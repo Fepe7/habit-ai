@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import '../data/auth_repository.dart';
+import 'package:go_router/go_router.dart';
+import '../../../app.dart';
 
-/// Pantalla de registro de nuevo usuario.
-/// Misma estructura que LoginScreen pero con campo de confirmar contraseña.
+// Pantalla de registro
 class RegisterScreen extends StatefulWidget {
-  final AuthRepository authRepository;
-
-  const RegisterScreen({super.key, required this.authRepository});
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -37,14 +35,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      await widget.authRepository.register(
+      final authRepository = AuthProvider.of(context);
+      await authRepository.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // Al registrarse, Firebase Auth emite un cambio de estado.
-      // El StreamBuilder en main.dart lo detecta y navega automáticamente.
-      // Cerramos esta pantalla para no quedarnos en la pila de navegación.
-      if (mounted) Navigator.of(context).pop();
+      // GoRouter detecta el cambio de auth y redirige solo
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -62,6 +58,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // Volver a login
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.goNamed('login'),
+        ),
         title: const Text('Crear cuenta'),
       ),
       body: SafeArea(
@@ -167,13 +168,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: _isLoading ? null : _handleRegister,
                     child: _isLoading
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
                         : const Text('Crear cuenta'),
                   ),
                 ],

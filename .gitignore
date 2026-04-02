@@ -64,6 +64,9 @@ key.properties
 functions/node_modules/
 functions/.env
 
+explicacion_auth.md
+
+
 # Claude AI config
 CLAUDE.md
 skills/

@@ -2,8 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 
-/// Repositorio que encapsula todas las operaciones de hábitos en Firestore.
-/// La UI nunca accede a Firestore directamente, solo a través de este repositorio.
+// CRUD de habitos y logs en Firestore
 class HabitRepository {
   final FirebaseFirestore _firestore;
   final String _uid;
@@ -14,18 +13,17 @@ class HabitRepository {
   })  : _uid = uid,
         _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Referencia a la colección de hábitos del usuario actual
+  // Ref a la coleccion de habitos del usuario
   CollectionReference<Map<String, dynamic>> get _habitsRef =>
       _firestore.collection('users').doc(_uid).collection('habits');
 
-  /// Referencia a los logs de un hábito específico
+  // Ref a los logs de un habito
   CollectionReference<Map<String, dynamic>> _logsRef(String habitId) =>
       _habitsRef.doc(habitId).collection('logs');
 
   // ==================== CRUD DE HÁBITOS ====================
 
-  /// Stream reactivo de hábitos activos, ordenados por fecha de creación.
-  /// StreamBuilder se suscribe a esto para actualizar la UI automáticamente.
+  // Habitos activos en tiempo real
   Stream<List<HabitModel>> watchActiveHabits() {
     return _habitsRef
         .where('isActive', isEqualTo: true)
@@ -36,11 +34,9 @@ class HabitRepository {
         .toList());
   }
 
-  /// Stream de hábitos que tocan hoy según sus targetDays.
-  /// Filtra en Firestore para traer solo los relevantes.
+  // Solo los habitos que tocan hoy
   Stream<List<HabitModel>> watchTodayHabits() {
-    // EFICIENCIA: arrayContains filtra en el servidor,
-    // solo descarga los hábitos que tocan hoy
+    // arrayContains filtra en el servidor, asi no baja todo
     final today = DateTime.now().weekday; // 1=Lunes, 7=Domingo
     return _habitsRef
         .where('isActive', isEqualTo: true)
@@ -51,23 +47,22 @@ class HabitRepository {
         .toList());
   }
 
-  /// Obtener un hábito por su ID
+  // Obtener un habito por id
   Future<HabitModel?> getHabit(String habitId) async {
     final doc = await _habitsRef.doc(habitId).get();
     if (!doc.exists) return null;
     return HabitModel.fromJson(doc.data()!, doc.id);
   }
 
-  /// Crear un nuevo hábito y devolver su ID generado por Firestore
+  // Crear habito nuevo
   Future<String> createHabit(HabitModel habit) async {
     final docRef = await _habitsRef.add(habit.toJson());
     return docRef.id;
   }
 
-  /// Crear múltiples hábitos de golpe (usado al aceptar un plan de IA).
-  /// Usa batch para enviar todas las escrituras en una sola operación.
+  // Crear varios habitos a la vez (para cuando la IA genera un plan)
   Future<void> createHabits(List<HabitModel> habits) async {
-    // EFICIENCIA: WriteBatch agrupa escrituras en una sola petición de red
+    // batch manda todo en una sola peticion
     final batch = _firestore.batch();
     for (final habit in habits) {
       final docRef = _habitsRef.doc();
@@ -76,27 +71,25 @@ class HabitRepository {
     await batch.commit();
   }
 
-  /// Actualizar campos específicos de un hábito
+  // Actualizar habito
   Future<void> updateHabit(String habitId, Map<String, dynamic> data) async {
     await _habitsRef.doc(habitId).update(data);
   }
 
-  /// Soft delete: marcar como inactivo en vez de borrar.
-  /// Conserva el historial de logs y estadísticas.
+  // No borramos, solo desactivamos para no perder los logs
   Future<void> deactivateHabit(String habitId) async {
     await _habitsRef.doc(habitId).update({'isActive': false});
   }
 
   // ==================== LOGS DIARIOS ====================
 
-  /// Registrar que un hábito se completó o no en una fecha
+  // Guardar log de un dia
   Future<String> addLog(String habitId, HabitLogModel log) async {
     final docRef = await _logsRef(habitId).add(log.toJson());
     return docRef.id;
   }
 
-  /// Obtener el log de hoy para un hábito específico.
-  /// Devuelve null si no se ha registrado hoy.
+  // Log de hoy (null si no hay)
   Future<HabitLogModel?> getTodayLog(String habitId) async {
     final now = DateTime.now();
     final startOfDay = DateTime(now.year, now.month, now.day);
@@ -115,15 +108,13 @@ class HabitRepository {
     );
   }
 
-  /// Obtener logs de un hábito en un rango de fechas.
-  /// Usado para calcular rachas y estadísticas del dashboard.
+  // Logs entre dos fechas (para estadisticas)
   Future<List<HabitLogModel>> getLogsByDateRange({
     required String habitId,
     required DateTime startDate,
     required DateTime endDate,
   }) async {
-    // EFICIENCIA: filtramos por rango en el servidor,
-    // solo descargamos los logs del periodo solicitado
+    // Filtra en el servidor para no bajar todos los logs
     final snapshot = await _logsRef(habitId)
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
         .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
@@ -137,8 +128,7 @@ class HabitRepository {
 
   // ==================== RACHAS ====================
 
-  /// Actualiza la racha del hábito después de completar un log.
-  /// Incrementa currentStreak y actualiza bestStreak si se supera el récord.
+  // Sumar 1 a la racha y actualizar record si toca
   Future<void> updateStreak(String habitId) async {
     final habit = await getHabit(habitId);
     if (habit == null) return;
@@ -152,7 +142,7 @@ class HabitRepository {
     });
   }
 
-  /// Rompe la racha de un hábito (cuando no se completa un día).
+  // Resetear racha a 0
   Future<void> resetStreak(String habitId) async {
     await updateHabit(habitId, {'currentStreak': 0});
   }
