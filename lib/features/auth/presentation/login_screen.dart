@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:habitai/features/auth/presentation/register_screen.dart';
-import '../data/auth_repository.dart';
+import 'package:go_router/go_router.dart';
+import '../../../app.dart';
 
-/// Pantalla de inicio de sesión.
-/// StatefulWidget porque necesita TextEditingControllers y setState para
-/// manejar el estado del formulario y la carga.
+// Pantalla de login
 class LoginScreen extends StatefulWidget {
-  final AuthRepository authRepository;
-
-  const LoginScreen({super.key, required this.authRepository});
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -23,14 +19,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    // Liberar controladores para evitar memory leaks
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
-    // Validar formulario antes de enviar
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -39,18 +33,17 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      await widget.authRepository.login(
+      final authRepository = AuthProvider.of(context);
+      await authRepository.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // No navegamos manualmente — el StreamBuilder en main.dart
-      // detectará el cambio de auth y mostrará la pantalla correcta
+      // GoRouter se encarga de redirigir a home al detectar el login
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
       });
     } finally {
-      // Verificar que el widget sigue montado antes de llamar setState
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -170,17 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: _isLoading
                         ? null
-                        : () {
-                            // Navegación temporal — cuando implementemos go_router
-                            // esto será context.goNamed('register')
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => RegisterScreen(
-                                  authRepository: widget.authRepository,
-                                ),
-                              ),
-                            );
-                          },
+                        : () => context.goNamed('register'),
                     child: const Text('¿No tienes cuenta? Regístrate'),
                   ),
                 ],

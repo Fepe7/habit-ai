@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../habits/domain/habit_model.dart';
 
-/// Plan completo de hábitos generado por la IA.
-/// Contiene los hábitos sugeridos y un mensaje motivacional.
+// Plan de habitos que genera la IA
 class HabitPlanModel {
   final String planTitle;
   final String planDescription;
@@ -32,8 +31,7 @@ class HabitPlanModel {
   }
 }
 
-/// Hábito individual generado por la IA, antes de guardarse en Firestore.
-/// Tiene campos extra de IA (estimatedMinutes, difficultyLevel) que no se persisten.
+// Habito que viene de la IA (tiene campos extra que no se guardan en Firestore)
 class GeneratedHabitModel {
   final String title;
   final String description;
@@ -68,8 +66,7 @@ class GeneratedHabitModel {
     );
   }
 
-  /// Convierte a HabitModel para guardar en Firestore.
-  /// Marca isAIGenerated = true para distinguir de hábitos manuales.
+  // Pasar a HabitModel para guardarlo en Firestore
   HabitModel toHabitModel() {
     return HabitModel(
       id: '',

@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Modelo que representa un logro desbloqueado por el usuario.
-/// Los logros son inmutables: una vez desbloqueados no se editan ni borran.
-/// Esto se refuerza en las reglas de seguridad de Firestore (solo read + create).
+// Logro del usuario (inmutable, una vez desbloqueado no se toca)
 class AchievementModel {
   final String id;
   final String type;
@@ -33,8 +31,7 @@ class AchievementModel {
     };
   }
 
-  /// Tipos de logros disponibles en la app.
-  /// Se definen como constantes para evitar errores de typo.
+  // Tipos de logros
   static const String firstHabit = 'first_habit';
   static const String streak7 = 'streak_7';
   static const String streak30 = 'streak_30';
