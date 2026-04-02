@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/habit_model.dart';
+import '../../habits/domain/habit_model.dart';
 
 /// Plan completo de hábitos generado por la IA.
 /// Contiene los hábitos sugeridos y un mensaje motivacional.
