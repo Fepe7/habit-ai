@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Modelo de dominio que representa un hábito del usuario.
-/// Independiente de la UI — solo define la estructura de datos.
+// Modelo de habito
 class HabitModel {
   final String id;
   final String title;
@@ -31,9 +30,7 @@ class HabitModel {
     this.isActive = true,
   });
 
-  /// Construye el modelo desde un documento de Firestore.
-  /// El ID viene separado porque Firestore lo guarda en doc.id,
-  /// no dentro del data() del documento.
+  // Crear desde un doc de Firestore (el id va aparte porque no viene en data())
   factory HabitModel.fromJson(Map<String, dynamic> json, String docId) {
     return HabitModel(
       id: docId,
@@ -51,8 +48,7 @@ class HabitModel {
     );
   }
 
-  /// Serializa para guardar en Firestore.
-  /// No incluye el ID porque Firestore lo gestiona como doc.id.
+  // Convertir a map para guardar en Firestore (sin id, lo pone Firestore)
   Map<String, dynamic> toJson() {
     return {
       'title': title,
@@ -69,8 +65,7 @@ class HabitModel {
     };
   }
 
-  /// Copia inmutable con campos modificados.
-  /// En vez de mutar el objeto, creamos uno nuevo con los cambios.
+  // Crear copia con campos cambiados
   HabitModel copyWith({
     String? title,
     String? description,

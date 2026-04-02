@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/achivement_model.dart';
 
-/// Repositorio de logros del usuario.
-/// Solo permite leer y crear — los logros no se editan ni borran.
+// Gestiona los logros (solo lectura y creacion, no se borran)
 class AchievementRepository {
   final FirebaseFirestore _firestore;
   final String _uid;
@@ -16,7 +15,7 @@ class AchievementRepository {
   CollectionReference<Map<String, dynamic>> get _achievementsRef =>
       _firestore.collection('users').doc(_uid).collection('achievements');
 
-  /// Stream reactivo de todos los logros del usuario.
+  // Logros en tiempo real
   Stream<List<AchievementModel>> watchAchievements() {
     return _achievementsRef
         .orderBy('unlockedAt', descending: true)
@@ -26,8 +25,7 @@ class AchievementRepository {
         .toList());
   }
 
-  /// Desbloquea un logro si no existe ya.
-  /// Comprueba primero si el tipo ya fue desbloqueado para evitar duplicados.
+  // Desbloquear logro (comprueba que no exista ya)
   Future<bool> unlockAchievement({
     required String type,
     String? habitId,
@@ -51,9 +49,9 @@ class AchievementRepository {
     return true; // Nuevo logro desbloqueado
   }
 
-  /// Comprueba si un tipo de logro ya está desbloqueado.
+  // Comprobar si ya tiene un logro
   Future<bool> isUnlocked(String type) async {
-    // EFICIENCIA: limit(1) para no descargar más de un documento
+    // limit(1) para no bajar mas de lo necesario
     final snapshot = await _achievementsRef
         .where('type', isEqualTo: type)
         .limit(1)

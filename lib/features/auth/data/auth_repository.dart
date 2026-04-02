@@ -1,16 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../domain/user_model.dart';
 
-/// Repositorio que encapsula todas las operaciones de autenticación.
-/// La UI nunca interactúa con FirebaseAuth directamente, solo con este repositorio.
+// Gestiona todo lo de autenticacion con Firebase Auth
 class AuthRepository {
   final FirebaseAuth _auth;
 
   AuthRepository({FirebaseAuth? auth})
       : _auth = auth ?? FirebaseAuth.instance;
 
-  /// Stream reactivo del estado de autenticación.
-  /// Emite el usuario actual cuando inicia/cierra sesión.
+  // Escucha cambios de sesion (login/logout)
   Stream<UserModel?> get authStateChanges {
     return _auth.authStateChanges().map((user) {
       if (user == null) return null;
@@ -22,8 +20,7 @@ class AuthRepository {
     });
   }
 
-  /// Registro con email y contraseña.
-  /// Devuelve el UserModel creado o lanza una excepción con mensaje en español.
+  // Registrar usuario nuevo
   Future<UserModel> register({
     required String email,
     required String password,
@@ -44,7 +41,7 @@ class AuthRepository {
     }
   }
 
-  /// Login con email y contraseña.
+  // Iniciar sesion
   Future<UserModel> login({
     required String email,
     required String password,
@@ -65,9 +62,19 @@ class AuthRepository {
     }
   }
 
-  /// Cierra la sesión del usuario actual.
+  // Usuario actual (null si no hay sesion)
+  UserModel? get currentUser {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return UserModel(
+      uid: user.uid,
+      email: user.email ?? '',
+      displayName: user.displayName,
+    );
+  }
+
+  // Cerrar sesion
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
 }
