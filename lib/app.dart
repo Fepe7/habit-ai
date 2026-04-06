@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 // Para poder acceder al AuthRepository desde cualquier pantalla
 // sin tener que pasarlo por constructor
@@ -57,10 +58,9 @@ class _HabitAIAppState extends State<HabitAIApp> {
       child: MaterialApp.router(
         title: 'HabitAI',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorSchemeSeed: const Color(0xFF6750A4),
-        ),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system, // respeta la preferencia del dispositivo
         routerConfig: _router,
       ),
     );
