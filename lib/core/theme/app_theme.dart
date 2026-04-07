@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color seedColor = Color(0xFF6750A4); // violeta Material 3
+  // colores principales
+  static const Color primary = Color(0xFF38BDF8);     // azul cielo
+  static const Color secondary = Color(0xFF0EA5E9);   // azul mas intenso
+  static const Color success = Color(0xFF10B981);     // verde (habito completado)
+  static const Color accent = Color(0xFFF59E0B);      // ambar (rachas, logros)
+  static const Color error = Color(0xFFEF4444);
+
+  // textos
+  static const Color textPrimary = Color(0xFF0F172A);
+  static const Color textSecondary = Color(0xFF64748B);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   static ThemeData get lightTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: seedColor,
+      seedColor: primary,
+      primary: primary,
+      secondary: secondary,
+      error: error,
+      surface: const Color(0xFFF0F9FF),
       brightness: Brightness.light,
     );
     return _buildTheme(colorScheme);
@@ -13,8 +27,13 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: seedColor,
+      seedColor: primary,
+      primary: primary,
+      secondary: secondary,
+      error: error,
       brightness: Brightness.dark,
+    ).copyWith(
+      surface: const Color(0xFF0F172A),
     );
     return _buildTheme(colorScheme);
   }
@@ -76,7 +95,7 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
       ),
 
-      // bottom nav bar con M3
+      // bottom nav bar
       navigationBarTheme: NavigationBarThemeData(
         labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         indicatorColor: colorScheme.primaryContainer,
@@ -84,23 +103,42 @@ class AppTheme {
     );
   }
 
-  // colores por categoria de habito
-  static Color categoryColor(String category, ColorScheme scheme) {
+  // colores por categoria (fondo + texto)
+  static Color categoryBg(String category) {
     switch (category) {
       case 'salud':
-        return const Color(0xFF4CAF50);
+        return const Color(0xFFCCFBF1);
       case 'productividad':
-        return scheme.primary;
+        return const Color(0xFFE0F2FE);
       case 'bienestar':
-        return const Color(0xFF42A5F5);
+        return const Color(0xFFFEF3C7);
       case 'social':
-        return const Color(0xFFFF7043);
+        return const Color(0xFFFCE7F3);
       case 'aprendizaje':
-        return const Color(0xFFAB47BC);
+        return const Color(0xFFEDE9FE);
       case 'finanzas':
-        return const Color(0xFF66BB6A);
+        return const Color(0xFFFEE2E2);
       default:
-        return scheme.tertiary;
+        return const Color(0xFFE5E7EB);
+    }
+  }
+
+  static Color categoryFg(String category) {
+    switch (category) {
+      case 'salud':
+        return const Color(0xFF115E59);
+      case 'productividad':
+        return const Color(0xFF0C4A6E);
+      case 'bienestar':
+        return const Color(0xFF92400E);
+      case 'social':
+        return const Color(0xFF9D174D);
+      case 'aprendizaje':
+        return const Color(0xFF5B21B6);
+      case 'finanzas':
+        return const Color(0xFF991B1B);
+      default:
+        return const Color(0xFF374151);
     }
   }
 }

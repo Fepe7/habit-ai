@@ -3,31 +3,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
-
-// Home temporal, esto se cambiará por el MainShell con tabs
-class _HomeScreen extends StatelessWidget {
-  final AuthRepository authRepository;
-
-  const _HomeScreen({required this.authRepository});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('HabitAI'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => authRepository.signOut(),
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('Bienvenido a HabitAI'),
-      ),
-    );
-  }
-}
+import '../../features/habits/presentation/habits_screen.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/ai/presentation/ai_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
+import 'main_shell.dart';
 
 // Configura el router con las rutas y el auth guard
 GoRouter createRouter(AuthRepository authRepository) {
@@ -54,13 +34,34 @@ GoRouter createRouter(AuthRepository authRepository) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        name: 'home',
-        builder: (context, state) => _HomeScreen(
-          authRepository: authRepository,
-        ),
+      // tabs principales con bottom nav
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(
+            path: '/',
+            name: 'home',
+            builder: (context, state) => const HabitsScreen(),
+          ),
+          GoRoute(
+            path: '/dashboard',
+            name: 'dashboard',
+            builder: (context, state) => const DashboardScreen(),
+          ),
+          GoRoute(
+            path: '/ai',
+            name: 'ai',
+            builder: (context, state) => const AIScreen(),
+          ),
+          GoRoute(
+            path: '/settings',
+            name: 'settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+        ],
       ),
+
+      // auth (fuera del shell, sin bottom nav)
       GoRoute(
         path: '/login',
         name: 'login',
