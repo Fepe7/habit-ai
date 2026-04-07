@@ -158,4 +158,54 @@ class AppTheme {
         return const Color(0xFF374151);
     }
   }
+
+  // icono por categoria
+  static IconData categoryIcon(String category) {
+    switch (category) {
+      case 'salud':
+        return Icons.favorite_rounded;
+      case 'productividad':
+        return Icons.rocket_launch_rounded;
+      case 'bienestar':
+        return Icons.spa_rounded;
+      case 'social':
+        return Icons.people_rounded;
+      case 'aprendizaje':
+        return Icons.school_rounded;
+      case 'finanzas':
+        return Icons.savings_rounded;
+      default:
+        return Icons.tag_rounded;
+    }
+  }
+
+  // nombre bonito de la categoria
+  static String categoryLabel(String category) {
+    switch (category) {
+      case 'salud':
+        return 'Salud';
+      case 'productividad':
+        return 'Productividad';
+      case 'bienestar':
+        return 'Bienestar';
+      case 'social':
+        return 'Social';
+      case 'aprendizaje':
+        return 'Aprendizaje';
+      case 'finanzas':
+        return 'Finanzas';
+      default:
+        return category[0].toUpperCase() + category.substring(1);
+    }
+  }
+
+  // todas las categorias disponibles
+  static const List<String> categories = [
+    'salud',
+    'productividad',
+    'bienestar',
+    'social',
+    'aprendizaje',
+    'finanzas',
+  ];
 }

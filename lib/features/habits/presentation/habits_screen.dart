@@ -7,9 +7,10 @@ import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import 'widgets/habit_card.dart';
 import 'widgets/empty_habits_view.dart';
+import 'widgets/edit_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 
-// Pantalla principal con la lista de habitos del dia
+// Pantalla principal con la lista de habitos del dia agrupados por categoria
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
 
@@ -40,14 +41,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
   Future<void> _toggleHabit(HabitModel habit) async {
     final wasCompleted = _completedToday[habit.id] ?? false;
 
-    // actualizar UI inmediatamente
     setState(() {
       _completedToday[habit.id] = !wasCompleted;
     });
 
     try {
       if (!wasCompleted) {
-        // completar: crear log + actualizar racha
         final log = HabitLogModel(
           id: '',
           date: DateTime.now(),
@@ -56,11 +55,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
         await _habitRepo.addLog(habit.id, log);
         await _habitRepo.updateStreak(habit.id);
       } else {
-        // descompletar: resetear racha
         await _habitRepo.resetStreak(habit.id);
       }
     } catch (e) {
-      // revertir si falla
       if (mounted) {
         setState(() {
           _completedToday[habit.id] = wasCompleted;
@@ -81,6 +78,107 @@ class _HabitsScreenState extends State<HabitsScreen> {
         }
       }
     }
+  }
+
+  // abrir editor y guardar cambios
+  Future<void> _editHabit(HabitModel habit) async {
+    final updated = await EditHabitSheet.show(context, habit);
+    if (updated == null) return;
+
+    try {
+      await _habitRepo.updateHabit(habit.id, {
+        'title': updated.title,
+        'description': updated.description,
+        'category': updated.category,
+        'frequency': updated.frequency,
+        'targetDays': updated.targetDays,
+        'reminderTime': updated.reminderTime,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Hábito actualizado'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al actualizar el hábito'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
+  // confirmar y eliminar habito (desactivar)
+  Future<void> _deleteHabit(HabitModel habit) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar hábito'),
+        content: Text(
+          '¿Seguro que quieres eliminar "${habit.title}"?\n\n'
+          'El hábito se desactivará y no aparecerá en tu lista, '
+          'pero se conservará el historial.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _habitRepo.deactivateHabit(habit.id);
+      // limpiar del cache local
+      _completedToday.remove(habit.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"${habit.title}" eliminado'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al eliminar el hábito'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
+  // agrupar habitos por categoria manteniendo el orden
+  Map<String, List<HabitModel>> _groupByCategory(List<HabitModel> habits) {
+    final groups = <String, List<HabitModel>>{};
+    for (final habit in habits) {
+      groups.putIfAbsent(habit.category, () => []).add(habit);
+    }
+    return groups;
   }
 
   @override
@@ -104,12 +202,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
       body: StreamBuilder<List<HabitModel>>(
         stream: _habitRepo.watchTodayHabits(),
         builder: (context, snapshot) {
-          // cargando
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // error
           if (snapshot.hasError) {
             return Center(
               child: Padding(
@@ -139,47 +235,92 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
           final habits = snapshot.data ?? [];
 
-          // sin habitos
           if (habits.isEmpty) {
             return EmptyHabitsView(
               onCreatePlan: () => context.go('/ai'),
             );
           }
 
-          // cargar logs de hoy
           _loadTodayLogs(habits);
 
-          // contar completados
           final completedCount = habits.where(
             (h) => _completedToday[h.id] == true,
           ).length;
 
+          final groups = _groupByCategory(habits);
+
           return Column(
             children: [
-              // barra de progreso del dia
               _DailyProgress(
                 completed: completedCount,
                 total: habits.length,
               ),
 
-              // lista de habitos
+              // lista agrupada por categoria
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: habits.length,
+                  itemCount: _countItems(groups),
                   itemBuilder: (context, index) {
-                    final habit = habits[index];
+                    final item = _getItem(groups, index);
+
+                    // header de categoria
+                    if (item is _CategoryHeader) {
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          top: item.isFirst ? 0 : 16,
+                          bottom: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppTheme.categoryBg(item.category),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                AppTheme.categoryIcon(item.category),
+                                size: 16,
+                                color: AppTheme.categoryFg(item.category),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              AppTheme.categoryLabel(item.category),
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.categoryFg(item.category),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${item.count}',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ).animate().fadeIn(duration: 250.ms);
+                    }
+
+                    // card de habito
+                    final habitItem = item as _HabitItem;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: HabitCard(
-                        habit: habit,
-                        isCompletedToday: _completedToday[habit.id] ?? false,
-                        onToggle: () => _toggleHabit(habit),
+                        habit: habitItem.habit,
+                        isCompletedToday: _completedToday[habitItem.habit.id] ?? false,
+                        onToggle: () => _toggleHabit(habitItem.habit),
+                        onTap: () => context.go('/habit/${habitItem.habit.id}'),
+                        onEdit: () => _editHabit(habitItem.habit),
+                        onDelete: () => _deleteHabit(habitItem.habit),
                       ),
                     )
                         .animate()
                         .fadeIn(
-                          delay: Duration(milliseconds: index * 80),
+                          delay: Duration(milliseconds: habitItem.animIndex * 80),
                           duration: 350.ms,
                         )
                         .slideX(
@@ -196,12 +337,61 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
   }
 
+  // calcula cuantos items hay en total (headers + habitos)
+  int _countItems(Map<String, List<HabitModel>> groups) {
+    int count = 0;
+    for (final entry in groups.entries) {
+      count += 1 + entry.value.length; // header + habitos
+    }
+    return count;
+  }
+
+  // obtiene el item (header o habito) por indice flat
+  Object _getItem(Map<String, List<HabitModel>> groups, int index) {
+    int current = 0;
+    int animIndex = 0;
+    bool isFirst = true;
+    for (final entry in groups.entries) {
+      if (current == index) {
+        return _CategoryHeader(
+          category: entry.key,
+          count: entry.value.length,
+          isFirst: isFirst,
+        );
+      }
+      current++;
+      for (final habit in entry.value) {
+        if (current == index) {
+          return _HabitItem(habit: habit, animIndex: animIndex);
+        }
+        current++;
+        animIndex++;
+      }
+      isFirst = false;
+    }
+    return _CategoryHeader(category: '', count: 0, isFirst: true);
+  }
+
   String _todayFormatted() {
     final now = DateTime.now();
     final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     final months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
     return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]}';
   }
+}
+
+// tipos auxiliares para el listview flat con headers
+class _CategoryHeader {
+  final String category;
+  final int count;
+  final bool isFirst;
+  _CategoryHeader({required this.category, required this.count, required this.isFirst});
+}
+
+class _HabitItem {
+  final HabitModel habit;
+  final int animIndex;
+  _HabitItem({required this.habit, required this.animIndex});
 }
 
 // barra de progreso del dia
@@ -252,7 +442,6 @@ class _DailyProgress extends StatelessWidget {
                   ),
                 ],
               ),
-              // porcentaje circular
               SizedBox(
                 width: 52,
                 height: 52,

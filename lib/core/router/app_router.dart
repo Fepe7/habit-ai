@@ -4,6 +4,7 @@ import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/habits/presentation/habits_screen.dart';
+import '../../features/habits/presentation/habit_detail_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -42,6 +43,15 @@ GoRouter createRouter(AuthRepository authRepository) {
             path: '/',
             name: 'home',
             builder: (context, state) => const HabitsScreen(),
+            routes: [
+              GoRoute(
+                path: 'habit/:habitId',
+                name: 'habit-detail',
+                builder: (context, state) => HabitDetailScreen(
+                  habitId: state.pathParameters['habitId']!,
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/dashboard',

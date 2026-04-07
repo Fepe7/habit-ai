@@ -2,17 +2,23 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/habit_model.dart';
 
-// Card de un habito individual con checkbox y info
+// Card de un habito con checkbox, categoria y menu de opciones
 class HabitCard extends StatelessWidget {
   final HabitModel habit;
   final bool isCompletedToday;
   final VoidCallback onToggle;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const HabitCard({
     super.key,
     required this.habit,
     required this.isCompletedToday,
     required this.onToggle,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -20,26 +26,34 @@ class HabitCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final catBg = AppTheme.categoryBg(habit.category);
     final catFg = AppTheme.categoryFg(habit.category);
+    final catIcon = AppTheme.categoryIcon(habit.category);
 
     return Card(
       color: isCompletedToday
           ? colorScheme.primaryContainer.withValues(alpha: 0.3)
           : null,
       child: InkWell(
-        onTap: onToggle,
+        onTap: onTap,
+        onLongPress: onEdit,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              // checkbox circular
-              _CheckCircle(
-                isCompleted: isCompletedToday,
-                color: catFg,
+              // checkbox circular — solo este toglea el habito
+              GestureDetector(
+                onTap: onToggle,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: _CheckCircle(
+                    isCompleted: isCompletedToday,
+                    color: catFg,
+                  ),
+                ),
               ),
-              const SizedBox(width: 16),
 
-              // titulo + descripcion + racha
+              // titulo + descripcion + racha + categoria
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +100,7 @@ class HabitCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 12),
                         ],
-                        // categoria con colores propios
+                        // categoria con icono y colores propios
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -96,12 +110,19 @@ class HabitCard extends StatelessWidget {
                             color: catBg,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            habit.category,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: catFg,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(catIcon, size: 12, color: catFg),
+                              const SizedBox(width: 4),
+                              Text(
+                                AppTheme.categoryLabel(habit.category),
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: catFg,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         // hora recordatorio
@@ -126,11 +147,49 @@ class HabitCard extends StatelessWidget {
                 ),
               ),
 
-              // icono de check si completado
+              // icono de check si completado, o menu de opciones
               if (isCompletedToday)
                 Icon(
                   Icons.check_circle,
                   color: colorScheme.primary,
+                )
+              else if (onEdit != null || onDelete != null)
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_vert,
+                    color: colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onSelected: (value) {
+                    if (value == 'edit') onEdit?.call();
+                    if (value == 'delete') onDelete?.call();
+                  },
+                  itemBuilder: (context) => [
+                    if (onEdit != null)
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 20),
+                            SizedBox(width: 12),
+                            Text('Editar'),
+                          ],
+                        ),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                            const SizedBox(width: 12),
+                            Text('Eliminar', style: TextStyle(color: AppTheme.error)),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
             ],
           ),
