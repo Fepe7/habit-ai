@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../habits/domain/habit_model.dart';
 
 // Plan de habitos que genera la IA
