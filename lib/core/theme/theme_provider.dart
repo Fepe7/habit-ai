@@ -78,8 +78,8 @@ class _ThemeInherited extends InheritedWidget {
     required super.child,
   });
 
+  // siempre true: ListenableBuilder ya controla cuando rebuildar,
+  // si llega aqui es porque el themeMode cambio
   @override
-  bool updateShouldNotify(_ThemeInherited oldWidget) {
-    return provider.themeMode != oldWidget.provider.themeMode;
-  }
+  bool updateShouldNotify(_ThemeInherited oldWidget) => true;
 }
