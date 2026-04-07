@@ -34,6 +34,8 @@ class AppTheme {
       brightness: Brightness.dark,
     ).copyWith(
       surface: const Color(0xFF0F172A),
+      onSurface: const Color(0xFFE2E8F0),
+      surfaceContainerHighest: const Color(0xFF1E293B),
     );
     return _buildTheme(colorScheme);
   }
@@ -95,10 +97,25 @@ class AppTheme {
         backgroundColor: colorScheme.surface,
       ),
 
-      // bottom nav bar
+      // bottom nav bar con etiquetas
       navigationBarTheme: NavigationBarThemeData(
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorColor: colorScheme.primaryContainer,
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
+      ),
+
+      // snackbars y dialogs redondeados
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
     );
   }

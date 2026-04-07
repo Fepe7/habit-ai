@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 
 // Para poder acceder al AuthRepository desde cualquier pantalla
 // sin tener que pasarlo por constructor
@@ -60,7 +61,7 @@ class _HabitAIAppState extends State<HabitAIApp> {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system, // respeta la preferencia del dispositivo
+        themeMode: ThemeProvider.of(context).themeMode,
         routerConfig: _router,
       ),
     );

@@ -41,6 +41,7 @@ dependencies:
   flutter_animate: ^4.5.2
   firebase_ai: ^3.10.0
   cloud_functions: ^6.1.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

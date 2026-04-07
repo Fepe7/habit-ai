@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 
@@ -16,6 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
   String? _errorMessage;
 
   @override
@@ -40,30 +43,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      // GoRouter detecta el cambio de auth y redirige solo
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
       });
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        // Volver a login
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.goNamed('login'),
         ),
-        title: const Text('Crear cuenta'),
       ),
       body: SafeArea(
         child: Center(
@@ -74,26 +74,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // icono
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person_add_outlined,
+                        size: 40,
+                        color: colorScheme.secondary,
+                      ),
+                    ),
+                  ).animate().fadeIn(duration: 400.ms).scale(
+                        begin: const Offset(0.8, 0.8),
+                        curve: Curves.easeOutBack,
+                      ),
+                  const SizedBox(height: 24),
+
                   Text(
-                    'Únete a HabitAI',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    'Crear cuenta',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                     textAlign: TextAlign.center,
-                  ),
+                  ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
                   const SizedBox(height: 8),
                   Text(
-                    'Crea tu cuenta para empezar a construir hábitos',
+                    'Empieza a construir mejores hábitos',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                     textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
+                  ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+                  const SizedBox(height: 40),
 
-                  // Campo de email
+                  // email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
                     decoration: const InputDecoration(
                       labelText: 'Correo electrónico',
                       prefixIcon: Icon(Icons.email_outlined),
@@ -107,39 +130,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       return null;
                     },
-                  ),
+                  ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
                   const SizedBox(height: 16),
 
-                  // Campo de contraseña
+                  // contraseña
                   TextFormField(
                     controller: _passwordController,
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
+                    autofillHints: const [AutofillHints.newPassword],
+                    decoration: InputDecoration(
                       labelText: 'Contraseña',
-                      prefixIcon: Icon(Icons.lock_outlined),
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Introduce una contraseña';
                       }
                       if (value.length < 6) {
-                        return 'La contraseña debe tener al menos 6 caracteres';
+                        return 'Mínimo 6 caracteres';
                       }
                       return null;
                     },
-                  ),
+                  ).animate().fadeIn(delay: 400.ms, duration: 400.ms),
                   const SizedBox(height: 16),
 
-                  // Confirmar contraseña
+                  // confirmar contraseña
                   TextFormField(
                     controller: _confirmPasswordController,
-                    obscureText: true,
+                    obscureText: _obscureConfirm,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleRegister(),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Confirmar contraseña',
-                      prefixIcon: Icon(Icons.lock_outlined),
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirm
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscureConfirm = !_obscureConfirm);
+                        },
+                      ),
                     ),
                     validator: (value) {
                       if (value != _passwordController.text) {
@@ -147,23 +191,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       }
                       return null;
                     },
-                  ),
+                  ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
                   const SizedBox(height: 24),
 
-                  // Mensaje de error
+                  // error
                   if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        textAlign: TextAlign.center,
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 20, color: colorScheme.onErrorContainer),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ).animate().fadeIn().shake(hz: 3, offset: const Offset(4, 0)),
 
-                  // Botón de registro
+                  // boton registro
                   FilledButton(
                     onPressed: _isLoading ? null : _handleRegister,
                     child: _isLoading
@@ -176,7 +233,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           )
                         : const Text('Crear cuenta'),
-                  ),
+                  ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 ],
               ),
             ),

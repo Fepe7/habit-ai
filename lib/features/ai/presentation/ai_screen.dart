@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/ai_repository.dart';
 import '../domain/chat_message.dart';
@@ -24,6 +25,14 @@ class _AIScreenState extends State<AIScreen> {
   late final HabitRepository _habitRepo;
   bool _isLoading = false;
 
+  // sugerencias rapidas para guiar al usuario
+  static const _suggestions = [
+    'Quiero hacer ejercicio y comer mejor',
+    'Necesito ser más productivo',
+    'Quiero leer más y dormir mejor',
+    'Mejorar mi salud mental',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -31,11 +40,9 @@ class _AIScreenState extends State<AIScreen> {
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
 
-    // Mensaje de bienvenida
     _messages.add(ChatMessage(
       text: '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
-          'y te generaré un plan personalizado.\n\n'
-          'Por ejemplo: "Quiero hacer ejercicio, dormir mejor y leer más"',
+          'y te generaré un plan personalizado.',
       isUser: false,
       timestamp: DateTime.now(),
     ));
@@ -48,15 +55,15 @@ class _AIScreenState extends State<AIScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty || _isLoading) return;
+  Future<void> _sendMessage([String? text]) async {
+    final msg = text ?? _controller.text.trim();
+    if (msg.isEmpty || _isLoading) return;
 
     _controller.clear();
 
     setState(() {
       _messages.add(ChatMessage(
-        text: text,
+        text: msg,
         isUser: true,
         timestamp: DateTime.now(),
       ));
@@ -66,9 +73,8 @@ class _AIScreenState extends State<AIScreen> {
     _scrollToBottom();
 
     try {
-      final plan = await _aiRepo.generatePlan(text);
+      final plan = await _aiRepo.generatePlan(msg);
 
-      // Convertir a datos para la UI
       HabitPlanData? planData;
       if (plan.habits.isNotEmpty) {
         planData = HabitPlanData(
@@ -124,7 +130,6 @@ class _AIScreenState extends State<AIScreen> {
     });
   }
 
-  // Guarda los habitos aceptados del plan en Firestore
   Future<void> _saveHabits(HabitPlanData plan) async {
     final accepted = plan.habits.where((h) => h.accepted).toList();
     if (accepted.isEmpty) return;
@@ -147,10 +152,15 @@ class _AIScreenState extends State<AIScreen> {
         SnackBar(
           content: Text('${accepted.length} hábitos añadidos'),
           backgroundColor: AppTheme.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
   }
+
+  // solo mostrar sugerencias si es el primer mensaje (bienvenida)
+  bool get _showSuggestions => _messages.length == 1 && !_isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +171,7 @@ class _AIScreenState extends State<AIScreen> {
         title: const Text('Asistente IA'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Nueva conversación',
             onPressed: () {
               _aiRepo.resetChat();
@@ -179,35 +189,48 @@ class _AIScreenState extends State<AIScreen> {
       ),
       body: Column(
         children: [
-          // Lista de mensajes
+          // lista de mensajes
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _messages.length + (_isLoading ? 1 : 0),
+              itemCount: _messages.length +
+                  (_isLoading ? 1 : 0) +
+                  (_showSuggestions ? 1 : 0),
               itemBuilder: (context, index) {
-                // Indicador de carga al final
-                if (index == _messages.length) {
+                // sugerencias al final si aplica
+                if (_showSuggestions && index == _messages.length) {
+                  return _SuggestionChips(
+                    suggestions: _suggestions,
+                    onTap: (s) => _sendMessage(s),
+                  );
+                }
+
+                // indicador de carga
+                if (index == _messages.length + (_showSuggestions ? 1 : 0) ||
+                    (_isLoading && index == _messages.length)) {
                   return const _TypingIndicator();
                 }
 
                 final message = _messages[index];
                 return Column(
                   children: [
-                    ChatBubble(message: message),
-                    // Mostrar plan si hay
+                    ChatBubble(message: message)
+                        .animate()
+                        .fadeIn(duration: 250.ms)
+                        .slideY(begin: 0.05),
                     if (message.plan != null)
                       PlanCard(
                         plan: message.plan!,
                         onSave: () => _saveHabits(message.plan!),
-                      ),
+                      ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.08),
                   ],
                 );
               },
             ),
           ),
 
-          // Input de texto
+          // input de texto
           Container(
             padding: EdgeInsets.only(
               left: 16,
@@ -246,8 +269,8 @@ class _AIScreenState extends State<AIScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton.filled(
-                  onPressed: _isLoading ? null : _sendMessage,
-                  icon: const Icon(Icons.send),
+                  onPressed: _isLoading ? null : () => _sendMessage(),
+                  icon: const Icon(Icons.send_rounded),
                 ),
               ],
             ),
@@ -258,7 +281,46 @@ class _AIScreenState extends State<AIScreen> {
   }
 }
 
-// Animacion de "escribiendo..."
+// chips de sugerencias rapidas
+class _SuggestionChips extends StatelessWidget {
+  final List<String> suggestions;
+  final ValueChanged<String> onTap;
+
+  const _SuggestionChips({required this.suggestions, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: suggestions.asMap().entries.map((entry) {
+          return ActionChip(
+            label: Text(
+              entry.value,
+              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+            ),
+            avatar: Icon(Icons.auto_awesome, size: 16, color: colorScheme.primary),
+            backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            onPressed: () => onTap(entry.value),
+          )
+              .animate()
+              .fadeIn(
+                delay: Duration(milliseconds: 200 + entry.key * 80),
+                duration: 300.ms,
+              )
+              .slideY(begin: 0.15);
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// animacion de "pensando..."
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
 
@@ -294,6 +356,6 @@ class _TypingIndicator extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 250.ms);
   }
 }

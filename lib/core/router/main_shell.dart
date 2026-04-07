@@ -1,69 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// Shell con bottom nav custom
+// Shell con bottom nav bar con etiquetas y animaciones
 class MainShell extends StatelessWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
 
+  static const _tabs = [
+    _TabInfo(
+      path: '/',
+      icon: Icons.check_circle_outline,
+      activeIcon: Icons.check_circle,
+      label: 'Hábitos',
+    ),
+    _TabInfo(
+      path: '/dashboard',
+      icon: Icons.bar_chart_outlined,
+      activeIcon: Icons.bar_chart_rounded,
+      label: 'Progreso',
+    ),
+    _TabInfo(
+      path: '/ai',
+      icon: Icons.auto_awesome_outlined,
+      activeIcon: Icons.auto_awesome,
+      label: 'Asistente',
+    ),
+    _TabInfo(
+      path: '/settings',
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings,
+      label: 'Ajustes',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final selected = _currentIndex(context);
-    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-            ),
-          ),
-        ),
-        padding: EdgeInsets.only(
-          top: 8,
-          bottom: MediaQuery.of(context).padding.bottom + 8,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _NavItem(
-              icon: Icons.check_circle_outline,
-              activeIcon: Icons.check_circle,
-              isSelected: selected == 0,
-              color: colorScheme.primary,
-              inactiveColor: colorScheme.onSurfaceVariant,
-              onTap: () => _onTap(context, 0),
-            ),
-            _NavItem(
-              icon: Icons.bar_chart_outlined,
-              activeIcon: Icons.bar_chart_rounded,
-              isSelected: selected == 1,
-              color: colorScheme.primary,
-              inactiveColor: colorScheme.onSurfaceVariant,
-              onTap: () => _onTap(context, 1),
-            ),
-            _NavItem(
-              icon: Icons.auto_awesome_outlined,
-              activeIcon: Icons.auto_awesome,
-              isSelected: selected == 2,
-              color: colorScheme.primary,
-              inactiveColor: colorScheme.onSurfaceVariant,
-              onTap: () => _onTap(context, 2),
-            ),
-            _NavItem(
-              icon: Icons.person_outline,
-              activeIcon: Icons.person,
-              isSelected: selected == 3,
-              color: colorScheme.primary,
-              inactiveColor: colorScheme.onSurfaceVariant,
-              onTap: () => _onTap(context, 3),
-            ),
-          ],
-        ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: selected,
+        onDestinationSelected: (index) => context.go(_tabs[index].path),
+        destinations: _tabs
+            .map((tab) => NavigationDestination(
+                  icon: Icon(tab.icon),
+                  selectedIcon: Icon(tab.activeIcon),
+                  label: tab.label,
+                ))
+            .toList(),
       ),
     );
   }
@@ -75,58 +61,18 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/settings')) return 3;
     return 0;
   }
-
-  void _onTap(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/');
-      case 1:
-        context.go('/dashboard');
-      case 2:
-        context.go('/ai');
-      case 3:
-        context.go('/settings');
-    }
-  }
 }
 
-class _NavItem extends StatelessWidget {
+class _TabInfo {
+  final String path;
   final IconData icon;
   final IconData activeIcon;
-  final bool isSelected;
-  final Color color;
-  final Color inactiveColor;
-  final VoidCallback onTap;
+  final String label;
 
-  const _NavItem({
+  const _TabInfo({
+    required this.path,
     required this.icon,
     required this.activeIcon,
-    required this.isSelected,
-    required this.color,
-    required this.inactiveColor,
-    required this.onTap,
+    required this.label,
   });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 56,
-        height: 40,
-        child: Center(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              isSelected ? activeIcon : icon,
-              key: ValueKey(isSelected),
-              size: isSelected ? 28 : 24,
-              color: isSelected ? color : inactiveColor,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

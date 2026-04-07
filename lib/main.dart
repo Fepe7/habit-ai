@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'core/theme/theme_provider.dart';
 import 'app.dart';
 
 void main() async {
@@ -9,6 +10,6 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Arranca la app
-  runApp(const HabitAIApp());
+  // ThemeScope envuelve toda la app para que el tema sea accesible en cualquier sitio
+  runApp(const ThemeScope(child: HabitAIApp()));
 }
