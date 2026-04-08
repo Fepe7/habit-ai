@@ -8,6 +8,7 @@ import '../domain/habit_log_model.dart';
 import 'widgets/habit_card.dart';
 import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
+import 'widgets/create_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 
 // Pantalla principal con la lista de habitos del dia agrupados por categoria
@@ -20,9 +21,10 @@ class HabitsScreen extends StatefulWidget {
 
 class _HabitsScreenState extends State<HabitsScreen> {
   late HabitRepository _habitRepo;
-  // guarda que habitos se completaron hoy
   final Map<String, bool> _completedToday = {};
   bool _initialized = false;
+  // ids de habitos que ya se consultaron para no repetir
+  final Set<String> _logsFetched = {};
 
   @override
   void didChangeDependencies() {
@@ -37,10 +39,26 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
-  // marcar/desmarcar habito como completado
+  // cargar logs de hoy solo para habitos nuevos que no se hayan consultado
+  void _fetchLogsIfNeeded(List<HabitModel> habits) {
+    for (final habit in habits) {
+      if (_logsFetched.contains(habit.id)) continue;
+      _logsFetched.add(habit.id);
+
+      _habitRepo.getTodayLog(habit.id).then((log) {
+        if (mounted) {
+          setState(() {
+            _completedToday[habit.id] = log?.completed ?? false;
+          });
+        }
+      });
+    }
+  }
+
   Future<void> _toggleHabit(HabitModel habit) async {
     final wasCompleted = _completedToday[habit.id] ?? false;
 
+    // UI optimista
     setState(() {
       _completedToday[habit.id] = !wasCompleted;
     });
@@ -55,7 +73,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
         await _habitRepo.addLog(habit.id, log);
         await _habitRepo.updateStreak(habit.id);
       } else {
-        await _habitRepo.resetStreak(habit.id);
+        // desmarcar: borra log + recalcula racha
+        await _habitRepo.uncheckAndRecalculate(habit.id);
       }
     } catch (e) {
       if (mounted) {
@@ -66,21 +85,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
-  // cargar estado de completado para cada habito
-  Future<void> _loadTodayLogs(List<HabitModel> habits) async {
-    for (final habit in habits) {
-      if (!_completedToday.containsKey(habit.id)) {
-        final log = await _habitRepo.getTodayLog(habit.id);
-        if (mounted) {
-          setState(() {
-            _completedToday[habit.id] = log?.completed ?? false;
-          });
-        }
-      }
-    }
-  }
-
-  // abrir editor y guardar cambios
   Future<void> _editHabit(HabitModel habit) async {
     final updated = await EditHabitSheet.show(context, habit);
     if (updated == null) return;
@@ -118,7 +122,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
-  // confirmar y eliminar habito (desactivar)
   Future<void> _deleteHabit(HabitModel habit) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -147,8 +150,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
     try {
       await _habitRepo.deactivateHabit(habit.id);
-      // limpiar del cache local
       _completedToday.remove(habit.id);
+      _logsFetched.remove(habit.id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -172,7 +175,36 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
-  // agrupar habitos por categoria manteniendo el orden
+  Future<void> _createHabit() async {
+    final habit = await CreateHabitSheet.show(context);
+    if (habit == null) return;
+
+    try {
+      await _habitRepo.createHabit(habit);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Hábito creado'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al crear el hábito'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
   Map<String, List<HabitModel>> _groupByCategory(List<HabitModel> habits) {
     final groups = <String, List<HabitModel>>{};
     for (final habit in habits) {
@@ -198,6 +230,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _createHabit,
+        tooltip: 'Crear hábito',
+        child: const Icon(Icons.add),
       ),
       body: StreamBuilder<List<HabitModel>>(
         stream: _habitRepo.watchTodayHabits(),
@@ -241,7 +278,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
             );
           }
 
-          _loadTodayLogs(habits);
+          // cargar logs fuera del build propiamente dicho
+          _fetchLogsIfNeeded(habits);
 
           final completedCount = habits.where(
             (h) => _completedToday[h.id] == true,
@@ -256,7 +294,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 total: habits.length,
               ),
 
-              // lista agrupada por categoria
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -264,7 +301,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   itemBuilder: (context, index) {
                     final item = _getItem(groups, index);
 
-                    // header de categoria
                     if (item is _CategoryHeader) {
                       return Padding(
                         padding: EdgeInsets.only(
@@ -305,7 +341,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       ).animate().fadeIn(duration: 250.ms);
                     }
 
-                    // card de habito
                     final habitItem = item as _HabitItem;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
@@ -337,16 +372,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
   }
 
-  // calcula cuantos items hay en total (headers + habitos)
   int _countItems(Map<String, List<HabitModel>> groups) {
     int count = 0;
     for (final entry in groups.entries) {
-      count += 1 + entry.value.length; // header + habitos
+      count += 1 + entry.value.length;
     }
     return count;
   }
 
-  // obtiene el item (header o habito) por indice flat
   Object _getItem(Map<String, List<HabitModel>> groups, int index) {
     int current = 0;
     int animIndex = 0;
@@ -380,7 +413,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
   }
 }
 
-// tipos auxiliares para el listview flat con headers
 class _CategoryHeader {
   final String category;
   final int count;
@@ -394,7 +426,6 @@ class _HabitItem {
   _HabitItem({required this.habit, required this.animIndex});
 }
 
-// barra de progreso del dia
 class _DailyProgress extends StatelessWidget {
   final int completed;
   final int total;
@@ -419,54 +450,50 @@ class _DailyProgress extends StatelessWidget {
             : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    allDone ? '¡Todo completado!' : 'Progreso de hoy',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$completed de $total hábitos',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+              Text(
+                allDone ? '¡Todo completado!' : 'Progreso de hoy',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              SizedBox(
-                width: 52,
-                height: 52,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CircularProgressIndicator(
-                      value: progress,
-                      strokeWidth: 5,
-                      backgroundColor: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                      color: allDone ? AppTheme.accent : colorScheme.primary,
-                      strokeCap: StrokeCap.round,
-                    ),
-                    Center(
-                      child: Text(
-                        '${(progress * 100).toInt()}%',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 4),
+              Text(
+                '$completed de $total hábitos',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
+          ),
+          SizedBox(
+            width: 52,
+            height: 52,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 5,
+                  backgroundColor: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: allDone ? AppTheme.accent : colorScheme.primary,
+                  strokeCap: StrokeCap.round,
+                ),
+                Center(
+                  child: Text(
+                    '${(progress * 100).toInt()}%',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

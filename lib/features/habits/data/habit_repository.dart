@@ -126,14 +126,68 @@ class HabitRepository {
         .toList();
   }
 
+  // Borrar el log de hoy (para cuando se desmarca un habito)
+  Future<void> deleteTodayLog(String habitId) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final snapshot = await _logsRef(habitId)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('date', isLessThan: Timestamp.fromDate(endOfDay))
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
   // ==================== RACHAS ====================
 
-  // Sumar 1 a la racha y actualizar record si toca
+  // Calcular racha real contando dias consecutivos hacia atras
+  Future<int> _calculateStreak(String habitId) async {
+    // traer los logs completados ordenados de mas reciente a mas antiguo
+    final snapshot = await _logsRef(habitId)
+        .where('completed', isEqualTo: true)
+        .orderBy('date', descending: true)
+        .limit(365)
+        .get();
+
+    if (snapshot.docs.isEmpty) return 0;
+
+    // convertir a set de fechas (solo dia, sin hora)
+    final completedDays = <DateTime>{};
+    for (final doc in snapshot.docs) {
+      final date = (doc.data()['date'] as Timestamp).toDate();
+      completedDays.add(DateTime(date.year, date.month, date.day));
+    }
+
+    // contar dias consecutivos desde hoy hacia atras
+    final today = DateTime.now();
+    var current = DateTime(today.year, today.month, today.day);
+    int streak = 0;
+
+    // si hoy no esta completado, empezar desde ayer
+    if (!completedDays.contains(current)) {
+      current = current.subtract(const Duration(days: 1));
+    }
+
+    while (completedDays.contains(current)) {
+      streak++;
+      current = current.subtract(const Duration(days: 1));
+    }
+
+    return streak;
+  }
+
+  // Recalcular racha tras completar un habito
   Future<void> updateStreak(String habitId) async {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
-    final newStreak = habit.currentStreak + 1;
+    final newStreak = await _calculateStreak(habitId);
     final newBest = newStreak > habit.bestStreak ? newStreak : habit.bestStreak;
 
     await updateHabit(habitId, {
@@ -142,8 +196,17 @@ class HabitRepository {
     });
   }
 
-  // Resetear racha a 0
-  Future<void> resetStreak(String habitId) async {
-    await updateHabit(habitId, {'currentStreak': 0});
+  // Recalcular racha tras desmarcar (borra log + recalcula)
+  Future<void> uncheckAndRecalculate(String habitId) async {
+    await deleteTodayLog(habitId);
+
+    final habit = await getHabit(habitId);
+    if (habit == null) return;
+
+    final newStreak = await _calculateStreak(habitId);
+
+    await updateHabit(habitId, {
+      'currentStreak': newStreak,
+    });
   }
 }

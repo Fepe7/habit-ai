@@ -73,7 +73,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         await _habitRepo.addLog(widget.habitId, log);
         await _habitRepo.updateStreak(widget.habitId);
       } else {
-        await _habitRepo.resetStreak(widget.habitId);
+        await _habitRepo.uncheckAndRecalculate(widget.habitId);
       }
       await _loadData();
     } catch (e) {
