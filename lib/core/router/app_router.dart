@@ -6,6 +6,9 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/habits/presentation/habits_screen.dart';
 import '../../features/habits/presentation/habit_detail_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/dashboard/presentation/weekly_detail_screen.dart';
+import '../../features/dashboard/presentation/category_detail_screen.dart';
+import '../../features/dashboard/presentation/streaks_detail_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import 'main_shell.dart';
@@ -57,6 +60,23 @@ GoRouter createRouter(AuthRepository authRepository) {
             path: '/dashboard',
             name: 'dashboard',
             builder: (context, state) => const DashboardScreen(),
+            routes: [
+              GoRoute(
+                path: 'weekly',
+                name: 'dashboard-weekly',
+                builder: (context, state) => const WeeklyDetailScreen(),
+              ),
+              GoRoute(
+                path: 'categories',
+                name: 'dashboard-categories',
+                builder: (context, state) => const CategoryDetailScreen(),
+              ),
+              GoRoute(
+                path: 'streaks',
+                name: 'dashboard-streaks',
+                builder: (context, state) => const StreaksDetailScreen(),
+              ),
+            ],
           ),
           GoRoute(
             path: '/ai',
