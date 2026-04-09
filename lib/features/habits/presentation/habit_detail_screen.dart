@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../data/habit_repository.dart';
@@ -263,18 +264,31 @@ class _HeaderCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: catBg,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          AppTheme.categoryLabel(habit.category),
-                          style: TextStyle(
-                            color: catFg,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                      Hero(
+                        tag: 'habit_cat_${habit.id}',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: catBg,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(catIcon, size: 12, color: catFg),
+                                const SizedBox(width: 4),
+                                Text(
+                                  AppTheme.categoryLabel(habit.category),
+                                  style: TextStyle(
+                                    color: catFg,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -405,7 +419,7 @@ class _StreakStat extends StatelessWidget {
   }
 }
 
-// boton grande de marcar hoy
+// boton grande de marcar hoy con transicion animada
 class _CheckInButton extends StatelessWidget {
   final bool isCompleted;
   final VoidCallback onToggle;
@@ -417,15 +431,34 @@ class _CheckInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.icon(
-      onPressed: onToggle,
-      icon: Icon(
-        isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-      ),
-      label: Text(isCompleted ? 'Completado hoy' : 'Marcar como completado'),
-      style: FilledButton.styleFrom(
-        backgroundColor: isCompleted ? AppTheme.success : null,
-        minimumSize: const Size(double.infinity, 52),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      child: FilledButton.icon(
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          onToggle();
+        },
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
+          child: Icon(
+            isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+            key: ValueKey(isCompleted),
+          ),
+        ),
+        label: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            isCompleted ? 'Completado hoy' : 'Marcar como completado',
+            key: ValueKey(isCompleted),
+          ),
+        ),
+        style: FilledButton.styleFrom(
+          backgroundColor: isCompleted ? AppTheme.success : null,
+          minimumSize: const Size(double.infinity, 52),
+        ),
       ),
     );
   }

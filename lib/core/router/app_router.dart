@@ -14,6 +14,31 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import 'main_shell.dart';
 
+// transicion suave fade + slide para pantallas internas
+CustomTransitionPage<void> _fadeSlideTransition({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curve = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+      return FadeTransition(
+        opacity: curve,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.04, 0),
+            end: Offset.zero,
+          ).animate(curve),
+          child: child,
+        ),
+      );
+    },
+    transitionDuration: const Duration(milliseconds: 300),
+  );
+}
+
 // Configura el router con las rutas y el auth guard
 GoRouter createRouter(AuthRepository authRepository) {
   return GoRouter(
@@ -51,8 +76,11 @@ GoRouter createRouter(AuthRepository authRepository) {
               GoRoute(
                 path: 'habit/:habitId',
                 name: 'habit-detail',
-                builder: (context, state) => HabitDetailScreen(
-                  habitId: state.pathParameters['habitId']!,
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: HabitDetailScreen(
+                    habitId: state.pathParameters['habitId']!,
+                  ),
                 ),
               ),
             ],
@@ -65,22 +93,34 @@ GoRouter createRouter(AuthRepository authRepository) {
               GoRoute(
                 path: 'weekly',
                 name: 'dashboard-weekly',
-                builder: (context, state) => const WeeklyDetailScreen(),
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const WeeklyDetailScreen(),
+                ),
               ),
               GoRoute(
                 path: 'categories',
                 name: 'dashboard-categories',
-                builder: (context, state) => const CategoryDetailScreen(),
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const CategoryDetailScreen(),
+                ),
               ),
               GoRoute(
                 path: 'streaks',
                 name: 'dashboard-streaks',
-                builder: (context, state) => const StreaksDetailScreen(),
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const StreaksDetailScreen(),
+                ),
               ),
               GoRoute(
                 path: 'achievements',
                 name: 'achievements',
-                builder: (context, state) => const AchievementsScreen(),
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const AchievementsScreen(),
+                ),
               ),
             ],
           ),
@@ -101,12 +141,21 @@ GoRouter createRouter(AuthRepository authRepository) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const LoginScreen(),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(opacity: animation, child: child),
+          transitionDuration: const Duration(milliseconds: 400),
+        ),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => _fadeSlideTransition(
+          state: state,
+          child: const RegisterScreen(),
+        ),
       ),
     ],
   );

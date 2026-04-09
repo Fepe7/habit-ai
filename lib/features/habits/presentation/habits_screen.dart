@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../data/habit_repository.dart';
@@ -25,11 +24,11 @@ class HabitsScreen extends StatefulWidget {
 class _HabitsScreenState extends State<HabitsScreen> {
   late HabitRepository _habitRepo;
   late AchievementChecker _achievementChecker;
+  // stream cacheado para que no se recree en cada rebuild
+  late Stream<List<HabitModel>> _habitsStream;
   final Map<String, bool> _completedToday = {};
   bool _initialized = false;
-  // ids de habitos que ya se consultaron para no repetir
   final Set<String> _logsFetched = {};
-  // habitos de hoy para pasar al checker
   List<HabitModel> _currentTodayHabits = [];
 
   @override
@@ -40,6 +39,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
       final user = auth.currentUser;
       if (user != null) {
         _habitRepo = HabitRepository(uid: user.uid);
+        _habitsStream = _habitRepo.watchTodayHabits();
         _achievementChecker = AchievementChecker(
           achievementRepo: AchievementRepository(uid: user.uid),
           habitRepo: _habitRepo,
@@ -47,6 +47,17 @@ class _HabitsScreenState extends State<HabitsScreen> {
       }
       _initialized = true;
     }
+  }
+
+  // refrescar datos: recrea el stream y limpia cache de logs
+  Future<void> _refresh() async {
+    setState(() {
+      _habitsStream = _habitRepo.watchTodayHabits();
+      _logsFetched.clear();
+      _completedToday.clear();
+    });
+    // esperar un poco para que el stream emita
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   // cargar logs de hoy solo para habitos nuevos que no se hayan consultado
@@ -82,8 +93,22 @@ class _HabitsScreenState extends State<HabitsScreen> {
         );
         await _habitRepo.addLog(habit.id, log);
         await _habitRepo.updateStreak(habit.id);
+      } else {
+        await _habitRepo.uncheckAndRecalculate(habit.id);
+      }
+    } catch (e) {
+      // revertir si falla la operacion principal
+      if (mounted) {
+        setState(() {
+          _completedToday[habit.id] = wasCompleted;
+        });
+      }
+      return;
+    }
 
-        // comprobar logros tras completar
+    // logros aparte para que no rompan el flujo
+    if (!wasCompleted) {
+      try {
         final updated = await _habitRepo.getHabit(habit.id);
         if (updated != null && mounted) {
           final unlocked = await _achievementChecker.checkAfterToggle(
@@ -95,15 +120,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
             AchievementOverlay.showUnlocked(context, unlocked);
           }
         }
-      } else {
-        // desmarcar: borra log + recalcula racha
-        await _habitRepo.uncheckAndRecalculate(habit.id);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _completedToday[habit.id] = wasCompleted;
-        });
+      } catch (_) {
+        // si falla el check de logros no pasa nada
       }
     }
   }
@@ -127,7 +145,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
             content: const Text('Hábito actualizado'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -138,7 +158,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
             content: const Text('Error al actualizar el hábito'),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -180,7 +202,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
           SnackBar(
             content: Text('"${habit.title}" eliminado'),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -191,7 +215,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
             content: const Text('Error al eliminar el hábito'),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -204,22 +230,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
     try {
       await _habitRepo.createHabit(habit);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Hábito creado'),
-            backgroundColor: AppTheme.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-
-        // comprobar logros tras crear
-        final unlocked = await _achievementChecker.checkAfterCreate();
-        if (unlocked.isNotEmpty && mounted) {
-          AchievementOverlay.showUnlocked(context, unlocked);
-        }
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -227,10 +237,36 @@ class _HabitsScreenState extends State<HabitsScreen> {
             content: const Text('Error al crear el hábito'),
             backgroundColor: AppTheme.error,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
+      return;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Hábito creado'),
+          backgroundColor: AppTheme.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
+
+    // logros aparte
+    try {
+      final unlocked = await _achievementChecker.checkAfterCreate();
+      if (unlocked.isNotEmpty && mounted) {
+        AchievementOverlay.showUnlocked(context, unlocked);
+      }
+    } catch (_) {
+      // si falla el check de logros no afecta la creacion
     }
   }
 
@@ -266,7 +302,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
         child: const Icon(Icons.add),
       ),
       body: StreamBuilder<List<HabitModel>>(
-        stream: _habitRepo.watchTodayHabits(),
+        stream: _habitsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -279,7 +315,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: colorScheme.error,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Error al cargar hábitos',
@@ -303,36 +343,43 @@ class _HabitsScreenState extends State<HabitsScreen> {
           _currentTodayHabits = habits;
 
           if (habits.isEmpty) {
-            return EmptyHabitsView(
-              onCreatePlan: () => context.go('/ai'),
-            );
+            return EmptyHabitsView(onCreatePlan: () => context.go('/ai'));
           }
 
           // cargar logs fuera del build propiamente dicho
           _fetchLogsIfNeeded(habits);
 
-          final completedCount = habits.where(
-            (h) => _completedToday[h.id] == true,
-          ).length;
+          final completedCount = habits
+              .where((h) => _completedToday[h.id] == true)
+              .length;
 
           final groups = _groupByCategory(habits);
 
-          return Column(
-            children: [
-              _DailyProgress(
-                completed: completedCount,
-                total: habits.length,
-              ),
-
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _countItems(groups),
-                  itemBuilder: (context, index) {
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _DailyProgress(
+                    completed: completedCount,
+                    total: habits.length,
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      childCount: _countItems(groups),
+                      (context, index) {
                     final item = _getItem(groups, index);
 
                     if (item is _CategoryHeader) {
                       return Padding(
+                        key: ValueKey('cat_${item.category}'),
                         padding: EdgeInsets.only(
                           top: item.isFirst ? 0 : 16,
                           bottom: 8,
@@ -354,48 +401,46 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             const SizedBox(width: 10),
                             Text(
                               AppTheme.categoryLabel(item.category),
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.categoryFg(item.category),
-                              ),
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.categoryFg(item.category),
+                                  ),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               '${item.count}',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ],
                         ),
-                      ).animate().fadeIn(duration: 250.ms);
+                      );
                     }
 
                     final habitItem = item as _HabitItem;
                     return Padding(
+                      key: ValueKey(habitItem.habit.id),
                       padding: const EdgeInsets.only(bottom: 8),
                       child: HabitCard(
                         habit: habitItem.habit,
-                        isCompletedToday: _completedToday[habitItem.habit.id] ?? false,
+                        isCompletedToday:
+                            _completedToday[habitItem.habit.id] ?? false,
                         onToggle: () => _toggleHabit(habitItem.habit),
-                        onTap: () => context.go('/habit/${habitItem.habit.id}'),
+                        onTap: () =>
+                            context.go('/habit/${habitItem.habit.id}'),
                         onEdit: () => _editHabit(habitItem.habit),
                         onDelete: () => _deleteHabit(habitItem.habit),
                       ),
-                    )
-                        .animate()
-                        .fadeIn(
-                          delay: Duration(milliseconds: habitItem.animIndex * 80),
-                          duration: 350.ms,
-                        )
-                        .slideX(
-                          begin: 0.05,
-                          curve: Curves.easeOutCubic,
-                        );
-                  },
+                    );
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
@@ -437,8 +482,29 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   String _todayFormatted() {
     final now = DateTime.now();
-    final days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-    final months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    final days = [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo',
+    ];
+    final months = [
+      'ene',
+      'feb',
+      'mar',
+      'abr',
+      'may',
+      'jun',
+      'jul',
+      'ago',
+      'sep',
+      'oct',
+      'nov',
+      'dic',
+    ];
     return '${days[now.weekday - 1]}, ${now.day} ${months[now.month - 1]}';
   }
 }
@@ -447,12 +513,18 @@ class _CategoryHeader {
   final String category;
   final int count;
   final bool isFirst;
-  _CategoryHeader({required this.category, required this.count, required this.isFirst});
+
+  _CategoryHeader({
+    required this.category,
+    required this.count,
+    required this.isFirst,
+  });
 }
 
 class _HabitItem {
   final HabitModel habit;
   final int animIndex;
+
   _HabitItem({required this.habit, required this.animIndex});
 }
 
@@ -460,10 +532,7 @@ class _DailyProgress extends StatelessWidget {
   final int completed;
   final int total;
 
-  const _DailyProgress({
-    required this.completed,
-    required this.total,
-  });
+  const _DailyProgress({required this.completed, required this.total});
 
   @override
   Widget build(BuildContext context) {
@@ -471,7 +540,9 @@ class _DailyProgress extends StatelessWidget {
     final progress = total > 0 ? completed / total : 0.0;
     final allDone = completed == total && total > 0;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -483,47 +554,62 @@ class _DailyProgress extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                allDone ? '¡Todo completado!' : 'Progreso de hoy',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '$completed de $total hábitos',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(
-            width: 52,
-            height: 52,
-            child: Stack(
-              fit: StackFit.expand,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 5,
-                  backgroundColor: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                  color: allDone ? AppTheme.accent : colorScheme.primary,
-                  strokeCap: StrokeCap.round,
-                ),
-                Center(
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
                   child: Text(
-                    '${(progress * 100).toInt()}%',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    allDone ? '¡Todo completado!' : 'Progreso de hoy',
+                    key: ValueKey(allDone),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  '$completed de $total hábitos',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
+          ),
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+            builder: (context, animatedProgress, _) {
+              return SizedBox(
+                width: 52,
+                height: 52,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: animatedProgress,
+                      strokeWidth: 5,
+                      backgroundColor: colorScheme.outlineVariant.withValues(
+                        alpha: 0.3,
+                      ),
+                      color: allDone ? AppTheme.accent : colorScheme.primary,
+                      strokeCap: StrokeCap.round,
+                    ),
+                    Center(
+                      child: Text(
+                        '${(animatedProgress * 100).toInt()}%',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

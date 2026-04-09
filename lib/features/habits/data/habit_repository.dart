@@ -148,18 +148,18 @@ class HabitRepository {
 
   // Calcular racha real contando dias consecutivos hacia atras
   Future<int> _calculateStreak(String habitId) async {
-    // traer los logs completados ordenados de mas reciente a mas antiguo
+    // solo orderBy para evitar indice compuesto, filtramos completed en codigo
     final snapshot = await _logsRef(habitId)
-        .where('completed', isEqualTo: true)
         .orderBy('date', descending: true)
         .limit(365)
         .get();
 
     if (snapshot.docs.isEmpty) return 0;
 
-    // convertir a set de fechas (solo dia, sin hora)
+    // solo los completados, convertir a set de fechas
     final completedDays = <DateTime>{};
     for (final doc in snapshot.docs) {
+      if (doc.data()['completed'] != true) continue;
       final date = (doc.data()['date'] as Timestamp).toDate();
       completedDays.add(DateTime(date.year, date.month, date.day));
     }
