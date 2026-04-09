@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/theme_provider.dart';
 
@@ -90,6 +91,12 @@ class SettingsScreen extends StatelessWidget {
 
           // seccion general
           _SectionHeader(title: 'General'),
+          _SettingsTile(
+            icon: Icons.emoji_events_outlined,
+            title: 'Logros',
+            subtitle: 'Tus logros desbloqueados',
+            onTap: () => context.goNamed('achievements'),
+          ),
           _SettingsTile(
             icon: Icons.notifications_outlined,
             title: 'Notificaciones',

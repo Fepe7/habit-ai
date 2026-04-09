@@ -6,6 +6,8 @@ import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/domain/achivement_model.dart';
 
 // Dashboard con graficas de progreso y estadisticas
 class DashboardScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   late StatsRepository _statsRepo;
+  late AchievementRepository _achievementRepo;
   bool _initialized = false;
 
   // datos cargados
@@ -24,6 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<DailyProgress> _weeklyProgress = [];
   List<CategoryStat> _categoryStats = [];
   List<HabitModel> _topStreaks = [];
+  List<AchievementModel> _achievements = [];
   bool _loading = true;
 
   // dias de la semana donde se completo el 100%
@@ -39,6 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final user = auth.currentUser;
       if (user != null) {
         _statsRepo = StatsRepository(uid: user.uid);
+        _achievementRepo = AchievementRepository(uid: user.uid);
         _loadStats();
       }
       _initialized = true;
@@ -52,6 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _statsRepo.getWeeklyProgress(),
         _statsRepo.getCategoryDistribution(),
         _statsRepo.getTopStreaks(),
+        _achievementRepo.watchAchievements().first,
       ]);
 
       if (mounted) {
@@ -60,6 +66,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           _weeklyProgress = results[1] as List<DailyProgress>;
           _categoryStats = results[2] as List<CategoryStat>;
           _topStreaks = results[3] as List<HabitModel>;
+          _achievements = results[4] as List<AchievementModel>;
           _loading = false;
         });
       }
@@ -145,6 +152,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               .fadeIn(delay: 400.ms, duration: 400.ms)
                               .slideY(begin: 0.05),
                         ],
+
+                        const SizedBox(height: 20),
+
+                        // logros (tappable)
+                        GestureDetector(
+                          onTap: () => context.goNamed('achievements'),
+                          child: _buildAchievements(context),
+                        )
+                            .animate()
+                            .fadeIn(delay: 500.ms, duration: 400.ms)
+                            .slideY(begin: 0.05),
 
                         const SizedBox(height: 24),
                       ],
@@ -677,6 +695,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  // seccion de logros con los ultimos desbloqueados
+  Widget _buildAchievements(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final unlockedTypes = _achievements.map((a) => a.type).toSet();
+    final total = AchievementCatalog.all.length;
+    final count = unlockedTypes.length;
+
+    // mostrar hasta 4 logros recientes
+    final recent = _achievements.take(4).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.emoji_events_rounded,
+                  size: 20, color: AppTheme.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Logros',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ),
+              Text(
+                '$count/$total',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.accent,
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+            ],
+          ),
+          const SizedBox(height: 14),
+          if (recent.isEmpty)
+            Text(
+              'Completa habitos para desbloquear logros',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: recent.map((achievement) {
+                final info = AchievementCatalog.getInfo(achievement.type);
+                return Column(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: info.color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: info.color.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Icon(info.icon, color: info.color, size: 22),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        info.title,
+                        style:
+                            Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
         ],
       ),
     );

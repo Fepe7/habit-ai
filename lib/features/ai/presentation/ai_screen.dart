@@ -8,6 +8,9 @@ import '../../habits/data/habit_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
+import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/data/achievement_checker.dart';
+import '../../achievements/presentation/achievement_overlay.dart';
 
 // Pantalla de chat con el asistente IA
 class AIScreen extends StatefulWidget {
@@ -23,6 +26,7 @@ class _AIScreenState extends State<AIScreen> {
   final _messages = <ChatMessage>[];
   late final AIRepository _aiRepo;
   late final HabitRepository _habitRepo;
+  late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
 
   // sugerencias rapidas para guiar al usuario
@@ -39,6 +43,10 @@ class _AIScreenState extends State<AIScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
+    _achievementChecker = AchievementChecker(
+      achievementRepo: AchievementRepository(uid: uid),
+      habitRepo: _habitRepo,
+    );
 
     _messages.add(ChatMessage(
       text: '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
@@ -156,6 +164,12 @@ class _AIScreenState extends State<AIScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
+
+      // comprobar logros tras guardar plan IA
+      final unlocked = await _achievementChecker.checkAfterAIPlan();
+      if (unlocked.isNotEmpty && mounted) {
+        AchievementOverlay.showUnlocked(context, unlocked);
+      }
     }
   }
 

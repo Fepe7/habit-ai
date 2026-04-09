@@ -10,6 +10,9 @@ import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/data/achievement_checker.dart';
+import '../../achievements/presentation/achievement_overlay.dart';
 
 // Pantalla principal con la lista de habitos del dia agrupados por categoria
 class HabitsScreen extends StatefulWidget {
@@ -21,10 +24,13 @@ class HabitsScreen extends StatefulWidget {
 
 class _HabitsScreenState extends State<HabitsScreen> {
   late HabitRepository _habitRepo;
+  late AchievementChecker _achievementChecker;
   final Map<String, bool> _completedToday = {};
   bool _initialized = false;
   // ids de habitos que ya se consultaron para no repetir
   final Set<String> _logsFetched = {};
+  // habitos de hoy para pasar al checker
+  List<HabitModel> _currentTodayHabits = [];
 
   @override
   void didChangeDependencies() {
@@ -34,6 +40,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
       final user = auth.currentUser;
       if (user != null) {
         _habitRepo = HabitRepository(uid: user.uid);
+        _achievementChecker = AchievementChecker(
+          achievementRepo: AchievementRepository(uid: user.uid),
+          habitRepo: _habitRepo,
+        );
       }
       _initialized = true;
     }
@@ -72,6 +82,19 @@ class _HabitsScreenState extends State<HabitsScreen> {
         );
         await _habitRepo.addLog(habit.id, log);
         await _habitRepo.updateStreak(habit.id);
+
+        // comprobar logros tras completar
+        final updated = await _habitRepo.getHabit(habit.id);
+        if (updated != null && mounted) {
+          final unlocked = await _achievementChecker.checkAfterToggle(
+            habit: updated,
+            todayHabits: _currentTodayHabits,
+            completedToday: _completedToday,
+          );
+          if (unlocked.isNotEmpty && mounted) {
+            AchievementOverlay.showUnlocked(context, unlocked);
+          }
+        }
       } else {
         // desmarcar: borra log + recalcula racha
         await _habitRepo.uncheckAndRecalculate(habit.id);
@@ -190,6 +213,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
+
+        // comprobar logros tras crear
+        final unlocked = await _achievementChecker.checkAfterCreate();
+        if (unlocked.isNotEmpty && mounted) {
+          AchievementOverlay.showUnlocked(context, unlocked);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -271,6 +300,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
           }
 
           final habits = snapshot.data ?? [];
+          _currentTodayHabits = habits;
 
           if (habits.isEmpty) {
             return EmptyHabitsView(

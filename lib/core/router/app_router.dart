@@ -11,6 +11,7 @@ import '../../features/dashboard/presentation/category_detail_screen.dart';
 import '../../features/dashboard/presentation/streaks_detail_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/achievements/presentation/achievements_screen.dart';
 import 'main_shell.dart';
 
 // Configura el router con las rutas y el auth guard
@@ -75,6 +76,11 @@ GoRouter createRouter(AuthRepository authRepository) {
                 path: 'streaks',
                 name: 'dashboard-streaks',
                 builder: (context, state) => const StreaksDetailScreen(),
+              ),
+              GoRoute(
+                path: 'achievements',
+                name: 'achievements',
+                builder: (context, state) => const AchievementsScreen(),
               ),
             ],
           ),
