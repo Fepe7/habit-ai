@@ -207,6 +207,16 @@ function getPreviousWeekRange(now) {
   return { start: startOfLastWeek, end: endOfLastWeek };
 }
 
+// Devuelve el lunes (00:00) de la semana en curso hasta 'now' (inclusive).
+// Se usa desde el boton manual para analizar los dias que llevan hechos.
+function getCurrentWeekRange(now) {
+  const day = now.getDay() || 7; // 1=lunes, 7=domingo
+  const startOfThisWeek = new Date(now);
+  startOfThisWeek.setDate(now.getDate() - (day - 1));
+  startOfThisWeek.setHours(0, 0, 0, 0);
+  return { start: startOfThisWeek, end: new Date(now) };
+}
+
 // Lee los datos de la semana y construye el contexto que se le pasa a Gemini
 async function buildWeeklyContext(uid, start, end) {
   const db = admin.firestore();
@@ -265,9 +275,13 @@ async function buildWeeklyContext(uid, start, end) {
   return { habits: habitStats, totalLogs };
 }
 
-// Lógica compartida: genera la revisión de una semana para un usuario
-async function runWeeklyReview(uid, now) {
-  const { start, end } = getPreviousWeekRange(now);
+// Lógica compartida: genera la revisión de una semana para un usuario.
+// Si currentWeek=true analiza la semana en curso (lun hasta 'now').
+// Si no, analiza la semana anterior completa (uso del job automatico).
+async function runWeeklyReview(uid, now, { currentWeek = false } = {}) {
+  const { start, end } = currentWeek
+    ? getCurrentWeekRange(now)
+    : getPreviousWeekRange(now);
   const weekId = getIsoWeekId(start);
 
   const context = await buildWeeklyContext(uid, start, end);
@@ -368,7 +382,9 @@ exports.generateWeeklyReview = onCall(
     }
 
     try {
-      return await runWeeklyReview(uid, new Date());
+      // El boton manual analiza la semana en curso (mas intuitivo para el usuario).
+      // El job scheduled sigue usando la semana anterior.
+      return await runWeeklyReview(uid, new Date(), { currentWeek: true });
     } catch (error) {
       if (error instanceof HttpsError) throw error;
       console.error("Error en generateWeeklyReview:", error);

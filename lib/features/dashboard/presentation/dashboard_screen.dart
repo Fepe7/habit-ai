@@ -256,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'La IA analiza tu semana cada lunes',
+                        'Pide que la IA analice tu semana y te de un resumen de tus habitos, rachas y areas de mejora',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -356,6 +356,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           height: 1.4,
                           color: colorScheme.onSurface,
                         ),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed:
+                          _generatingReview ? null : _generateReviewManually,
+                      icon: _generatingReview
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 16),
+                      label: Text(
+                        _generatingReview ? 'Regenerando…' : 'Regenerar',
+                      ),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppTheme.accent,
+                        minimumSize: const Size(0, 32),
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
                   ),
                 ],
               ],
