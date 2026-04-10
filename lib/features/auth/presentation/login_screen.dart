@@ -51,6 +51,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authRepository = AuthProvider.of(context);
+      await authRepository.signInWithGoogle();
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -201,6 +221,47 @@ class _LoginScreenState extends State<LoginScreen> {
                           )
                         : const Text('Iniciar sesión'),
                   ).animate().fadeIn(delay: 550.ms, duration: 400.ms),
+                  const SizedBox(height: 20),
+
+                  // separador "o"
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: colorScheme.outlineVariant,
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'o',
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: colorScheme.outlineVariant,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
+                  const SizedBox(height: 20),
+
+                  // boton google
+                  OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _handleGoogleSignIn,
+                    icon: const _GoogleLogo(),
+                    label: const Text('Continuar con Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                  ).animate().fadeIn(delay: 650.ms, duration: 400.ms),
                   const SizedBox(height: 16),
 
                   // link registro
@@ -224,11 +285,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                  ).animate().fadeIn(delay: 650.ms, duration: 400.ms),
+                  ).animate().fadeIn(delay: 750.ms, duration: 400.ms),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Logo simple de Google (G azul) — sin assets externos
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 22,
+      height: 22,
+      alignment: Alignment.center,
+      child: const Text(
+        'G',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF4285F4),
         ),
       ),
     );
