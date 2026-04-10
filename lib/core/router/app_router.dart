@@ -11,6 +11,7 @@ import '../../features/dashboard/presentation/weekly_detail_screen.dart';
 import '../../features/dashboard/presentation/category_detail_screen.dart';
 import '../../features/dashboard/presentation/streaks_detail_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
+import '../../features/ai/presentation/weekly_review_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import 'main_shell.dart';
@@ -131,6 +132,16 @@ GoRouter createRouter(AuthRepository authRepository) {
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
                   child: const AchievementsScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'weekly-review/:weekId',
+                name: 'weekly-review',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: WeeklyReviewScreen(
+                    weekId: state.pathParameters['weekId']!,
+                  ),
                 ),
               ),
             ],

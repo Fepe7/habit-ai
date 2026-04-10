@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../domain/habit_plan_model.dart';
+import '../domain/weekly_review_model.dart';
 
 // Llama a la Cloud Function proxy y guarda las conversaciones en Firestore
 class AIRepository {
   final FirebaseFirestore _firestore;
   final String _uid;
   final HttpsCallable _generatePlanFn;
+  final HttpsCallable _generateWeeklyReviewFn;
 
   // Historial del chat para mantener contexto entre mensajes
   final List<Map<String, String>> _chatHistory = [];
@@ -19,10 +21,16 @@ class AIRepository {
         _firestore = firestore ?? FirebaseFirestore.instance,
         _generatePlanFn = (functions ??
                 FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable('generateHabitPlan');
+            .httpsCallable('generateHabitPlan'),
+        _generateWeeklyReviewFn = (functions ??
+                FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable('generateWeeklyReview');
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
       _firestore.collection('users').doc(_uid).collection('ai_conversations');
+
+  CollectionReference<Map<String, dynamic>> get _weeklyReviewsRef =>
+      _firestore.collection('users').doc(_uid).collection('weekly_reviews');
 
   // Envia un mensaje a la Cloud Function y devuelve la respuesta parseada
   Future<HabitPlanModel> generatePlan(String userMessage) async {
@@ -138,6 +146,40 @@ class AIRepository {
               ...doc.data(),
             })
         .toList();
+  }
+
+  // ==================== REVISION SEMANAL ====================
+
+  // Fuerza la generacion de la revision de la semana anterior (boton manual).
+  // Devuelve null si el backend decidio omitirla por falta de logs.
+  Future<String?> generateWeeklyReview() async {
+    try {
+      final result = await _generateWeeklyReviewFn.call();
+      final data = _deepCast(result.data);
+      if (data['skipped'] == true) return null;
+      return data['weekId'] as String?;
+    } on FirebaseFunctionsException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  // Stream con la ultima revision generada (para el card del dashboard)
+  Stream<WeeklyReviewModel?> watchLatestWeeklyReview() {
+    return _weeklyReviewsRef
+        .orderBy('generatedAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return WeeklyReviewModel.fromJson(snapshot.docs.first.data());
+    });
+  }
+
+  // Lee una revision concreta por weekId (para la pantalla de detalle)
+  Future<WeeklyReviewModel?> getReviewForWeek(String weekId) async {
+    final doc = await _weeklyReviewsRef.doc(weekId).get();
+    if (!doc.exists) return null;
+    return WeeklyReviewModel.fromJson(doc.data()!);
   }
 
   // Convierte recursivamente Map<Object?, Object?> a Map<String, dynamic>

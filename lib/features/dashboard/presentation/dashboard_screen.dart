@@ -8,6 +8,8 @@ import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/domain/achivement_model.dart';
+import '../../ai/data/ai_repository.dart';
+import '../../ai/domain/weekly_review_model.dart';
 
 // Dashboard con graficas de progreso y estadisticas
 class DashboardScreen extends StatefulWidget {
@@ -20,7 +22,9 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late StatsRepository _statsRepo;
   late AchievementRepository _achievementRepo;
+  late AIRepository _aiRepo;
   bool _initialized = false;
+  bool _generatingReview = false;
 
   // datos cargados
   Map<String, dynamic> _generalStats = {};
@@ -44,6 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (user != null) {
         _statsRepo = StatsRepository(uid: user.uid);
         _achievementRepo = AchievementRepository(uid: user.uid);
+        _aiRepo = AIRepository(uid: user.uid);
         _loadStats();
       }
       _initialized = true;
@@ -116,6 +121,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             .fadeIn(delay: 100.ms, duration: 400.ms)
                             .slideY(begin: 0.05),
 
+                        const SizedBox(height: 16),
+
+                        // revision semanal con IA
+                        _buildWeeklyReviewCard(context)
+                            .animate()
+                            .fadeIn(delay: 150.ms, duration: 400.ms)
+                            .slideY(begin: 0.05),
+
                         const SizedBox(height: 20),
 
                         // grafica semanal (tappable)
@@ -169,6 +182,196 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
+    );
+  }
+
+  // Dispara la generacion manual desde el boton del card
+  Future<void> _generateReviewManually() async {
+    setState(() => _generatingReview = true);
+    try {
+      final weekId = await _aiRepo.generateWeeklyReview();
+      if (!mounted) return;
+      if (weekId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Necesitas al menos 3 check-ins esta semana para generar la revisión',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generatingReview = false);
+    }
+  }
+
+  // Card de revision semanal: muestra la ultima o invita a generar
+  Widget _buildWeeklyReviewCard(BuildContext context) {
+    return StreamBuilder<WeeklyReviewModel?>(
+      stream: _aiRepo.watchLatestWeeklyReview(),
+      builder: (context, snapshot) {
+        final review = snapshot.data;
+        final colorScheme = Theme.of(context).colorScheme;
+
+        if (review == null) {
+          // estado vacio: invitar a generar manualmente
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.accent.withValues(alpha: 0.12),
+                  AppTheme.primary.withValues(alpha: 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.accent.withValues(alpha: 0.25),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.insights_rounded,
+                      color: AppTheme.accent, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Revisión semanal',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'La IA analiza tu semana cada lunes',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      FilledButton.tonalIcon(
+                        onPressed:
+                            _generatingReview ? null : _generateReviewManually,
+                        icon: _generatingReview
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.auto_awesome_rounded, size: 16),
+                        label: Text(
+                          _generatingReview
+                              ? 'Generando…'
+                              : 'Generar ahora',
+                        ),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 38),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // ya existe una revision: mostrarla con tap para detalle
+        return GestureDetector(
+          onTap: () => context.goNamed(
+            'weekly-review',
+            pathParameters: {'weekId': review.weekId},
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.accent.withValues(alpha: 0.15),
+                  AppTheme.primary.withValues(alpha: 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.accent.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.insights_rounded,
+                        color: AppTheme.accent, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Revisión semanal',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                      ),
+                    ),
+                    Text(
+                      review.weekId,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.accent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.5)),
+                  ],
+                ),
+                if (review.focus.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    review.focus,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          height: 1.4,
+                          color: colorScheme.onSurface,
+                        ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

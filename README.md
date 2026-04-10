@@ -6,11 +6,12 @@ Proyecto desarrollado como **Trabajo Final de Grado** de 2 de DAM.
 
 ## Que hace la app
 
-- Registro e inicio de sesion con email y contraseña (Firebase Auth)
-- La IA analiza tus metas y genera habitos adaptados a tu rutina
-- Seguimiento diario de habitos con sistema de rachas
+- Registro e inicio de sesion con email/contraseña o con Google (Firebase Auth)
+- La IA analiza tus metas y genera habitos adaptados a tu rutina, agrupados por plan
+- Seguimiento diario de habitos con sistema de rachas y check-in rapido
+- Grupos de habitos editables para organizar los planes generados por la IA
 - Logros desbloqueables al cumplir objetivos
-- Dashboard con estadisticas de progreso
+- Dashboard con estadisticas de progreso, gráficas y rachas activas
 
 ## Stack
 
@@ -19,9 +20,10 @@ Proyecto desarrollado como **Trabajo Final de Grado** de 2 de DAM.
 | Frontend | Flutter + Dart |
 | Diseño | Material Design 3 |
 | Navegacion | go_router |
-| Auth | Firebase Authentication |
+| Auth | Firebase Authentication (email + Google Sign-In) |
 | Base de datos | Cloud Firestore |
-| IA | Gemini (Google) via Cloud Functions |
+| IA | Gemini (Google) via Firebase Cloud Functions |
+| Scheduler | Cloud Scheduler + Pub/Sub (revisiones semanales) |
 
 ## Estructura del proyecto
 
