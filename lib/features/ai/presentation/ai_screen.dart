@@ -218,23 +218,6 @@ class _AIScreenState extends State<AIScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Asistente IA'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Nueva conversación',
-            onPressed: () {
-              _aiRepo.resetChat();
-              setState(() {
-                _messages.clear();
-                _messages.add(ChatMessage(
-                  text: '¡Conversación reiniciada! Cuéntame, ¿qué metas tienes?',
-                  isUser: false,
-                  timestamp: DateTime.now(),
-                ));
-              });
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
