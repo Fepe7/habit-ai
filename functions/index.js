@@ -24,7 +24,8 @@ REGLAS ESTRICTAS:
 
 FORMATO DE RESPUESTA (JSON):
 {
-  "planTitle": "Título descriptivo del plan",
+  "planTitle": "Título descriptivo del plan (ej: 'Nuevo en el gimnasio', 'Rutina de estudio')",
+  "planEmoji": "Un solo emoji que represente el plan (ej: 🏋️, 📚, 🧘, 🥗)",
   "planDescription": "Breve descripción de 1-2 frases",
   "habits": [
     {

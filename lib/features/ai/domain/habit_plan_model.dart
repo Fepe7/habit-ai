@@ -3,12 +3,14 @@ import '../../habits/domain/habit_model.dart';
 // Plan de habitos que genera la IA
 class HabitPlanModel {
   final String planTitle;
+  final String? planEmoji;
   final String planDescription;
   final List<GeneratedHabitModel> habits;
   final String coachMessage;
 
   const HabitPlanModel({
     required this.planTitle,
+    this.planEmoji,
     required this.planDescription,
     required this.habits,
     required this.coachMessage,
@@ -17,6 +19,7 @@ class HabitPlanModel {
   factory HabitPlanModel.fromJson(Map<String, dynamic> json) {
     return HabitPlanModel(
       planTitle: json['planTitle'] as String? ?? 'Tu plan personalizado',
+      planEmoji: json['planEmoji'] as String?,
       planDescription: json['planDescription'] as String? ?? '',
       habits:
           (json['habits'] as List<dynamic>?)
@@ -66,7 +69,7 @@ class GeneratedHabitModel {
   }
 
   // Pasar a HabitModel para guardarlo en Firestore
-  HabitModel toHabitModel() {
+  HabitModel toHabitModel({String? groupId}) {
     return HabitModel(
       id: '',
       title: title,
@@ -77,6 +80,7 @@ class GeneratedHabitModel {
       reminderTime: suggestedTime,
       isAIGenerated: true,
       createdAt: DateTime.now(),
+      groupId: groupId,
     );
   }
 }

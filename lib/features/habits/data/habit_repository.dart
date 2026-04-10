@@ -62,13 +62,65 @@ class HabitRepository {
 
   // Crear varios habitos a la vez (para cuando la IA genera un plan)
   Future<void> createHabits(List<HabitModel> habits) async {
-    // batch manda todo en una sola peticion
     final batch = _firestore.batch();
     for (final habit in habits) {
       final docRef = _habitsRef.doc();
       batch.set(docRef, habit.toJson());
     }
     await batch.commit();
+  }
+
+  // Crear varios habitos asignados a un grupo
+  Future<void> createHabitsInGroup(List<HabitModel> habits, String groupId) async {
+    final batch = _firestore.batch();
+    for (final habit in habits) {
+      final docRef = _habitsRef.doc();
+      final json = habit.toJson();
+      json['groupId'] = groupId;
+      batch.set(docRef, json);
+    }
+    await batch.commit();
+  }
+
+  // Habitos de hoy sin grupo (creados manualmente)
+  Stream<List<HabitModel>> watchUngroupedTodayHabits() {
+    final today = DateTime.now().weekday;
+    // filtramos groupId == null en cliente porque Firestore no combina
+    // isNull con arrayContains sin indice compuesto
+    return _habitsRef
+        .where('isActive', isEqualTo: true)
+        .where('targetDays', arrayContains: today)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => HabitModel.fromJson(doc.data(), doc.id))
+            .where((h) => h.groupId == null)
+            .toList());
+  }
+
+  // Habitos de hoy de un grupo concreto
+  Stream<List<HabitModel>> watchTodayHabitsByGroup(String groupId) {
+    final today = DateTime.now().weekday;
+    // filtramos groupId en cliente para evitar indice compuesto triple
+    return _habitsRef
+        .where('isActive', isEqualTo: true)
+        .where('targetDays', arrayContains: today)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => HabitModel.fromJson(doc.data(), doc.id))
+            .where((h) => h.groupId == groupId)
+            .toList());
+  }
+
+  // Todos los habitos activos de un grupo (sin filtrar por dia)
+  // util para la pantalla de edicion del grupo
+  Stream<List<HabitModel>> watchAllHabitsByGroup(String groupId) {
+    return _habitsRef
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => HabitModel.fromJson(doc.data(), doc.id))
+            .where((h) => h.groupId == groupId)
+            .toList());
   }
 
   // Actualizar habito

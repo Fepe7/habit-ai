@@ -5,6 +5,8 @@ import '../data/ai_repository.dart';
 import '../domain/chat_message.dart';
 import '../domain/habit_plan_model.dart';
 import '../../habits/data/habit_repository.dart';
+import '../../habits/data/habit_group_repository.dart';
+import '../../habits/domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
@@ -26,6 +28,7 @@ class _AIScreenState extends State<AIScreen> {
   final _messages = <ChatMessage>[];
   late final AIRepository _aiRepo;
   late final HabitRepository _habitRepo;
+  late final HabitGroupRepository _groupRepo;
   late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
 
@@ -43,6 +46,7 @@ class _AIScreenState extends State<AIScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
+    _groupRepo = HabitGroupRepository(uid: uid);
     _achievementChecker = AchievementChecker(
       achievementRepo: AchievementRepository(uid: uid),
       habitRepo: _habitRepo,
@@ -87,6 +91,7 @@ class _AIScreenState extends State<AIScreen> {
       if (plan.habits.isNotEmpty) {
         planData = HabitPlanData(
           title: plan.planTitle,
+          emoji: plan.planEmoji,
           description: plan.planDescription,
           habits: plan.habits
               .map((h) => HabitSuggestion(
@@ -142,35 +147,65 @@ class _AIScreenState extends State<AIScreen> {
     final accepted = plan.habits.where((h) => h.accepted).toList();
     if (accepted.isEmpty) return;
 
-    final habits = accepted
-        .map((h) => GeneratedHabitModel(
-              title: h.title,
-              description: h.description,
-              category: h.category,
-              frequency: h.frequency,
-              targetDays: h.targetDays,
-              suggestedTime: h.suggestedTime,
-            ).toHabitModel())
-        .toList();
-
-    await _habitRepo.createHabits(habits);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${accepted.length} hábitos añadidos'),
-          backgroundColor: AppTheme.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+    try {
+      // 1. crear el grupo con el titulo del plan
+      final group = HabitGroupModel(
+        id: '',
+        title: plan.title,
+        emoji: plan.emoji,
+        createdAt: DateTime.now(),
+        habitCount: accepted.length,
       );
+      final groupId = await _groupRepo.createGroup(group);
 
-      // comprobar logros tras guardar plan IA
+      // 2. crear los habitos asignados al grupo
+      final habits = accepted
+          .map((h) => GeneratedHabitModel(
+                title: h.title,
+                description: h.description,
+                category: h.category,
+                frequency: h.frequency,
+                targetDays: h.targetDays,
+                suggestedTime: h.suggestedTime,
+              ).toHabitModel(groupId: groupId))
+          .toList();
+
+      await _habitRepo.createHabitsInGroup(habits, groupId);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${plan.emoji ?? "✨"} "${plan.title}" — ${accepted.length} hábitos añadidos',
+            ),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error guardando plan: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
+
+    // logros aparte para que no rompan el flujo
+    try {
       final unlocked = await _achievementChecker.checkAfterAIPlan();
       if (unlocked.isNotEmpty && mounted) {
         AchievementOverlay.showUnlocked(context, unlocked);
       }
-    }
+    } catch (_) {}
   }
 
   // solo mostrar sugerencias si es el primer mensaje (bienvenida)

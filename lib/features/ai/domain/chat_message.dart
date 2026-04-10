@@ -16,11 +16,13 @@ class ChatMessage {
 // Datos del plan para mostrar en el chat (sin acoplar al modelo de Firestore)
 class HabitPlanData {
   final String title;
+  final String? emoji;
   final String description;
   final List<HabitSuggestion> habits;
 
   const HabitPlanData({
     required this.title,
+    this.emoji,
     required this.description,
     required this.habits,
   });

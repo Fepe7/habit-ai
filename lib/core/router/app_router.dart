@@ -5,6 +5,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/habits/presentation/habits_screen.dart';
 import '../../features/habits/presentation/habit_detail_screen.dart';
+import '../../features/habits/presentation/group_detail_screen.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/dashboard/presentation/weekly_detail_screen.dart';
 import '../../features/dashboard/presentation/category_detail_screen.dart';
@@ -80,6 +81,16 @@ GoRouter createRouter(AuthRepository authRepository) {
                   state: state,
                   child: HabitDetailScreen(
                     habitId: state.pathParameters['habitId']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'group/:groupId',
+                name: 'group-detail',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: GroupDetailScreen(
+                    groupId: state.pathParameters['groupId']!,
                   ),
                 ),
               ),
