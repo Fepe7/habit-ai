@@ -441,13 +441,16 @@ exports.weeklyReviewJob = onSchedule(
   }
 );
 
-// Extrae JSON limpio de la respuesta de Gemini
+// Extrae JSON limpio de la respuesta de Gemini (Blindado)
 function extractJson(text) {
-  const match = text.match(/```json?\s*([\s\S]*?)```/);
-  if (match) return match[1].trim();
+  const jsonStartIndex = text.indexOf('{');
+  const jsonEndIndex = text.lastIndexOf('}');
 
-  const trimmed = text.trim();
-  if (trimmed.startsWith("{")) return trimmed;
+  if (jsonStartIndex !== -1 && jsonEndIndex !== -1) {
+    // Recorta exactamente desde la primera '{' hasta la última '}'
+    return text.substring(jsonStartIndex, jsonEndIndex + 1);
+  }
 
+  // Si no hay llaves, devolvemos el texto original para que el try-catch de arriba lo maneje
   return text;
 }

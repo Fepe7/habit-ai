@@ -67,7 +67,11 @@ functions/.env
 explicacion_auth.md
 
 
-# Claude AI config
+# Claude AI config — documentación interna de desarrollo
 CLAUDE.md
 skills/
 /paso-21-revision-semanal.md
+
+# Claude Code — subir agentes, ignorar memoria y settings locales
+.claude/settings.local.json
+.claude/agent-memory/
