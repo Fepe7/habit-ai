@@ -32,8 +32,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Logros')),
       body: StreamBuilder<List<AchievementModel>>(
@@ -57,55 +55,44 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        AppTheme.accent.withValues(alpha: 0.15),
-                        AppTheme.accent.withValues(alpha: 0.05),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppTheme.accent.withValues(alpha: 0.2),
-                    ),
+                    gradient: AppTheme.streakGradient,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: AppTheme.ambientShadow(opacity: 0.14),
                   ),
                   child: Column(
                     children: [
                       const Icon(
                         Icons.emoji_events_rounded,
-                        size: 40,
-                        color: AppTheme.accent,
+                        size: 44,
+                        color: Colors.white,
                       ),
                       const SizedBox(height: 8),
                       Text(
                         '$unlockedCount / ${catalog.length}',
                         style:
                             Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.accent,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                 ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'logros desbloqueados',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                       ),
                       const SizedBox(height: 12),
                       // barra de progreso
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(8),
                         child: LinearProgressIndicator(
                           value: catalog.isEmpty
                               ? 0
                               : unlockedCount / catalog.length,
                           minHeight: 8,
-                          backgroundColor:
-                              colorScheme.outlineVariant.withValues(alpha: 0.3),
-                          valueColor: const AlwaysStoppedAnimation(
-                              AppTheme.accent),
+                          backgroundColor: Colors.white.withValues(alpha: 0.25),
+                          valueColor: const AlwaysStoppedAnimation(Colors.white),
                         ),
                       ),
                     ],
@@ -184,12 +171,18 @@ class _AchievementTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isUnlocked
             ? info.color.withValues(alpha: 0.08)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(20),
+            : colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
         border: isUnlocked
-            ? Border.all(color: info.color.withValues(alpha: 0.3))
-            : Border.all(
-                color: colorScheme.outlineVariant.withValues(alpha: 0.2)),
+            ? Border.all(color: info.color.withValues(alpha: 0.25), width: 1)
+            : Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.12), width: 1),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 4),
+            blurRadius: 16,
+            color: colorScheme.onSurface.withValues(alpha: 0.04),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -202,7 +195,7 @@ class _AchievementTile extends StatelessWidget {
               color: isUnlocked
                   ? info.color.withValues(alpha: 0.15)
                   : colorScheme.outlineVariant.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(
               isUnlocked ? info.icon : Icons.lock_rounded,
