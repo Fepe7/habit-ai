@@ -11,6 +11,8 @@ import '../../achievements/domain/achivement_model.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 import '../../ai/domain/butterfly_projection_model.dart';
+import '../../levels/data/levels_repository.dart';
+import '../../levels/domain/level_model.dart';
 
 /// Dashboard con gráficas de progreso y estadísticas — Editorial Vitality
 class DashboardScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late StatsRepository _statsRepo;
   late AchievementRepository _achievementRepo;
   late AIRepository _aiRepo;
+  late LevelsRepository _levelsRepo;
   bool _initialized = false;
   bool _generatingReview = false;
   bool _generatingButterfly = false;
@@ -48,6 +51,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _statsRepo = StatsRepository(uid: user.uid);
         _achievementRepo = AchievementRepository(uid: user.uid);
         _aiRepo = AIRepository(uid: user.uid);
+        _levelsRepo = LevelsRepository(uid: user.uid);
         _loadStats();
       }
       _initialized = true;
@@ -124,6 +128,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildButterflyCard(context)
                                   .animate()
                                   .fadeIn(delay: 175.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
+
+                              const SizedBox(height: 14),
+
+                              GestureDetector(
+                                onTap: () => context.goNamed('levels'),
+                                child: _buildMasteryCard(context),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 190.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
@@ -1146,6 +1160,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // card compacto de maestría con mini-radar y nivel medio
+  Widget _buildMasteryCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return _SectionCard(
+      child: FutureBuilder<LevelsProfile>(
+        future: _levelsRepo.computeProfile(),
+        builder: (context, snapshot) {
+          final profile = snapshot.data;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.military_tech_rounded, size: 20, color: AppTheme.tertiary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Perfil de Maestría',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (profile != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Nvl ${profile.averageLevel.toStringAsFixed(1)}',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppTheme.tertiary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 18, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              if (snapshot.connectionState == ConnectionState.waiting)
+                const SizedBox(
+                  height: 100,
+                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                )
+              else if (profile == null || profile.categories.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'Completa hábitos para desbloquear tu perfil de maestría.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              else ...[
+                // mini radar
+                SizedBox(
+                  height: 160,
+                  child: _MiniRadarChart(profile: profile),
+                ),
+                const SizedBox(height: 12),
+                // fila con las 3 categorías más altas
+                Builder(
+                  builder: (context) {
+                    final sorted = AppTheme.categories
+                        .map((cat) => profile.categories[cat] ?? CategoryLevel.fromXp(cat, 0))
+                        .toList()
+                      ..sort((a, b) => b.xp.compareTo(a.xp));
+                    final top3 = sorted.take(3).toList();
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: top3.map((l) => _MiniLevelBadge(level: l)).toList(),
+                    );
+                  },
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   String _dayLabel(DateTime date) {
     if (_isToday(date)) return 'Hoy';
     const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -1159,6 +1261,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // ==================== WIDGETS INTERNOS ====================
+
+/// Mini radar para el card compacto del dashboard
+class _MiniRadarChart extends StatelessWidget {
+  final LevelsProfile profile;
+
+  const _MiniRadarChart({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dataEntries = AppTheme.categories.map((cat) {
+      final level = profile.categories[cat];
+      return RadarEntry(value: level != null ? level.level.toDouble() : 0.0);
+    }).toList();
+
+    return RadarChart(
+      RadarChartData(
+        dataSets: [
+          RadarDataSet(
+            dataEntries: dataEntries,
+            fillColor: scheme.primary.withValues(alpha: 0.15),
+            borderColor: scheme.primary,
+            borderWidth: 2,
+            entryRadius: 2,
+          ),
+        ],
+        radarShape: RadarShape.polygon,
+        tickCount: 5,
+        ticksTextStyle: const TextStyle(fontSize: 0, color: Colors.transparent),
+        radarBackgroundColor: Colors.transparent,
+        borderData: FlBorderData(show: false),
+        radarBorderData: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.25),
+          width: 1,
+        ),
+        gridBorderData: BorderSide(
+          color: scheme.outlineVariant.withValues(alpha: 0.15),
+          width: 1,
+        ),
+        titleTextStyle: TextStyle(
+          color: scheme.onSurfaceVariant,
+          fontSize: 9,
+        ),
+        getTitle: (index, angle) {
+          final cat = AppTheme.categories[index];
+          return RadarChartTitle(
+            text: AppTheme.categoryLabel(cat),
+            angle: 0,
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Badge de nivel compacto para el card del dashboard
+class _MiniLevelBadge extends StatelessWidget {
+  final CategoryLevel level;
+
+  const _MiniLevelBadge({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final fgColor = AppTheme.categoryFg(level.category);
+    return Column(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppTheme.categoryBg(level.category),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(AppTheme.categoryIcon(level.category), color: fgColor, size: 18),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Nvl ${level.level}',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: fgColor,
+            fontWeight: FontWeight.w700,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// Card de sección reutilizable — surfaceContainerLowest + ambient shadow + sin bordes
 class _SectionCard extends StatelessWidget {

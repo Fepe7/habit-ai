@@ -15,6 +15,7 @@ import '../../features/ai/presentation/weekly_review_screen.dart';
 import '../../features/ai/presentation/butterfly_projection_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
+import '../../features/levels/presentation/levels_screen.dart';
 import 'main_shell.dart';
 
 // transicion suave fade + slide para pantallas internas
@@ -153,6 +154,14 @@ GoRouter createRouter(AuthRepository authRepository) {
                   child: ButterflyProjectionScreen(
                     monthId: state.pathParameters['monthId']!,
                   ),
+                ),
+              ),
+              GoRoute(
+                path: 'levels',
+                name: 'levels',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const LevelsScreen(),
                 ),
               ),
             ],
