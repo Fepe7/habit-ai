@@ -151,11 +151,15 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 20, 16, 12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            color: colorScheme.onSurface.withValues(alpha: 0.04),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,10 +309,10 @@ class _MiniStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
@@ -362,11 +366,11 @@ class _DayTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: isPerfect
             ? AppTheme.success.withValues(alpha: 0.08)
-            : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+            : colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
         border: isToday
-            ? Border.all(color: AppTheme.primary.withValues(alpha: 0.4))
-            : null,
+            ? Border.all(color: AppTheme.primary.withValues(alpha: 0.35), width: 1)
+            : Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.12), width: 1),
       ),
       child: Row(
         children: [

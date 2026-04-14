@@ -160,10 +160,10 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         children: [
@@ -234,12 +234,12 @@ class _StreakTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: inactive
-            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
-            : AppTheme.accent.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
+            ? colorScheme.surfaceContainerLowest
+            : AppTheme.accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(20),
         border: !inactive && habit.currentStreak >= 7
-            ? Border.all(color: AppTheme.accent.withValues(alpha: 0.3))
-            : null,
+            ? Border.all(color: AppTheme.accent.withValues(alpha: 0.25), width: 1)
+            : Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.12), width: 1),
       ),
       child: Row(
         children: [

@@ -87,11 +87,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            color: colorScheme.onSurface.withValues(alpha: 0.04),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -189,8 +193,8 @@ class _CategoryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.categoryBg(stat.category).withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.categoryBg(stat.category).withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
