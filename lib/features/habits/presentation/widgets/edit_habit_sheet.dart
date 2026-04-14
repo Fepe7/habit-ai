@@ -15,6 +15,11 @@ class EditHabitSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      useRootNavigator: true,
+      // limitar altura para que SingleChildScrollView pueda hacer scroll hasta el botón
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
+      ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
       ),
@@ -95,39 +100,34 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // barra indicadora
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: scheme.outlineVariant.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(24, 16, 24, bottomInset + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+                // barra indicadora
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: scheme.outlineVariant.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-            Text(
-              'Editar hábito',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 24),
+                Text(
+                  'Editar hábito',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 24),
 
             // título
             TextField(
@@ -148,7 +148,8 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 hintText: 'Opcional',
               ),
               textCapitalization: TextCapitalization.sentences,
-              maxLines: 2,
+              minLines: 4,
+              maxLines: 6,
             ),
             const SizedBox(height: 24),
 
@@ -264,18 +265,16 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
               onPickTime: _pickTime,
               onClear: () => setState(() => _reminderTime = null),
             ),
-            const SizedBox(height: 28),
+          const SizedBox(height: 28),
 
-            // CTA
-            GradientButton(
-              onPressed: _save,
-              label: 'Guardar cambios',
-              icon: Icons.save_rounded,
-              gradient: AppTheme.heroGradient,
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
+          // botón guardar debajo del recordatorio
+          GradientButton(
+            onPressed: _save,
+            label: 'Guardar cambios',
+            icon: Icons.save_rounded,
+            gradient: AppTheme.heroGradient,
+          ),
+        ],
       ),
     );
   }

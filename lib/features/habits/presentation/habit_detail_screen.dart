@@ -183,6 +183,16 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     .slideY(begin: 0.05),
                 const SizedBox(height: 16),
 
+                // descripción del hábito (si existe)
+                if (habit.description != null &&
+                    habit.description!.trim().isNotEmpty) ...[
+                  _DescriptionCard(description: habit.description!)
+                      .animate()
+                      .fadeIn(delay: 150.ms, duration: 300.ms)
+                      .slideY(begin: 0.05),
+                  const SizedBox(height: 16),
+                ],
+
                 // botón check-in
                 _CheckInButton(
                   isCompleted: _completedToday,
@@ -400,6 +410,56 @@ class _HeroHeader extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ==================== DESCRIPTION CARD ====================
+
+class _DescriptionCard extends StatelessWidget {
+  final String description;
+
+  const _DescriptionCard({required this.description});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notes_rounded, size: 16, color: scheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Text(
+                'Descripción',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            description,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurface,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
