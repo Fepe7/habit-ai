@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/gradient_button.dart';
 
-// Pantalla de login con diseño moderno
+// Pantalla de login — diseño Editorial Vitality
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -74,222 +76,254 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // logo con fondo circular
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                        shape: BoxShape.circle,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 24),
+
+                // hero — icono con glow en surface container
+                Center(
+                  child: Container(
+                    width: 88,
+                    height: 88,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.heroGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.ambientShadow(opacity: 0.18),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 44,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      curve: Curves.easeOutBack,
+                    ),
+                const SizedBox(height: 28),
+
+                Text(
+                  'HabitAI',
+                  style: textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
+                const SizedBox(height: 8),
+                Text(
+                  'Tus hábitos, potenciados con IA',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
+                const SizedBox(height: 48),
+
+                // campo email
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Introduce tu correo electrónico';
+                    }
+                    if (!value.contains('@')) {
+                      return 'Introduce un correo válido';
+                    }
+                    return null;
+                  },
+                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+                const SizedBox(height: 16),
+
+                // campo contraseña
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.password],
+                  onFieldSubmitted: (_) => _handleLogin(),
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    prefixIcon: const Icon(Icons.lock_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        size: 56,
-                        color: colorScheme.primary,
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Introduce tu contraseña';
+                    }
+                    if (value.length < 6) {
+                      return 'Mínimo 6 caracteres';
+                    }
+                    return null;
+                  },
+                ).animate().fadeIn(delay: 450.ms, duration: 400.ms),
+                const SizedBox(height: 28),
+
+                // error
+                if (_errorMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 20, color: colorScheme.onErrorContainer),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn().shake(hz: 3, offset: const Offset(4, 0)),
+
+                // botón login con gradiente
+                GradientButton(
+                  onPressed: _isLoading ? null : _handleLogin,
+                  label: 'Iniciar sesión',
+                  loading: _isLoading,
+                ).animate().fadeIn(delay: 550.ms, duration: 400.ms),
+                const SizedBox(height: 24),
+
+                // separador "o"
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                        thickness: 1,
                       ),
                     ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 500.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        curve: Curves.easeOutBack,
-                      ),
-                  const SizedBox(height: 24),
-
-                  Text(
-                    'HabitAI',
-                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tus hábitos, potenciados con IA',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Text(
+                        'o',
+                        style: textTheme.labelMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+                        thickness: 1,
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
+                const SizedBox(height: 24),
+
+                // botón Google — outlined sin borde duro
+                _GoogleButton(
+                  onPressed: _isLoading ? null : _handleGoogleSignIn,
+                ).animate().fadeIn(delay: 650.ms, duration: 400.ms),
+                const SizedBox(height: 20),
+
+                // link registro
+                TextButton(
+                  onPressed: _isLoading ? null : () => context.goNamed('register'),
+                  child: RichText(
                     textAlign: TextAlign.center,
-                  ).animate().fadeIn(delay: 250.ms, duration: 400.ms),
-                  const SizedBox(height: 48),
-
-                  // campo email
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textInputAction: TextInputAction.next,
-                    autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Introduce tu correo electrónico';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Introduce un correo válido';
-                      }
-                      return null;
-                    },
-                  ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
-                  const SizedBox(height: 16),
-
-                  // campo contraseña con toggle
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    textInputAction: TextInputAction.done,
-                    autofillHints: const [AutofillHints.password],
-                    onFieldSubmitted: (_) => _handleLogin(),
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      prefixIcon: const Icon(Icons.lock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                    text: TextSpan(
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
                       ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Introduce tu contraseña';
-                      }
-                      if (value.length < 6) {
-                        return 'Mínimo 6 caracteres';
-                      }
-                      return null;
-                    },
-                  ).animate().fadeIn(delay: 450.ms, duration: 400.ms),
-                  const SizedBox(height: 24),
-
-                  // error
-                  if (_errorMessage != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: colorScheme.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline,
-                              size: 20, color: colorScheme.onErrorContainer),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: TextStyle(
-                                color: colorScheme.onErrorContainer,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ).animate().fadeIn().shake(hz: 3, offset: const Offset(4, 0)),
-
-                  // boton login
-                  FilledButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Iniciar sesión'),
-                  ).animate().fadeIn(delay: 550.ms, duration: 400.ms),
-                  const SizedBox(height: 20),
-
-                  // separador "o"
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: colorScheme.outlineVariant,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          'o',
+                      children: [
+                        const TextSpan(text: '¿No tienes cuenta? '),
+                        TextSpan(
+                          text: 'Regístrate',
                           style: TextStyle(
-                            color: colorScheme.onSurfaceVariant,
-                            fontSize: 13,
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: colorScheme.outlineVariant,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
-                  const SizedBox(height: 20),
-
-                  // boton google
-                  OutlinedButton.icon(
-                    onPressed: _isLoading ? null : _handleGoogleSignIn,
-                    icon: const _GoogleLogo(),
-                    label: const Text('Continuar con Google'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: colorScheme.outlineVariant),
+                      ],
                     ),
-                  ).animate().fadeIn(delay: 650.ms, duration: 400.ms),
-                  const SizedBox(height: 16),
-
-                  // link registro
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => context.goNamed('register'),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(color: colorScheme.onSurfaceVariant),
-                        children: [
-                          const TextSpan(text: '¿No tienes cuenta? '),
-                          TextSpan(
-                            text: 'Regístrate',
-                            style: TextStyle(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 750.ms, duration: 400.ms),
-                ],
-              ),
+                  ),
+                ).animate().fadeIn(delay: 750.ms, duration: 400.ms),
+              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Botón Google con fondo surface y ghost border
+class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(56),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: AppTheme.ambientShadow(opacity: 0.04),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const _GoogleLogo(),
+            const SizedBox(width: 12),
+            Text(
+              'Continuar con Google',
+              style: textTheme.titleSmall?.copyWith(
+                color: scheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -302,16 +336,17 @@ class _GoogleLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return const SizedBox(
       width: 22,
       height: 22,
-      alignment: Alignment.center,
-      child: const Text(
-        'G',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w900,
-          color: Color(0xFF4285F4),
+      child: Center(
+        child: Text(
+          'G',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF4285F4),
+          ),
         ),
       ),
     );
