@@ -10,6 +10,7 @@ import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/domain/achivement_model.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
+import '../../ai/domain/butterfly_projection_model.dart';
 
 /// Dashboard con gráficas de progreso y estadísticas — Editorial Vitality
 class DashboardScreen extends StatefulWidget {
@@ -25,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late AIRepository _aiRepo;
   bool _initialized = false;
   bool _generatingReview = false;
+  bool _generatingButterfly = false;
 
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
@@ -115,6 +117,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildWeeklyReviewCard(context)
                                   .animate()
                                   .fadeIn(delay: 150.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
+
+                              const SizedBox(height: 14),
+
+                              _buildButterflyCard(context)
+                                  .animate()
+                                  .fadeIn(delay: 175.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
@@ -238,6 +247,220 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) setState(() => _generatingReview = false);
     }
+  }
+
+  Future<void> _generateButterflyManually() async {
+    setState(() => _generatingButterfly = true);
+    try {
+      final monthId = await _aiRepo.generateButterflyProjection();
+      if (!mounted) return;
+      if (monthId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Necesitas al menos 10 check-ins este mes para generar la proyección',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generatingButterfly = false);
+    }
+  }
+
+  // card del simulador efecto mariposa
+  Widget _buildButterflyCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return StreamBuilder<ButterflyProjectionModel?>(
+      stream: _aiRepo.watchLatestButterfly(),
+      builder: (context, snapshot) {
+        final projection = snapshot.data;
+
+        if (projection == null) {
+          return _SectionCard(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.tertiary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Text('🦋', style: TextStyle(fontSize: 22)),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Efecto Mariposa',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Descubre cómo serás en 3 años si mantienes tus hábitos',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 36,
+                        child: FilledButton.tonalIcon(
+                          onPressed: _generatingButterfly
+                              ? null
+                              : _generateButterflyManually,
+                          icon: _generatingButterfly
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : const Icon(Icons.auto_awesome_rounded,
+                                  size: 16),
+                          label: Text(
+                            _generatingButterfly
+                                ? 'Generando…'
+                                : 'Generar proyección',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                AppTheme.tertiary.withValues(alpha: 0.14),
+                            foregroundColor: AppTheme.tertiary,
+                            minimumSize: const Size(0, 36),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
+                            shape: const StadiumBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // card con proyección existente — tap navega al detalle
+        return GestureDetector(
+          onTap: () => context.goNamed(
+            'butterfly-projection',
+            pathParameters: {'monthId': projection.monthId},
+          ),
+          child: _SectionCard(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.tertiary.withValues(alpha: 0.14),
+                AppTheme.tertiaryContainer.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text('🦋', style: TextStyle(fontSize: 18)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Efecto Mariposa',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Text(
+                      projection.monthId,
+                      style:
+                          Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: AppTheme.tertiary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color:
+                            scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                  ],
+                ),
+                if (projection.titleKeep.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      const Text('🌟', style: TextStyle(fontSize: 14)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          projection.titleKeep,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    projection.storyKeep,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _generatingButterfly
+                          ? null
+                          : _generateButterflyManually,
+                      icon: _generatingButterfly
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 16),
+                      label: Text(
+                        _generatingButterfly ? 'Regenerando…' : 'Regenerar',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // card de revision semanal con IA

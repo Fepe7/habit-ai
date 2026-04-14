@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../domain/habit_plan_model.dart';
 import '../domain/weekly_review_model.dart';
+import '../domain/butterfly_projection_model.dart';
 
 // Llama a la Cloud Function proxy y guarda las conversaciones en Firestore
 class AIRepository {
@@ -12,6 +13,8 @@ class AIRepository {
 
   // Historial del chat para mantener contexto entre mensajes
   final List<Map<String, String>> _chatHistory = [];
+
+  final HttpsCallable _generateButterflyFn;
 
   AIRepository({
     required String uid,
@@ -24,13 +27,19 @@ class AIRepository {
             .httpsCallable('generateHabitPlan'),
         _generateWeeklyReviewFn = (functions ??
                 FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable('generateWeeklyReview');
+            .httpsCallable('generateWeeklyReview'),
+        _generateButterflyFn = (functions ??
+                FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable('generateButterflyProjection');
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
       _firestore.collection('users').doc(_uid).collection('ai_conversations');
 
   CollectionReference<Map<String, dynamic>> get _weeklyReviewsRef =>
       _firestore.collection('users').doc(_uid).collection('weekly_reviews');
+
+  CollectionReference<Map<String, dynamic>> get _butterflyRef =>
+      _firestore.collection('users').doc(_uid).collection('butterfly_projections');
 
   // Envia un mensaje a la Cloud Function y devuelve la respuesta parseada
   Future<HabitPlanModel> generatePlan(String userMessage) async {
@@ -180,6 +189,41 @@ class AIRepository {
     final doc = await _weeklyReviewsRef.doc(weekId).get();
     if (!doc.exists) return null;
     return WeeklyReviewModel.fromJson(doc.data()!);
+  }
+
+  // ==================== EFECTO MARIPOSA ====================
+
+  // Dispara la generación manual de la proyección del mes en curso.
+  // Devuelve null si no hay suficientes logs (< 10).
+  Future<String?> generateButterflyProjection() async {
+    try {
+      final result = await _generateButterflyFn.call();
+      final data = _deepCast(result.data);
+      if (data['skipped'] == true) return null;
+      return data['monthId'] as String?;
+    } on FirebaseFunctionsException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  // Stream con la proyección más reciente (para el card del dashboard)
+  Stream<ButterflyProjectionModel?> watchLatestButterfly() {
+    return _butterflyRef
+        .orderBy('generatedAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return ButterflyProjectionModel.fromJson(snapshot.docs.first.data());
+    });
+  }
+
+  // Lee una proyección concreta por monthId (para la pantalla de detalle)
+  Future<ButterflyProjectionModel?> getProjectionForMonth(
+      String monthId) async {
+    final doc = await _butterflyRef.doc(monthId).get();
+    if (!doc.exists) return null;
+    return ButterflyProjectionModel.fromJson(doc.data()!);
   }
 
   // Convierte recursivamente Map<Object?, Object?> a Map<String, dynamic>

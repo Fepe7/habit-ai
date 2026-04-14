@@ -441,6 +441,312 @@ exports.weeklyReviewJob = onSchedule(
   }
 );
 
+// ==================== EFECTO MARIPOSA ====================
+
+// Prompt para la proyección de vida a 3 años — dos escenarios
+const BUTTERFLY_PROMPT = `
+Eres un narrador cinematográfico y coach de vida. Tu tarea es generar una pequeña
+historia inmersiva que proyecte la vida del usuario en 3 años bajo dos escenarios:
+si mantiene sus hábitos actuales, o si los abandona.
+
+REGLAS ESTRICTAS:
+1. Responde ÚNICAMENTE con un objeto JSON válido. Sin texto fuera del JSON.
+2. Usa segunda persona ("tú"), presente narrativo mezclado con futuro.
+3. Sé evocador y concreto: menciona hábitos reales del contexto, logros tangibles.
+4. No uses cifras frías ni porcentajes — usa imágenes y emociones.
+5. Cada historia: 4-6 frases, fluidas, con impacto emocional.
+6. El escenario de abandono no debe ser catastrófico — sutil, melancólico.
+7. keyMoments: 3 hitos concretos que marcarán la diferencia (uno por hábito destacado).
+8. closingMessage: 1-2 frases que inviten a actuar, no a rendirse.
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "titleKeep": "Título evocador del camino de continuidad (ej: 'El día que todo encajó')",
+  "storyKeep": "Historia de 4-6 frases si el usuario mantiene sus hábitos...",
+  "titleAbandon": "Título melancólico del camino de abandono (ej: 'Lo que pudo ser')",
+  "storyAbandon": "Historia de 4-6 frases si el usuario abandona sus hábitos...",
+  "keyMoments": [
+    {
+      "habitTitle": "título del hábito del contexto",
+      "impact": "impacto concreto en 3 años en 1-2 frases, evocador"
+    }
+  ],
+  "closingMessage": "Mensaje motivacional de cierre en 1-2 frases"
+}
+`;
+
+// Devuelve el ID de mes: "2026-04"
+function getMonthId(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+// Rango del mes anterior completo
+function getPreviousMonthRange(now) {
+  const firstOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfLastMonth = new Date(firstOfThisMonth - 1);
+  endOfLastMonth.setHours(23, 59, 59, 999);
+  const startOfLastMonth = new Date(endOfLastMonth.getFullYear(), endOfLastMonth.getMonth(), 1);
+  startOfLastMonth.setHours(0, 0, 0, 0);
+  return { start: startOfLastMonth, end: endOfLastMonth };
+}
+
+// Rango del mes en curso desde el 1 hasta 'now'
+function getCurrentMonthRange(now) {
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  start.setHours(0, 0, 0, 0);
+  return { start, end: new Date(now) };
+}
+
+// Construye el contexto mensual para Gemini
+async function buildMonthlyContext(uid, start, end) {
+  const db = admin.firestore();
+  const habitsSnapshot = await db
+    .collection("users")
+    .doc(uid)
+    .collection("habits")
+    .where("isActive", "==", true)
+    .get();
+
+  const habits = habitsSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const habitStats = [];
+  let totalLogs = 0;
+  let totalExpected = 0;
+  const categoryCounts = {};
+  let longestStreak = 0;
+
+  for (const habit of habits) {
+    const logsSnapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("habits")
+      .doc(habit.id)
+      .collection("logs")
+      .where("date", ">=", admin.firestore.Timestamp.fromDate(start))
+      .where("date", "<=", admin.firestore.Timestamp.fromDate(end))
+      .get();
+
+    const completed = logsSnapshot.docs.filter(
+      (d) => d.data().completed === true
+    ).length;
+
+    const targetDays = habit.targetDays || [];
+    let expected = 0;
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      const weekday = cursor.getDay() === 0 ? 7 : cursor.getDay();
+      if (targetDays.includes(weekday)) expected += 1;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // Agrupar por categoría
+    const cat = habit.category || "otro";
+    categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+
+    // Racha más larga del mes
+    if ((habit.currentStreak || 0) > longestStreak) {
+      longestStreak = habit.currentStreak || 0;
+    }
+
+    habitStats.push({
+      id: habit.id,
+      title: habit.title,
+      category: cat,
+      completed,
+      expected,
+      currentStreak: habit.currentStreak || 0,
+      bestStreak: habit.bestStreak || 0,
+    });
+
+    totalLogs += completed;
+    totalExpected += expected;
+  }
+
+  // Top 3 categorías por número de hábitos
+  const topCategories = Object.entries(categoryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  const completionRate = totalExpected > 0 ? totalLogs / totalExpected : 0;
+
+  return {
+    habits: habitStats,
+    totalLogs,
+    activeHabits: habits.length,
+    completionRate,
+    topCategories,
+    longestStreak,
+  };
+}
+
+// Lógica compartida: genera la proyección de efecto mariposa para un usuario
+async function runButterflyProjection(uid, now, { currentMonth = false } = {}) {
+  const { start, end } = currentMonth
+    ? getCurrentMonthRange(now)
+    : getPreviousMonthRange(now);
+  const monthId = getMonthId(start);
+
+  const context = await buildMonthlyContext(uid, start, end);
+
+  // Mínimo 10 logs para que la historia tenga sentido
+  if (context.totalLogs < 10) {
+    return { skipped: true, reason: "insufficient_logs", monthId };
+  }
+
+  const userMessage = `Genera mi proyección "Efecto Mariposa" a 3 años.
+
+Mis hábitos activos este mes (${start.toISOString().slice(0, 10)} a ${end.toISOString().slice(0, 10)}):
+${context.habits
+  .filter((h) => h.expected > 0)
+  .map(
+    (h) =>
+      `- "${h.title}" (${h.category}) → ${h.completed}/${h.expected} días completados, racha actual: ${h.currentStreak} días`
+  )
+  .join("\n")}
+
+Resumen del mes:
+- Total check-ins: ${context.totalLogs}
+- Hábitos activos: ${context.activeHabits}
+- Tasa de completitud: ${(context.completionRate * 100).toFixed(0)}%
+- Categorías principales: ${context.topCategories.join(", ")}
+- Racha más larga activa: ${context.longestStreak} días`;
+
+  const apiKey = geminiApiKey.value();
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-pro",
+    systemInstruction: BUTTERFLY_PROMPT,
+  });
+
+  const result = await model.generateContent(userMessage);
+  const text = result.response.text();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(extractJson(text));
+  } catch (e) {
+    console.error("No se pudo parsear la proyección mariposa:", text);
+    throw new HttpsError("internal", "La IA devolvió un formato no válido.");
+  }
+
+  const stats = {
+    totalLogs: context.totalLogs,
+    activeHabits: context.activeHabits,
+    completionRate: context.completionRate,
+    topCategories: context.topCategories,
+    longestStreak: context.longestStreak,
+  };
+
+  const projectionDoc = {
+    monthId,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    monthStart: admin.firestore.Timestamp.fromDate(start),
+    monthEnd: admin.firestore.Timestamp.fromDate(end),
+    stats,
+    titleKeep: parsed.titleKeep || "",
+    storyKeep: parsed.storyKeep || "",
+    titleAbandon: parsed.titleAbandon || "",
+    storyAbandon: parsed.storyAbandon || "",
+    keyMoments: parsed.keyMoments || [],
+    closingMessage: parsed.closingMessage || "",
+  };
+
+  await admin
+    .firestore()
+    .collection("users")
+    .doc(uid)
+    .collection("butterfly_projections")
+    .doc(monthId)
+    .set(projectionDoc);
+
+  return { skipped: false, monthId };
+}
+
+// Trigger manual desde la app — analiza el mes en curso
+exports.generateButterflyProjection = onCall(
+  {
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Debes iniciar sesión para usar el asistente."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const allowed = await checkRateLimit(uid);
+    if (!allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Has hecho demasiadas peticiones. Espera unos minutos."
+      );
+    }
+
+    try {
+      return await runButterflyProjection(uid, new Date(), { currentMonth: true });
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      console.error("Error en generateButterflyProjection:", error);
+      throw new HttpsError(
+        "internal",
+        "No se pudo generar la proyección. Inténtalo más tarde."
+      );
+    }
+  }
+);
+
+// Job programado: día 1 de cada mes a las 09:00 Europa/Madrid
+exports.butterflyProjectionJob = onSchedule(
+  {
+    schedule: "0 9 1 * *",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = new Date();
+
+    const usersSnapshot = await db
+      .collection("users")
+      .where("onboardingCompleted", "==", true)
+      .get();
+
+    console.log(`butterflyProjectionJob: procesando ${usersSnapshot.size} usuarios`);
+
+    let generated = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      try {
+        const result = await runButterflyProjection(userDoc.id, now);
+        if (result.skipped) {
+          skipped += 1;
+        } else {
+          generated += 1;
+        }
+      } catch (e) {
+        errors += 1;
+        console.error(`Error procesando ${userDoc.id}:`, e.message);
+      }
+    }
+
+    console.log(
+      `butterflyProjectionJob terminado: ${generated} generadas, ${skipped} omitidas, ${errors} errores`
+    );
+  }
+);
+
 // Extrae JSON limpio de la respuesta de Gemini (Blindado)
 function extractJson(text) {
   const jsonStartIndex = text.indexOf('{');

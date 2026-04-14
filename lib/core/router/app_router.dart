@@ -12,6 +12,7 @@ import '../../features/dashboard/presentation/category_detail_screen.dart';
 import '../../features/dashboard/presentation/streaks_detail_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/ai/presentation/weekly_review_screen.dart';
+import '../../features/ai/presentation/butterfly_projection_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import 'main_shell.dart';
@@ -141,6 +142,16 @@ GoRouter createRouter(AuthRepository authRepository) {
                   state: state,
                   child: WeeklyReviewScreen(
                     weekId: state.pathParameters['weekId']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'butterfly/:monthId',
+                name: 'butterfly-projection',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: ButterflyProjectionScreen(
+                    monthId: state.pathParameters['monthId']!,
                   ),
                 ),
               ),
