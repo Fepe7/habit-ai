@@ -198,22 +198,41 @@ class HabitRepository {
 
   // ==================== RACHAS ====================
 
-  // Calcular racha real contando dias consecutivos hacia atras
-  Future<int> _calculateStreak(String habitId) async {
-    // solo orderBy para evitar indice compuesto, filtramos completed en codigo
+  // Calcular racha real contando dias consecutivos hacia atras.
+  // Trata como "dia cumplido" tanto los logs completados como los escudados,
+  // y los dias cubiertos por el modo enfermedad.
+  Future<int> _calculateStreak(
+    String habitId, {
+    DateTime? sickModeStart,
+    DateTime? sickModeUntil,
+  }) async {
+    // solo orderBy para evitar indice compuesto, filtramos en codigo
     final snapshot = await _logsRef(habitId)
         .orderBy('date', descending: true)
         .limit(365)
         .get();
 
-    if (snapshot.docs.isEmpty) return 0;
-
-    // solo los completados, convertir a set de fechas
-    final completedDays = <DateTime>{};
+    // dias "cumplidos": completados o con escudo
+    final doneDays = <DateTime>{};
     for (final doc in snapshot.docs) {
-      if (doc.data()['completed'] != true) continue;
-      final date = (doc.data()['date'] as Timestamp).toDate();
-      completedDays.add(DateTime(date.year, date.month, date.day));
+      final data = doc.data();
+      final isCompleted = data['completed'] == true;
+      final isShielded = data['shielded'] == true;
+      if (!isCompleted && !isShielded) continue;
+      final date = (data['date'] as Timestamp).toDate();
+      doneDays.add(DateTime(date.year, date.month, date.day));
+    }
+
+    // añadir dias cubiertos por el modo enfermedad al set de cumplidos
+    if (sickModeStart != null && sickModeUntil != null) {
+      var day = DateTime(
+          sickModeStart.year, sickModeStart.month, sickModeStart.day);
+      final end = DateTime(
+          sickModeUntil.year, sickModeUntil.month, sickModeUntil.day);
+      while (!day.isAfter(end)) {
+        doneDays.add(day);
+        day = day.add(const Duration(days: 1));
+      }
     }
 
     // contar dias consecutivos desde hoy hacia atras
@@ -221,12 +240,12 @@ class HabitRepository {
     var current = DateTime(today.year, today.month, today.day);
     int streak = 0;
 
-    // si hoy no esta completado, empezar desde ayer
-    if (!completedDays.contains(current)) {
+    // si hoy no esta cumplido, empezar desde ayer
+    if (!doneDays.contains(current)) {
       current = current.subtract(const Duration(days: 1));
     }
 
-    while (completedDays.contains(current)) {
+    while (doneDays.contains(current)) {
       streak++;
       current = current.subtract(const Duration(days: 1));
     }
@@ -234,12 +253,32 @@ class HabitRepository {
     return streak;
   }
 
+  // Leer el sick mode del usuario para pasarlo al calculo de racha
+  Future<({DateTime? start, DateTime? until})> _getSickMode() async {
+    final snap =
+        await _firestore.collection('users').doc(_uid).get();
+    if (!snap.exists) return (start: null, until: null);
+    final data = snap.data()!;
+    final start = data['sickModeStart'] != null
+        ? (data['sickModeStart'] as Timestamp).toDate()
+        : null;
+    final until = data['sickModeUntil'] != null
+        ? (data['sickModeUntil'] as Timestamp).toDate()
+        : null;
+    return (start: start, until: until);
+  }
+
   // Recalcular racha tras completar un habito
   Future<void> updateStreak(String habitId) async {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
-    final newStreak = await _calculateStreak(habitId);
+    final sickMode = await _getSickMode();
+    final newStreak = await _calculateStreak(
+      habitId,
+      sickModeStart: sickMode.start,
+      sickModeUntil: sickMode.until,
+    );
     final newBest = newStreak > habit.bestStreak ? newStreak : habit.bestStreak;
 
     await updateHabit(habitId, {
@@ -255,10 +294,118 @@ class HabitRepository {
     final habit = await getHabit(habitId);
     if (habit == null) return;
 
-    final newStreak = await _calculateStreak(habitId);
+    final sickMode = await _getSickMode();
+    final newStreak = await _calculateStreak(
+      habitId,
+      sickModeStart: sickMode.start,
+      sickModeUntil: sickMode.until,
+    );
 
-    await updateHabit(habitId, {
-      'currentStreak': newStreak,
+    await updateHabit(habitId, {'currentStreak': newStreak});
+  }
+
+  // ==================== ESCUDOS DE RACHA ====================
+
+  // Usar un escudo en un dia concreto (crea log shielded y descuenta escudo)
+  // Devuelve false si el usuario no tiene escudos suficientes
+  Future<bool> useShield(String habitId, DateTime date) async {
+    final userRef = _firestore.collection('users').doc(_uid);
+
+    bool success = false;
+    await _firestore.runTransaction((tx) async {
+      final userSnap = await tx.get(userRef);
+      final shields = userSnap.data()?['shieldsCount'] as int? ?? 0;
+      if (shields <= 0) return;
+
+      // crear el log shielded
+      final logRef = _logsRef(habitId).doc();
+      final dayStart = DateTime(date.year, date.month, date.day);
+      tx.set(logRef, {
+        'date': Timestamp.fromDate(dayStart),
+        'completed': false,
+        'shielded': true,
+        'notes': null,
+      });
+
+      // descontar escudo
+      tx.update(userRef, {'shieldsCount': shields - 1});
+      success = true;
     });
+
+    if (success) {
+      // recalcular racha con el nuevo log
+      final sickMode = await _getSickMode();
+      final habit = await getHabit(habitId);
+      if (habit != null) {
+        final newStreak = await _calculateStreak(
+          habitId,
+          sickModeStart: sickMode.start,
+          sickModeUntil: sickMode.until,
+        );
+        final newBest =
+            newStreak > habit.bestStreak ? newStreak : habit.bestStreak;
+        await updateHabit(habitId, {
+          'currentStreak': newStreak,
+          'bestStreak': newBest,
+        });
+      }
+    }
+
+    return success;
+  }
+
+  // Quitar un escudo usado (devuelve el escudo al usuario)
+  Future<void> removeShield(String habitId, DateTime date) async {
+    final userRef = _firestore.collection('users').doc(_uid);
+
+    final dayStart = DateTime(date.year, date.month, date.day);
+    final dayEnd = dayStart.add(const Duration(days: 1));
+
+    // buscar el log shielded de ese dia
+    final snap = await _logsRef(habitId)
+        .where('shielded', isEqualTo: true)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(dayStart))
+        .where('date', isLessThan: Timestamp.fromDate(dayEnd))
+        .limit(1)
+        .get();
+
+    if (snap.docs.isEmpty) return;
+
+    await _firestore.runTransaction((tx) async {
+      final userSnap = await tx.get(userRef);
+      final shields = userSnap.data()?['shieldsCount'] as int? ?? 0;
+      final newCount = (shields + 1).clamp(0, 5);
+
+      tx.delete(snap.docs.first.reference);
+      tx.update(userRef, {'shieldsCount': newCount});
+    });
+
+    // recalcular racha sin ese escudo
+    final sickMode = await _getSickMode();
+    final habit = await getHabit(habitId);
+    if (habit != null) {
+      final newStreak = await _calculateStreak(
+        habitId,
+        sickModeStart: sickMode.start,
+        sickModeUntil: sickMode.until,
+      );
+      await updateHabit(habitId, {'currentStreak': newStreak});
+    }
+  }
+
+  // Comprobar si hoy hay un log de tipo escudo activo
+  Future<bool> isShieldedToday(String habitId) async {
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    final snap = await _logsRef(habitId)
+        .where('shielded', isEqualTo: true)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('date', isLessThan: Timestamp.fromDate(endOfDay))
+        .limit(1)
+        .get();
+
+    return snap.docs.isNotEmpty;
   }
 }

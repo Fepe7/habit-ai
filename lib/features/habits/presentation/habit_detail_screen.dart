@@ -7,6 +7,8 @@ import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../auth/data/user_repository.dart';
+import '../../auth/domain/user_model.dart';
 import 'widgets/edit_habit_sheet.dart';
 
 // Pantalla de detalle de un hábito con diseño Editorial Vitality
@@ -21,9 +23,12 @@ class HabitDetailScreen extends StatefulWidget {
 
 class _HabitDetailScreenState extends State<HabitDetailScreen> {
   late final HabitRepository _habitRepo;
+  late final UserRepository _userRepo;
   HabitModel? _habit;
+  UserModel? _userData;
   List<HabitLogModel> _recentLogs = [];
   bool _completedToday = false;
+  bool _shieldedToday = false;
   bool _loading = true;
 
   @override
@@ -31,32 +36,39 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _habitRepo = HabitRepository(uid: uid);
+    _userRepo = UserRepository(uid: uid);
     _loadData();
   }
 
   Future<void> _loadData() async {
-    final habit = await _habitRepo.getHabit(widget.habitId);
-    if (habit == null || !mounted) return;
+    final results = await Future.wait([
+      _habitRepo.getHabit(widget.habitId),
+      _habitRepo.getTodayLog(widget.habitId),
+      _userRepo.getUser(),
+      _habitRepo.getLogsByDateRange(
+        habitId: widget.habitId,
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        endDate: DateTime.now(),
+      ),
+    ]);
 
-    final todayLog = await _habitRepo.getTodayLog(widget.habitId);
+    if (!mounted) return;
 
-    // últimos 30 días de logs
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-    final logs = await _habitRepo.getLogsByDateRange(
-      habitId: widget.habitId,
-      startDate: thirtyDaysAgo,
-      endDate: now,
-    );
+    final habit = results[0] as HabitModel?;
+    if (habit == null) return;
 
-    if (mounted) {
-      setState(() {
-        _habit = habit;
-        _completedToday = todayLog?.completed ?? false;
-        _recentLogs = logs;
-        _loading = false;
-      });
-    }
+    final todayLog = results[1] as HabitLogModel?;
+    final user = results[2] as UserModel;
+    final logs = results[3] as List<HabitLogModel>;
+
+    setState(() {
+      _habit = habit;
+      _userData = user;
+      _completedToday = todayLog?.completed ?? false;
+      _shieldedToday = todayLog?.shielded ?? false;
+      _recentLogs = logs;
+      _loading = false;
+    });
   }
 
   Future<void> _toggleToday() async {
@@ -82,6 +94,55 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     } catch (e) {
       if (mounted) setState(() => _completedToday = wasCompleted);
     }
+  }
+
+  // Usar un escudo para proteger la racha de hoy
+  Future<void> _useShield() async {
+    if (_habit == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Usar escudo de racha'),
+        content: Text(
+          'Gastarás 1 escudo para proteger la racha de "${_habit!.title}" hoy.\n\n'
+          'Te quedan ${_userData?.shieldsCount ?? 0} escudos.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Usar escudo'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final ok = await _habitRepo.useShield(widget.habitId, DateTime.now());
+    if (!mounted) return;
+
+    if (ok) {
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('🛡️ Escudo usado — racha protegida')),
+      );
+      await _loadData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No tienes escudos disponibles')),
+      );
+    }
+  }
+
+  // Retirar el escudo de hoy (recuperar el escudo)
+  Future<void> _removeShield() async {
+    await _habitRepo.removeShield(widget.habitId, DateTime.now());
+    if (mounted) await _loadData();
   }
 
   Future<void> _editHabit() async {
@@ -196,7 +257,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 // botón check-in
                 _CheckInButton(
                   isCompleted: _completedToday,
-                  onToggle: _toggleToday,
+                  isShielded: _shieldedToday,
+                  shieldsAvailable: _userData?.shieldsCount ?? 0,
+                  onToggle: _completedToday ? _toggleToday : (_shieldedToday ? null : _toggleToday),
+                  onUseShield: (!_completedToday && !_shieldedToday)
+                      ? _useShield
+                      : null,
+                  onRemoveShield: _shieldedToday ? _removeShield : null,
                 ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
                 const SizedBox(height: 24),
 
@@ -206,9 +273,11 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     .fadeIn(delay: 300.ms, duration: 300.ms),
                 const SizedBox(height: 12),
 
-                _ActivityGrid(logs: _recentLogs)
-                    .animate()
-                    .fadeIn(delay: 350.ms, duration: 300.ms),
+                _ActivityGrid(
+                  logs: _recentLogs,
+                  sickModeStart: _userData?.sickModeStart,
+                  sickModeUntil: _userData?.sickModeUntil,
+                ).animate().fadeIn(delay: 350.ms, duration: 300.ms),
                 const SizedBox(height: 24),
 
                 // info adicional
@@ -581,11 +650,19 @@ class _StreakColumn extends StatelessWidget {
 
 class _CheckInButton extends StatelessWidget {
   final bool isCompleted;
-  final VoidCallback onToggle;
+  final bool isShielded;
+  final int shieldsAvailable;
+  final VoidCallback? onToggle;
+  final VoidCallback? onUseShield;
+  final VoidCallback? onRemoveShield;
 
   const _CheckInButton({
     required this.isCompleted,
-    required this.onToggle,
+    required this.isShielded,
+    required this.shieldsAvailable,
+    this.onToggle,
+    this.onUseShield,
+    this.onRemoveShield,
   });
 
   @override
@@ -593,7 +670,6 @@ class _CheckInButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     if (isCompleted) {
-      // estado completado: botón surface con check verde
       return GestureDetector(
         onTap: onToggle,
         child: AnimatedContainer(
@@ -628,11 +704,83 @@ class _CheckInButton extends StatelessWidget {
       );
     }
 
-    return GradientButton(
-      onPressed: onToggle,
-      label: 'Marcar como completado',
-      icon: Icons.radio_button_unchecked_rounded,
-      gradient: AppTheme.heroGradient,
+    // estado escudo activo
+    if (isShielded) {
+      return GestureDetector(
+        onTap: onRemoveShield,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: scheme.primary.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shield_rounded, color: scheme.primary, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                'Racha protegida hoy',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // estado sin completar: botón principal + botón escudo si hay disponibles
+    return Column(
+      children: [
+        GradientButton(
+          onPressed: onToggle ?? () {},
+          label: 'Marcar como completado',
+          icon: Icons.radio_button_unchecked_rounded,
+          gradient: AppTheme.heroGradient,
+        ),
+        if (shieldsAvailable > 0) ...[
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onUseShield,
+            child: Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: scheme.outlineVariant.withValues(alpha: 0.4),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shield_outlined,
+                      size: 18, color: scheme.onSurfaceVariant),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Usar escudo ($shieldsAvailable disponible${shieldsAvailable == 1 ? '' : 's'})',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -641,19 +789,41 @@ class _CheckInButton extends StatelessWidget {
 
 class _ActivityGrid extends StatelessWidget {
   final List<HabitLogModel> logs;
+  final DateTime? sickModeStart;
+  final DateTime? sickModeUntil;
 
-  const _ActivityGrid({required this.logs});
+  const _ActivityGrid({
+    required this.logs,
+    this.sickModeStart,
+    this.sickModeUntil,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
 
-    // set de fechas completadas para búsqueda rápida
+    // sets de fechas por tipo para búsqueda O(1)
     final completedDates = <String>{};
+    final shieldedDates = <String>{};
     for (final log in logs) {
-      if (log.completed) {
+      if (log.shielded) {
+        shieldedDates.add(_dateKey(log.date));
+      } else if (log.completed) {
         completedDates.add(_dateKey(log.date));
+      }
+    }
+
+    // días cubiertos por sick mode
+    final sickDates = <String>{};
+    if (sickModeStart != null && sickModeUntil != null) {
+      var day = DateTime(
+          sickModeStart!.year, sickModeStart!.month, sickModeStart!.day);
+      final end = DateTime(
+          sickModeUntil!.year, sickModeUntil!.month, sickModeUntil!.day);
+      while (!day.isAfter(end)) {
+        sickDates.add(_dateKey(day));
+        day = day.add(const Duration(days: 1));
       }
     }
 
@@ -664,49 +834,127 @@ class _ActivityGrid extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppTheme.ambientShadow(),
       ),
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
-        children: List.generate(30, (i) {
-          final date = now.subtract(Duration(days: 29 - i));
-          final key = _dateKey(date);
-          final done = completedDates.contains(key);
-          final isToday = i == 29;
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // leyenda
+          Wrap(
+            spacing: 12,
+            children: [
+              _LegendDot(color: scheme.tertiary, label: 'Completado'),
+              _LegendDot(color: scheme.primary, label: 'Escudo'),
+              if (sickDates.isNotEmpty)
+                _LegendDot(color: scheme.secondary, label: 'Enfermedad'),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: List.generate(30, (i) {
+              final date = now.subtract(Duration(days: 29 - i));
+              final key = _dateKey(date);
+              final done = completedDates.contains(key);
+              final shielded = shieldedDates.contains(key);
+              final sick = sickDates.contains(key) && !done && !shielded;
+              final isToday = i == 29;
 
-          return Tooltip(
-            message:
-                '${date.day}/${date.month} — ${done ? "Completado" : "No completado"}',
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                // completado: gradiente hero; hoy sin completar: borde primary; resto: surface
-                gradient: done ? AppTheme.heroGradient : null,
-                color: done
-                    ? null
-                    : isToday
-                        ? scheme.primaryContainer.withValues(alpha: 0.15)
-                        : scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(8),
-                border: isToday && !done
-                    ? Border.all(
-                        color: scheme.primary.withValues(alpha: 0.5),
-                        width: 1.5,
-                      )
-                    : null,
-              ),
-              child: done
-                  ? const Icon(Icons.check_rounded,
-                      size: 14, color: Colors.white)
-                  : null,
-            ),
-          );
-        }),
+              String tooltip;
+              if (done) {
+                tooltip = '${date.day}/${date.month} — Completado';
+              } else if (shielded) {
+                tooltip = '${date.day}/${date.month} — Protegido por escudo';
+              } else if (sick) {
+                tooltip = '${date.day}/${date.month} — Modo enfermedad';
+              } else {
+                tooltip = '${date.day}/${date.month} — No completado';
+              }
+
+              return Tooltip(
+                message: tooltip,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    gradient: done ? AppTheme.heroGradient : null,
+                    color: done
+                        ? null
+                        : shielded
+                            ? scheme.primaryContainer.withValues(alpha: 0.4)
+                            : sick
+                                ? scheme.secondaryContainer
+                                    .withValues(alpha: 0.35)
+                                : isToday
+                                    ? scheme.primaryContainer
+                                        .withValues(alpha: 0.15)
+                                    : scheme.surfaceContainerHighest
+                                        .withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: shielded
+                        ? Border.all(
+                            color: scheme.primary.withValues(alpha: 0.5),
+                            width: 1.5,
+                          )
+                        : sick
+                            ? Border.all(
+                                color: scheme.secondary.withValues(alpha: 0.4),
+                                width: 1.5,
+                              )
+                            : isToday && !done
+                                ? Border.all(
+                                    color: scheme.primary.withValues(alpha: 0.5),
+                                    width: 1.5,
+                                  )
+                                : null,
+                  ),
+                  child: done
+                      ? const Icon(Icons.check_rounded,
+                          size: 14, color: Colors.white)
+                      : shielded
+                          ? Icon(Icons.shield_rounded,
+                              size: 13, color: scheme.primary)
+                          : sick
+                              ? Icon(Icons.medical_services_outlined,
+                                  size: 12, color: scheme.secondary)
+                              : null,
+                ),
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
 
   String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration:
+              BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // ==================== INFO CARD ====================

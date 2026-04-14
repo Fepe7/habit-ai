@@ -15,6 +15,7 @@ import '../../../core/widgets/gradient_button.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
+import '../../auth/data/user_repository.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -52,6 +53,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
         _achievementChecker = AchievementChecker(
           achievementRepo: AchievementRepository(uid: user.uid),
           habitRepo: _habitRepo,
+          userRepo: UserRepository(uid: user.uid),
         );
       }
       _initialized = true;

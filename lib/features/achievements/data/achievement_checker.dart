@@ -1,3 +1,4 @@
+import '../../auth/data/user_repository.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../domain/achivement_model.dart';
@@ -7,12 +8,15 @@ import 'archivement_repository.dart';
 class AchievementChecker {
   final AchievementRepository _achievementRepo;
   final HabitRepository _habitRepo;
+  final UserRepository _userRepo;
 
   AchievementChecker({
     required AchievementRepository achievementRepo,
     required HabitRepository habitRepo,
+    required UserRepository userRepo,
   })  : _achievementRepo = achievementRepo,
-        _habitRepo = habitRepo;
+        _habitRepo = habitRepo,
+        _userRepo = userRepo;
 
   // comprobar todo tras completar un habito
   Future<List<String>> checkAfterToggle({
@@ -61,6 +65,9 @@ class AchievementChecker {
         unlocked.add(AchievementModel.streak30);
       }
     }
+
+    // conceder escudos por hitos de racha (con deduplicacion)
+    await _grantShieldsForStreak(habit);
 
     // dia perfecto: todos los de hoy completados
     final allDone = todayHabits.every(
@@ -162,6 +169,24 @@ class AchievementChecker {
         type: AchievementModel.total100,
       )) {
         unlocked.add(AchievementModel.total100);
+      }
+    }
+  }
+
+  // conceder escudos al alcanzar hitos de racha (7→1, 30→2, 90→3)
+  // usa shield_grants para no repetir la concesion
+  Future<void> _grantShieldsForStreak(HabitModel habit) async {
+    final milestones = <int, int>{7: 1, 30: 2, 90: 3};
+    for (final entry in milestones.entries) {
+      final milestone = entry.key;
+      final shields = entry.value;
+      if (habit.currentStreak >= milestone) {
+        final alreadyGranted =
+            await _userRepo.hasShieldGrant(habit.id, milestone);
+        if (!alreadyGranted) {
+          await _userRepo.grantShields(shields);
+          await _userRepo.recordShieldGrant(habit.id, milestone);
+        }
       }
     }
   }

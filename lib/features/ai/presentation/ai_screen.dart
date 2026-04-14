@@ -15,6 +15,7 @@ import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
+import '../../auth/data/user_repository.dart';
 
 /// Pantalla de chat con el asistente IA
 class AIScreen extends StatefulWidget {
@@ -51,6 +52,7 @@ class _AIScreenState extends State<AIScreen> {
     _achievementChecker = AchievementChecker(
       achievementRepo: AchievementRepository(uid: uid),
       habitRepo: _habitRepo,
+      userRepo: UserRepository(uid: uid),
     );
 
     _messages.add(ChatMessage(
