@@ -182,7 +182,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
                 maxY: 100,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipRoundedRadius: 8,
+                    tooltipBorderRadius: BorderRadius.circular(8),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final p = _progress[group.x.toInt()];
                       final date = p.date;

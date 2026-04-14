@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Denegar todo por defecto
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Funciones helper
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Documentos privados del usuario
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /habits/{habitId} {
+        allow read, write: if isOwner(userId);
+
+        match /logs/{logId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+
+      match /achievements/{achievementId} {
+        allow read:   if isOwner(userId);
+        allow create: if isOwner(userId);
+        // inmutables una vez desbloqueados
+        allow update, delete: if false;
+      }
+
+      match /ai_conversations/{conversationId} {
+        allow read:   if isOwner(userId);
+        allow create: if isOwner(userId);
+        allow update, delete: if false;
+      }
+
+      match /weekly_reviews/{weekId} {
+        allow read:   if isOwner(userId);
+        // solo escribe el admin SDK (Cloud Function)
+        allow write: if false;
+      }
+
+      match /butterfly_projections/{monthId} {
+        allow read:   if isOwner(userId);
+        allow write: if false;
+      }
+
+      match /shield_grants/{grantId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /habit_groups/{groupId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Perfiles públicos — lectura abierta, escritura solo del propio usuario
+    match /public_profiles/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+
+      match /habits/{habitId} {
+        allow read: if true;
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Reserva de usernames — lectura abierta para isUsernameAvailable
+    match /usernames/{username} {
+      allow read: if true;
+      // Solo puede crear si el doc apunta al uid del caller
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      // Solo puede borrar el dueño del username
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+      // Inmutable: cambiar username = delete + create
+      allow update: if false;
+    }
+  }
+}

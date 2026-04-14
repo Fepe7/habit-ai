@@ -16,6 +16,8 @@ import '../../features/ai/presentation/butterfly_projection_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
+import '../../features/profile/presentation/public_profiles_feed_screen.dart';
+import '../../features/profile/presentation/public_profile_screen.dart';
 import 'main_shell.dart';
 
 // transicion suave fade + slide para pantallas internas
@@ -175,6 +177,23 @@ GoRouter createRouter(AuthRepository authRepository) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/profiles',
+            name: 'public-profiles-feed',
+            builder: (context, state) => const PublicProfilesFeedScreen(),
+            routes: [
+              GoRoute(
+                path: ':userId',
+                name: 'public-profile',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: PublicProfileScreen(
+                    userId: state.pathParameters['userId']!,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

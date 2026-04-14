@@ -806,7 +806,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 maxY: 100,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipRoundedRadius: 12,
+                    tooltipBorderRadius: BorderRadius.circular(12),
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final progress = _weeklyProgress[group.x.toInt()];
                       return BarTooltipItem(

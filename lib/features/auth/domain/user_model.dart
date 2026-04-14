@@ -17,6 +17,15 @@ class UserModel {
   /// Fin del período de modo enfermedad (null si no está activo)
   final DateTime? sickModeUntil;
 
+  /// Si el perfil es público (visible en el directorio de perfiles)
+  final bool isProfilePublic;
+
+  /// Username único elegido por el usuario (lowercase, 3-20, [a-z0-9_])
+  final String? username;
+
+  /// Cuándo se hizo público el perfil por primera vez
+  final DateTime? publicProfileCreatedAt;
+
   const UserModel({
     required this.uid,
     required this.email,
@@ -24,6 +33,9 @@ class UserModel {
     this.shieldsCount = 0,
     this.sickModeStart,
     this.sickModeUntil,
+    this.isProfilePublic = false,
+    this.username,
+    this.publicProfileCreatedAt,
   });
 
   /// Si el modo enfermedad sigue activo ahora mismo
@@ -45,6 +57,11 @@ class UserModel {
       sickModeUntil: data['sickModeUntil'] != null
           ? (data['sickModeUntil'] as Timestamp).toDate()
           : null,
+      isProfilePublic: data['isProfilePublic'] as bool? ?? false,
+      username: data['username'] as String?,
+      publicProfileCreatedAt: data['publicProfileCreatedAt'] != null
+          ? (data['publicProfileCreatedAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -57,6 +74,11 @@ class UserModel {
           sickModeStart != null ? Timestamp.fromDate(sickModeStart!) : null,
       'sickModeUntil':
           sickModeUntil != null ? Timestamp.fromDate(sickModeUntil!) : null,
+      'isProfilePublic': isProfilePublic,
+      'username': username,
+      'publicProfileCreatedAt': publicProfileCreatedAt != null
+          ? Timestamp.fromDate(publicProfileCreatedAt!)
+          : null,
     };
   }
 
@@ -67,6 +89,10 @@ class UserModel {
     DateTime? sickModeStart,
     DateTime? sickModeUntil,
     bool clearSickMode = false,
+    bool? isProfilePublic,
+    String? username,
+    DateTime? publicProfileCreatedAt,
+    bool clearUsername = false,
   }) {
     return UserModel(
       uid: uid,
@@ -75,6 +101,9 @@ class UserModel {
       shieldsCount: shieldsCount ?? this.shieldsCount,
       sickModeStart: clearSickMode ? null : (sickModeStart ?? this.sickModeStart),
       sickModeUntil: clearSickMode ? null : (sickModeUntil ?? this.sickModeUntil),
+      isProfilePublic: isProfilePublic ?? this.isProfilePublic,
+      username: clearUsername ? null : (username ?? this.username),
+      publicProfileCreatedAt: publicProfileCreatedAt ?? this.publicProfileCreatedAt,
     );
   }
 }

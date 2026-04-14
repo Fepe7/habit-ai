@@ -7,15 +7,12 @@ import '../domain/user_model.dart';
 class AuthRepository {
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
-  final GoogleSignIn _googleSignIn;
 
   AuthRepository({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
-    GoogleSignIn? googleSignIn,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Escucha cambios de sesion (login/logout)
   Stream<UserModel?> get authStateChanges {
@@ -75,17 +72,12 @@ class AuthRepository {
   // Iniciar sesion con Google (cuenta nueva o existente)
   Future<UserModel> signInWithGoogle() async {
     try {
-      // 1. lanzar el selector de cuentas de Google
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        // el usuario cerro el selector sin elegir nada
-        throw 'Inicio de sesión cancelado';
-      }
+      // 1. lanzar el selector de cuentas (v7: singleton + authenticate, lanza si cancela)
+      final googleUser = await GoogleSignIn.instance.authenticate();
 
-      // 2. obtener tokens de la cuenta seleccionada
-      final googleAuth = await googleUser.authentication;
+      // 2. obtener idToken (v7: accessToken ya no está en authentication, solo idToken)
+      final googleAuth = googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
@@ -150,7 +142,7 @@ class AuthRepository {
 
   // Cerrar sesion (limpia tambien la sesion de Google)
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    await GoogleSignIn.instance.signOut();
     await _auth.signOut();
   }
 }

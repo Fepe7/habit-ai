@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/widgets/avatar_circle.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import '../../profile/data/public_profile_repository.dart';
+import '../../profile/presentation/widgets/username_input_sheet.dart';
 
 /// Pantalla de ajustes — Editorial Vitality
 class SettingsScreen extends StatefulWidget {
@@ -18,12 +21,14 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final UserRepository _userRepo;
+  late final PublicProfileRepository _publicProfileRepo;
 
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _userRepo = UserRepository(uid: uid);
+    _publicProfileRepo = PublicProfileRepository(uid: uid);
   }
 
   @override
@@ -114,6 +119,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 8),
+
+            // perfil público
+            _SectionLabel(label: 'Comunidad'),
+            _SectionGroup(
+              children: [
+                _PublicProfileTile(
+                  userData: userData,
+                  publicProfileRepo: _publicProfileRepo,
+                  onExplore: () => context.pushNamed('public-profiles-feed'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
 
             // apariencia
             _SectionLabel(label: 'Apariencia'),
@@ -522,6 +541,213 @@ class _ShieldCountTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Tile de perfil público con toggle y botón de explorar
+class _PublicProfileTile extends StatefulWidget {
+  final UserModel? userData;
+  final PublicProfileRepository publicProfileRepo;
+  final VoidCallback onExplore;
+
+  const _PublicProfileTile({
+    required this.userData,
+    required this.publicProfileRepo,
+    required this.onExplore,
+  });
+
+  @override
+  State<_PublicProfileTile> createState() => _PublicProfileTileState();
+}
+
+class _PublicProfileTileState extends State<_PublicProfileTile> {
+  bool _loading = false;
+
+  bool get _isPublic => widget.userData?.isProfilePublic ?? false;
+  String? get _username => widget.userData?.username;
+
+  Future<void> _toggle(BuildContext context) async {
+    if (_loading) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    if (_isPublic && _username != null) {
+      // desactivar
+      final confirm = await _showDisableConfirm(context);
+      if (confirm != true) return;
+
+      setState(() => _loading = true);
+      try {
+        await widget.publicProfileRepo.disablePublicProfile(_username!);
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    } else {
+      // activar: pedir username
+      final chosenUsername = await UsernameInputSheet.show(
+        context,
+        widget.publicProfileRepo,
+      );
+      if (chosenUsername == null || !mounted) return;
+
+      setState(() => _loading = true);
+      try {
+        final displayName =
+            user.displayName ?? user.email ?? 'Usuario';
+        final initials = AvatarCircle.fromName(user.displayName, user.email);
+        final ok = await widget.publicProfileRepo.enablePublicProfile(
+          username: chosenUsername,
+          displayName: displayName,
+          avatarInitials: initials,
+        );
+        if (!mounted) return;
+        if (!ok) {
+          ScaffoldMessenger.of(context).showSnackBar( // ignore: use_build_context_synchronously
+            const SnackBar(content: Text('El username ya está ocupado')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _changeUsername(BuildContext context) async {
+    if (_loading || _username == null) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final newUsername = await UsernameInputSheet.show(
+      context,
+      widget.publicProfileRepo,
+      currentUsername: _username,
+    );
+    if (newUsername == null || newUsername == _username || !mounted) return;
+
+    setState(() => _loading = true);
+    try {
+      final displayName = user.displayName ?? user.email ?? 'Usuario';
+      final initials = AvatarCircle.fromName(user.displayName, user.email);
+      final ok = await widget.publicProfileRepo.changeUsername(
+        _username!,
+        newUsername,
+        displayName,
+        initials,
+      );
+      if (!mounted) return;
+      if (!ok) {
+        ScaffoldMessenger.of(context).showSnackBar( // ignore: use_build_context_synchronously
+          const SnackBar(content: Text('El username ya está ocupado')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<bool?> _showDisableConfirm(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desactivar perfil público'),
+        content: const Text(
+          '¿Seguro? Tu perfil desaparecerá del directorio y liberarás el username.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.public_rounded, size: 18, color: scheme.primary),
+          ),
+          title: Text(
+            'Perfil público',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          subtitle: Text(
+            _isPublic && _username != null
+                ? '@$_username — visible en el directorio'
+                : 'Aparece en el directorio de la comunidad',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          trailing: _loading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Switch(
+                  value: _isPublic,
+                  onChanged: (_) => _toggle(context),
+                ),
+        ),
+        if (_isPublic) ...[
+          Divider(
+            height: 1,
+            indent: 70,
+            color: scheme.outlineVariant.withValues(alpha: 0.12),
+          ),
+          // Cambiar username
+          ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+            leading: const SizedBox(width: 36),
+            title: Text(
+              'Cambiar @username',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.primary,
+              ),
+            ),
+            trailing: Icon(Icons.chevron_right_rounded,
+                size: 18, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
+            onTap: () => _changeUsername(context),
+          ),
+          Divider(
+            height: 1,
+            indent: 70,
+            color: scheme.outlineVariant.withValues(alpha: 0.12),
+          ),
+        ] else ...[
+          Divider(
+            height: 1,
+            indent: 70,
+            color: scheme.outlineVariant.withValues(alpha: 0.12),
+          ),
+        ],
+      ],
     );
   }
 }

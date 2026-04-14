@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
+import '../../profile/domain/public_habit_model.dart';
 
 // CRUD de habitos y logs en Firestore
 class HabitRepository {
@@ -12,6 +13,17 @@ class HabitRepository {
     FirebaseFirestore? firestore,
   })  : _uid = uid,
         _firestore = firestore ?? FirebaseFirestore.instance;
+
+  // Ref al doc del perfil público (para sync dual)
+  CollectionReference<Map<String, dynamic>> get _publicHabitsRef =>
+      _firestore.collection('public_profiles').doc(_uid).collection('habits');
+
+  // Comprobar si el usuario tiene perfil público activo
+  Future<bool> _isProfilePublic() async {
+    final snap = await _firestore.collection('users').doc(_uid).get();
+    return snap.data()?['isProfilePublic'] as bool? ?? false;
+  }
+
 
   // Ref a la coleccion de habitos del usuario
   CollectionReference<Map<String, dynamic>> get _habitsRef =>
@@ -54,10 +66,29 @@ class HabitRepository {
     return HabitModel.fromJson(doc.data()!, doc.id);
   }
 
-  // Crear habito nuevo
+  // Crear habito nuevo (+ sync en perfil público si está activo)
   Future<String> createHabit(HabitModel habit) async {
     final docRef = await _habitsRef.add(habit.toJson());
-    return docRef.id;
+    final newId = docRef.id;
+
+    // sync al perfil público si corresponde
+    if (await _isProfilePublic()) {
+      final publicHabit = PublicHabitModel(
+        id: newId,
+        title: habit.title,
+        category: habit.category,
+        emoji: null,
+        currentStreak: habit.currentStreak,
+        bestStreak: habit.bestStreak,
+      );
+      try {
+        await _publicHabitsRef.doc(newId).set(publicHabit.toJson());
+      } catch (_) {
+        // error de sync no bloquea la operación principal
+      }
+    }
+
+    return newId;
   }
 
   // Crear varios habitos a la vez (para cuando la IA genera un plan)
@@ -123,14 +154,42 @@ class HabitRepository {
             .toList());
   }
 
-  // Actualizar habito
+  // Actualizar habito (+ sync de campos públicos si corresponde)
   Future<void> updateHabit(String habitId, Map<String, dynamic> data) async {
     await _habitsRef.doc(habitId).update(data);
+
+    // sync campos públicos al perfil si está activo
+    if (await _isProfilePublic()) {
+      final publicFields = <String, dynamic>{};
+      if (data.containsKey('title')) publicFields['title'] = data['title'];
+      if (data.containsKey('category')) publicFields['category'] = data['category'];
+      if (data.containsKey('currentStreak')) {
+        publicFields['currentStreak'] = data['currentStreak'];
+      }
+      if (data.containsKey('bestStreak')) {
+        publicFields['bestStreak'] = data['bestStreak'];
+      }
+      if (publicFields.isNotEmpty) {
+        try {
+          await _publicHabitsRef.doc(habitId).update(publicFields);
+        } catch (_) {
+          // el hábito puede no existir en el perfil público
+        }
+      }
+    }
   }
 
   // No borramos, solo desactivamos para no perder los logs
+  // Si el perfil es público, quitamos el hábito del espejo público
   Future<void> deactivateHabit(String habitId) async {
-    await _habitsRef.doc(habitId).update({'isActive': false});
+    final batch = _firestore.batch();
+    batch.update(_habitsRef.doc(habitId), {'isActive': false});
+
+    if (await _isProfilePublic()) {
+      batch.delete(_publicHabitsRef.doc(habitId));
+    }
+
+    await batch.commit();
   }
 
   // ==================== LOGS DIARIOS ====================

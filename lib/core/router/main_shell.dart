@@ -30,6 +30,12 @@ class MainShell extends StatelessWidget {
       label: 'Asistente',
     ),
     _TabInfo(
+      path: '/profiles',
+      icon: Icons.search_rounded,
+      activeIcon: Icons.manage_search_rounded,
+      label: 'Explorar',
+    ),
+    _TabInfo(
       path: '/settings',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
@@ -58,7 +64,8 @@ class MainShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/dashboard')) return 1;
     if (location.startsWith('/ai')) return 2;
-    if (location.startsWith('/settings')) return 3;
+    if (location.startsWith('/profiles') || location.startsWith('/profile/')) return 3;
+    if (location.startsWith('/settings')) return 4;
     return 0;
   }
 }
