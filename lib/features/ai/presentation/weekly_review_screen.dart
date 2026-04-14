@@ -218,16 +218,20 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primary.withValues(alpha: 0.15),
-            AppTheme.secondary.withValues(alpha: 0.08),
+            AppTheme.primary.withValues(alpha: 0.12),
+            AppTheme.primaryContainer.withValues(alpha: 0.08),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primary.withValues(alpha: 0.2),
-        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            color: AppTheme.primary.withValues(alpha: 0.08),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -295,7 +299,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           children: [
@@ -324,15 +328,18 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.3)),
+        color: AppTheme.tertiaryContainer.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppTheme.tertiaryContainer.withValues(alpha: 0.35),
+          width: 1,
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.lightbulb_rounded,
-              color: AppTheme.accent, size: 26),
+              color: AppTheme.tertiary, size: 26),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -342,7 +349,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   'Tu foco esta semana',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.accent,
+                        color: AppTheme.tertiary,
                       ),
                 ),
                 const SizedBox(height: 6),
@@ -373,11 +380,15 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            color: colorScheme.onSurface.withValues(alpha: 0.04),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,11 +450,15 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            color: colorScheme.onSurface.withValues(alpha: 0.04),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,11 +482,8 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-                ),
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
