@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/habit_model.dart';
 
-// Card de un habito con zonas de tap separadas:
-// - circulo: toggle completado
-// - resto del card: navegar a detalle
+/// Card de un habito con zonas de tap separadas:
+/// - circulo izquierdo: toggle completado
+/// - resto del card: navegar a detalle
+/// [isInsideGroup] elimina sombra propia cuando va dentro de un contenedor padre
 class HabitCard extends StatelessWidget {
   final HabitModel habit;
   final bool isCompletedToday;
@@ -13,6 +14,7 @@ class HabitCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool isInsideGroup;
 
   const HabitCard({
     super.key,
@@ -22,47 +24,58 @@ class HabitCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.isInsideGroup = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final catBg = AppTheme.categoryBg(habit.category);
     final catFg = AppTheme.categoryFg(habit.category);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
-    return Card(
-      color: isCompletedToday
-          ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-          : null,
+    final cardBg = isCompletedToday
+        ? scheme.primaryContainer.withValues(alpha: 0.18)
+        : isInsideGroup
+            ? Colors.transparent
+            : scheme.surfaceContainerLowest;
+
+    Widget card = Container(
+      color: isInsideGroup ? cardBg : null,
+      decoration: isInsideGroup
+          ? null
+          : BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: AppTheme.ambientShadow(),
+            ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
             // circulo de check — zona de tap independiente
-            InkWell(
+            GestureDetector(
               onTap: () {
                 HapticFeedback.lightImpact();
                 onToggle();
               },
-              customBorder: const CircleBorder(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: _CheckCircle(
                   isCompleted: isCompletedToday,
-                  color: catFg,
+                  categoryColor: catFg,
                 ),
               ),
             ),
 
-            // contenido del card — tap para navegar a detalle
+            // contenido — tap para navegar a detalle
             Expanded(
               child: InkWell(
                 onTap: onTap,
                 onLongPress: onEdit,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -72,86 +85,60 @@ class HabitCard extends StatelessWidget {
                           decoration: isCompletedToday
                               ? TextDecoration.lineThrough
                               : null,
+                          decorationColor: scheme.onSurface.withValues(alpha: 0.4),
                           color: isCompletedToday
-                              ? colorScheme.onSurface.withValues(alpha: 0.5)
-                              : null,
+                              ? scheme.onSurface.withValues(alpha: 0.45)
+                              : scheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
                         ),
                       ),
                       if (habit.description.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           habit.description,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
-                      const SizedBox(height: 6),
-                      Row(
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
                         children: [
-                          if (habit.currentStreak > 0) ...[
-                            const Icon(
-                              Icons.local_fire_department,
-                              size: 16,
-                              color: AppTheme.accent,
+                          // racha activa
+                          if (habit.currentStreak > 0)
+                            _MetaChip(
+                              icon: Icons.local_fire_department_rounded,
+                              label: '${habit.currentStreak} días',
+                              iconColor: AppTheme.tertiaryContainer,
+                              textColor: AppTheme.tertiary,
+                              bgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${habit.currentStreak} días',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppTheme.accent,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                          ],
+                          // chip de categoria
                           Hero(
                             tag: 'habit_cat_${habit.id}',
                             child: Material(
                               color: Colors.transparent,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: catBg,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(catIcon, size: 12, color: catFg),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      AppTheme.categoryLabel(habit.category),
-                                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: catFg,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              child: _MetaChip(
+                                icon: catIcon,
+                                label: AppTheme.categoryLabel(habit.category),
+                                iconColor: catFg,
+                                textColor: catFg,
+                                bgColor: catBg,
                               ),
                             ),
                           ),
-                          if (habit.reminderTime != null) ...[
-                            const SizedBox(width: 12),
-                            Icon(
-                              Icons.schedule,
-                              size: 14,
-                              color: colorScheme.onSurfaceVariant,
+                          // hora recordatorio
+                          if (habit.reminderTime != null)
+                            _MetaChip(
+                              icon: Icons.schedule_rounded,
+                              label: habit.reminderTime!,
+                              iconColor: scheme.onSurfaceVariant,
+                              textColor: scheme.onSurfaceVariant,
+                              bgColor: scheme.surfaceContainerHighest,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              habit.reminderTime!,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                     ],
@@ -160,38 +147,32 @@ class HabitCard extends StatelessWidget {
               ),
             ),
 
-            // menu o check con animacion
+            // icono de completado con bounce / menu
             if (isCompletedToday)
               Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 14),
                 child: TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 400),
                   curve: Curves.elasticOut,
-                  builder: (context, value, child) => Transform.scale(
-                    scale: value,
-                    child: child,
-                  ),
+                  builder: (ctx, v, child) => Transform.scale(scale: v, child: child),
                   child: Icon(
-                    Icons.check_circle,
-                    color: colorScheme.primary,
+                    Icons.check_circle_rounded,
+                    color: scheme.primary,
+                    size: 22,
                   ),
                 ),
               )
             else if (onEdit != null || onDelete != null)
               PopupMenuButton<String>(
-                icon: Icon(
-                  Icons.more_vert,
-                  color: colorScheme.onSurfaceVariant,
-                  size: 20,
-                ),
+                icon: Icon(Icons.more_vert_rounded, color: scheme.onSurfaceVariant, size: 20),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                onSelected: (value) {
-                  if (value == 'edit') onEdit?.call();
-                  if (value == 'delete') onDelete?.call();
+                onSelected: (v) {
+                  if (v == 'edit') onEdit?.call();
+                  if (v == 'delete') onDelete?.call();
                 },
-                itemBuilder: (context) => [
+                itemBuilder: (ctx) => [
                   if (onEdit != null)
                     const PopupMenuItem(
                       value: 'edit',
@@ -220,18 +201,26 @@ class HabitCard extends StatelessWidget {
         ),
       ),
     );
+
+    // separador sutil entre cards dentro de grupo (sin linea 1px visible)
+    if (isInsideGroup) {
+      return card;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: card,
+    );
   }
 }
 
-// circulo con check animado + bounce al completar
+// ==================== CHECK CIRCLE ====================
+
 class _CheckCircle extends StatefulWidget {
   final bool isCompleted;
-  final Color color;
+  final Color categoryColor;
 
-  const _CheckCircle({
-    required this.isCompleted,
-    required this.color,
-  });
+  const _CheckCircle({required this.isCompleted, required this.categoryColor});
 
   @override
   State<_CheckCircle> createState() => _CheckCircleState();
@@ -239,70 +228,116 @@ class _CheckCircle extends StatefulWidget {
 
 class _CheckCircleState extends State<_CheckCircle>
     with SingleTickerProviderStateMixin {
-  late AnimationController _bounceCtrl;
-  late Animation<double> _scaleAnim;
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
-    _bounceCtrl = AnimationController(
+    _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 350),
     );
-    _scaleAnim = TweenSequence<double>([
+    _scale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.3, end: 0.9), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
-    ]).animate(CurvedAnimation(parent: _bounceCtrl, curve: Curves.easeOut));
+    ]).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
   }
 
   @override
   void didUpdateWidget(_CheckCircle oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // bounce solo al marcar como completado
-    if (widget.isCompleted && !oldWidget.isCompleted) {
-      _bounceCtrl.forward(from: 0);
-    }
+    if (widget.isCompleted && !oldWidget.isCompleted) _ctrl.forward(from: 0);
   }
 
   @override
   void dispose() {
-    _bounceCtrl.dispose();
+    _ctrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return AnimatedBuilder(
-      animation: _scaleAnim,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _scaleAnim.value,
-          child: child,
-        );
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: widget.isCompleted ? widget.color : Colors.transparent,
-          border: Border.all(
-            color: widget.isCompleted
-                ? widget.color
-                : widget.color.withValues(alpha: 0.4),
-            width: 2.5,
+      animation: _scale,
+      builder: (ctx, child) => Transform.scale(scale: _scale.value, child: child),
+      child: widget.isCompleted
+          ? Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppTheme.heroGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.check_rounded, size: 18, color: Colors.white),
+            )
+          : AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.transparent,
+                border: Border.all(
+                  color: widget.categoryColor.withValues(alpha: 0.45),
+                  width: 2,
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+// ==================== META CHIP ====================
+
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color iconColor;
+  final Color textColor;
+  final Color bgColor;
+
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.iconColor,
+    required this.textColor,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: iconColor),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+            ),
           ),
-        ),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: widget.isCompleted
-              ? const Icon(Icons.check, size: 18, color: Colors.white,
-                  key: ValueKey('check'))
-              : const SizedBox.shrink(key: ValueKey('empty')),
-        ),
+        ],
       ),
     );
   }
