@@ -271,6 +271,16 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: FloatingActionButton(
+          onPressed: _createHabit,
+          backgroundColor: scheme.primary,
+          foregroundColor: scheme.onPrimary,
+          tooltip: 'Nuevo hábito',
+          child: const Icon(Icons.add_rounded),
+        ),
+      ),
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<List<HabitGroupModel>>(
@@ -385,18 +395,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             onDeleteHabit: _deleteHabit,
                           ),
                         ),
-
-                      // boton crear + espacio para BottomNav glass
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                          child: GradientButton(
-                            onPressed: _createHabit,
-                            label: 'Nuevo hábito',
-                            icon: Icons.add_rounded,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 );
