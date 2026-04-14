@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/chat_message.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/gradient_button.dart';
 
-// Tarjeta que muestra el plan generado por la IA con toggle por habito
+/// Tarjeta del plan generado por la IA con toggle por habito
 class PlanCard extends StatefulWidget {
   final HabitPlanData plan;
   final VoidCallback onSave;
@@ -18,81 +19,86 @@ class _PlanCardState extends State<PlanCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
-      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      margin: const EdgeInsets.only(top: 6, bottom: 10),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // cabecera del plan
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+          // cabecera con gradiente
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryContainer.withValues(alpha: 0.25),
+                  AppTheme.primary.withValues(alpha: 0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
             child: Row(
               children: [
-                Icon(
-                  Icons.auto_awesome,
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
+                if (widget.plan.emoji != null) ...[
+                  Text(widget.plan.emoji!, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: 10),
+                ] else ...[
+                  Icon(Icons.auto_awesome_rounded,
+                      size: 20, color: scheme.primary),
+                  const SizedBox(width: 10),
+                ],
                 Expanded(
-                  child: Text(
-                    widget.plan.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.plan.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
+                      ),
+                      if (widget.plan.description.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          widget.plan.description,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          if (widget.plan.description.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Text(
-                widget.plan.description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ),
 
-          const Divider(height: 1),
-
-          // lista de habitos con checkbox
+          // lista de habitos con check custom
           ...widget.plan.habits.map((habit) => _HabitTile(
                 habit: habit,
                 enabled: !_saved,
-                onChanged: (value) {
-                  setState(() => habit.accepted = value);
-                },
+                onChanged: (value) => setState(() => habit.accepted = value),
               )),
 
           // boton de guardar
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _saved
-                    ? null
-                    : () {
-                        widget.onSave();
-                        setState(() => _saved = true);
-                      },
-                icon: Icon(_saved ? Icons.check : Icons.add),
-                label: Text(
-                  _saved ? 'Hábitos guardados' : 'Añadir hábitos seleccionados',
-                ),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: GradientButton(
+              onPressed: _saved
+                  ? null
+                  : () {
+                      widget.onSave();
+                      setState(() => _saved = true);
+                    },
+              label: _saved ? 'Hábitos guardados' : 'Añadir hábitos seleccionados',
+              icon: _saved ? Icons.check_rounded : Icons.add_rounded,
+              gradient: _saved ? null : AppTheme.heroGradient,
             ),
           ),
         ],
@@ -101,7 +107,7 @@ class _PlanCardState extends State<PlanCard> {
   }
 }
 
-// Fila de habito con checkbox y chip de categoria
+/// Fila de hábito con checkbox custom (circulo con gradiente al activar)
 class _HabitTile extends StatelessWidget {
   final HabitSuggestion habit;
   final bool enabled;
@@ -115,46 +121,109 @@ class _HabitTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CheckboxListTile(
-      value: habit.accepted,
-      onChanged: enabled ? (v) => onChanged(v ?? false) : null,
-      controlAffinity: ListTileControlAffinity.leading,
-      title: Text(
-        habit.title,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (habit.description.isNotEmpty)
+    final scheme = Theme.of(context).colorScheme;
+    final catBg = AppTheme.categoryBg(habit.category);
+    final catFg = AppTheme.categoryFg(habit.category);
+
+    return InkWell(
+      onTap: enabled ? () => onChanged(!habit.accepted) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // check custom con gradiente
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                habit.description,
-                style: Theme.of(context).textTheme.bodySmall,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: habit.accepted ? AppTheme.heroGradient : null,
+                  color: habit.accepted ? null : Colors.transparent,
+                  border: Border.all(
+                    color: habit.accepted
+                        ? Colors.transparent
+                        : scheme.outlineVariant.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
+                ),
+                child: habit.accepted
+                    ? const Icon(Icons.check_rounded,
+                        size: 14, color: Colors.white)
+                    : null,
               ),
             ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            children: [
-              _CategoryChip(category: habit.category),
-              if (habit.suggestedTime != null)
-                _InfoChip(
-                  icon: Icons.schedule,
-                  label: habit.suggestedTime!,
-                ),
-              _InfoChip(
-                icon: Icons.repeat,
-                label: _frequencyLabel(habit.frequency),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    habit.title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: habit.accepted
+                          ? scheme.onSurface.withValues(alpha: 0.5)
+                          : scheme.onSurface,
+                      decoration:
+                          habit.accepted ? TextDecoration.lineThrough : null,
+                      decorationColor:
+                          scheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  if (habit.description.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      habit.description,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      // chip categoria
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: catBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          AppTheme.categoryLabel(habit.category),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: catFg,
+                          ),
+                        ),
+                      ),
+                      if (habit.suggestedTime != null)
+                        _InfoChip(
+                          icon: Icons.schedule_rounded,
+                          label: habit.suggestedTime!,
+                          scheme: scheme,
+                        ),
+                      _InfoChip(
+                        icon: Icons.repeat_rounded,
+                        label: _frequencyLabel(habit.frequency),
+                        scheme: scheme,
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -171,51 +240,40 @@ class _HabitTile extends StatelessWidget {
   }
 }
 
-// Chip con color segun la categoria
-class _CategoryChip extends StatelessWidget {
-  final String category;
-  const _CategoryChip({required this.category});
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ColorScheme scheme;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.scheme,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: AppTheme.categoryBg(category),
+        color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        category,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          color: AppTheme.categoryFg(category),
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-// Chip generico con icono + texto
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: color),
-        ),
-      ],
     );
   }
 }

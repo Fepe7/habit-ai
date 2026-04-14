@@ -11,7 +11,7 @@ import '../../achievements/domain/achivement_model.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 
-// Dashboard con graficas de progreso y estadisticas
+/// Dashboard con gráficas de progreso y estadísticas — Editorial Vitality
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -26,7 +26,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _initialized = false;
   bool _generatingReview = false;
 
-  // datos cargados
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
   List<CategoryStat> _categoryStats = [];
@@ -34,10 +33,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<AchievementModel> _achievements = [];
   bool _loading = true;
 
-  // dias de la semana donde se completo el 100%
-  int get _perfectDays => _weeklyProgress
-      .where((d) => d.total > 0 && d.completed == d.total)
-      .length;
+  int get _perfectDays =>
+      _weeklyProgress.where((d) => d.total > 0 && d.completed == d.total).length;
 
   @override
   void didChangeDependencies() {
@@ -64,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _statsRepo.getTopStreaks(),
         _achievementRepo.watchAchievements().first,
       ]);
-
       if (mounted) {
         setState(() {
           _generalStats = results[0] as Map<String, dynamic>;
@@ -82,101 +78,140 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Progreso'),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _generalStats['totalActive'] == 0
-              ? _buildEmptyState(context)
-              : RefreshIndicator(
-                  onRefresh: _loadStats,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // resumen de hoy
-                        _buildTodaySummary(context)
-                            .animate()
-                            .fadeIn(duration: 400.ms)
-                            .slideY(begin: 0.05),
+      backgroundColor: scheme.surfaceContainerLow,
+      body: SafeArea(
+        bottom: false,
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _generalStats['totalActive'] == 0
+                ? _buildEmptyState(context)
+                : RefreshIndicator(
+                    onRefresh: _loadStats,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverToBoxAdapter(child: _buildHeader(context)),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                          sliver: SliverList(
+                            delegate: SliverChildListDelegate([
+                              _buildTodaySummary(context)
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(begin: 0.05),
 
-                        const SizedBox(height: 16),
+                              const SizedBox(height: 14),
 
-                        // tarjetas de stats
-                        _buildStatCards(context)
-                            .animate()
-                            .fadeIn(delay: 100.ms, duration: 400.ms)
-                            .slideY(begin: 0.05),
+                              _buildStatCards(context)
+                                  .animate()
+                                  .fadeIn(delay: 100.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
 
-                        const SizedBox(height: 16),
+                              const SizedBox(height: 14),
 
-                        // revision semanal con IA
-                        _buildWeeklyReviewCard(context)
-                            .animate()
-                            .fadeIn(delay: 150.ms, duration: 400.ms)
-                            .slideY(begin: 0.05),
+                              _buildWeeklyReviewCard(context)
+                                  .animate()
+                                  .fadeIn(delay: 150.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
 
-                        const SizedBox(height: 20),
+                              const SizedBox(height: 14),
 
-                        // grafica semanal (tappable)
-                        GestureDetector(
-                          onTap: () => context.goNamed('dashboard-weekly'),
-                          child: _buildWeeklyChart(context),
-                        )
-                            .animate()
-                            .fadeIn(delay: 200.ms, duration: 400.ms)
-                            .slideY(begin: 0.05),
+                              GestureDetector(
+                                onTap: () => context.goNamed('dashboard-weekly'),
+                                child: _buildWeeklyChart(context),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 200.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
 
-                        const SizedBox(height: 20),
+                              if (_categoryStats.isNotEmpty) ...[
+                                const SizedBox(height: 14),
+                                GestureDetector(
+                                  onTap: () =>
+                                      context.goNamed('dashboard-categories'),
+                                  child: _buildCategoryChart(context),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 300.ms, duration: 400.ms)
+                                    .slideY(begin: 0.05),
+                              ],
 
-                        // distribucion por categorias (tappable)
-                        if (_categoryStats.isNotEmpty)
-                          GestureDetector(
-                            onTap: () =>
-                                context.goNamed('dashboard-categories'),
-                            child: _buildCategoryChart(context),
-                          )
-                              .animate()
-                              .fadeIn(delay: 300.ms, duration: 400.ms)
-                              .slideY(begin: 0.05),
+                              if (_topStreaks.isNotEmpty) ...[
+                                const SizedBox(height: 14),
+                                GestureDetector(
+                                  onTap: () =>
+                                      context.goNamed('dashboard-streaks'),
+                                  child: _buildTopStreaks(context),
+                                )
+                                    .animate()
+                                    .fadeIn(delay: 400.ms, duration: 400.ms)
+                                    .slideY(begin: 0.05),
+                              ],
 
-                        if (_topStreaks.isNotEmpty) ...[
-                          const SizedBox(height: 20),
-                          // rachas (tappable)
-                          GestureDetector(
-                            onTap: () =>
-                                context.goNamed('dashboard-streaks'),
-                            child: _buildTopStreaks(context),
-                          )
-                              .animate()
-                              .fadeIn(delay: 400.ms, duration: 400.ms)
-                              .slideY(begin: 0.05),
-                        ],
+                              const SizedBox(height: 14),
 
-                        const SizedBox(height: 20),
-
-                        // logros (tappable)
-                        GestureDetector(
-                          onTap: () => context.goNamed('achievements'),
-                          child: _buildAchievements(context),
-                        )
-                            .animate()
-                            .fadeIn(delay: 500.ms, duration: 400.ms)
-                            .slideY(begin: 0.05),
-
-                        const SizedBox(height: 24),
+                              GestureDetector(
+                                onTap: () => context.goNamed('achievements'),
+                                child: _buildAchievements(context),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 500.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
+                            ]),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                ),
+      ),
     );
   }
 
-  // Dispara la generacion manual desde el boton del card
+  // header asimetrico: titulo izquierda, icono derecha
+  Widget _buildHeader(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Progreso',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  'Tu avance esta semana',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLowest,
+              shape: BoxShape.circle,
+              boxShadow: AppTheme.ambientShadow(),
+            ),
+            child: Icon(Icons.insights_rounded, color: scheme.primary, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _generateReviewManually() async {
     setState(() => _generatingReview = true);
     try {
@@ -205,84 +240,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // Card de revision semanal: muestra la ultima o invita a generar
+  // card de revision semanal con IA
   Widget _buildWeeklyReviewCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return StreamBuilder<WeeklyReviewModel?>(
       stream: _aiRepo.watchLatestWeeklyReview(),
       builder: (context, snapshot) {
         final review = snapshot.data;
-        final colorScheme = Theme.of(context).colorScheme;
 
         if (review == null) {
-          // estado vacio: invitar a generar manualmente
-          return Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.accent.withValues(alpha: 0.12),
-                  AppTheme.primary.withValues(alpha: 0.08),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.accent.withValues(alpha: 0.25),
-              ),
-            ),
+          return _SectionCard(
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppTheme.accent.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.insights_rounded,
-                      color: AppTheme.accent, size: 24),
+                  child: Icon(Icons.insights_rounded,
+                      color: AppTheme.tertiary, size: 24),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Revisión semanal',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
-                        'Pide que la IA analice tu semana y te de un resumen de tus habitos, rachas y areas de mejora',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                        'Pide a la IA que analice tu semana: rachas, wins y áreas de mejora',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
-                      const SizedBox(height: 10),
-                      FilledButton.tonalIcon(
-                        onPressed:
-                            _generatingReview ? null : _generateReviewManually,
-                        icon: _generatingReview
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.auto_awesome_rounded, size: 16),
-                        label: Text(
-                          _generatingReview
-                              ? 'Generando…'
-                              : 'Generar ahora',
-                        ),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 38),
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 14),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 36,
+                        child: FilledButton.tonalIcon(
+                          onPressed:
+                              _generatingReview ? null : _generateReviewManually,
+                          icon: _generatingReview
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.auto_awesome_rounded, size: 16),
+                          label: Text(
+                            _generatingReview ? 'Generando…' : 'Generar ahora',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: scheme.primaryContainer.withValues(alpha: 0.3),
+                            foregroundColor: scheme.primary,
+                            minimumSize: const Size(0, 36),
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            shape: const StadiumBorder(),
+                          ),
                         ),
                       ),
                     ],
@@ -293,57 +310,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }
 
-        // ya existe una revision: mostrarla con tap para detalle
         return GestureDetector(
           onTap: () => context.goNamed(
             'weekly-review',
             pathParameters: {'weekId': review.weekId},
           ),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.accent.withValues(alpha: 0.15),
-                  AppTheme.primary.withValues(alpha: 0.08),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppTheme.accent.withValues(alpha: 0.3),
-              ),
+          child: _SectionCard(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.tertiaryContainer.withValues(alpha: 0.2),
+                scheme.primaryContainer.withValues(alpha: 0.12),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.insights_rounded,
-                        color: AppTheme.accent, size: 20),
+                    Icon(Icons.insights_rounded,
+                        color: AppTheme.tertiary, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Revisión semanal',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                     Text(
                       review.weekId,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppTheme.accent,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppTheme.tertiary,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(width: 4),
                     Icon(Icons.chevron_right_rounded,
                         size: 20,
-                        color: colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.5)),
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
                   ],
                 ),
                 if (review.focus.isNotEmpty) ...[
@@ -353,11 +358,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          height: 1.4,
-                          color: colorScheme.onSurface,
-                        ),
+                      height: 1.5,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
@@ -372,13 +376,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           : const Icon(Icons.refresh_rounded, size: 16),
                       label: Text(
                         _generatingReview ? 'Regenerando…' : 'Regenerar',
-                      ),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppTheme.accent,
-                        minimumSize: const Size(0, 32),
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 10),
-                        visualDensity: VisualDensity.compact,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -392,37 +391,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.bar_chart_rounded,
-              size: 64,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.4),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              child: Icon(Icons.bar_chart_rounded,
+                  size: 36, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              'Sin datos todavia',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+              'Sin datos todavía',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontSize: 20,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Crea habitos y completa check-ins para ver tus estadisticas aqui',
+              'Crea hábitos y completa check-ins para ver tus estadísticas aquí',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withValues(alpha: 0.7),
-                  ),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],
         ),
@@ -430,99 +428,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // tarjeta grande con progreso de hoy
+  // hero card con progreso de hoy
   Widget _buildTodaySummary(BuildContext context) {
     final completed = _generalStats['completedToday'] ?? 0;
     final total = _generalStats['todayTotal'] ?? 0;
     final percentage = total == 0 ? 0.0 : completed / total;
-    final colorScheme = Theme.of(context).colorScheme;
+    final allDone = percentage == 1.0 && total > 0;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primary.withValues(alpha: 0.15),
-            AppTheme.secondary.withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppTheme.primary.withValues(alpha: 0.2),
-        ),
+        gradient: allDone ? AppTheme.streakGradient : AppTheme.heroGradient,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: AppTheme.ambientShadow(opacity: 0.14),
       ),
-      child: Row(
-        children: [
-          // circulo de progreso
-          SizedBox(
-            width: 72,
-            height: 72,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: percentage,
-                  strokeWidth: 6,
-                  backgroundColor:
-                      colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
-                  valueColor: AlwaysStoppedAnimation(
-                    percentage == 1.0 ? AppTheme.success : AppTheme.primary,
-                  ),
-                  strokeCap: StrokeCap.round,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Row(
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: percentage),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (ctx, v, _) => SizedBox(
+                width: 72,
+                height: 72,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: v,
+                      strokeWidth: 6,
+                      backgroundColor: Colors.white.withValues(alpha: 0.25),
+                      valueColor: const AlwaysStoppedAnimation(Colors.white),
+                      strokeCap: StrokeCap.round,
+                    ),
+                    Center(
+                      child: allDone && percentage == 1.0
+                          ? const Icon(Icons.check_rounded,
+                              color: Colors.white, size: 28)
+                          : Text(
+                              '${(percentage * 100).round()}%',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${(percentage * 100).round()}%',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: percentage == 1.0
-                            ? AppTheme.success
-                            : AppTheme.primary,
-                      ),
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hoy',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  total == 0
-                      ? 'No tienes habitos programados hoy'
-                      : '$completed de $total completados',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-                if (percentage == 1.0 && total > 0) ...[
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    allDone ? '¡Día perfecto!' : 'Hoy',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 4),
                   Text(
-                    'Dia perfecto!',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.success,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    total == 0
+                        ? 'No tienes hábitos programados hoy'
+                        : '$completed de $total completados',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // fila de stats: racha, completados, activos
+  // fila de 3 stat cards
   Widget _buildStatCards(BuildContext context) {
     return Row(
       children: [
@@ -532,8 +518,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Mejor racha',
             value: '${_generalStats['bestStreak'] ?? 0}',
             suffix: 'd',
-            color: AppTheme.accent,
-            bgColor: const Color(0xFFFEF3C7),
+            color: AppTheme.tertiary,
+            bgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
           ),
         ),
         const SizedBox(width: 10),
@@ -542,57 +528,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.check_circle_rounded,
             label: 'Completados',
             value: '${_generalStats['totalCompletedAllTime'] ?? 0}',
-            color: AppTheme.success,
-            bgColor: const Color(0xFFCCFBF1),
+            color: AppTheme.primary,
+            bgColor: AppTheme.primaryContainer.withValues(alpha: 0.2),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _StatCard(
             icon: Icons.stars_rounded,
-            label: 'Dias perfectos',
+            label: 'Días perfectos',
             value: '$_perfectDays',
             color: AppTheme.secondary,
-            bgColor: const Color(0xFFE0F2FE),
+            bgColor: AppTheme.secondaryContainer.withValues(alpha: 0.18),
           ),
         ),
       ],
     );
   }
 
-  // grafica de barras con el progreso semanal
+  // grafica de barras semanal
   Widget _buildWeeklyChart(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
-      ),
+    return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.trending_up_rounded,
-                  size: 20, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Ultima semana',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
-            ],
+          _SectionHeader(
+            icon: Icons.trending_up_rounded,
+            label: 'Última semana',
+            color: scheme.primary,
+            hasChevron: true,
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -603,13 +569,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 maxY: 100,
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
-                    tooltipRoundedRadius: 8,
+                    tooltipRoundedRadius: 12,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       final progress = _weeklyProgress[group.x.toInt()];
                       return BarTooltipItem(
                         '${progress.completed}/${progress.total}',
                         TextStyle(
-                          color: colorScheme.onInverseSurface,
+                          color: scheme.onInverseSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -619,12 +585,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 titlesData: FlTitlesData(
                   show: true,
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
@@ -635,8 +597,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           return Text(
                             '${value.toInt()}%',
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.6),
+                              color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
                               fontSize: 10,
                             ),
                           );
@@ -656,13 +617,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Text(
                               _dayLabel(_weeklyProgress[index].date),
                               style: TextStyle(
-                                color: colorScheme.onSurfaceVariant
-                                    .withValues(alpha: 0.7),
+                                color: _isToday(_weeklyProgress[index].date)
+                                    ? scheme.primary
+                                    : scheme.onSurfaceVariant.withValues(alpha: 0.6),
                                 fontSize: 11,
-                                fontWeight: _isToday(
-                                        _weeklyProgress[index].date)
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                                fontWeight: _isToday(_weeklyProgress[index].date)
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
                           );
@@ -672,36 +633,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
+                // solo lineas horizontales muy sutiles, sin bordes
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: 50,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+                    color: scheme.outlineVariant.withValues(alpha: 0.15),
                     strokeWidth: 1,
+                    dashArray: [4, 4],
                   ),
                 ),
                 borderData: FlBorderData(show: false),
                 barGroups: List.generate(_weeklyProgress.length, (i) {
                   final progress = _weeklyProgress[i];
-                  final pct = (progress.percentage * 100);
+                  final pct = progress.percentage * 100;
                   final isToday = _isToday(progress.date);
+                  final isDone = pct >= 100;
 
                   return BarChartGroupData(
                     x: i,
                     barRods: [
                       BarChartRodData(
                         toY: pct == 0 && progress.total > 0 ? 2 : pct,
+                        gradient: isDone
+                            ? AppTheme.streakGradient
+                            : isToday
+                                ? AppTheme.heroGradient
+                                : LinearGradient(
+                                    colors: [
+                                      scheme.primary.withValues(alpha: 0.5),
+                                      scheme.primaryContainer.withValues(alpha: 0.7),
+                                    ],
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                  ),
                         color: progress.total == 0
-                            ? colorScheme.outlineVariant.withValues(alpha: 0.3)
-                            : pct >= 100
-                                ? AppTheme.success
-                                : isToday
-                                    ? AppTheme.primary
-                                    : AppTheme.primary.withValues(alpha: 0.6),
-                        width: 24,
+                            ? scheme.outlineVariant.withValues(alpha: 0.2)
+                            : null,
+                        width: 22,
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(6),
+                          top: Radius.circular(8),
                         ),
                       ),
                     ],
@@ -717,56 +689,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // distribucion por categorias con barras horizontales
   Widget _buildCategoryChart(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final totalHabits = _categoryStats.fold<int>(0, (sum, c) => sum + c.count);
+    final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
-      ),
+    return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.pie_chart_rounded,
-                  size: 20, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Por categoria',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
-            ],
+          _SectionHeader(
+            icon: Icons.pie_chart_rounded,
+            label: 'Por categoría',
+            color: scheme.primary,
+            hasChevron: true,
           ),
           const SizedBox(height: 16),
           ..._categoryStats.map((stat) {
             final fraction = stat.count / totalHabits;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 14),
               child: Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: AppTheme.categoryBg(stat.category),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       AppTheme.categoryIcon(stat.category),
-                      size: 16,
+                      size: 18,
                       color: AppTheme.categoryFg(stat.category),
                     ),
                   ),
@@ -780,31 +732,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           children: [
                             Text(
                               AppTheme.categoryLabel(stat.category),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w500),
                             ),
                             Text(
                               '${stat.count}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(6),
                           child: LinearProgressIndicator(
                             value: fraction,
-                            minHeight: 6,
-                            backgroundColor: colorScheme.outlineVariant
-                                .withValues(alpha: 0.2),
+                            minHeight: 5,
+                            backgroundColor: scheme.outlineVariant.withValues(alpha: 0.15),
                             valueColor: AlwaysStoppedAnimation(
                               AppTheme.categoryFg(stat.category),
                             ),
@@ -824,50 +768,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // top rachas activas
   Widget _buildTopStreaks(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
-      ),
+    return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.local_fire_department_rounded,
-                  size: 20, color: AppTheme.accent),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Rachas activas',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded,
-                  size: 20,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
-            ],
+          _SectionHeader(
+            icon: Icons.local_fire_department_rounded,
+            label: 'Rachas activas',
+            color: AppTheme.tertiary,
+            hasChevron: true,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           ..._topStreaks.map((habit) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: AppTheme.categoryBg(habit.category),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       AppTheme.categoryIcon(habit.category),
@@ -879,33 +801,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: Text(
                       habit.title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w500),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppTheme.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_fire_department_rounded,
-                            size: 14, color: AppTheme.accent),
+                        Icon(Icons.local_fire_department_rounded,
+                            size: 14, color: AppTheme.tertiary),
                         const SizedBox(width: 4),
                         Text(
                           '${habit.currentStreak}d',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.accent,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: AppTheme.tertiary,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
@@ -919,61 +838,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // seccion de logros con los ultimos desbloqueados
+  // logros recientes
   Widget _buildAchievements(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final unlockedTypes = _achievements.map((a) => a.type).toSet();
     final total = AchievementCatalog.all.length;
     final count = unlockedTypes.length;
-
-    // mostrar hasta 4 logros recientes
     final recent = _achievements.take(4).toList();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-        ),
-      ),
+    return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events_rounded,
-                  size: 20, color: AppTheme.accent),
+              Icon(Icons.emoji_events_rounded,
+                  size: 20, color: AppTheme.tertiary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Logros',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
-              Text(
-                '$count/$total',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppTheme.accent,
-                      fontWeight: FontWeight.bold,
-                    ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '$count/$total',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppTheme.tertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded,
                   size: 20,
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (recent.isEmpty)
             Text(
-              'Completa habitos para desbloquear logros',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                  ),
+              'Completa hábitos para desbloquear logros',
+              style: Theme.of(context).textTheme.bodySmall,
             )
           else
             Row(
@@ -983,27 +895,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 return Column(
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         color: info.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: info.color.withValues(alpha: 0.25),
-                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(info.icon, color: info.color, size: 22),
+                      child: Icon(info.icon, color: info.color, size: 24),
                     ),
                     const SizedBox(height: 6),
                     SizedBox(
-                      width: 60,
+                      width: 64,
                       child: Text(
                         info.title,
-                        style:
-                            Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                        style: Theme.of(context).textTheme.labelSmall,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1018,7 +923,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // helpers de fecha
   String _dayLabel(DateTime date) {
     if (_isToday(date)) return 'Hoy';
     const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -1027,12 +931,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
+    return date.year == now.year && date.month == now.month && date.day == now.day;
   }
 }
 
+// ==================== WIDGETS INTERNOS ====================
+
+/// Card de sección reutilizable — surfaceContainerLowest + ambient shadow + sin bordes
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+  final LinearGradient? gradient;
+
+  const _SectionCard({required this.child, this.gradient});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: gradient == null ? scheme.surfaceContainerLowest : null,
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Header de sección con icono + label + chevron opcional
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool hasChevron;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.hasChevron = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        if (hasChevron)
+          Icon(Icons.chevron_right_rounded,
+              size: 20,
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.5)),
+      ],
+    );
+  }
+}
+
+/// Stat card compacta para la fila de 3 métricas
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1052,33 +1016,43 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: bgColor.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(16),
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.ambientShadow(),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 26),
-          const SizedBox(height: 8),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 10),
           RichText(
             text: TextSpan(
               children: [
                 TextSpan(
                   text: value,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
                 ),
                 if (suffix != null)
                   TextSpan(
                     text: suffix,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: color.withValues(alpha: 0.7),
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: color.withValues(alpha: 0.7),
+                    ),
                   ),
               ],
             ),
@@ -1086,9 +1060,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.labelSmall,
             textAlign: TextAlign.center,
           ),
         ],

@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../domain/habit_model.dart';
 
-// Bottom sheet para editar un habito existente
+// Bottom sheet para editar un hábito existente
 class EditHabitSheet extends StatefulWidget {
   final HabitModel habit;
 
   const EditHabitSheet({super.key, required this.habit});
 
-  // abrir el sheet y devolver el habito editado (o null si cancela)
+  // abrir el sheet y devolver el hábito editado (o null si cancela)
   static Future<HabitModel?> show(BuildContext context, HabitModel habit) {
     return showModalBottomSheet<HabitModel>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+      ),
       builder: (_) => EditHabitSheet(habit: habit),
     );
   }
@@ -90,14 +94,14 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
         top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 32,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -107,25 +111,25 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             // barra indicadora
             Center(
               child: Container(
-                width: 40,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.outlineVariant,
+                  color: scheme.outlineVariant.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             Text(
               'Editar hábito',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // titulo
+            // título
             TextField(
               controller: _titleCtrl,
               decoration: const InputDecoration(
@@ -136,7 +140,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             ),
             const SizedBox(height: 16),
 
-            // descripcion
+            // descripción
             TextField(
               controller: _descCtrl,
               decoration: const InputDecoration(
@@ -146,14 +150,11 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // categoria
-            Text(
-              'Categoría',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
+            // sección categoría
+            _SheetLabel(label: 'Categoría'),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -161,37 +162,55 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 final selected = cat == _category;
                 final bg = AppTheme.categoryBg(cat);
                 final fg = AppTheme.categoryFg(cat);
-                return ChoiceChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        AppTheme.categoryIcon(cat),
-                        size: 16,
-                        color: selected ? fg : colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(AppTheme.categoryLabel(cat)),
-                    ],
+                return GestureDetector(
+                  onTap: () => setState(() => _category = cat),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? bg
+                          : scheme.surfaceContainerHighest.withValues(
+                              alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: selected
+                          ? null
+                          : Border.all(
+                              color:
+                                  scheme.outlineVariant.withValues(alpha: 0.15),
+                            ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          AppTheme.categoryIcon(cat),
+                          size: 14,
+                          color: selected ? fg : scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppTheme.categoryLabel(cat),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: selected ? fg : scheme.onSurfaceVariant,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  selected: selected,
-                  selectedColor: bg,
-                  labelStyle: TextStyle(
-                    color: selected ? fg : colorScheme.onSurfaceVariant,
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                  onSelected: (_) => setState(() => _category = cat),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // dias de la semana
-            Text(
-              'Días de la semana',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
+            // sección días
+            _SheetLabel(label: 'Días de la semana'),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (i) {
@@ -209,26 +228,23 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                     });
                   },
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 40,
-                    height: 40,
+                    duration: const Duration(milliseconds: 180),
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: selected ? colorScheme.primary : Colors.transparent,
-                      border: Border.all(
-                        color: selected
-                            ? colorScheme.primary
-                            : colorScheme.outlineVariant,
-                        width: 1.5,
-                      ),
+                      color: selected
+                          ? scheme.primary
+                          : scheme.surfaceContainerHighest.withValues(
+                              alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Center(
                       child: Text(
                         _dayNames[i],
                         style: TextStyle(
                           color: selected
-                              ? colorScheme.onPrimary
-                              : colorScheme.onSurfaceVariant,
+                              ? Colors.white
+                              : scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -238,43 +254,109 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 );
               }),
             ),
-            const SizedBox(height: 20),
-
-            // hora recordatorio
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.schedule, color: colorScheme.primary),
-              title: Text(
-                _reminderTime != null
-                    ? 'Recordatorio: $_reminderTime'
-                    : 'Sin recordatorio',
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_reminderTime != null)
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 20),
-                      onPressed: () => setState(() => _reminderTime = null),
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 20),
-                    onPressed: _pickTime,
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 24),
 
-            // boton guardar
-            FilledButton.icon(
+            // recordatorio
+            _SheetLabel(label: 'Recordatorio'),
+            const SizedBox(height: 12),
+            _ReminderTile(
+              reminderTime: _reminderTime,
+              onPickTime: _pickTime,
+              onClear: () => setState(() => _reminderTime = null),
+            ),
+            const SizedBox(height: 28),
+
+            // CTA
+            GradientButton(
               onPressed: _save,
-              icon: const Icon(Icons.save_rounded),
-              label: const Text('Guardar cambios'),
+              label: 'Guardar cambios',
+              icon: Icons.save_rounded,
+              gradient: AppTheme.heroGradient,
             ),
             const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ==================== HELPERS ====================
+
+class _SheetLabel extends StatelessWidget {
+  final String label;
+  const _SheetLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: scheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _ReminderTile extends StatelessWidget {
+  final String? reminderTime;
+  final VoidCallback onPickTime;
+  final VoidCallback onClear;
+
+  const _ReminderTile({
+    required this.reminderTime,
+    required this.onPickTime,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasReminder = reminderTime != null;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(Icons.schedule_rounded, size: 18, color: scheme.primary),
+        ),
+        title: Text(
+          hasReminder ? reminderTime! : 'Sin recordatorio',
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w500,
+            color: hasReminder ? scheme.onSurface : scheme.onSurfaceVariant,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (hasReminder)
+              IconButton(
+                icon: Icon(Icons.close_rounded,
+                    size: 18, color: scheme.onSurfaceVariant),
+                onPressed: onClear,
+              ),
+            IconButton(
+              icon: Icon(Icons.chevron_right_rounded,
+                  size: 20, color: scheme.onSurfaceVariant),
+              onPressed: onPickTime,
+            ),
+          ],
+        ),
+        onTap: onPickTime,
       ),
     );
   }

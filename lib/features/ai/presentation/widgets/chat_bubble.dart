@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../domain/chat_message.dart';
+import '../../../../core/theme/app_theme.dart';
 
-// Burbuja de mensaje del chat
+/// Burbuja de mensaje del chat
+/// Usuario: primaryContainer con radio pill asimetrico
+/// IA: surfaceContainerLowest con ghost border
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
 
@@ -9,36 +12,64 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final isUser = message.isUser;
 
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.78,
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isUser
-              ? colorScheme.primary
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isUser ? 16 : 4),
-            bottomRight: Radius.circular(isUser ? 4 : 16),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!isUser) ...[
+            Container(
+              width: 28,
+              height: 28,
+              margin: const EdgeInsets.only(right: 8, bottom: 2),
+              decoration: BoxDecoration(
+                gradient: AppTheme.heroGradient,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+          ],
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.72,
+            ),
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              // usuario: gradient sutil; IA: surface blanco con ghost border
+              color: isUser ? null : scheme.surfaceContainerLowest,
+              gradient: isUser ? AppTheme.heroGradient : null,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(20),
+                topRight: const Radius.circular(20),
+                bottomLeft: Radius.circular(isUser ? 20 : 4),
+                bottomRight: Radius.circular(isUser ? 4 : 20),
+              ),
+              border: isUser
+                  ? null
+                  : Border.all(
+                      color: scheme.outlineVariant.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+              boxShadow: AppTheme.ambientShadow(),
+            ),
+            child: Text(
+              message.text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isUser ? Colors.white : scheme.onSurface,
+                height: 1.45,
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          message.text,
-          style: TextStyle(
-            color: isUser
-                ? colorScheme.onPrimary
-                : colorScheme.onSurface,
-          ),
-        ),
+        ],
       ),
     );
   }

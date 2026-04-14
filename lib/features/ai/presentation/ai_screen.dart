@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,7 +16,7 @@ import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 
-// Pantalla de chat con el asistente IA
+/// Pantalla de chat con el asistente IA
 class AIScreen extends StatefulWidget {
   const AIScreen({super.key});
 
@@ -32,7 +34,6 @@ class _AIScreenState extends State<AIScreen> {
   late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
 
-  // sugerencias rapidas para guiar al usuario
   static const _suggestions = [
     'Quiero hacer ejercicio y comer mejor',
     'Necesito ser más productivo',
@@ -148,7 +149,6 @@ class _AIScreenState extends State<AIScreen> {
     if (accepted.isEmpty) return;
 
     try {
-      // 1. crear el grupo con el titulo del plan
       final group = HabitGroupModel(
         id: '',
         title: plan.title,
@@ -158,7 +158,6 @@ class _AIScreenState extends State<AIScreen> {
       );
       final groupId = await _groupRepo.createGroup(group);
 
-      // 2. crear los habitos asignados al grupo
       final habits = accepted
           .map((h) => GeneratedHabitModel(
                 title: h.title,
@@ -178,28 +177,21 @@ class _AIScreenState extends State<AIScreen> {
             content: Text(
               '${plan.emoji ?? "✨"} "${plan.title}" — ${accepted.length} hábitos añadidos',
             ),
-            backgroundColor: AppTheme.success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
     } catch (e) {
-      debugPrint('Error guardando plan: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: AppTheme.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
       }
       return;
     }
 
-    // logros aparte para que no rompan el flujo
     try {
       final unlocked = await _achievementChecker.checkAfterAIPlan();
       if (unlocked.isNotEmpty && mounted) {
@@ -208,112 +200,231 @@ class _AIScreenState extends State<AIScreen> {
     } catch (_) {}
   }
 
-  // solo mostrar sugerencias si es el primer mensaje (bienvenida)
   bool get _showSuggestions => _messages.length == 1 && !_isLoading;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Asistente IA'),
-      ),
-      body: Column(
-        children: [
-          // lista de mensajes
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _messages.length +
-                  (_isLoading ? 1 : 0) +
-                  (_showSuggestions ? 1 : 0),
-              itemBuilder: (context, index) {
-                // sugerencias al final si aplica
-                if (_showSuggestions && index == _messages.length) {
-                  return _SuggestionChips(
-                    suggestions: _suggestions,
-                    onTap: (s) => _sendMessage(s),
-                  );
-                }
-
-                // indicador de carga
-                if (index == _messages.length + (_showSuggestions ? 1 : 0) ||
-                    (_isLoading && index == _messages.length)) {
-                  return const _TypingIndicator();
-                }
-
-                final message = _messages[index];
-                return Column(
-                  children: [
-                    ChatBubble(message: message)
-                        .animate()
-                        .fadeIn(duration: 250.ms)
-                        .slideY(begin: 0.05),
-                    if (message.plan != null)
-                      PlanCard(
-                        plan: message.plan!,
-                        onSave: () => _saveHabits(message.plan!),
-                      ).animate().fadeIn(delay: 100.ms, duration: 350.ms).slideY(begin: 0.08),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          // input de texto
-          Container(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 8,
-              top: 8,
-              bottom: MediaQuery.of(context).padding.bottom + 8,
-            ),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              border: Border(
-                top: BorderSide(
-                  color: colorScheme.outlineVariant.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _sendMessage(),
-                    maxLines: 4,
-                    minLines: 1,
-                    decoration: InputDecoration(
-                      hintText: 'Escribe tus metas...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
+      backgroundColor: scheme.surfaceContainerLow,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // header asimetrico
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Asistente IA',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Powered by Gemini',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: _isLoading ? null : () => _sendMessage(),
-                  icon: const Icon(Icons.send_rounded),
-                ),
-              ],
+                  // indicador Gemini
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryContainer.withValues(alpha: 0.3),
+                          AppTheme.primary.withValues(alpha: 0.12),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.auto_awesome_rounded,
+                            size: 14, color: scheme.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Gemini',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // lista de mensajes
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                itemCount: _messages.length +
+                    (_isLoading ? 1 : 0) +
+                    (_showSuggestions ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (_showSuggestions && index == _messages.length) {
+                    return _SuggestionChips(
+                      suggestions: _suggestions,
+                      onTap: _sendMessage,
+                    );
+                  }
+
+                  if (_isLoading &&
+                      index == _messages.length + (_showSuggestions ? 1 : 0)) {
+                    return const _TypingIndicator();
+                  }
+
+                  if (index >= _messages.length) return const SizedBox.shrink();
+
+                  final message = _messages[index];
+                  return Column(
+                    children: [
+                      ChatBubble(message: message)
+                          .animate()
+                          .fadeIn(duration: 250.ms)
+                          .slideY(begin: 0.05),
+                      if (message.plan != null)
+                        PlanCard(
+                          plan: message.plan!,
+                          onSave: () => _saveHabits(message.plan!),
+                        )
+                            .animate()
+                            .fadeIn(delay: 100.ms, duration: 350.ms)
+                            .slideY(begin: 0.08),
+                    ],
+                  );
+                },
+              ),
+            ),
+
+            // input bar glassmorphism
+            _InputBar(
+              controller: _controller,
+              isLoading: _isLoading,
+              onSend: _sendMessage,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// chips de sugerencias rapidas
+// ==================== INPUT BAR GLASS ====================
+
+class _InputBar extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isLoading;
+  final VoidCallback onSend;
+
+  const _InputBar({
+    required this.controller,
+    required this.isLoading,
+    required this.onSend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bottom = MediaQuery.of(context).padding.bottom;
+
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(16, 10, 16, bottom + 10),
+          decoration: BoxDecoration(
+            color: scheme.surface.withValues(alpha: 0.72),
+            border: Border(
+              top: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => onSend(),
+                    maxLines: 4,
+                    minLines: 1,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      hintText: 'Escribe tus metas...',
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // boton enviar con gradiente
+              GestureDetector(
+                onTap: isLoading ? null : onSend,
+                child: AnimatedOpacity(
+                  opacity: isLoading ? 0.5 : 1,
+                  duration: const Duration(milliseconds: 200),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: AppTheme.heroGradient,
+                      shape: BoxShape.circle,
+                      boxShadow: AppTheme.ambientShadow(opacity: 0.15),
+                    ),
+                    child: isLoading
+                        ? const Padding(
+                            padding: EdgeInsets.all(14),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded,
+                            color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ==================== SUGGESTION CHIPS ====================
+
 class _SuggestionChips extends StatelessWidget {
   final List<String> suggestions;
   final ValueChanged<String> onTap;
@@ -322,7 +433,7 @@ class _SuggestionChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -333,11 +444,19 @@ class _SuggestionChips extends StatelessWidget {
           return ActionChip(
             label: Text(
               entry.value,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: scheme.onSurface,
+              ),
             ),
-            avatar: Icon(Icons.auto_awesome, size: 16, color: colorScheme.primary),
-            backgroundColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            avatar: Icon(Icons.auto_awesome_rounded,
+                size: 14, color: scheme.primary),
+            backgroundColor: scheme.surfaceContainerLowest,
+            side: BorderSide.none,
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             onPressed: () => onTap(entry.value),
           )
               .animate()
@@ -352,13 +471,14 @@ class _SuggestionChips extends StatelessWidget {
   }
 }
 
-// animacion de "pensando..."
+// ==================== TYPING INDICATOR ====================
+
 class _TypingIndicator extends StatelessWidget {
   const _TypingIndicator();
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Align(
       alignment: Alignment.centerLeft,
@@ -366,8 +486,17 @@ class _TypingIndicator extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
+          color: scheme.surfaceContainerLowest,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomLeft: Radius.circular(4),
+            bottomRight: Radius.circular(20),
+          ),
+          border: Border.all(
+            color: scheme.outlineVariant.withValues(alpha: 0.15),
+          ),
+          boxShadow: AppTheme.ambientShadow(),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -377,13 +506,15 @@ class _TypingIndicator extends StatelessWidget {
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: colorScheme.primary,
+                color: scheme.primary,
               ),
             ),
             const SizedBox(width: 8),
             Text(
               'Pensando...',
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

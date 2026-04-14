@@ -6,9 +6,10 @@ import '../data/habit_repository.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/gradient_button.dart';
 import 'widgets/edit_habit_sheet.dart';
 
-// Pantalla de detalle de un habito: info, rachas, historial de check-ins
+// Pantalla de detalle de un hábito con diseño Editorial Vitality
 class HabitDetailScreen extends StatefulWidget {
   final String habitId;
 
@@ -39,7 +40,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
     final todayLog = await _habitRepo.getTodayLog(widget.habitId);
 
-    // ultimos 30 dias de logs
+    // últimos 30 días de logs
     final now = DateTime.now();
     final thirtyDaysAgo = now.subtract(const Duration(days: 30));
     final logs = await _habitRepo.getLogsByDateRange(
@@ -61,6 +62,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   Future<void> _toggleToday() async {
     if (_habit == null) return;
     final wasCompleted = _completedToday;
+    HapticFeedback.mediumImpact();
 
     setState(() => _completedToday = !wasCompleted);
 
@@ -132,17 +134,18 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     if (_loading) {
       return Scaffold(
-        appBar: AppBar(),
+        backgroundColor: scheme.surfaceContainerLow,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_habit == null) {
       return Scaffold(
+        backgroundColor: scheme.surfaceContainerLow,
         appBar: AppBar(),
         body: const Center(child: Text('Hábito no encontrado')),
       );
@@ -154,182 +157,256 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     final catIcon = AppTheme.categoryIcon(habit.category);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Detalle'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Editar',
-            onPressed: _editHabit,
-          ),
-          IconButton(
-            icon: Icon(Icons.delete_outline, color: AppTheme.error),
-            tooltip: 'Eliminar',
-            onPressed: _deleteHabit,
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // cabecera con titulo, categoria e icono
-          _HeaderCard(
+      backgroundColor: scheme.surfaceContainerLow,
+      body: CustomScrollView(
+        slivers: [
+          // header hero con gradiente
+          _HeroHeader(
             habit: habit,
             catBg: catBg,
             catFg: catFg,
             catIcon: catIcon,
-          ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
-          const SizedBox(height: 16),
-
-          // rachas
-          _StreakCard(habit: habit)
-              .animate()
-              .fadeIn(delay: 100.ms, duration: 300.ms)
-              .slideY(begin: 0.05),
-          const SizedBox(height: 16),
-
-          // boton de check-in
-          _CheckInButton(
             isCompleted: _completedToday,
-            onToggle: _toggleToday,
-          ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
-          const SizedBox(height: 24),
+            onEdit: _editHabit,
+            onDelete: _deleteHabit,
+          ),
 
-          // historial ultimos 30 dias
-          Text(
-            'Últimos 30 días',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+          // contenido principal
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // tarjeta de rachas con números display-lg
+                _StreakCard(habit: habit)
+                    .animate()
+                    .fadeIn(delay: 100.ms, duration: 300.ms)
+                    .slideY(begin: 0.05),
+                const SizedBox(height: 16),
+
+                // botón check-in
+                _CheckInButton(
+                  isCompleted: _completedToday,
+                  onToggle: _toggleToday,
+                ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                const SizedBox(height: 24),
+
+                // sección actividad últimos 30 días
+                _SectionLabel(label: 'Últimos 30 días')
+                    .animate()
+                    .fadeIn(delay: 300.ms, duration: 300.ms),
+                const SizedBox(height: 12),
+
+                _ActivityGrid(logs: _recentLogs)
+                    .animate()
+                    .fadeIn(delay: 350.ms, duration: 300.ms),
+                const SizedBox(height: 24),
+
+                // info adicional
+                _SectionLabel(label: 'Información')
+                    .animate()
+                    .fadeIn(delay: 400.ms, duration: 300.ms),
+                const SizedBox(height: 12),
+
+                _InfoCard(habit: habit)
+                    .animate()
+                    .fadeIn(delay: 450.ms, duration: 300.ms)
+                    .slideY(begin: 0.05),
+              ]),
             ),
-          ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
-          const SizedBox(height: 12),
-
-          _ActivityGrid(
-            logs: _recentLogs,
-            catFg: catFg,
-          ).animate().fadeIn(delay: 350.ms, duration: 300.ms),
-          const SizedBox(height: 24),
-
-          // info extra
-          _InfoSection(habit: habit, colorScheme: colorScheme)
-              .animate()
-              .fadeIn(delay: 400.ms, duration: 300.ms),
+          ),
         ],
       ),
     );
   }
 }
 
-// cabecera con nombre, descripcion y categoria
-class _HeaderCard extends StatelessWidget {
+// ==================== HEADER HERO ====================
+
+class _HeroHeader extends StatelessWidget {
   final HabitModel habit;
   final Color catBg;
   final Color catFg;
   final IconData catIcon;
+  final bool isCompleted;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _HeaderCard({
+  const _HeroHeader({
     required this.habit,
     required this.catBg,
     required this.catFg,
     required this.catIcon,
+    required this.isCompleted,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: catBg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(catIcon, color: catFg, size: 28),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        habit.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+    final scheme = Theme.of(context).colorScheme;
+
+    return SliverAppBar(
+      expandedHeight: 220,
+      pinned: true,
+      backgroundColor: scheme.surfaceContainerLow,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      leading: IconButton(
+        icon: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.25),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.arrow_back_rounded,
+            size: 18,
+            color: Colors.white,
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      actions: [
+        IconButton(
+          icon: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.edit_outlined,
+              size: 18,
+              color: Colors.white,
+            ),
+          ),
+          onPressed: onEdit,
+        ),
+        IconButton(
+          icon: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.delete_outline_rounded,
+              size: 18,
+              color: Colors.white,
+            ),
+          ),
+          onPressed: onDelete,
+        ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: isCompleted
+                ? AppTheme.streakGradient
+                : AppTheme.heroGradient,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  // icono categoría grande
+                  Hero(
+                    tag: 'habit_cat_${habit.id}',
+                    child: Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 4),
-                      Hero(
-                        tag: 'habit_cat_${habit.id}',
-                        child: Material(
-                          color: Colors.transparent,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: catBg,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(catIcon, size: 12, color: catFg),
-                                const SizedBox(width: 4),
-                                Text(
-                                  AppTheme.categoryLabel(habit.category),
-                                  style: TextStyle(
-                                    color: catFg,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                      child: Icon(catIcon, color: Colors.white, size: 36),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // chip categoría
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            AppTheme.categoryLabel(habit.category),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            if (habit.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                habit.description,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            if (habit.isAIGenerated) ...[
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.auto_awesome, size: 14, color: AppTheme.accent),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Generado por IA',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppTheme.accent,
-                      fontWeight: FontWeight.w600,
+                        const SizedBox(height: 8),
+                        Text(
+                          habit.title,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (habit.isAIGenerated) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome_rounded,
+                                size: 12,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Generado por IA',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
               ),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// tarjeta de rachas
+// ==================== STREAK CARD ====================
+
 class _StreakCard extends StatelessWidget {
   final HabitModel habit;
 
@@ -337,81 +414,102 @@ class _StreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            Expanded(
-              child: _StreakStat(
-                icon: Icons.local_fire_department,
-                iconColor: AppTheme.accent,
-                label: 'Racha actual',
-                value: '${habit.currentStreak}',
-                unit: 'días',
-              ),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: Row(
+        children: [
+          // racha actual con glow terciario
+          Expanded(
+            child: _StreakColumn(
+              icon: Icons.local_fire_department_rounded,
+              iconColor: scheme.tertiary,
+              glowColor: scheme.tertiaryContainer.withValues(alpha: 0.4),
+              value: '${habit.currentStreak}',
+              label: 'Racha actual',
             ),
-            Container(
-              width: 1,
-              height: 48,
-              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
+          Container(
+            width: 1,
+            height: 64,
+            color: scheme.outlineVariant.withValues(alpha: 0.2),
+          ),
+          // mejor racha
+          Expanded(
+            child: _StreakColumn(
+              icon: Icons.emoji_events_rounded,
+              iconColor: scheme.tertiary,
+              glowColor: scheme.tertiaryContainer.withValues(alpha: 0.3),
+              value: '${habit.bestStreak}',
+              label: 'Mejor racha',
             ),
-            Expanded(
-              child: _StreakStat(
-                icon: Icons.emoji_events_rounded,
-                iconColor: AppTheme.accent,
-                label: 'Mejor racha',
-                value: '${habit.bestStreak}',
-                unit: 'días',
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StreakStat extends StatelessWidget {
+class _StreakColumn extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
-  final String label;
+  final Color glowColor;
   final String value;
-  final String unit;
+  final String label;
 
-  const _StreakStat({
+  const _StreakColumn({
     required this.icon,
     required this.iconColor,
-    required this.label,
+    required this.glowColor,
     required this.value,
-    required this.unit,
+    required this.label,
   });
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
-        Icon(icon, color: iconColor, size: 24),
-        const SizedBox(height: 8),
+        // ícono con glow
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: glowColor,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: iconColor, size: 24),
+        ),
+        const SizedBox(height: 12),
+        // número grande display-lg
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: scheme.onSurface,
+            height: 1,
           ),
         ),
+        const SizedBox(height: 4),
         Text(
-          unit,
+          'días',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: scheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            color: scheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ],
@@ -419,7 +517,8 @@ class _StreakStat extends StatelessWidget {
   }
 }
 
-// boton grande de marcar hoy con transicion animada
+// ==================== CHECK-IN BUTTON ====================
+
 class _CheckInButton extends StatelessWidget {
   final bool isCompleted;
   final VoidCallback onToggle;
@@ -431,52 +530,66 @@ class _CheckInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      child: FilledButton.icon(
-        onPressed: () {
-          HapticFeedback.mediumImpact();
-          onToggle();
-        },
-        icon: AnimatedSwitcher(
+    final scheme = Theme.of(context).colorScheme;
+
+    if (isCompleted) {
+      // estado completado: botón surface con check verde
+      return GestureDetector(
+        onTap: onToggle,
+        child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, animation) =>
-              ScaleTransition(scale: animation, child: child),
-          child: Icon(
-            isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-            key: ValueKey(isCompleted),
+          curve: Curves.easeOutCubic,
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            color: scheme.tertiaryContainer.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: scheme.tertiary.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_circle_rounded,
+                  color: scheme.tertiary, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                'Completado hoy',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.tertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
-        label: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Text(
-            isCompleted ? 'Completado hoy' : 'Marcar como completado',
-            key: ValueKey(isCompleted),
-          ),
-        ),
-        style: FilledButton.styleFrom(
-          backgroundColor: isCompleted ? AppTheme.success : null,
-          minimumSize: const Size(double.infinity, 52),
-        ),
-      ),
+      );
+    }
+
+    return GradientButton(
+      onPressed: onToggle,
+      label: 'Marcar como completado',
+      icon: Icons.radio_button_unchecked_rounded,
+      gradient: AppTheme.heroGradient,
     );
   }
 }
 
-// grid de actividad de los ultimos 30 dias (cuadraditos tipo GitHub)
+// ==================== ACTIVITY GRID ====================
+
 class _ActivityGrid extends StatelessWidget {
   final List<HabitLogModel> logs;
-  final Color catFg;
 
-  const _ActivityGrid({required this.logs, required this.catFg});
+  const _ActivityGrid({required this.logs});
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
 
-    // set de fechas completadas para busqueda rapida
+    // set de fechas completadas para búsqueda rápida
     final completedDates = <String>{};
     for (final log in logs) {
       if (log.completed) {
@@ -484,80 +597,110 @@ class _ActivityGrid extends StatelessWidget {
       }
     }
 
-    return Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: List.generate(30, (i) {
-        final date = now.subtract(Duration(days: 29 - i));
-        final key = _dateKey(date);
-        final done = completedDates.contains(key);
-        final isToday = i == 29;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: List.generate(30, (i) {
+          final date = now.subtract(Duration(days: 29 - i));
+          final key = _dateKey(date);
+          final done = completedDates.contains(key);
+          final isToday = i == 29;
 
-        return Tooltip(
-          message: '${date.day}/${date.month} — ${done ? "Completado" : "No completado"}',
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: done
-                  ? catFg.withValues(alpha: 0.8)
-                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(6),
-              border: isToday
-                  ? Border.all(color: catFg, width: 2)
+          return Tooltip(
+            message:
+                '${date.day}/${date.month} — ${done ? "Completado" : "No completado"}',
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                // completado: gradiente hero; hoy sin completar: borde primary; resto: surface
+                gradient: done ? AppTheme.heroGradient : null,
+                color: done
+                    ? null
+                    : isToday
+                        ? scheme.primaryContainer.withValues(alpha: 0.15)
+                        : scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(8),
+                border: isToday && !done
+                    ? Border.all(
+                        color: scheme.primary.withValues(alpha: 0.5),
+                        width: 1.5,
+                      )
+                    : null,
+              ),
+              child: done
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
                   : null,
             ),
-            child: done
-                ? const Icon(Icons.check, size: 14, color: Colors.white)
-                : null,
-          ),
-        );
-      }),
+          );
+        }),
+      ),
     );
   }
 
   String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
 }
 
-// info adicional: frecuencia, dias, recordatorio
-class _InfoSection extends StatelessWidget {
-  final HabitModel habit;
-  final ColorScheme colorScheme;
+// ==================== INFO CARD ====================
 
-  const _InfoSection({required this.habit, required this.colorScheme});
+class _InfoCard extends StatelessWidget {
+  final HabitModel habit;
+
+  const _InfoCard({required this.habit});
 
   static const _dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
   @override
   Widget build(BuildContext context) {
-    final days = habit.targetDays.map((d) => _dayNames[d - 1]).join(', ');
+    final scheme = Theme.of(context).colorScheme;
+    final days =
+        habit.targetDays.map((d) => _dayNames[d - 1]).join(', ');
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _InfoRow(
-              icon: Icons.repeat,
-              label: 'Frecuencia',
-              value: habit.frequency == 'daily' ? 'Diario' : habit.frequency,
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.repeat_rounded,
+            label: 'Frecuencia',
+            value: habit.frequency == 'daily' ? 'Diario' : habit.frequency,
+          ),
+          Divider(
+            height: 1,
+            indent: 56,
+            color: scheme.outlineVariant.withValues(alpha: 0.12),
+          ),
+          _InfoRow(
+            icon: Icons.calendar_today_rounded,
+            label: 'Días',
+            value: days.isNotEmpty ? days : 'Todos',
+          ),
+          if (habit.reminderTime != null) ...[
+            Divider(
+              height: 1,
+              indent: 56,
+              color: scheme.outlineVariant.withValues(alpha: 0.12),
             ),
-            const Divider(height: 24),
             _InfoRow(
-              icon: Icons.calendar_today,
-              label: 'Días',
-              value: days.isNotEmpty ? days : 'Todos',
+              icon: Icons.schedule_rounded,
+              label: 'Recordatorio',
+              value: habit.reminderTime!,
             ),
-            if (habit.reminderTime != null) ...[
-              const Divider(height: 24),
-              _InfoRow(
-                icon: Icons.schedule,
-                label: 'Recordatorio',
-                value: habit.reminderTime!,
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -576,20 +719,58 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: colorScheme.primary),
-        const SizedBox(width: 12),
-        Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        const Spacer(),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: scheme.primary),
           ),
-        ),
-      ],
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==================== HELPERS ====================
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: scheme.onSurfaceVariant,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.8,
+      ),
     );
   }
 }
