@@ -11,6 +11,7 @@ import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
@@ -422,6 +423,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          const DrawerMenuButton(),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

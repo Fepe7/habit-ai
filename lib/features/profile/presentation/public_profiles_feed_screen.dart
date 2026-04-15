@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../data/public_profile_repository.dart';
 import '../domain/public_profile_model.dart';
 import 'widgets/public_profile_card.dart';
@@ -120,11 +121,20 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Explorar perfiles',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    children: [
+                      const DrawerMenuButton(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Explorar perfiles',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   SearchBar(

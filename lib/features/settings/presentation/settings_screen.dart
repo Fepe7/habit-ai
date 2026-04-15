@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
@@ -53,11 +54,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-              child: Text(
-                'Perfil',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+              child: Row(
+                children: [
+                  const DrawerMenuButton(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Perfil',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 

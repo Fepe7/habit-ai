@@ -10,6 +10,7 @@ import '../../habits/data/habit_repository.dart';
 import '../../habits/data/habit_group_repository.dart';
 import '../../habits/domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_drawer.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
@@ -219,6 +220,8 @@ class _AIScreenState extends State<AIScreen> {
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
               child: Row(
                 children: [
+                  const DrawerMenuButton(),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,12 +3,17 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/app_drawer.dart';
+
 /// Shell principal con glassmorphism bottom nav
 /// BackdropFilter + superficie translucida para que el scroll se vea detras
 class MainShell extends StatelessWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
+
+  /// Key global para abrir el drawer desde cualquier widget hijo.
+  static final scaffoldKey = GlobalKey<ScaffoldState>();
 
   static const _tabs = [
     _TabInfo(
@@ -49,7 +54,9 @@ class MainShell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      key: scaffoldKey,
       extendBody: true,
+      drawer: const AppDrawer(),
       body: child,
       bottomNavigationBar: _GlassNavBar(
         selectedIndex: selected,
