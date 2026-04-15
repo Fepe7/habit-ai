@@ -82,5 +82,7 @@ graphify-out/
 
 .claudeignore
 
+.graphifyignore
+
 # Bóveda personal de Obsidian — notas y documentación local
 obsidian-boveda/
