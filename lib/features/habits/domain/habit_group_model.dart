@@ -9,6 +9,8 @@ class HabitGroupModel {
   final String? conversationId;
   final int habitCount;
   final bool isActive;
+  // id de la plantilla publica si el grupo fue publicado en la comunidad
+  final String? publishedTemplateId;
 
   const HabitGroupModel({
     required this.id,
@@ -18,6 +20,7 @@ class HabitGroupModel {
     this.conversationId,
     this.habitCount = 0,
     this.isActive = true,
+    this.publishedTemplateId,
   });
 
   factory HabitGroupModel.fromJson(Map<String, dynamic> json, String docId) {
@@ -29,6 +32,7 @@ class HabitGroupModel {
       conversationId: json['conversationId'] as String?,
       habitCount: json['habitCount'] as int? ?? 0,
       isActive: json['isActive'] as bool? ?? true,
+      publishedTemplateId: json['publishedTemplateId'] as String?,
     );
   }
 
@@ -40,6 +44,7 @@ class HabitGroupModel {
       'conversationId': conversationId,
       'habitCount': habitCount,
       'isActive': isActive,
+      'publishedTemplateId': publishedTemplateId,
     };
   }
 
@@ -48,6 +53,7 @@ class HabitGroupModel {
     String? emoji,
     int? habitCount,
     bool? isActive,
+    String? publishedTemplateId,
   }) {
     return HabitGroupModel(
       id: id,
@@ -57,6 +63,7 @@ class HabitGroupModel {
       conversationId: conversationId,
       habitCount: habitCount ?? this.habitCount,
       isActive: isActive ?? this.isActive,
+      publishedTemplateId: publishedTemplateId ?? this.publishedTemplateId,
     );
   }
 }

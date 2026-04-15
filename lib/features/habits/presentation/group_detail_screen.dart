@@ -7,6 +7,7 @@ import '../data/habit_group_repository.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/community/data/community_template_repository.dart';
 import 'widgets/edit_habit_sheet.dart';
 
 // Pantalla de edicion de un grupo de habitos:
@@ -25,6 +26,7 @@ class GroupDetailScreen extends StatefulWidget {
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
   late final HabitRepository _habitRepo;
   late final HabitGroupRepository _groupRepo;
+  late final CommunityTemplateRepository _communityRepo;
   late final Stream<HabitGroupModel?> _groupStream;
   late final Stream<List<HabitModel>> _habitsStream;
 
@@ -34,6 +36,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _habitRepo = HabitRepository(uid: uid);
     _groupRepo = HabitGroupRepository(uid: uid);
+    _communityRepo = CommunityTemplateRepository(uid: uid);
     _groupStream = _groupRepo.watchGroup(widget.groupId);
     _habitsStream = _habitRepo.watchAllHabitsByGroup(widget.groupId);
   }
@@ -64,6 +67,145 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           ),
         );
       }
+    }
+  }
+
+  // Muestra un dialogo para pedir descripcion y publica el grupo como plantilla
+  Future<void> _publishTemplate(
+      HabitGroupModel group, List<HabitModel> habits) async {
+    if (habits.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content:
+                Text('El grupo no tiene hábitos, añade al menos uno.')),
+      );
+      return;
+    }
+
+    final descCtrl = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Publicar como plantilla'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Se publicarán ${habits.length} hábito${habits.length == 1 ? "" : "s"} '
+              'sin datos personales (sin rachas ni historial).',
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: descCtrl,
+              maxLength: 200,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Descripción (opcional)',
+                hintText: 'Explica para quién es este plan…',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Publicar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // obtener datos del perfil publico del usuario
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final profileDoc = await _communityRepo.getAuthorPublicProfile(uid);
+    final username =
+        profileDoc?['username'] as String? ?? uid;
+    final displayName =
+        profileDoc?['displayName'] as String? ??
+            FirebaseAuth.instance.currentUser?.displayName ??
+            '';
+
+    try {
+      final templateId = await _communityRepo.publishTemplate(
+        group: group,
+        habits: habits,
+        authorUsername: username,
+        authorDisplayName: displayName,
+        description: descCtrl.text.trim(),
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Plantilla publicada en la comunidad'),
+          backgroundColor: AppTheme.success,
+          action: SnackBarAction(
+            label: 'Ver',
+            onPressed: () => context.go('/community/$templateId'),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Error al publicar la plantilla'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _unpublishTemplate(
+      String templateId, HabitGroupModel group) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Retirar plantilla'),
+        content: const Text(
+          'La plantilla desaparecerá del marketplace. '
+          'Las copias importadas por otros usuarios no se verán afectadas.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style:
+                FilledButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Retirar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _communityRepo.unpublishTemplate(
+        templateId: templateId,
+        sourceGroupId: widget.groupId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Plantilla retirada del marketplace')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Error al retirar la plantilla'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
     }
   }
 
@@ -154,138 +296,213 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar grupo'),
-      ),
-      body: StreamBuilder<HabitGroupModel?>(
-        stream: _groupStream,
-        builder: (context, groupSnap) {
-          if (groupSnap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final group = groupSnap.data;
-          if (group == null || !group.isActive) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.folder_off_rounded,
-                        size: 48, color: colorScheme.onSurfaceVariant),
-                    const SizedBox(height: 16),
-                    Text('Este grupo ya no existe',
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.go('/'),
-                      child: const Text('Volver'),
+    return StreamBuilder<HabitGroupModel?>(
+      stream: _groupStream,
+      builder: (context, groupHeaderSnap) {
+        final groupForHeader = groupHeaderSnap.data;
+        return StreamBuilder<List<HabitModel>>(
+          stream: _habitsStream,
+          builder: (context, habitsHeaderSnap) {
+            final habitsForHeader = habitsHeaderSnap.data ?? [];
+            final isPublished =
+                groupForHeader?.publishedTemplateId != null;
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Editar grupo'),
+                actions: [
+                  if (groupForHeader != null)
+                    IconButton(
+                      tooltip: isPublished
+                          ? 'Retirar del marketplace'
+                          : 'Publicar como plantilla',
+                      icon: Icon(
+                        isPublished
+                            ? Icons.cloud_done_rounded
+                            : Icons.cloud_upload_outlined,
+                        color: isPublished ? colorScheme.primary : null,
+                      ),
+                      onPressed: () => isPublished
+                          ? _unpublishTemplate(
+                              groupForHeader.publishedTemplateId!,
+                              groupForHeader,
+                            )
+                          : _publishTemplate(
+                              groupForHeader,
+                              habitsForHeader,
+                            ),
                     ),
-                  ],
-                ),
+                ],
+              ),
+              body: _GroupBody(
+                groupStream: _groupStream,
+                habitsStream: _habitsStream,
+                groupId: widget.groupId,
+                onEditGroup: _editGroup,
+                onEditHabit: _editHabit,
+                onDeleteHabit: _deleteHabit,
               ),
             );
-          }
+          },
+        );
+      },
+    );
+  }
+}
 
-          return StreamBuilder<List<HabitModel>>(
-            stream: _habitsStream,
-            builder: (context, habitsSnap) {
-              final habits = habitsSnap.data ?? [];
+// Extrae el body para no duplicar los StreamBuilders
+class _GroupBody extends StatelessWidget {
+  final Stream<HabitGroupModel?> groupStream;
+  final Stream<List<HabitModel>> habitsStream;
+  final String groupId;
+  final Future<void> Function(HabitGroupModel) onEditGroup;
+  final Future<void> Function(HabitModel) onEditHabit;
+  final Future<void> Function(HabitModel) onDeleteHabit;
 
-              return CustomScrollView(
-                slivers: [
-                  // cabecera editable
-                  SliverToBoxAdapter(
-                    child: _GroupHeader(
-                      group: group,
-                      habitCount: habits.length,
-                      onEdit: () => _editGroup(group),
+  const _GroupBody({
+    required this.groupStream,
+    required this.habitsStream,
+    required this.groupId,
+    required this.onEditGroup,
+    required this.onEditHabit,
+    required this.onDeleteHabit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return StreamBuilder<HabitGroupModel?>(
+      stream: groupStream,
+      builder: (context, groupSnap) {
+        if (groupSnap.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final group = groupSnap.data;
+        if (group == null || !group.isActive) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.folder_off_rounded,
+                      size: 48, color: colorScheme.onSurfaceVariant),
+                  const SizedBox(height: 16),
+                  Text('Este grupo ya no existe',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => context.go('/'),
+                    child: const Text('Volver'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return StreamBuilder<List<HabitModel>>(
+          stream: habitsStream,
+          builder: (context, habitsSnap) {
+            final habits = habitsSnap.data ?? [];
+
+            return CustomScrollView(
+              slivers: [
+                // cabecera editable
+                SliverToBoxAdapter(
+                  child: _GroupHeader(
+                    group: group,
+                    habitCount: habits.length,
+                    onEdit: () => onEditGroup(group),
+                  ),
+                ),
+
+                // separador
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+                    child: Row(
+                      children: [
+                        Icon(Icons.list_alt_rounded,
+                            size: 18, color: colorScheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Hábitos del grupo',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${habits.length}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(
+                                  color: colorScheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
                   ),
+                ),
 
-                  // separador
-                  SliverToBoxAdapter(
+                if (habitsSnap.connectionState == ConnectionState.waiting)
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (habits.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                      child: Row(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.list_alt_rounded,
-                              size: 18, color: colorScheme.primary),
-                          const SizedBox(width: 8),
+                          Icon(Icons.inbox_rounded,
+                              size: 48,
+                              color: colorScheme.onSurfaceVariant),
+                          const SizedBox(height: 16),
                           Text(
-                            'Hábitos del grupo',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${habits.length}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                            'Este grupo no tiene hábitos',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
                     ),
+                  )
+                else
+                  SliverList.builder(
+                    itemCount: habits.length,
+                    itemBuilder: (context, i) {
+                      final habit = habits[i];
+                      return Padding(
+                        key: ValueKey(habit.id),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        child: _GroupHabitTile(
+                          habit: habit,
+                          onTap: () => context.go('/habit/${habit.id}'),
+                          onEdit: () => onEditHabit(habit),
+                          onDelete: () => onDeleteHabit(habit),
+                        ),
+                      ).animate().fadeIn(
+                            delay: Duration(milliseconds: 50 * i),
+                            duration: 250.ms,
+                          );
+                    },
                   ),
 
-                  if (habitsSnap.connectionState == ConnectionState.waiting)
-                    const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (habits.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.inbox_rounded,
-                                size: 48, color: colorScheme.onSurfaceVariant),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Este grupo no tiene hábitos',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  else
-                    SliverList.builder(
-                      itemCount: habits.length,
-                      itemBuilder: (context, i) {
-                        final habit = habits[i];
-                        return Padding(
-                          key: ValueKey(habit.id),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
-                          child: _GroupHabitTile(
-                            habit: habit,
-                            onTap: () => context.go('/habit/${habit.id}'),
-                            onEdit: () => _editHabit(habit),
-                            onDelete: () => _deleteHabit(habit),
-                          ),
-                        ).animate().fadeIn(
-                              delay: Duration(milliseconds: 50 * i),
-                              duration: 250.ms,
-                            );
-                      },
-                    ),
-
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
-                ],
-              );
-            },
-          );
-        },
-      ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

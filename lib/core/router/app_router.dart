@@ -18,6 +18,9 @@ import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
 import '../../features/profile/presentation/public_profiles_feed_screen.dart';
 import '../../features/profile/presentation/public_profile_screen.dart';
+import '../../features/community/presentation/community_templates_feed_screen.dart';
+import '../../features/community/presentation/community_template_detail_screen.dart';
+import '../../features/explore/presentation/explore_screen.dart';
 import 'main_shell.dart';
 
 // transicion suave fade + slide para pantallas internas
@@ -190,6 +193,29 @@ GoRouter createRouter(AuthRepository authRepository) {
                   state: state,
                   child: PublicProfileScreen(
                     userId: state.pathParameters['userId']!,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/explore',
+            name: 'explore',
+            builder: (context, state) => const ExploreScreen(),
+          ),
+          GoRoute(
+            path: '/community',
+            name: 'community-feed',
+            builder: (context, state) =>
+                const CommunityTemplatesFeedScreen(),
+            routes: [
+              GoRoute(
+                path: ':templateId',
+                name: 'community-template-detail',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: CommunityTemplateDetailScreen(
+                    templateId: state.pathParameters['templateId']!,
                   ),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import '../data/ai_repository.dart';
 import '../domain/chat_message.dart';
 import '../domain/habit_plan_model.dart';
@@ -273,6 +274,10 @@ class _AIScreenState extends State<AIScreen> {
               ),
             ),
 
+            // banner comunidad — solo visible cuando no hay conversación activa
+            if (_showSuggestions)
+              _CommunityBanner(),
+
             // lista de mensajes
             Expanded(
               child: ListView.builder(
@@ -525,5 +530,46 @@ class _TypingIndicator extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn(duration: 250.ms);
+  }
+}
+
+// Banner discreto que invita a explorar plantillas de la comunidad
+class _CommunityBanner extends StatelessWidget {
+  const _CommunityBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+      child: Material(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => context.go("/explore"),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Icon(Icons.storefront_rounded,
+                    size: 18, color: scheme.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "¿Sin ideas? Explora plantillas de la comunidad",
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 16, color: scheme.onSurfaceVariant),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 300.ms);
   }
 }
