@@ -132,6 +132,12 @@ class _AppDrawerState extends State<AppDrawer> {
                   onTap: () => _goNamedAndClose('levels'),
                 ),
                 _DrawerTile(
+                  icon: Icons.list_alt_rounded,
+                  title: 'Todos mis hábitos',
+                  subtitle: 'Activos y archivados',
+                  onTap: () => _goNamedAndClose('all-habits'),
+                ),
+                _DrawerTile(
                   icon: Icons.calendar_month_rounded,
                   title: 'Revisión semanal',
                   subtitle: 'Análisis de la IA',

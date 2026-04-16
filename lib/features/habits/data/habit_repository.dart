@@ -141,6 +141,42 @@ class HabitRepository {
             .toList());
   }
 
+  // Todos los habitos del usuario (activos y archivados, sin filtro de dia)
+  // util para la pantalla "Todos mis habitos"
+  Stream<List<HabitModel>> watchAllHabits() {
+    return _habitsRef
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => HabitModel.fromJson(doc.data(), doc.id))
+            .toList());
+  }
+
+  // Borrado total: elimina logs + doc principal + espejo público
+  // Solo se llama desde "Todos mis hábitos" tras confirmación fuerte
+  Future<void> hardDeleteHabit(String habitId) async {
+    // borrar subcoleccion de logs en chunks (Firestore limita a 500 por batch)
+    final logsSnap = await _logsRef(habitId).get();
+    if (logsSnap.docs.isNotEmpty) {
+      const chunkSize = 400;
+      for (int i = 0; i < logsSnap.docs.length; i += chunkSize) {
+        final chunk = logsSnap.docs.skip(i).take(chunkSize);
+        final batch = _firestore.batch();
+        for (final doc in chunk) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      }
+    }
+
+    // borrar doc principal y espejo público en una segunda batch
+    final batch = _firestore.batch();
+    batch.delete(_habitsRef.doc(habitId));
+    if (await _isProfilePublic()) {
+      batch.delete(_publicHabitsRef.doc(habitId));
+    }
+    await batch.commit();
+  }
+
   // Todos los habitos activos de un grupo (sin filtrar por dia)
   // util para la pantalla de edicion del grupo
   Stream<List<HabitModel>> watchAllHabitsByGroup(String groupId) {
