@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../app.dart';
+import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
 import '../data/levels_repository.dart';
 import '../domain/level_model.dart';
 import 'widgets/category_level_card.dart';
@@ -66,7 +68,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
   Widget _buildContent(BuildContext context, LevelsProfile profile) {
     final scheme = Theme.of(context).colorScheme;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, context.bottomNavInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -296,9 +298,8 @@ class _LevelsScreenState extends State<LevelsScreen> {
   }
 
   void _showCategoryDetail(BuildContext context, CategoryLevel level) {
-    showModalBottomSheet(
+    showAppBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => CategoryDetailSheet(level: level),
     );

@@ -210,3 +210,13 @@ class _TabInfo {
     required this.label,
   });
 }
+
+/// Alto fijo de la barra de navegación (sin safe area inferior)
+const double kBottomNavBarHeight = 72.0;
+
+extension BottomNavInset on BuildContext {
+  /// Espacio inferior para que el contenido scrollable no quede
+  /// tapado por _GlassNavBar cuando extendBody=true en MainShell.
+  double get bottomNavInset =>
+      kBottomNavBarHeight + MediaQuery.viewPaddingOf(this).bottom + 16;
+}

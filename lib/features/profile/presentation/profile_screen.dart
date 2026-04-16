@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
@@ -155,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     else
                       ..._buildHabitsSlivers(habits, scheme),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                    SliverToBoxAdapter(child: SizedBox(height: context.bottomNavInset)),
                   ],
                 );
               },
@@ -207,9 +209,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.only(bottom: 10),
                 child: CategoryLevelCard(
                   level: level,
-                  onTap: () => showModalBottomSheet(
+                  onTap: () => showAppBottomSheet(
                     context: context,
-                    isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (_) => CategoryDetailSheet(level: level),
                   ),

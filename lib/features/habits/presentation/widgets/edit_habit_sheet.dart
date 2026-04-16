@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../domain/habit_model.dart';
 
@@ -11,11 +12,8 @@ class EditHabitSheet extends StatefulWidget {
 
   // abrir el sheet y devolver el hábito editado (o null si cancela)
   static Future<HabitModel?> show(BuildContext context, HabitModel habit) {
-    return showModalBottomSheet<HabitModel>(
+    return showAppBottomSheet<HabitModel>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      useRootNavigator: true,
       // limitar altura para que SingleChildScrollView pueda hacer scroll hasta el botón
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.92,

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../data/public_profile_repository.dart';
 
 enum _UsernameState { idle, checking, available, taken, invalid }
@@ -22,10 +23,8 @@ class UsernameInputSheet extends StatefulWidget {
     PublicProfileRepository repo, {
     String? currentUsername,
   }) {
-    return showModalBottomSheet<String>(
+    return showAppBottomSheet<String>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => UsernameInputSheet(
         repo: repo,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../domain/habit_model.dart';
 
@@ -8,10 +9,8 @@ class CreateHabitSheet extends StatefulWidget {
   const CreateHabitSheet({super.key});
 
   static Future<HabitModel?> show(BuildContext context) {
-    return showModalBottomSheet<HabitModel>(
+    return showAppBottomSheet<HabitModel>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
       ),

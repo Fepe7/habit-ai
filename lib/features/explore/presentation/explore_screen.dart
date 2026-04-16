@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -398,7 +399,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
         ),
       ],
-      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+      SliverToBoxAdapter(child: SizedBox(height: context.bottomNavInset)),
     ];
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
+import '../../../core/router/main_shell.dart';
 import '../data/habit_repository.dart';
 import '../data/habit_group_repository.dart';
 import '../domain/habit_model.dart';
@@ -398,6 +399,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             onDeleteHabit: _deleteHabit,
                           ),
                         ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: context.bottomNavInset),
+                    ),
                     ],
                   ),
                 );

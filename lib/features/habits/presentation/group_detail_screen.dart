@@ -7,6 +7,7 @@ import '../data/habit_group_repository.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../features/community/data/community_template_repository.dart';
 import 'widgets/edit_habit_sheet.dart';
 
@@ -756,10 +757,8 @@ class _EditGroupSheet extends StatefulWidget {
 
   static Future<HabitGroupModel?> show(
       BuildContext context, HabitGroupModel group) {
-    return showModalBottomSheet<HabitGroupModel>(
+    return showAppBottomSheet<HabitGroupModel>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
       builder: (_) => _EditGroupSheet(group: group),
     );
   }

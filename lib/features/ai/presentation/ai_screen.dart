@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/main_shell.dart';
 import '../data/ai_repository.dart';
 import '../domain/chat_message.dart';
 import '../domain/habit_plan_model.dart';
@@ -282,7 +283,7 @@ class _AIScreenState extends State<AIScreen> {
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 8, 16, context.bottomNavInset),
                 itemCount: _messages.length +
                     (_isLoading ? 1 : 0) +
                     (_showSuggestions ? 1 : 0),
