@@ -39,7 +39,6 @@ class HabitRepository {
   Stream<List<HabitModel>> watchActiveHabits() {
     return _habitsRef
         .where('isActive', isEqualTo: true)
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
         .map((doc) => HabitModel.fromJson(doc.data(), doc.id))

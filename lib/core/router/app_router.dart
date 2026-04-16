@@ -16,6 +16,7 @@ import '../../features/ai/presentation/butterfly_projection_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/public_profiles_feed_screen.dart';
 import '../../features/profile/presentation/public_profile_screen.dart';
 import '../../features/community/presentation/community_templates_feed_screen.dart';
@@ -175,6 +176,11 @@ GoRouter createRouter(AuthRepository authRepository) {
             path: '/ai',
             name: 'ai',
             builder: (context, state) => const AIScreen(),
+          ),
+          GoRoute(
+            path: '/profile',
+            name: 'profile',
+            builder: (context, state) => const ProfileScreen(),
           ),
           GoRoute(
             path: '/settings',

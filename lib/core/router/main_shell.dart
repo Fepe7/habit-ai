@@ -41,7 +41,7 @@ class MainShell extends StatelessWidget {
       label: 'Explorar',
     ),
     _TabInfo(
-      path: '/settings',
+      path: '/profile',
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
       label: 'Perfil',
@@ -74,7 +74,7 @@ class MainShell extends StatelessWidget {
     if (location.startsWith('/explore') ||
         location.startsWith('/community') ||
         location.startsWith('/profiles')) return 3;
-    if (location.startsWith('/settings')) return 4;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 }

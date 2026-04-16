@@ -143,12 +143,6 @@ class _AppDrawerState extends State<AppDrawer> {
                   subtitle: 'Proyección a 3 años',
                   onTap: _openLatestButterfly,
                 ),
-                _DrawerTile(
-                  icon: Icons.people_outline_rounded,
-                  title: 'Perfiles',
-                  subtitle: 'Directorio de la comunidad',
-                  onTap: () => _goAndClose('/profiles'),
-                ),
                 const SizedBox(height: 8),
                 _SectionLabel(label: 'Acciones rápidas'),
                 _DrawerTile(
@@ -170,6 +164,13 @@ class _AppDrawerState extends State<AppDrawer> {
                   userRepo: _userRepo,
                 ),
                 const SizedBox(height: 8),
+                _SectionLabel(label: 'Cuenta'),
+                _DrawerTile(
+                  icon: Icons.settings_outlined,
+                  title: 'Ajustes',
+                  subtitle: 'Tema, notificaciones, cuenta',
+                  onTap: () => _goAndClose('/settings'),
+                ),
                 const SizedBox(height: 24),
               ],
             );
