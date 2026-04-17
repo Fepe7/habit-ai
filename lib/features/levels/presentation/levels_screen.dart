@@ -5,6 +5,8 @@ import '../../../app.dart';
 import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/levels_repository.dart';
 import '../domain/level_model.dart';
 import 'widgets/category_level_card.dart';
@@ -42,12 +44,12 @@ class _LevelsScreenState extends State<LevelsScreen> {
         centerTitle: false,
       ),
       body: _levelsRepo == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const SectionSkeleton()
           : FutureBuilder<LevelsProfile>(
               future: _levelsRepo!.computeProfile(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const SectionSkeleton();
                 }
 
                 if (snapshot.hasError || !snapshot.hasData) {
@@ -271,29 +273,10 @@ class _LevelsScreenState extends State<LevelsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.military_tech_rounded, size: 72, color: scheme.primary.withValues(alpha: 0.4)),
-            const SizedBox(height: 16),
-            Text(
-              'Empieza a crear hábitos',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Completa check-ins para subir de nivel en cada categoría.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return const EmptyStateView(
+      icon: Icons.military_tech_rounded,
+      title: 'Empieza a crear hábitos',
+      subtitle: 'Completa check-ins para subir de nivel en cada categoría.',
     );
   }
 

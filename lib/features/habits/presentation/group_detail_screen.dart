@@ -8,6 +8,10 @@ import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../../../features/community/data/community_template_repository.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
@@ -74,19 +78,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       await _groupRepo.incrementHabitCount(widget.groupId, 1);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al añadir el hábito'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al añadir el hábito');
       }
       return;
     }
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hábito añadido a la rutina')),
-      );
+      AppSnackBar.showSuccess(context, 'Hábito añadido a la rutina');
     }
     try {
       final unlocked = await _achievementChecker.checkAfterCreate();
@@ -104,12 +101,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (mounted) context.go('/group/$groupId');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al crear la rutina'),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al crear la rutina');
       }
     }
   }
@@ -124,21 +116,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         'emoji': result.emoji,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Grupo actualizado'),
-            backgroundColor: AppTheme.success,
-          ),
-        );
+        AppSnackBar.showSuccess(context, 'Grupo actualizado');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al actualizar el grupo'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al actualizar el grupo');
       }
     }
   }
@@ -147,11 +129,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Future<void> _publishTemplate(
       HabitGroupModel group, List<HabitModel> habits) async {
     if (habits.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('El grupo no tiene hábitos, añade al menos uno.')),
-      );
+      AppSnackBar.showInfo(context, 'El grupo no tiene hábitos, añade al menos uno.');
       return;
     }
 
@@ -227,12 +205,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Error al publicar la plantilla'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      AppSnackBar.showError(context, 'Error al publicar la plantilla');
     }
   }
 
@@ -268,17 +241,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         sourceGroupId: widget.groupId,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Plantilla retirada del marketplace')),
-      );
+      AppSnackBar.showSuccess(context, 'Plantilla retirada del marketplace');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Error al retirar la plantilla'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      AppSnackBar.showError(context, 'Error al retirar la plantilla');
     }
   }
 
@@ -298,23 +264,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (updated.groupId != habit.groupId) {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Hábito actualizado'),
-            backgroundColor: AppTheme.success,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showSuccess(context, 'Hábito actualizado');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al actualizar el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al actualizar el hábito');
     }
   }
 
@@ -351,20 +303,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         await _groupRepo.incrementHabitCount(widget.groupId, -1);
       } catch (_) {}
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${habit.title}" eliminado')),
-        );
-      }
+      if (mounted) AppSnackBar.showSuccess(context, '"${habit.title}" eliminado');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al eliminar el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al eliminar el hábito');
     }
   }
 
@@ -458,30 +399,15 @@ class _GroupBody extends StatelessWidget {
       stream: groupStream,
       builder: (context, groupSnap) {
         if (groupSnap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const SectionSkeleton(itemCount: 4);
         }
 
         final group = groupSnap.data;
         if (group == null || !group.isActive) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.folder_off_rounded,
-                      size: 48, color: colorScheme.onSurfaceVariant),
-                  const SizedBox(height: 16),
-                  Text('Este grupo ya no existe',
-                      style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () => context.go('/'),
-                    child: const Text('Volver'),
-                  ),
-                ],
-              ),
-            ),
+          return ErrorStateView(
+            message: 'Este grupo ya no existe.',
+            icon: Icons.folder_off_rounded,
+            onRetry: () => context.go('/'),
           );
         }
 
@@ -533,30 +459,19 @@ class _GroupBody extends StatelessWidget {
 
                 if (habitsSnap.connectionState == ConnectionState.waiting)
                   const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (habits.isEmpty)
-                  SliverFillRemaining(
                     hasScrollBody: false,
                     child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox_rounded,
-                              size: 48,
-                              color: colorScheme.onSurfaceVariant),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Este grupo no tiene hábitos',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
+                      padding: EdgeInsets.all(16),
+                      child: SectionSkeleton(itemCount: 3),
+                    ),
+                  )
+                else if (habits.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyStateView(
+                      icon: Icons.inbox_rounded,
+                      title: 'Sin hábitos en este grupo',
+                      subtitle: 'Añade hábitos con el botón +',
                     ),
                   )
                 else

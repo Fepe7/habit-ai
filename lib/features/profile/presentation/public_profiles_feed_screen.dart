@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/public_profile_repository.dart';
 import '../domain/public_profile_model.dart';
 import 'widgets/public_profile_card.dart';
@@ -212,31 +214,14 @@ class _FeedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (loading && profiles.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const SectionSkeleton(itemCount: 5);
     }
 
     if (profiles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people_outline_rounded,
-                size: 64, color: Theme.of(context).colorScheme.outlineVariant),
-            const SizedBox(height: 16),
-            Text(
-              'Todavía no hay perfiles públicos',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Activa tu perfil en Ajustes para aparecer aquí.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      return const EmptyStateView(
+        icon: Icons.people_outline_rounded,
+        title: 'Todavía no hay perfiles públicos',
+        subtitle: 'Activa tu perfil en Ajustes para aparecer aquí.',
       );
     }
 
@@ -296,13 +281,10 @@ class _SearchResultsView extends StatelessWidget {
     }
 
     if (results.isEmpty) {
-      return Center(
-        child: Text(
-          'Sin resultados',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
+      return const EmptyStateView(
+        icon: Icons.manage_search_rounded,
+        title: 'Sin resultados',
+        subtitle: 'Prueba con otro @username',
       );
     }
 

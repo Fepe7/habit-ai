@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
 import 'widgets/community_template_card.dart';
@@ -319,36 +320,12 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.all(48),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.storefront_outlined,
-              size: 64, color: scheme.onSurfaceVariant),
-          const SizedBox(height: 20),
-          Text(
-            hasFilter
-                ? 'Sin resultados para ese filtro'
-                : 'Todavía no hay plantillas',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            hasFilter
-                ? 'Prueba otra categoría o quita el filtro.'
-                : 'Sé el primero en publicar un plan de hábitos.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+    return EmptyStateView(
+      icon: Icons.storefront_outlined,
+      title: hasFilter ? 'Sin resultados para ese filtro' : 'Todavía no hay plantillas',
+      subtitle: hasFilter
+          ? 'Prueba otra categoría o quita el filtro.'
+          : 'Sé el primero en publicar un plan de hábitos.',
     );
   }
 }

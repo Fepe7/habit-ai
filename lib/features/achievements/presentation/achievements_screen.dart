@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/archivement_repository.dart';
 import '../domain/achivement_model.dart';
 
@@ -38,7 +39,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         stream: _achievementRepo.watchAchievements(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: SectionSkeleton(itemCount: 5),
+            );
           }
 
           final unlocked = snapshot.data ?? [];

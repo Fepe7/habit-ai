@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/avatar_circle.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../profile/data/public_profile_repository.dart';
@@ -613,9 +614,7 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
         );
         if (!mounted) return;
         if (!ok) {
-          ScaffoldMessenger.of(context).showSnackBar( // ignore: use_build_context_synchronously
-            const SnackBar(content: Text('El username ya está ocupado')),
-          );
+          AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
         }
       } finally {
         if (mounted) setState(() => _loading = false);
@@ -648,9 +647,7 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
       );
       if (!mounted) return;
       if (!ok) {
-        ScaffoldMessenger.of(context).showSnackBar( // ignore: use_build_context_synchronously
-          const SnackBar(content: Text('El username ya está ocupado')),
-        );
+        AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
       }
     } finally {
       if (mounted) setState(() => _loading = false);

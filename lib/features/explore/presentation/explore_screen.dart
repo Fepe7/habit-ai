@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../community/data/community_template_repository.dart';
 import '../../community/domain/community_template_model.dart';
@@ -221,9 +223,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           const SizedBox(height: 12),
           if (_loadingFeatured)
-            const SizedBox(
-              height: 180,
-              child: Center(child: CircularProgressIndicator()),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: ChartSkeleton(height: 180),
             )
           else if (_featured.isEmpty)
             _EmptyInline(
@@ -271,8 +273,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: 12),
           if (_loadingCreators)
             const Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: SectionSkeleton(itemCount: 3),
             )
           else if (_creators.isEmpty)
             _EmptyInline(
@@ -319,8 +321,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<Widget> _buildSearchResults(ColorScheme scheme) {
     if (_searching) {
       return const [
-        SliverFillRemaining(
-          child: Center(child: CircularProgressIndicator()),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: SectionSkeleton(itemCount: 3),
+          ),
         ),
       ];
     }
@@ -328,9 +333,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _EmptyInline(
+          child: EmptyStateView(
             icon: Icons.manage_search_rounded,
-            text: 'Sin resultados para "$_query"',
+            title: 'Sin resultados',
+            subtitle: 'Prueba con otro término de búsqueda.',
           ),
         ),
       ];

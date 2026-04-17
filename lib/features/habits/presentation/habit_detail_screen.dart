@@ -7,6 +7,9 @@ import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import 'widgets/edit_habit_sheet.dart';
@@ -128,14 +131,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
     if (ok) {
       HapticFeedback.lightImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('🛡️ Escudo usado — racha protegida')),
-      );
+      AppSnackBar.showSuccess(context, '🛡️ Escudo usado — racha protegida');
       await _loadData();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tienes escudos disponibles')),
-      );
+      AppSnackBar.showInfo(context, 'No tienes escudos disponibles');
     }
   }
 
@@ -203,7 +202,12 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     if (_loading) {
       return Scaffold(
         backgroundColor: scheme.surfaceContainerLow,
-        body: const Center(child: CircularProgressIndicator()),
+        body: const SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: SectionSkeleton(itemCount: 4),
+          ),
+        ),
       );
     }
 
@@ -211,7 +215,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       return Scaffold(
         backgroundColor: scheme.surfaceContainerLow,
         appBar: AppBar(),
-        body: const Center(child: Text('Hábito no encontrado')),
+        body: const ErrorStateView(
+          message: 'El hábito no existe o fue eliminado.',
+          icon: Icons.help_outline_rounded,
+        ),
       );
     }
 

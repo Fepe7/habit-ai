@@ -8,6 +8,9 @@ import '../domain/habit_group_model.dart';
 import 'widgets/edit_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 
 /// Catálogo completo de hábitos: activos y archivados, agrupados igual que HabitsScreen.
 /// No incluye lógica de check-in — es una vista de gestión, no de progreso diario.
@@ -105,15 +108,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Hábito actualizado')));
+        AppSnackBar.showSuccess(context, 'Hábito actualizado');
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Error al actualizar el hábito'),
-          backgroundColor: AppTheme.error,
-        ));
+        AppSnackBar.showError(context, 'Error al actualizar el hábito');
       }
     }
   }
@@ -145,16 +144,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
     try {
       await _habitRepo.hardDeleteHabit(habit.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${habit.title}" borrado permanentemente')),
-        );
+        AppSnackBar.showSuccess(context, '"${habit.title}" borrado permanentemente');
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Error al borrar el hábito'),
-          backgroundColor: AppTheme.error,
-        ));
+        AppSnackBar.showError(context, 'Error al borrar el hábito');
       }
     }
   }
@@ -188,16 +182,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         await _habitRepo.hardDeleteHabit(id);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$count hábito${count == 1 ? '' : 's'} borrado${count == 1 ? '' : 's'}')),
-        );
+        AppSnackBar.showSuccess(context, '$count hábito${count == 1 ? '' : 's'} borrado${count == 1 ? '' : 's'}');
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Error al borrar los hábitos'),
-          backgroundColor: AppTheme.error,
-        ));
+        AppSnackBar.showError(context, 'Error al borrar los hábitos');
       }
     }
   }
@@ -239,16 +228,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         }
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$count rutina${count == 1 ? '' : 's'} eliminada${count == 1 ? '' : 's'}')),
-        );
+        AppSnackBar.showSuccess(context, '$count rutina${count == 1 ? '' : 's'} eliminada${count == 1 ? '' : 's'}');
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Error al eliminar las rutinas'),
-          backgroundColor: AppTheme.error,
-        ));
+        AppSnackBar.showError(context, 'Error al eliminar las rutinas');
       }
     }
   }
@@ -271,7 +255,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                   stream: _habitsStream,
                   builder: (context, habitsSnap) {
                     if (habitsSnap.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const SectionSkeleton(itemCount: 4);
                     }
 
                     final allHabits = habitsSnap.data ?? [];
@@ -552,42 +536,10 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isActive ? Icons.checklist_rounded : Icons.archive_outlined,
-              size: 64,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isActive
-                  ? 'No tienes hábitos creados'
-                  : 'No tienes hábitos archivados',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            if (isActive) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Crea hábitos desde la pantalla principal o con la IA.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
-      ),
+    return EmptyStateView(
+      icon: isActive ? Icons.checklist_rounded : Icons.archive_outlined,
+      title: isActive ? 'No tienes hábitos creados' : 'No tienes hábitos archivados',
+      subtitle: isActive ? 'Crea hábitos desde la pantalla principal o con la IA.' : null,
     );
   }
 }
@@ -1082,38 +1034,10 @@ class _EmptyGroupsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.folder_special_outlined,
-              size: 64,
-              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No tienes rutinas creadas',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Crea una rutina desde el "+" de la pantalla principal.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return const EmptyStateView(
+      icon: Icons.folder_special_outlined,
+      title: 'No tienes rutinas creadas',
+      subtitle: 'Crea una rutina desde el "+" de la pantalla principal.',
     );
   }
 }

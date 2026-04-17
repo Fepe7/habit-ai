@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/ai_repository.dart';
 import '../domain/weekly_review_model.dart';
 import '../../habits/data/habit_repository.dart';
@@ -66,12 +69,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     if (!mounted) return;
 
     if (habit == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Este hábito ya no existe'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
+      AppSnackBar.showError(context, 'Este hábito ya no existe');
       return;
     }
 
@@ -88,21 +86,11 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         'reminderTime': updated.reminderTime,
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hábito actualizado'),
-            backgroundColor: AppTheme.success,
-          ),
-        );
+        AppSnackBar.showSuccess(context, 'Hábito actualizado');
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al actualizar el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al actualizar el hábito');
       }
     }
   }
@@ -114,7 +102,10 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         title: const Text('Revisión semanal'),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: SectionSkeleton(itemCount: 4),
+            )
           : _error != null
               ? _buildError(context)
               : _buildContent(context, _review!),
@@ -122,31 +113,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   }
 
   Widget _buildError(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 56,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              _error ?? 'Error',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      message: _error ?? 'Error al cargar la revisión',
+      onRetry: _load,
     );
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../app.dart';
+import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/ai_repository.dart';
 import '../domain/butterfly_projection_model.dart';
 
@@ -84,7 +86,10 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: SectionSkeleton(itemCount: 3),
+            )
           : _projection == null
               ? _buildError(context)
               : _buildContent(context, _projection!),
@@ -92,27 +97,9 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   }
 
   Widget _buildError(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('🦋', style: TextStyle(fontSize: 48)),
-            const SizedBox(height: 16),
-            Text(
-              'No se encontró la proyección',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Puede que haya expirado o no se generó correctamente',
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return const ErrorStateView(
+      message: 'No se encontró la proyección o puede que haya expirado.',
+      icon: Icons.cloud_off_outlined,
     );
   }
 
