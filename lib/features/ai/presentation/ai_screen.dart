@@ -13,6 +13,7 @@ import '../../habits/data/habit_group_repository.dart';
 import '../../habits/domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
@@ -37,6 +38,7 @@ class _AIScreenState extends State<AIScreen> {
   late final HabitGroupRepository _groupRepo;
   late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
+  String? _lastUserMessage;
 
   static const _suggestions = [
     'Quiero hacer ejercicio y comer mejor',
@@ -78,6 +80,7 @@ class _AIScreenState extends State<AIScreen> {
     if (msg.isEmpty || _isLoading) return;
 
     _controller.clear();
+    _lastUserMessage = msg;
 
     setState(() {
       _messages.add(ChatMessage(
@@ -124,11 +127,10 @@ class _AIScreenState extends State<AIScreen> {
     } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: e is String
-              ? e
-              : 'No pude conectar con el asistente. Comprueba tu conexión.',
+          text: 'No pude conectar con el asistente. Comprueba tu conexión.',
           isUser: false,
           timestamp: DateTime.now(),
+          isError: true,
         ));
         _isLoading = false;
       });
@@ -177,22 +179,14 @@ class _AIScreenState extends State<AIScreen> {
       await _habitRepo.createHabitsInGroup(habits, groupId);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${plan.emoji ?? "✨"} "${plan.title}" — ${accepted.length} hábitos añadidos',
-            ),
-          ),
+        AppSnackBar.showSuccess(
+          context,
+          '${plan.emoji ?? "✨"} "${plan.title}" — ${accepted.length} hábitos añadidos',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al guardar los hábitos');
       }
       return;
     }
@@ -305,7 +299,12 @@ class _AIScreenState extends State<AIScreen> {
                   final message = _messages[index];
                   return Column(
                     children: [
-                      ChatBubble(message: message)
+                      ChatBubble(
+                        message: message,
+                        onRetry: message.isError && _lastUserMessage != null
+                            ? () => _sendMessage(_lastUserMessage)
+                            : null,
+                      )
                           .animate()
                           .fadeIn(duration: 250.ms)
                           .slideY(begin: 0.05),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design system Editorial Vitality / Mindful Architect
 /// Jerarquia por superficie, sin bordes 1px duros, radios grandes, tipografia dual Manrope+Inter
 class AppTheme {
   // paleta core Stitch

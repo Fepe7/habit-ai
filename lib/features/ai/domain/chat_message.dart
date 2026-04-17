@@ -4,12 +4,14 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final HabitPlanData? plan;
+  final bool isError;
 
   const ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
     this.plan,
+    this.isError = false,
   });
 }
 

@@ -6,6 +6,9 @@ import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/router/main_shell.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/skeletons.dart';
+import '../../../core/widgets/ux/empty_state_view.dart';
 import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../achievements/data/archivement_repository.dart';
@@ -93,7 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         bottom: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildLoadingSkeleton(context)
             : _generalStats['totalActive'] == 0
                 ? _buildEmptyState(context)
                 : RefreshIndicator(
@@ -245,22 +248,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final weekId = await _aiRepo.generateWeeklyReview();
       if (!mounted) return;
       if (weekId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Necesitas al menos 3 check-ins esta semana para generar la revisión',
-            ),
-          ),
+        AppSnackBar.showInfo(
+          context,
+          'Necesitas al menos 3 check-ins esta semana para generar la revisión',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _generatingReview = false);
@@ -273,22 +268,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final monthId = await _aiRepo.generateButterflyProjection();
       if (!mounted) return;
       if (monthId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Necesitas al menos 10 check-ins este mes para generar la proyección',
-            ),
-          ),
+        AppSnackBar.showInfo(
+          context,
+          'Necesitas al menos 10 check-ins este mes para generar la proyección',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, e.toString());
       }
     } finally {
       if (mounted) setState(() => _generatingButterfly = false);
@@ -632,40 +619,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest,
-                shape: BoxShape.circle,
-                boxShadow: AppTheme.ambientShadow(),
-              ),
-              child: Icon(Icons.bar_chart_rounded,
-                  size: 36, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Sin datos todavía',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Crea hábitos y completa check-ins para ver tus estadísticas aquí',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateView(
+      icon: Icons.bar_chart_rounded,
+      title: 'Sin datos todavía',
+      subtitle: 'Crea hábitos y completa check-ins para ver tus estadísticas aquí',
+      actionLabel: 'Crear primer hábito',
+      onAction: () => context.go('/'),
+      iconColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+    );
+  }
+
+  Widget _buildLoadingSkeleton(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(20, 0, 20, context.bottomNavInset),
+      children: [
+        _buildHeader(context),
+        const SizedBox(height: 8),
+        const ChartSkeleton(height: 120),
+        const SizedBox(height: 14),
+        const SectionSkeleton(itemCount: 1),
+        const SizedBox(height: 14),
+        const ChartSkeleton(height: 200),
+      ],
     );
   }
 

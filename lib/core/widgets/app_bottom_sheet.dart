@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 /// Wrapper de `showModalBottomSheet` con defaults seguros para HabitAI.
-///
 /// `useRootNavigator: true` empuja el sheet al Navigator raíz (por encima
 /// de la BottomNavigationBar del MainShell). Sin esto el sheet queda
 /// tapado por la nav porque ShellRoute usa un Navigator interno.

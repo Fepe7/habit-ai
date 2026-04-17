@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 
@@ -14,6 +15,7 @@ class GradientButton extends StatelessWidget {
     this.fullWidth = true,
     this.height = 56,
     this.gradient,
+    this.enableHaptic = true,
   });
 
   final VoidCallback? onPressed;
@@ -23,6 +25,7 @@ class GradientButton extends StatelessWidget {
   final bool fullWidth;
   final double height;
   final LinearGradient? gradient;
+  final bool enableHaptic;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,12 @@ class GradientButton extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: enabled ? onPressed : null,
+              onTap: enabled
+                  ? () {
+                      if (enableHaptic) HapticFeedback.lightImpact();
+                      onPressed!();
+                    }
+                  : null,
               borderRadius: BorderRadius.circular(height),
               child: Center(
                 child: loading

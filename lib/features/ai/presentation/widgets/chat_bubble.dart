@@ -7,8 +7,9 @@ import '../../../../core/theme/app_theme.dart';
 /// IA: surfaceContainerLowest con ghost border
 class ChatBubble extends StatelessWidget {
   final ChatMessage message;
+  final VoidCallback? onRetry;
 
-  const ChatBubble({super.key, required this.message});
+  const ChatBubble({super.key, required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +62,42 @@ class ChatBubble extends StatelessWidget {
                     ),
               boxShadow: AppTheme.ambientShadow(),
             ),
-            child: Text(
-              message.text,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isUser ? Colors.white : scheme.onSurface,
-                height: 1.45,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  message.text,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isUser
+                        ? Colors.white
+                        : message.isError
+                            ? scheme.error
+                            : scheme.onSurface,
+                    height: 1.45,
+                  ),
+                ),
+                if (message.isError && onRetry != null) ...[
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: onRetry,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.refresh_rounded, size: 14, color: scheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Reintentar',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

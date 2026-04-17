@@ -15,7 +15,9 @@ import 'widgets/create_choice_sheet.dart';
 import 'widgets/create_group_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
-import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/skeletons.dart';
+import '../../../core/widgets/ux/error_state_view.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
@@ -103,16 +105,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
         _logsFetched.remove(id);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$count hábito${count == 1 ? '' : 's'} eliminado${count == 1 ? '' : 's'}')),
+        AppSnackBar.showSuccess(
+          context,
+          '$count hábito${count == 1 ? '' : 's'} eliminado${count == 1 ? '' : 's'}',
         );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: const Text('Error al eliminar los hábitos'),
-          backgroundColor: AppTheme.error,
-        ));
+        AppSnackBar.showError(context, 'Error al eliminar los hábitos');
       }
     }
   }
@@ -211,18 +211,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hábito actualizado')),
-        );
+        AppSnackBar.showSuccess(context, 'Hábito actualizado');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al actualizar el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al actualizar el hábito');
       }
     }
   }
@@ -262,18 +255,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
         } catch (_) {}
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${habit.title}" eliminado')),
-        );
+        AppSnackBar.showSuccess(context, '"${habit.title}" eliminado');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al eliminar el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
+        AppSnackBar.showError(context, 'Error al eliminar el hábito');
       }
     }
   }
@@ -295,21 +281,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
     try {
       await _habitRepo.createHabit(habit);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al crear el hábito'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al crear el hábito');
       return;
     }
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hábito creado')),
-      );
-    }
+    if (mounted) AppSnackBar.showSuccess(context, 'Hábito creado');
     try {
       final unlocked = await _achievementChecker.checkAfterCreate();
       if (unlocked.isNotEmpty && mounted) {
@@ -327,14 +302,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
         context.go('/group/$groupId');
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al crear la rutina'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al crear la rutina');
     }
   }
 
@@ -371,20 +339,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
       } else {
         await _groupRepo.deleteGroup(group.id);
       }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Rutina "${group.title}" eliminada')),
-        );
-      }
+      if (mounted) AppSnackBar.showSuccess(context, 'Rutina "${group.title}" eliminada');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al eliminar la rutina'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al eliminar la rutina');
     }
   }
 
@@ -415,7 +372,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
               stream: _habitsStream,
               builder: (context, habitsSnapshot) {
                 if (habitsSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return ListView(
+                    children: [
+                      _buildHeader(context),
+                      SectionSkeleton(itemCount: 4),
+                    ],
+                  );
                 }
                 if (habitsSnapshot.hasError) {
                   return _buildError(context, habitsSnapshot.error);
@@ -635,26 +597,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
   }
 
   Widget _buildError(BuildContext context, Object? error) {
-    final scheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: scheme.error),
-            const SizedBox(height: 16),
-            Text('Error al cargar hábitos',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(
-              '$error',
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return ErrorStateView(
+      message: 'No se pudieron cargar tus hábitos. Comprueba tu conexión.',
+      onRetry: _refresh,
     );
   }
 }
