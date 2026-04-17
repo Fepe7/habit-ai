@@ -11,6 +11,8 @@ import 'widgets/habit_card.dart';
 import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
+import 'widgets/create_choice_sheet.dart';
+import 'widgets/create_group_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/gradient_button.dart';
@@ -130,6 +132,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
         'targetDays': updated.targetDays,
         'reminderTime': updated.reminderTime,
       });
+      // reasignar grupo si cambió (actualiza groupId y contadores)
+      if (updated.groupId != habit.groupId) {
+        await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Hábito actualizado')),
@@ -198,7 +204,18 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
-  Future<void> _createHabit() async {
+  Future<void> _handleFabTap() async {
+    final choice = await CreateChoiceSheet.show(context);
+    if (choice == null) return;
+
+    if (choice == CreateChoice.habit) {
+      await _doCreateHabit();
+    } else {
+      await _doCreateGroup();
+    }
+  }
+
+  Future<void> _doCreateHabit() async {
     final habit = await CreateHabitSheet.show(context);
     if (habit == null) return;
     try {
@@ -227,41 +244,69 @@ class _HabitsScreenState extends State<HabitsScreen> {
     } catch (_) {}
   }
 
+  Future<void> _doCreateGroup() async {
+    final group = await CreateGroupSheet.show(context);
+    if (group == null || !mounted) return;
+    try {
+      final groupId = await _groupRepo.createGroup(group);
+      if (mounted) {
+        context.go('/group/$groupId');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al crear la rutina'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _deleteGroup(HabitGroupModel group) async {
-    final confirmed = await showDialog<bool>(
+    // 'group_only' | 'group_and_habits' | null (cancelar)
+    final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar grupo'),
-        content: Text(
-          '¿Eliminar el grupo "${group.title}"?\n\n'
-          'Los hábitos no se borran, pasan a "Mis hábitos".',
+        title: Text('Eliminar "${group.title}"'),
+        content: const Text(
+          '¿Qué quieres hacer con los hábitos de esta rutina?',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () => Navigator.of(ctx).pop(null),
             child: const Text('Cancelar'),
           ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('group_only'),
+            child: const Text('Solo la rutina'),
+          ),
           FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => Navigator.of(ctx).pop('group_and_habits'),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Eliminar'),
+            child: const Text('Rutina y hábitos'),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (choice == null) return;
     try {
-      await _groupRepo.deleteGroup(group.id);
+      if (choice == 'group_and_habits') {
+        await _groupRepo.deleteGroupAndHabits(group.id);
+      } else {
+        await _groupRepo.deleteGroup(group.id);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Grupo "${group.title}" eliminado')),
+          SnackBar(content: Text('Rutina "${group.title}" eliminada')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Error al eliminar el grupo'),
+            content: const Text('Error al eliminar la rutina'),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -278,10 +323,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 100),
         child: FloatingActionButton(
-          onPressed: _createHabit,
+          onPressed: _handleFabTap,
           backgroundColor: scheme.primary,
           foregroundColor: scheme.onPrimary,
-          tooltip: 'Nuevo hábito',
+          tooltip: 'Crear',
           child: const Icon(Icons.add_rounded),
         ),
       ),
@@ -303,7 +348,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 final allHabits = habitsSnapshot.data ?? [];
                 _currentTodayHabits = allHabits;
 
-                if (allHabits.isEmpty) {
+                // grupos antes del early-return para poder mostrarlos aunque no haya hábitos hoy
+                final groups = groupsSnapshot.data ?? [];
+                final groupsLoaded = groupsSnapshot.hasData;
+
+                // estado vacío solo si no hay hábitos NI grupos activos
+                if (allHabits.isEmpty && groups.isEmpty) {
                   return Column(
                     children: [
                       _buildHeader(context),
@@ -318,8 +368,6 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
                 _fetchLogsIfNeeded(allHabits);
 
-                final groups = groupsSnapshot.data ?? [];
-                final groupsLoaded = groupsSnapshot.hasData;
                 final groupIds = groups.map((g) => g.id).toSet();
                 final completedCount =
                     allHabits.where((h) => _completedToday[h.id] == true).length;
@@ -338,9 +386,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   }
                 }
 
-                final activeGroups = groups
-                    .where((g) => habitsByGroup.containsKey(g.id))
-                    .toList();
+                // todos los grupos activos, incluyendo los vacíos
+                final activeGroups = groups.toList();
 
                 return RefreshIndicator(
                   onRefresh: _refresh,
@@ -699,7 +746,7 @@ class _GroupSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                '$completedCount/${habits.length}',
+                                habits.isEmpty ? '–' : '$completedCount/${habits.length}',
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: allDone
                                       ? AppTheme.tertiaryContainer
@@ -759,16 +806,39 @@ class _GroupSection extends StatelessWidget {
               secondChild: Column(
                 children: [
                   Divider(height: 1, color: scheme.outlineVariant.withValues(alpha: 0.12)),
-                  ...habits.map((habit) => HabitCard(
-                    key: ValueKey(habit.id),
-                    habit: habit,
-                    isCompletedToday: completedToday[habit.id] ?? false,
-                    onToggle: () => onToggleHabit(habit),
-                    onTap: () => onTapHabit(habit),
-                    onEdit: () => onEditHabit(habit),
-                    onDelete: () => onDeleteHabit(habit),
-                    isInsideGroup: true,
-                  )),
+                  if (habits.isEmpty)
+                    // grupo vacío: invitar a añadir hábitos
+                    InkWell(
+                      onTap: onEditGroup,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        child: Row(
+                          children: [
+                            Icon(Icons.add_circle_outline_rounded,
+                                size: 16, color: scheme.primary.withValues(alpha: 0.7)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Toca para añadir hábitos',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: scheme.primary.withValues(alpha: 0.7),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    ...habits.map((habit) => HabitCard(
+                      key: ValueKey(habit.id),
+                      habit: habit,
+                      isCompletedToday: completedToday[habit.id] ?? false,
+                      onToggle: () => onToggleHabit(habit),
+                      onTap: () => onTapHabit(habit),
+                      onEdit: () => onEditHabit(habit),
+                      onDelete: () => onDeleteHabit(habit),
+                      isInsideGroup: true,
+                    )),
                 ],
               ),
               crossFadeState: isExpanded

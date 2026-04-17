@@ -5,6 +5,7 @@ class HabitGroupModel {
   final String id;
   final String title;
   final String? emoji;
+  final String? description;
   final DateTime createdAt;
   final String? conversationId;
   final int habitCount;
@@ -16,6 +17,7 @@ class HabitGroupModel {
     required this.id,
     required this.title,
     this.emoji,
+    this.description,
     required this.createdAt,
     this.conversationId,
     this.habitCount = 0,
@@ -28,6 +30,7 @@ class HabitGroupModel {
       id: docId,
       title: json['title'] as String,
       emoji: json['emoji'] as String?,
+      description: json['description'] as String?,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       conversationId: json['conversationId'] as String?,
       habitCount: json['habitCount'] as int? ?? 0,
@@ -40,6 +43,7 @@ class HabitGroupModel {
     return {
       'title': title,
       'emoji': emoji,
+      'description': description,
       'createdAt': Timestamp.fromDate(createdAt),
       'conversationId': conversationId,
       'habitCount': habitCount,
@@ -51,6 +55,7 @@ class HabitGroupModel {
   HabitGroupModel copyWith({
     String? title,
     String? emoji,
+    String? description,
     int? habitCount,
     bool? isActive,
     String? publishedTemplateId,
@@ -59,6 +64,7 @@ class HabitGroupModel {
       id: id,
       title: title ?? this.title,
       emoji: emoji ?? this.emoji,
+      description: description ?? this.description,
       createdAt: createdAt,
       conversationId: conversationId,
       habitCount: habitCount ?? this.habitCount,

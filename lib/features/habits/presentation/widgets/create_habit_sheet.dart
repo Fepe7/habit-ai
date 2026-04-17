@@ -6,15 +6,18 @@ import '../../domain/habit_model.dart';
 
 // Bottom sheet para crear un hábito manualmente
 class CreateHabitSheet extends StatefulWidget {
-  const CreateHabitSheet({super.key});
+  // si se pasa groupId el hábito queda asociado a ese grupo
+  final String? groupId;
 
-  static Future<HabitModel?> show(BuildContext context) {
+  const CreateHabitSheet({super.key, this.groupId});
+
+  static Future<HabitModel?> show(BuildContext context, {String? groupId}) {
     return showAppBottomSheet<HabitModel>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
       ),
-      builder: (_) => const CreateHabitSheet(),
+      builder: (_) => CreateHabitSheet(groupId: groupId),
     );
   }
 
@@ -51,6 +54,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       targetDays: _targetDays,
       reminderTime: _reminderTime,
       createdAt: DateTime.now(),
+      groupId: widget.groupId,
     );
 
     Navigator.of(context).pop(habit);

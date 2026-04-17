@@ -10,6 +10,13 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../features/community/data/community_template_repository.dart';
 import 'widgets/edit_habit_sheet.dart';
+import 'widgets/create_habit_sheet.dart';
+import 'widgets/create_choice_sheet.dart';
+import 'widgets/create_group_sheet.dart';
+import '../../../features/achievements/data/archivement_repository.dart';
+import '../../../features/achievements/data/achievement_checker.dart';
+import '../../../features/achievements/presentation/achievement_overlay.dart';
+import '../../../features/auth/data/user_repository.dart';
 
 // Pantalla de edicion de un grupo de habitos:
 // - cabecera editable (emoji + titulo)
@@ -28,6 +35,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   late final HabitRepository _habitRepo;
   late final HabitGroupRepository _groupRepo;
   late final CommunityTemplateRepository _communityRepo;
+  late final AchievementChecker _achievementChecker;
   late final Stream<HabitGroupModel?> _groupStream;
   late final Stream<List<HabitModel>> _habitsStream;
 
@@ -38,8 +46,72 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     _habitRepo = HabitRepository(uid: uid);
     _groupRepo = HabitGroupRepository(uid: uid);
     _communityRepo = CommunityTemplateRepository(uid: uid);
+    _achievementChecker = AchievementChecker(
+      achievementRepo: AchievementRepository(uid: uid),
+      habitRepo: _habitRepo,
+      userRepo: UserRepository(uid: uid),
+    );
     _groupStream = _groupRepo.watchGroup(widget.groupId);
     _habitsStream = _habitRepo.watchAllHabitsByGroup(widget.groupId);
+  }
+
+  Future<void> _handleFabTap() async {
+    final choice = await CreateChoiceSheet.show(context);
+    if (choice == null) return;
+
+    if (choice == CreateChoice.habit) {
+      await _doAddHabit();
+    } else {
+      await _doCreateGroup();
+    }
+  }
+
+  Future<void> _doAddHabit() async {
+    final habit = await CreateHabitSheet.show(context, groupId: widget.groupId);
+    if (habit == null) return;
+    try {
+      await _habitRepo.createHabit(habit);
+      await _groupRepo.incrementHabitCount(widget.groupId, 1);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al añadir el hábito'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+      return;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hábito añadido a la rutina')),
+      );
+    }
+    try {
+      final unlocked = await _achievementChecker.checkAfterCreate();
+      if (unlocked.isNotEmpty && mounted) {
+        AchievementOverlay.showUnlocked(context, unlocked);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _doCreateGroup() async {
+    final group = await CreateGroupSheet.show(context);
+    if (group == null || !mounted) return;
+    try {
+      final groupId = await _groupRepo.createGroup(group);
+      if (mounted) context.go('/group/$groupId');
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error al crear la rutina'),
+            backgroundColor: const Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _editGroup(HabitGroupModel group) async {
@@ -223,6 +295,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         'targetDays': updated.targetDays,
         'reminderTime': updated.reminderTime,
       });
+      if (updated.groupId != habit.groupId) {
+        await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -333,6 +408,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             ),
                     ),
                 ],
+              ),
+              floatingActionButton: Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: FloatingActionButton(
+                  onPressed: _handleFabTap,
+                  tooltip: 'Crear',
+                  child: const Icon(Icons.add_rounded),
+                ),
               ),
               body: _GroupBody(
                 groupStream: _groupStream,

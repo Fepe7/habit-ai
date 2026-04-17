@@ -227,6 +227,34 @@ class HabitRepository {
     await batch.commit();
   }
 
+  // Mover un hábito de un grupo a otro (o quitarlo de grupo)
+  // Actualiza groupId en el hábito y los contadores de ambos grupos en batch
+  Future<void> reassignGroup(
+      String habitId, String? oldGroupId, String? newGroupId) async {
+    if (oldGroupId == newGroupId) return;
+
+    final batch = _firestore.batch();
+    final groupsRef =
+        _firestore.collection('users').doc(_uid).collection('habit_groups');
+
+    // actualizar groupId en el hábito
+    batch.update(_habitsRef.doc(habitId), {'groupId': newGroupId});
+
+    // decrementar grupo anterior
+    if (oldGroupId != null) {
+      batch.update(groupsRef.doc(oldGroupId),
+          {'habitCount': FieldValue.increment(-1)});
+    }
+
+    // incrementar grupo nuevo
+    if (newGroupId != null) {
+      batch.update(groupsRef.doc(newGroupId),
+          {'habitCount': FieldValue.increment(1)});
+    }
+
+    await batch.commit();
+  }
+
   // ==================== LOGS DIARIOS ====================
 
   // Guardar log de un dia

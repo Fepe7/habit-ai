@@ -80,4 +80,25 @@ class HabitGroupRepository {
 
     await batch.commit();
   }
+
+  // desactivar grupo Y desactivar todos sus habitos
+  Future<void> deleteGroupAndHabits(String groupId) async {
+    final batch = _firestore.batch();
+
+    batch.update(_groupsRef.doc(groupId), {'isActive': false});
+
+    final habitsRef = _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('habits');
+    final habitsSnapshot = await habitsRef
+        .where('groupId', isEqualTo: groupId)
+        .get();
+
+    for (final doc in habitsSnapshot.docs) {
+      batch.update(doc.reference, {'isActive': false});
+    }
+
+    await batch.commit();
+  }
 }

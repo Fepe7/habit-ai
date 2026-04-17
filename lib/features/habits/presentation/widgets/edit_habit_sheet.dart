@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../data/habit_group_repository.dart';
+import '../../domain/habit_group_model.dart';
 import '../../domain/habit_model.dart';
 
 // Bottom sheet para editar un hábito existente
@@ -36,6 +39,9 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   late String _frequency;
   late List<int> _targetDays;
   late String? _reminderTime;
+  // grupo asignado: null = sin rutina
+  String? _selectedGroupId;
+  List<HabitGroupModel> _groups = [];
 
   static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -48,6 +54,18 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     _frequency = widget.habit.frequency;
     _targetDays = List.from(widget.habit.targetDays);
     _reminderTime = widget.habit.reminderTime;
+    _selectedGroupId = widget.habit.groupId;
+    _loadGroups();
+  }
+
+  Future<void> _loadGroups() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final groups =
+          await HabitGroupRepository(uid: uid).watchGroups().first;
+      if (mounted) setState(() => _groups = groups);
+    } catch (_) {}
   }
 
   @override
@@ -61,13 +79,21 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) return;
 
-    final updated = widget.habit.copyWith(
+    // construir explícitamente para permitir groupId null (copyWith no lo soporta)
+    final updated = HabitModel(
+      id: widget.habit.id,
       title: title,
       description: _descCtrl.text.trim(),
       category: _category,
       frequency: _frequency,
       targetDays: _targetDays,
       reminderTime: _reminderTime,
+      currentStreak: widget.habit.currentStreak,
+      bestStreak: widget.habit.bestStreak,
+      isAIGenerated: widget.habit.isAIGenerated,
+      createdAt: widget.habit.createdAt,
+      isActive: widget.habit.isActive,
+      groupId: _selectedGroupId,
     );
 
     Navigator.of(context).pop(updated);
@@ -263,7 +289,37 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
               onPickTime: _pickTime,
               onClear: () => setState(() => _reminderTime = null),
             ),
-          const SizedBox(height: 28),
+            const SizedBox(height: 24),
+
+            // sección rutina (grupo)
+            if (_groups.isNotEmpty) ...[
+              _SheetLabel(label: 'Rutina'),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  // opción "sin rutina"
+                  _GroupChip(
+                    label: 'Sin rutina',
+                    emoji: null,
+                    selected: _selectedGroupId == null,
+                    onTap: () => setState(() => _selectedGroupId = null),
+                    scheme: scheme,
+                  ),
+                  ..._groups.map((g) => _GroupChip(
+                        label: g.title,
+                        emoji: g.emoji,
+                        selected: _selectedGroupId == g.id,
+                        onTap: () =>
+                            setState(() => _selectedGroupId = g.id),
+                        scheme: scheme,
+                      )),
+                ],
+              ),
+              const SizedBox(height: 28),
+            ] else
+              const SizedBox(height: 4),
 
           // botón guardar debajo del recordatorio
           GradientButton(
@@ -293,6 +349,66 @@ class _SheetLabel extends StatelessWidget {
         color: scheme.onSurfaceVariant,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _GroupChip extends StatelessWidget {
+  final String label;
+  final String? emoji;
+  final bool selected;
+  final VoidCallback onTap;
+  final ColorScheme scheme;
+
+  const _GroupChip({
+    required this.label,
+    required this.emoji,
+    required this.selected,
+    required this.onTap,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primaryContainer
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.15),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (emoji != null) ...[
+              Text(emoji!, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 6),
+            ] else ...[
+              Icon(Icons.folder_off_outlined,
+                  size: 14,
+                  color: selected ? scheme.primary : scheme.onSurfaceVariant),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                fontWeight:
+                    selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
