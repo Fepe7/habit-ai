@@ -15,6 +15,10 @@ class HabitCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final bool isInsideGroup;
+  final bool selectionMode;
+  final bool isSelected;
+  final VoidCallback? onEnterSelection;
+  final VoidCallback? onToggleSelect;
 
   const HabitCard({
     super.key,
@@ -25,6 +29,10 @@ class HabitCard extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.isInsideGroup = false,
+    this.selectionMode = false,
+    this.isSelected = false,
+    this.onEnterSelection,
+    this.onToggleSelect,
   });
 
   @override
@@ -34,13 +42,17 @@ class HabitCard extends StatelessWidget {
     final catFg = AppTheme.categoryFg(habit.category);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
-    final cardBg = isCompletedToday
-        ? scheme.primaryContainer.withValues(alpha: 0.18)
-        : isInsideGroup
-            ? Colors.transparent
-            : scheme.surfaceContainerLowest;
+    final cardBg = isSelected
+        ? scheme.primaryContainer.withValues(alpha: 0.25)
+        : isCompletedToday
+            ? scheme.primaryContainer.withValues(alpha: 0.18)
+            : isInsideGroup
+                ? Colors.transparent
+                : scheme.surfaceContainerLowest;
 
-    Widget card = Container(
+    Widget card = GestureDetector(
+      onLongPress: selectionMode ? null : onEnterSelection,
+      child: Container(
       color: isInsideGroup ? cardBg : null,
       decoration: isInsideGroup
           ? null
@@ -53,26 +65,36 @@ class HabitCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            // circulo de check — zona de tap independiente
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onToggle();
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: _CheckCircle(
-                  isCompleted: isCompletedToday,
-                  categoryColor: catFg,
+            // en modo selección: checkbox; si no: circulo de check
+            if (selectionMode)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => onToggleSelect?.call(),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              )
+            else
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  onToggle();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: _CheckCircle(
+                    isCompleted: isCompletedToday,
+                    categoryColor: catFg,
+                  ),
                 ),
               ),
-            ),
 
-            // contenido — tap para navegar a detalle
+            // contenido — tap para navegar a detalle (o seleccionar en modo selección)
             Expanded(
               child: InkWell(
-                onTap: onTap,
-                onLongPress: onEdit,
+                onTap: selectionMode ? onToggleSelect : onTap,
+                onLongPress: selectionMode ? null : onEdit,
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
@@ -147,60 +169,62 @@ class HabitCard extends StatelessWidget {
               ),
             ),
 
-            // icono de completado con bounce / menu
-            if (isCompletedToday)
-              Padding(
-                padding: const EdgeInsets.only(right: 14),
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.elasticOut,
-                  builder: (ctx, v, child) => Transform.scale(scale: v, child: child),
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    color: scheme.primary,
-                    size: 22,
+            // icono de completado con bounce / menu (oculto en modo selección)
+            if (!selectionMode) ...[
+              if (isCompletedToday)
+                Padding(
+                  padding: const EdgeInsets.only(right: 14),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.elasticOut,
+                    builder: (ctx, v, child) => Transform.scale(scale: v, child: child),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      color: scheme.primary,
+                      size: 22,
+                    ),
                   ),
+                )
+              else if (onEdit != null || onDelete != null)
+                PopupMenuButton<String>(
+                  icon: Icon(Icons.more_vert_rounded, color: scheme.onSurfaceVariant, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onSelected: (v) {
+                    if (v == 'edit') onEdit?.call();
+                    if (v == 'delete') onDelete?.call();
+                  },
+                  itemBuilder: (ctx) => [
+                    if (onEdit != null)
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 20),
+                            SizedBox(width: 12),
+                            Text('Editar'),
+                          ],
+                        ),
+                      ),
+                    if (onDelete != null)
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                            const SizedBox(width: 12),
+                            Text('Eliminar', style: TextStyle(color: AppTheme.error)),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
-              )
-            else if (onEdit != null || onDelete != null)
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert_rounded, color: scheme.onSurfaceVariant, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                onSelected: (v) {
-                  if (v == 'edit') onEdit?.call();
-                  if (v == 'delete') onDelete?.call();
-                },
-                itemBuilder: (ctx) => [
-                  if (onEdit != null)
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined, size: 20),
-                          SizedBox(width: 12),
-                          Text('Editar'),
-                        ],
-                      ),
-                    ),
-                  if (onDelete != null)
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
-                          const SizedBox(width: 12),
-                          Text('Eliminar', style: TextStyle(color: AppTheme.error)),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
+            ],
           ],
         ),
       ),
-    );
+    ));
 
     // separador sutil entre cards dentro de grupo (sin linea 1px visible)
     if (isInsideGroup) {

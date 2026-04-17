@@ -43,6 +43,80 @@ class _HabitsScreenState extends State<HabitsScreen> {
   bool _initialized = false;
   List<HabitModel> _currentTodayHabits = [];
 
+  // modo selección múltiple
+  bool _selectionMode = false;
+  final Set<String> _selectedHabitIds = {};
+
+  void _enterSelection(String id) {
+    setState(() {
+      _selectionMode = true;
+      _selectedHabitIds.add(id);
+    });
+  }
+
+  void _toggleHabitSelection(String id) {
+    setState(() {
+      if (_selectedHabitIds.contains(id)) {
+        _selectedHabitIds.remove(id);
+      } else {
+        _selectedHabitIds.add(id);
+      }
+    });
+  }
+
+  void _exitSelection() {
+    setState(() {
+      _selectionMode = false;
+      _selectedHabitIds.clear();
+    });
+  }
+
+  Future<void> _bulkDeleteHabits() async {
+    final count = _selectedHabitIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Eliminar $count hábito${count == 1 ? '' : 's'}'),
+        content: const Text(
+          'Se desactivarán pero se conservará el historial.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final ids = List<String>.from(_selectedHabitIds);
+    _exitSelection();
+    try {
+      for (final id in ids) {
+        await _habitRepo.deactivateHabit(id);
+        _completedToday.remove(id);
+        _logsFetched.remove(id);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$count hábito${count == 1 ? '' : 's'} eliminado${count == 1 ? '' : 's'}')),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Error al eliminar los hábitos'),
+          backgroundColor: AppTheme.error,
+        ));
+      }
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -320,16 +394,18 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 100),
-        child: FloatingActionButton(
-          onPressed: _handleFabTap,
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
-          tooltip: 'Crear',
-          child: const Icon(Icons.add_rounded),
-        ),
-      ),
+      floatingActionButton: _selectionMode
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 100),
+              child: FloatingActionButton(
+                onPressed: _handleFabTap,
+                backgroundColor: scheme.primary,
+                foregroundColor: scheme.onPrimary,
+                tooltip: 'Crear',
+                child: const Icon(Icons.add_rounded),
+              ),
+            ),
       body: SafeArea(
         bottom: false,
         child: StreamBuilder<List<HabitGroupModel>>(
@@ -429,6 +505,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             onTapHabit: (h) => context.go('/habit/${h.id}'),
                             onEditHabit: _editHabit,
                             onDeleteHabit: _deleteHabit,
+                            selectionMode: _selectionMode,
+                            selectedIds: _selectedHabitIds,
+                            onToggleSelect: _toggleHabitSelection,
+                            onEnterSelection: _enterSelection,
                           ),
                         );
                       }),
@@ -444,6 +524,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             onTapHabit: (h) => context.go('/habit/${h.id}'),
                             onEditHabit: _editHabit,
                             onDeleteHabit: _deleteHabit,
+                            selectionMode: _selectionMode,
+                            selectedIds: _selectedHabitIds,
+                            onToggleSelect: _toggleHabitSelection,
+                            onEnterSelection: _enterSelection,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -460,9 +544,42 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
   }
 
-  // header asimetrico: saludo izquierda, fecha derecha
+  // header asimetrico: saludo izquierda, fecha derecha (o barra de selección)
   Widget _buildHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+
+    if (_selectionMode) {
+      final count = _selectedHabitIds.length;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: _exitSelection,
+              tooltip: 'Cancelar selección',
+            ),
+            Expanded(
+              child: Text(
+                '$count seleccionado${count == 1 ? '' : 's'}',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                color: count > 0 ? AppTheme.error : scheme.onSurfaceVariant,
+              ),
+              tooltip: 'Eliminar seleccionados',
+              onPressed: count > 0 ? _bulkDeleteHabits : null,
+            ),
+          ],
+        ),
+      );
+    }
+
     final now = DateTime.now();
     const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
@@ -664,6 +781,10 @@ class _GroupSection extends StatelessWidget {
   final void Function(HabitModel) onTapHabit;
   final void Function(HabitModel) onEditHabit;
   final void Function(HabitModel) onDeleteHabit;
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(String) onToggleSelect;
+  final void Function(String) onEnterSelection;
 
   const _GroupSection({
     required this.group,
@@ -678,6 +799,10 @@ class _GroupSection extends StatelessWidget {
     required this.onTapHabit,
     required this.onEditHabit,
     required this.onDeleteHabit,
+    this.selectionMode = false,
+    this.selectedIds = const {},
+    required this.onToggleSelect,
+    required this.onEnterSelection,
   });
 
   @override
@@ -838,6 +963,10 @@ class _GroupSection extends StatelessWidget {
                       onEdit: () => onEditHabit(habit),
                       onDelete: () => onDeleteHabit(habit),
                       isInsideGroup: true,
+                      selectionMode: selectionMode,
+                      isSelected: selectedIds.contains(habit.id),
+                      onEnterSelection: () => onEnterSelection(habit.id),
+                      onToggleSelect: () => onToggleSelect(habit.id),
                     )),
                 ],
               ),
@@ -863,6 +992,10 @@ class _UngroupedSection extends StatelessWidget {
   final void Function(HabitModel) onTapHabit;
   final void Function(HabitModel) onEditHabit;
   final void Function(HabitModel) onDeleteHabit;
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(String) onToggleSelect;
+  final void Function(String) onEnterSelection;
 
   const _UngroupedSection({
     required this.habits,
@@ -871,6 +1004,10 @@ class _UngroupedSection extends StatelessWidget {
     required this.onTapHabit,
     required this.onEditHabit,
     required this.onDeleteHabit,
+    this.selectionMode = false,
+    this.selectedIds = const {},
+    required this.onToggleSelect,
+    required this.onEnterSelection,
   });
 
   @override
@@ -932,6 +1069,10 @@ class _UngroupedSection extends StatelessWidget {
                   onEdit: () => onEditHabit(habit),
                   onDelete: () => onDeleteHabit(habit),
                   isInsideGroup: true,
+                  selectionMode: selectionMode,
+                  isSelected: selectedIds.contains(habit.id),
+                  onEnterSelection: () => onEnterSelection(habit.id),
+                  onToggleSelect: () => onToggleSelect(habit.id),
                 )),
               ],
             ),
