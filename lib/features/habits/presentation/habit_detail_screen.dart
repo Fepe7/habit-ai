@@ -158,6 +158,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       'targetDays': updated.targetDays,
       'reminderTime': updated.reminderTime,
     });
+    if (updated.groupId != _habit!.groupId) {
+      await _habitRepo.reassignGroup(_habit!.id, _habit!.groupId, updated.groupId);
+    }
     await _loadData();
   }
 
