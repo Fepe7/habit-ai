@@ -8,6 +8,7 @@ import '../../../core/widgets/ux/skeletons.dart';
 import '../data/ai_repository.dart';
 import '../domain/weekly_review_model.dart';
 import '../../habits/data/habit_repository.dart';
+import '../../habits/domain/habit_model.dart';
 import '../../habits/presentation/widgets/edit_habit_sheet.dart';
 
 // Pantalla con la revision semanal generada por la IA
@@ -27,6 +28,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   WeeklyReviewModel? _review;
   bool _loading = true;
   String? _error;
+  // cache de hábitos activos para fallback por título cuando Gemini no
+  // devuelve un habitId válido
+  List<HabitModel>? _activeHabits;
 
   @override
   void didChangeDependencies() {
@@ -63,9 +67,34 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     }
   }
 
+  // Resuelve el hábito real: primero por id, si falla por título.
+  // Gemini a veces devuelve habitId vacío o inventado, así que toca ser tolerante.
+  Future<HabitModel?> _resolveHabit(ReviewRecommendation rec) async {
+    if (rec.habitId.isNotEmpty) {
+      final byId = await _habitRepo.getHabit(rec.habitId);
+      if (byId != null) return byId;
+    }
+
+    final title = rec.habitTitle.trim().toLowerCase();
+    if (title.isEmpty) return null;
+
+    _activeHabits ??= await _habitRepo.getActiveHabits();
+    final habits = _activeHabits!;
+
+    // match exacto primero, luego contains
+    for (final h in habits) {
+      if (h.title.trim().toLowerCase() == title) return h;
+    }
+    for (final h in habits) {
+      final ht = h.title.trim().toLowerCase();
+      if (ht.contains(title) || title.contains(ht)) return h;
+    }
+    return null;
+  }
+
   // Abre el EditHabitSheet del habito al que apunta una recomendacion
   Future<void> _applyRecommendation(ReviewRecommendation rec) async {
-    final habit = await _habitRepo.getHabit(rec.habitId);
+    final habit = await _resolveHabit(rec);
     if (!mounted) return;
 
     if (habit == null) {
@@ -73,7 +102,13 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
       return;
     }
 
-    final updated = await EditHabitSheet.show(context, habit);
+    // precargar la descripción sugerida por la IA (rec.action) para que el
+    // usuario vea el cambio propuesto al abrir el sheet y solo tenga que
+    // pulsar guardar si le encaja
+    final suggested = rec.action.trim().isNotEmpty
+        ? habit.copyWith(description: rec.action.trim())
+        : habit;
+    final updated = await EditHabitSheet.show(context, suggested);
     if (updated == null || !mounted) return;
 
     try {
@@ -84,6 +119,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         'frequency': updated.frequency,
         'targetDays': updated.targetDays,
         'reminderTime': updated.reminderTime,
+        'groupId': updated.groupId,
       });
       if (mounted) {
         AppSnackBar.showSuccess(context, 'Hábito actualizado');
@@ -485,9 +521,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: FilledButton.tonalIcon(
-                      onPressed: rec.habitId.isEmpty
-                          ? null
-                          : () => _applyRecommendation(rec),
+                      onPressed: () => _applyRecommendation(rec),
                       icon: const Icon(Icons.edit_rounded, size: 16),
                       label: const Text('Aplicar'),
                       style: FilledButton.styleFrom(

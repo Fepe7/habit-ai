@@ -65,6 +65,14 @@ class HabitRepository {
     return HabitModel.fromJson(doc.data()!, doc.id);
   }
 
+  // Todos los hábitos activos del usuario (sin filtrar por día)
+  Future<List<HabitModel>> getActiveHabits() async {
+    final snap = await _habitsRef.where('isActive', isEqualTo: true).get();
+    return snap.docs
+        .map((d) => HabitModel.fromJson(d.data(), d.id))
+        .toList();
+  }
+
   // Crear habito nuevo (+ sync en perfil público si está activo)
   Future<String> createHabit(HabitModel habit) async {
     final docRef = await _habitsRef.add(habit.toJson());
@@ -209,6 +217,7 @@ class HabitRepository {
           await _publicHabitsRef.doc(habitId).update(publicFields);
         } catch (_) {
           // el hábito puede no existir en el perfil público
+          // (ej: creado por IA vía batch sin sync al espejo)
         }
       }
     }
