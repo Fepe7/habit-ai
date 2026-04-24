@@ -191,10 +191,10 @@ class AIRepository {
     return WeeklyReviewModel.fromJson(doc.data()!);
   }
 
-  // ==================== EFECTO MARIPOSA ====================
+  // EFECTO MARIPOSA
 
-  // Dispara la generación manual de la proyección del mes en curso.
-  // Devuelve null si no hay suficientes logs (< 10).
+  // Dispara la generación manual de la proyección del mes en curso
+  // Devuelve null si no hay suficientes logs (< 10
   Future<String?> generateButterflyProjection() async {
     try {
       final result = await _generateButterflyFn.call();
