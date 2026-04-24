@@ -1,19 +1,46 @@
 import 'dart:ui';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/habits/data/habit_repository.dart';
+import '../../services/notification_service.dart';
 import '../widgets/app_drawer.dart';
 
 /// Shell principal con glassmorphism bottom nav
 /// BackdropFilter + superficie translucida para que el scroll se vea detras
-class MainShell extends StatelessWidget {
+class MainShell extends StatefulWidget {
   final Widget child;
 
   const MainShell({super.key, required this.child});
 
   /// Key global para abrir el drawer desde cualquier widget hijo.
   static final scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  @override
+  void initState() {
+    super.initState();
+    // reprogramar notificaciones una vez por sesion (por si el SO las purgo
+    // o el usuario reinstalo la app). No bloquea el primer render
+    _rescheduleNotifications();
+  }
+
+  Future<void> _rescheduleNotifications() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    if (!await NotificationService.instance.isEnabled()) return;
+    // pedir permiso si aun no se ha concedido (Android 13+)
+    await NotificationService.instance.requestPermissions();
+    final repo = HabitRepository(uid: uid);
+    final habits = await repo.getActiveHabits();
+    await NotificationService.instance.rescheduleAll(habits);
+  }
 
   static const _tabs = [
     _TabInfo(
@@ -54,10 +81,10 @@ class MainShell extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      key: scaffoldKey,
+      key: MainShell.scaffoldKey,
       extendBody: true,
       drawer: const AppDrawer(),
-      body: child,
+      body: widget.child,
       bottomNavigationBar: _GlassNavBar(
         selectedIndex: selected,
         scheme: scheme,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../profile/domain/public_habit_model.dart';
+import '../../../services/notification_service.dart';
 
 // CRUD de habitos y logs en Firestore
 class HabitRepository {
@@ -95,29 +96,61 @@ class HabitRepository {
       }
     }
 
+    // programar recordatorios locales (el servicio ignora si no hay reminderTime)
+    await NotificationService.instance.scheduleHabitReminders(
+      _withId(habit, newId),
+    );
+
     return newId;
   }
+
+  // Clona el habito con un id concreto (el original trae id vacio antes de Firestore)
+  HabitModel _withId(HabitModel h, String id) => HabitModel(
+        id: id,
+        title: h.title,
+        description: h.description,
+        category: h.category,
+        frequency: h.frequency,
+        targetDays: h.targetDays,
+        reminderTime: h.reminderTime,
+        currentStreak: h.currentStreak,
+        bestStreak: h.bestStreak,
+        isAIGenerated: h.isAIGenerated,
+        createdAt: h.createdAt,
+        isActive: h.isActive,
+        groupId: h.groupId,
+      );
 
   // Crear varios habitos a la vez (para cuando la IA genera un plan)
   Future<void> createHabits(List<HabitModel> habits) async {
     final batch = _firestore.batch();
+    final withIds = <HabitModel>[];
     for (final habit in habits) {
       final docRef = _habitsRef.doc();
       batch.set(docRef, habit.toJson());
+      withIds.add(_withId(habit, docRef.id));
     }
     await batch.commit();
+    for (final h in withIds) {
+      await NotificationService.instance.scheduleHabitReminders(h);
+    }
   }
 
   // Crear varios habitos asignados a un grupo
   Future<void> createHabitsInGroup(List<HabitModel> habits, String groupId) async {
     final batch = _firestore.batch();
+    final withIds = <HabitModel>[];
     for (final habit in habits) {
       final docRef = _habitsRef.doc();
       final json = habit.toJson();
       json['groupId'] = groupId;
       batch.set(docRef, json);
+      withIds.add(_withId(habit.copyWith(groupId: groupId), docRef.id));
     }
     await batch.commit();
+    for (final h in withIds) {
+      await NotificationService.instance.scheduleHabitReminders(h);
+    }
   }
 
   // Habitos de hoy sin grupo (creados manualmente)
@@ -183,6 +216,7 @@ class HabitRepository {
       batch.delete(_publicHabitsRef.doc(habitId));
     }
     await batch.commit();
+    await NotificationService.instance.cancelHabitReminders(habitId);
   }
 
   // Todos los habitos activos de un grupo (sin filtrar por dia)
@@ -200,6 +234,19 @@ class HabitRepository {
   // Actualizar habito (+ sync de campos públicos si corresponde)
   Future<void> updateHabit(String habitId, Map<String, dynamic> data) async {
     await _habitsRef.doc(habitId).update(data);
+
+    // si cambia algo que afecte al recordatorio, reprogramar
+    final affectsReminder = data.containsKey('reminderTime') ||
+        data.containsKey('targetDays') ||
+        data.containsKey('title') ||
+        data.containsKey('description') ||
+        data.containsKey('isActive');
+    if (affectsReminder) {
+      final fresh = await getHabit(habitId);
+      if (fresh != null) {
+        await NotificationService.instance.scheduleHabitReminders(fresh);
+      }
+    }
 
     // sync campos públicos al perfil si está activo
     if (await _isProfilePublic()) {
@@ -234,6 +281,7 @@ class HabitRepository {
     }
 
     await batch.commit();
+    await NotificationService.instance.cancelHabitReminders(habitId);
   }
 
   // Mover un hábito de un grupo a otro (o quitarlo de grupo)
@@ -416,6 +464,9 @@ class HabitRepository {
       'currentStreak': newStreak,
       'bestStreak': newBest,
     });
+
+    // cancelar el recordatorio de hoy: ya se ha cumplido, no hace falta avisar
+    await NotificationService.instance.cancelTodayReminder(habit);
   }
 
   // Recalcular racha tras desmarcar (borra log + recalcula)
@@ -433,6 +484,9 @@ class HabitRepository {
     );
 
     await updateHabit(habitId, {'currentStreak': newStreak});
+
+    // si aun no ha pasado la hora del recordatorio, reprogramarlo para hoy
+    await NotificationService.instance.scheduleHabitReminders(habit);
   }
 
   // ==================== ESCUDOS DE RACHA ====================

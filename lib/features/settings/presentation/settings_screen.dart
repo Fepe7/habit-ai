@@ -10,8 +10,10 @@ import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import '../../habits/data/habit_repository.dart';
 import '../../profile/data/public_profile_repository.dart';
 import '../../profile/presentation/widgets/username_input_sheet.dart';
+import '../../../services/notification_service.dart';
 
 /// Pantalla de ajustes — Editorial Vitality
 class SettingsScreen extends StatefulWidget {
@@ -167,13 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'Tus logros desbloqueados',
                   onTap: () => context.goNamed('achievements'),
                 ),
-                _SettingsTile(
-                  icon: Icons.notifications_outlined,
-                  title: 'Notificaciones',
-                  subtitle: 'Recordatorios de hábitos',
-                  onTap: () {},
-                  divider: false,
-                ),
+                const _NotificationsTile(),
               ],
             ),
 
@@ -754,6 +750,99 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Tile con switch para activar/desactivar todas las notificaciones locales
+class _NotificationsTile extends StatefulWidget {
+  const _NotificationsTile();
+
+  @override
+  State<_NotificationsTile> createState() => _NotificationsTileState();
+}
+
+class _NotificationsTileState extends State<_NotificationsTile> {
+  bool _enabled = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final v = await NotificationService.instance.isEnabled();
+    if (mounted) setState(() { _enabled = v; _loading = false; });
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _loading = true);
+    try {
+      if (value) {
+        // al activar, pedimos permiso del SO. si lo deniega, no guardamos
+        final granted = await NotificationService.instance.requestPermissions();
+        if (!granted) {
+          if (mounted) {
+            AppSnackBar.showInfo(context,
+                'Activa las notificaciones en los ajustes del sistema'); // ignore: use_build_context_synchronously
+          }
+          return;
+        }
+        await NotificationService.instance.setEnabled(true);
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid != null) {
+          final repo = HabitRepository(uid: uid);
+          final habits = await repo.getActiveHabits();
+          await NotificationService.instance.rescheduleAll(habits);
+        }
+      } else {
+        await NotificationService.instance.setEnabled(false);
+        await NotificationService.instance.cancelAll();
+      }
+      if (mounted) setState(() => _enabled = value);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(Icons.notifications_outlined, size: 18, color: scheme.primary),
+      ),
+      title: Text(
+        'Notificaciones',
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        _enabled
+            ? 'Recibirás recordatorios de tus hábitos'
+            : 'Recordatorios desactivados',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      trailing: _loading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Switch(
+              value: _enabled,
+              onChanged: _toggle,
+            ),
     );
   }
 }
