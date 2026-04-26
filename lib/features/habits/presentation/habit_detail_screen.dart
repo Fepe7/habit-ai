@@ -12,6 +12,8 @@ import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import '../../ai/data/ai_repository.dart';
+import '../../ai/domain/renegotiation_model.dart';
 import 'widgets/edit_habit_sheet.dart';
 
 // Pantalla de detalle de un hábito con diseño Editorial Vitality
@@ -27,6 +29,7 @@ class HabitDetailScreen extends StatefulWidget {
 class _HabitDetailScreenState extends State<HabitDetailScreen> {
   late final HabitRepository _habitRepo;
   late final UserRepository _userRepo;
+  late final AIRepository _aiRepo;
   HabitModel? _habit;
   UserModel? _userData;
   List<HabitLogModel> _recentLogs = [];
@@ -40,6 +43,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _habitRepo = HabitRepository(uid: uid);
     _userRepo = UserRepository(uid: uid);
+    _aiRepo = AIRepository(uid: uid);
     _loadData();
   }
 
@@ -195,6 +199,165 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  // Aplica los campos no nulos de la sugerencia sobre el hábito base
+  HabitModel _applyRenegotiationOverrides(
+      HabitModel base, RenegotiationModel reno) {
+    return base.copyWith(
+      title: reno.suggestedTitle,
+      description: reno.suggestedDescription,
+      reminderTime: reno.suggestedReminderTime,
+      targetDays: reno.suggestedTargetDays,
+    );
+  }
+
+  Widget _buildRenegotiationBanner() {
+    return StreamBuilder<RenegotiationModel?>(
+      stream: _aiRepo.watchRenegotiationForHabit(widget.habitId),
+      builder: (context, snapshot) {
+        final reno = snapshot.data;
+        if (reno == null) return const SizedBox.shrink();
+
+        final scheme = Theme.of(context).colorScheme;
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+              boxShadow: AppTheme.ambientShadow(),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color:
+                            const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.handshake_outlined,
+                        size: 18,
+                        color: Color(0xFFF59E0B),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Sugerencia de la IA',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(
+                                  color: const Color(0xFFF59E0B),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                          Text(
+                            reno.strategy.label,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  reno.diagnosis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  reno.encouragement,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontStyle: FontStyle.italic,
+                        height: 1.4,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: () async {
+                          if (_habit == null) return;
+                          final prefilled =
+                              _applyRenegotiationOverrides(_habit!, reno);
+                          final updated =
+                              await EditHabitSheet.show(context, prefilled);
+                          if (updated == null || !mounted) return;
+                          await _habitRepo.updateHabit(_habit!.id, {
+                            'title': updated.title,
+                            'description': updated.description,
+                            'category': updated.category,
+                            'frequency': updated.frequency,
+                            'targetDays': updated.targetDays,
+                            'reminderTime': updated.reminderTime,
+                          });
+                          await _aiRepo
+                              .markRenegotiationApplied(widget.habitId);
+                          await _loadData();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor:
+                              const Color(0xFFF59E0B).withValues(alpha: 0.9),
+                          foregroundColor: Colors.white,
+                          shape: const StadiumBorder(),
+                          minimumSize: const Size(0, 40),
+                        ),
+                        child: const Text('Aplicar ajuste'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    OutlinedButton(
+                      onPressed: () =>
+                          _aiRepo.dismissRenegotiation(widget.habitId),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: scheme.onSurfaceVariant,
+                        side: BorderSide(
+                          color: scheme.outlineVariant.withValues(alpha: 0.4),
+                        ),
+                        shape: const StadiumBorder(),
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: const Text('Ahora no'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.04, curve: Curves.easeOutCubic),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -253,6 +416,9 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                     .fadeIn(delay: 100.ms, duration: 300.ms)
                     .slideY(begin: 0.05),
                 const SizedBox(height: 16),
+
+                // banner de renegociación si la IA sugiere un ajuste
+                _buildRenegotiationBanner(),
 
                 // descripción del hábito (si existe)
                 if (habit.description != null &&

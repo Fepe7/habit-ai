@@ -16,6 +16,7 @@ import '../../achievements/domain/achivement_model.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 import '../../ai/domain/butterfly_projection_model.dart';
+import '../../ai/domain/renegotiation_model.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
 
@@ -122,6 +123,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
+
+                              _buildRenegotiationsCard(context)
+                                  .animate()
+                                  .fadeIn(delay: 140.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
 
                               _buildWeeklyReviewCard(context)
                                   .animate()
@@ -280,6 +286,94 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } finally {
       if (mounted) setState(() => _generatingButterfly = false);
     }
+  }
+
+  // card de hábitos con renegociación pendiente — solo visible si hay sugerencias
+  Widget _buildRenegotiationsCard(BuildContext context) {
+    return StreamBuilder<List<RenegotiationModel>>(
+      stream: _aiRepo.watchActiveRenegotiations(),
+      builder: (context, snapshot) {
+        final renos = snapshot.data ?? [];
+        if (renos.isEmpty) return const SizedBox.shrink();
+
+        final scheme = Theme.of(context).colorScheme;
+        final displayed = renos.take(3).toList();
+
+        return _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text('🤝', style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Hábitos que ajustar (${renos.length})',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...displayed.map((reno) => InkWell(
+                    onTap: () => context.goNamed(
+                      'habit-detail',
+                      pathParameters: {'habitId': reno.habitId},
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  reno.habitTitle,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  reno.diagnosis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                          color: scheme.onSurfaceVariant),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right_rounded,
+                              size: 18,
+                              color: scheme.onSurfaceVariant
+                                  .withValues(alpha: 0.5)),
+                        ],
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // card del simulador efecto mariposa

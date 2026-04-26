@@ -48,6 +48,16 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /renegotiations/{habitId} {
+        allow read:   if isOwner(userId);
+        // el cliente solo puede marcar el ciclo de vida (applied/dismissed)
+        allow update: if isOwner(userId)
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['appliedAt', 'dismissedAt']);
+        // escritura inicial y borrado solo desde el admin SDK (Cloud Function)
+        allow create, delete: if false;
+      }
+
       match /shield_grants/{grantId} {
         allow read, write: if isOwner(userId);
       }

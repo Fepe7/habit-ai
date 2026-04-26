@@ -747,6 +747,266 @@ exports.butterflyProjectionJob = onSchedule(
   }
 );
 
+// ==================== RENEGOCIACION INTELIGENTE ====================
+
+const RENEGOTIATION_PROMPT = `Eres un coach de hábitos empático.
+El usuario ha fallado este hábito ≥3 días en su frecuencia objetivo.
+Propón UN ajuste concreto y factible (no rendirse, adaptar).
+
+Devuelve SOLO JSON válido:
+{
+  "diagnosis": "1 frase explicando por qué crees que falla",
+  "strategy": "lower_intensity" | "change_time" | "split_micro" | "reduce_frequency",
+  "suggestedTitle": "string",
+  "suggestedDescription": "string",
+  "suggestedReminderTime": "HH:mm" | null,
+  "suggestedTargetDays": [1,2,3,4,5] | null,
+  "encouragement": "1 frase motivacional, tuteando"
+}`;
+
+// Calcula si el hábito lleva ≥3 días objetivo consecutivos sin completar.
+// Devuelve el contexto si es elegible, null si no.
+async function buildRenegotiationContext(uid, habitId) {
+  const db = admin.firestore();
+  const habitDoc = await db
+    .collection("users")
+    .doc(uid)
+    .collection("habits")
+    .doc(habitId)
+    .get();
+
+  if (!habitDoc.exists) return null;
+  const habit = { id: habitId, ...habitDoc.data() };
+  const targetDays = habit.targetDays || [];
+  if (targetDays.length === 0) return null;
+
+  const since = new Date();
+  since.setDate(since.getDate() - 14);
+  since.setHours(0, 0, 0, 0);
+
+  const logsSnap = await db
+    .collection("users")
+    .doc(uid)
+    .collection("habits")
+    .doc(habitId)
+    .collection("logs")
+    .where("date", ">=", admin.firestore.Timestamp.fromDate(since))
+    .get();
+
+  const doneDates = new Set();
+  for (const doc of logsSnap.docs) {
+    const d = doc.data();
+    if (d.completed || d.shielded) {
+      const ts = d.date.toDate();
+      doneDates.add(`${ts.getFullYear()}-${ts.getMonth()}-${ts.getDate()}`);
+    }
+  }
+
+  // recorrer los últimos 14 días buscando targetDays (más reciente primero)
+  const now = new Date();
+  const recentTargetDays = [];
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const weekday = d.getDay() === 0 ? 7 : d.getDay();
+    if (targetDays.includes(weekday)) {
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      recentTargetDays.push({ date: d, done: doneDates.has(key) });
+    }
+  }
+
+  if (recentTargetDays.length < 3) return null;
+  const lastThree = recentTargetDays.slice(0, 3);
+  if (!lastThree.every((d) => !d.done)) return null;
+
+  return { habit, missedDays: lastThree.length };
+}
+
+// Genera (o saltea si ya hay una pendiente) la sugerencia para un hábito
+async function runRenegotiation(uid, habitId) {
+  const ctx = await buildRenegotiationContext(uid, habitId);
+  if (!ctx) return { skipped: true, reason: "not_eligible", habitId };
+
+  const db = admin.firestore();
+  const existing = await db
+    .collection("users")
+    .doc(uid)
+    .collection("renegotiations")
+    .doc(habitId)
+    .get();
+
+  // si ya hay una pendiente (sin applied ni dismissed), no regenerar
+  if (existing.exists) {
+    const data = existing.data();
+    if (!data.appliedAt && !data.dismissedAt) {
+      return { skipped: true, reason: "already_pending", habitId };
+    }
+  }
+
+  const { habit } = ctx;
+  const userMessage = `Hábito: "${habit.title}" (${habit.category})
+Descripción: ${habit.description || "sin descripción"}
+Días objetivo: ${(habit.targetDays || []).join(",")}
+Recordatorio actual: ${habit.reminderTime || "ninguno"}
+Días fallados consecutivos: ${ctx.missedDays}
+
+Propón un ajuste concreto para que pueda retomarlo.`;
+
+  const apiKey = geminiApiKey.value();
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-pro",
+    systemInstruction: RENEGOTIATION_PROMPT,
+  });
+
+  const result = await model.generateContent(userMessage);
+  const text = result.response.text();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(extractJson(text));
+  } catch (e) {
+    console.error("No se pudo parsear la renegociación:", text);
+    throw new HttpsError("internal", "La IA devolvió un formato no válido.");
+  }
+
+  const renoDoc = {
+    habitId,
+    habitTitle: habit.title,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    missedDays: ctx.missedDays,
+    diagnosis: parsed.diagnosis || "",
+    strategy: parsed.strategy || "lower_intensity",
+    suggestedTitle: parsed.suggestedTitle || habit.title,
+    suggestedDescription: parsed.suggestedDescription || null,
+    suggestedReminderTime: parsed.suggestedReminderTime || null,
+    suggestedTargetDays: parsed.suggestedTargetDays || null,
+    encouragement: parsed.encouragement || "",
+    appliedAt: null,
+    dismissedAt: null,
+  };
+
+  await db
+    .collection("users")
+    .doc(uid)
+    .collection("renegotiations")
+    .doc(habitId)
+    .set(renoDoc);
+
+  return { skipped: false, habitId };
+}
+
+// Trigger manual desde la app (botón en HabitDetailScreen)
+exports.generateRenegotiation = onCall(
+  {
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Debes iniciar sesión para usar el asistente."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const { habitId } = request.data;
+
+    if (!habitId || typeof habitId !== "string") {
+      throw new HttpsError("invalid-argument", "habitId requerido.");
+    }
+
+    // rate limit propio: 5 renegociaciones/hora por usuario
+    const ref = admin.firestore().collection("rate_limits").doc(uid);
+    const doc = await ref.get();
+    const nowTs = Date.now();
+    const oneHourAgo = nowTs - 60 * 60 * 1000;
+
+    if (doc.exists) {
+      const requests = (doc.data().renoRequests || []).filter(
+        (ts) => ts > oneHourAgo
+      );
+      if (requests.length >= 5) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Has hecho demasiadas peticiones de renegociación. Espera unos minutos."
+        );
+      }
+      requests.push(nowTs);
+      await ref.update({ renoRequests: requests });
+    } else {
+      await ref.set({ renoRequests: [nowTs] });
+    }
+
+    try {
+      return await runRenegotiation(uid, habitId);
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      console.error("Error en generateRenegotiation:", error);
+      throw new HttpsError(
+        "internal",
+        "No se pudo generar la renegociación. Inténtalo más tarde."
+      );
+    }
+  }
+);
+
+// Job diario a las 07:00 Europa/Madrid — analiza todos los hábitos activos
+exports.renegotiationJob = onSchedule(
+  {
+    schedule: "0 7 * * *",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+  },
+  async () => {
+    const db = admin.firestore();
+
+    const usersSnapshot = await db
+      .collection("users")
+      .where("onboardingCompleted", "==", true)
+      .get();
+
+    console.log(`renegotiationJob: procesando ${usersSnapshot.size} usuarios`);
+
+    let generated = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      try {
+        const habitsSnap = await db
+          .collection("users")
+          .doc(userDoc.id)
+          .collection("habits")
+          .where("isActive", "==", true)
+          .get();
+
+        for (const habitDoc of habitsSnap.docs) {
+          try {
+            const result = await runRenegotiation(userDoc.id, habitDoc.id);
+            result.skipped ? (skipped += 1) : (generated += 1);
+          } catch (e) {
+            errors += 1;
+            console.error(
+              `Error procesando ${userDoc.id}/${habitDoc.id}:`,
+              e.message
+            );
+          }
+        }
+      } catch (e) {
+        errors += 1;
+        console.error(`Error listando hábitos de ${userDoc.id}:`, e.message);
+      }
+    }
+
+    console.log(
+      `renegotiationJob terminado: ${generated} generadas, ${skipped} omitidas, ${errors} errores`
+    );
+  }
+);
+
 // Extrae JSON limpio de la respuesta de Gemini (Blindado)
 function extractJson(text) {
   const jsonStartIndex = text.indexOf('{');
