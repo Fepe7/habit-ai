@@ -19,6 +19,7 @@ class HabitCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onEnterSelection;
   final VoidCallback? onToggleSelect;
+  final bool hasRenegotiationPending;
 
   const HabitCard({
     super.key,
@@ -33,6 +34,7 @@ class HabitCard extends StatelessWidget {
     this.isSelected = false,
     this.onEnterSelection,
     this.onToggleSelect,
+    this.hasRenegotiationPending = false,
   });
 
   @override
@@ -101,19 +103,46 @@ class HabitCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        habit.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          decoration: isCompletedToday
-                              ? TextDecoration.lineThrough
-                              : null,
-                          decorationColor: scheme.onSurface.withValues(alpha: 0.4),
-                          color: isCompletedToday
-                              ? scheme.onSurface.withValues(alpha: 0.45)
-                              : scheme.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              habit.title,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                decoration: isCompletedToday
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                decorationColor:
+                                    scheme.onSurface.withValues(alpha: 0.4),
+                                color: isCompletedToday
+                                    ? scheme.onSurface.withValues(alpha: 0.45)
+                                    : scheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                          if (hasRenegotiationPending) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B)
+                                    .withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                '⚠ Renegociar',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFF59E0B),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       if (habit.description.isNotEmpty) ...[
                         const SizedBox(height: 2),

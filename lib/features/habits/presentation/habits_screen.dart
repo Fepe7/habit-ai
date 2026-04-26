@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
@@ -22,6 +23,7 @@ import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';
+import '../../ai/data/ai_repository.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -35,6 +37,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   late HabitRepository _habitRepo;
   late HabitGroupRepository _groupRepo;
   late AchievementChecker _achievementChecker;
+  late AIRepository _aiRepo;
 
   late Stream<List<HabitModel>> _habitsStream;
   late Stream<List<HabitGroupModel>> _groupsStream;
@@ -44,6 +47,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
   final Map<String, bool> _expandedGroups = {};
   bool _initialized = false;
   List<HabitModel> _currentTodayHabits = [];
+  Set<String> _pendingRenegotiationIds = {};
+  StreamSubscription? _renoSub;
 
   // modo selección múltiple
   bool _selectionMode = false;
@@ -133,9 +138,24 @@ class _HabitsScreenState extends State<HabitsScreen> {
           habitRepo: _habitRepo,
           userRepo: UserRepository(uid: user.uid),
         );
+        _aiRepo = AIRepository(uid: user.uid);
+        _renoSub = _aiRepo.watchActiveRenegotiations().listen((list) {
+          if (mounted) {
+            setState(() {
+              _pendingRenegotiationIds =
+                  list.map((r) => r.habitId).toSet();
+            });
+          }
+        });
       }
       _initialized = true;
     }
+  }
+
+  @override
+  void dispose() {
+    _renoSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -471,6 +491,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterSelection: _enterSelection,
+                            pendingRenegotiationIds: _pendingRenegotiationIds,
                           ),
                         );
                       }),
@@ -490,6 +511,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterSelection: _enterSelection,
+                            pendingRenegotiationIds: _pendingRenegotiationIds,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -730,6 +752,7 @@ class _GroupSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final void Function(String) onEnterSelection;
+  final Set<String> pendingRenegotiationIds;
 
   const _GroupSection({
     required this.group,
@@ -748,6 +771,7 @@ class _GroupSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterSelection,
+    this.pendingRenegotiationIds = const {},
   });
 
   @override
@@ -912,6 +936,8 @@ class _GroupSection extends StatelessWidget {
                       isSelected: selectedIds.contains(habit.id),
                       onEnterSelection: () => onEnterSelection(habit.id),
                       onToggleSelect: () => onToggleSelect(habit.id),
+                      hasRenegotiationPending:
+                          pendingRenegotiationIds.contains(habit.id),
                     )),
                 ],
               ),
@@ -941,6 +967,7 @@ class _UngroupedSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final void Function(String) onEnterSelection;
+  final Set<String> pendingRenegotiationIds;
 
   const _UngroupedSection({
     required this.habits,
@@ -953,6 +980,7 @@ class _UngroupedSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterSelection,
+    this.pendingRenegotiationIds = const {},
   });
 
   @override
@@ -1018,6 +1046,8 @@ class _UngroupedSection extends StatelessWidget {
                   isSelected: selectedIds.contains(habit.id),
                   onEnterSelection: () => onEnterSelection(habit.id),
                   onToggleSelect: () => onToggleSelect(habit.id),
+                  hasRenegotiationPending:
+                      pendingRenegotiationIds.contains(habit.id),
                 )),
               ],
             ),

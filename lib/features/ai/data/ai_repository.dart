@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../domain/habit_plan_model.dart';
 import '../domain/weekly_review_model.dart';
 import '../domain/butterfly_projection_model.dart';
+import '../domain/renegotiation_model.dart';
 
 // Llama a la Cloud Function proxy y guarda las conversaciones en Firestore
 class AIRepository {
@@ -15,6 +16,7 @@ class AIRepository {
   final List<Map<String, String>> _chatHistory = [];
 
   final HttpsCallable _generateButterflyFn;
+  final HttpsCallable _generateRenegotiationFn;
 
   AIRepository({
     required String uid,
@@ -30,7 +32,10 @@ class AIRepository {
             .httpsCallable('generateWeeklyReview'),
         _generateButterflyFn = (functions ??
                 FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable('generateButterflyProjection');
+            .httpsCallable('generateButterflyProjection'),
+        _generateRenegotiationFn = (functions ??
+                FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable('generateRenegotiation');
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
       _firestore.collection('users').doc(_uid).collection('ai_conversations');
@@ -40,6 +45,9 @@ class AIRepository {
 
   CollectionReference<Map<String, dynamic>> get _butterflyRef =>
       _firestore.collection('users').doc(_uid).collection('butterfly_projections');
+
+  CollectionReference<Map<String, dynamic>> get _renegotiationsRef =>
+      _firestore.collection('users').doc(_uid).collection('renegotiations');
 
   // Envia un mensaje a la Cloud Function y devuelve la respuesta parseada
   Future<HabitPlanModel> generatePlan(String userMessage) async {
@@ -224,6 +232,50 @@ class AIRepository {
     final doc = await _butterflyRef.doc(monthId).get();
     if (!doc.exists) return null;
     return ButterflyProjectionModel.fromJson(doc.data()!);
+  }
+
+  // ==================== RENEGOCIACION ====================
+
+  // Dispara la generación manual de renegociación para un hábito concreto
+  Future<bool> generateRenegotiation(String habitId) async {
+    try {
+      final result = await _generateRenegotiationFn.call({'habitId': habitId});
+      final data = _deepCast(result.data);
+      return data['skipped'] != true;
+    } on FirebaseFunctionsException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  // Stream de todas las renegociaciones pendientes (sin applied ni dismissed)
+  Stream<List<RenegotiationModel>> watchActiveRenegotiations() {
+    return _renegotiationsRef.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => RenegotiationModel.fromMap(doc.id, doc.data()))
+        .where((r) => r.isPending)
+        .toList());
+  }
+
+  // Stream de la renegociación pendiente de un hábito concreto (null si no hay)
+  Stream<RenegotiationModel?> watchRenegotiationForHabit(String habitId) {
+    return _renegotiationsRef.doc(habitId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      final model = RenegotiationModel.fromMap(doc.id, doc.data()!);
+      return model.isPending ? model : null;
+    });
+  }
+
+  // Marca la renegociación como aplicada (el usuario aceptó el cambio)
+  Future<void> markRenegotiationApplied(String habitId) async {
+    await _renegotiationsRef.doc(habitId).update({
+      'appliedAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+
+  // Descarta la renegociación sin aplicarla
+  Future<void> dismissRenegotiation(String habitId) async {
+    await _renegotiationsRef.doc(habitId).update({
+      'dismissedAt': Timestamp.fromDate(DateTime.now()),
+    });
   }
 
   // Convierte recursivamente Map<Object?, Object?> a Map<String, dynamic>
