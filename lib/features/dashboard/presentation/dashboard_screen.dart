@@ -17,6 +17,7 @@ import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 import '../../ai/domain/butterfly_projection_model.dart';
 import '../../ai/domain/renegotiation_model.dart';
+import '../../habits/data/habit_repository.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
 
@@ -32,10 +33,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late StatsRepository _statsRepo;
   late AchievementRepository _achievementRepo;
   late AIRepository _aiRepo;
+  late HabitRepository _habitRepo;
   late LevelsRepository _levelsRepo;
   bool _initialized = false;
   bool _generatingReview = false;
   bool _generatingButterfly = false;
+  bool _generatingReno = false;
 
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
@@ -57,6 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _statsRepo = StatsRepository(uid: user.uid);
         _achievementRepo = AchievementRepository(uid: user.uid);
         _aiRepo = AIRepository(uid: user.uid);
+        _habitRepo = HabitRepository(uid: user.uid);
         _levelsRepo = LevelsRepository(uid: user.uid);
         _loadStats();
       }
@@ -288,91 +292,398 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  // card de hábitos con renegociación pendiente — solo visible si hay sugerencias
+  static const _amber = Color(0xFFF59E0B);
+
+  // card de ajuste inteligente — estado vacío o con sugerencias activas
   Widget _buildRenegotiationsCard(BuildContext context) {
     return StreamBuilder<List<RenegotiationModel>>(
       stream: _aiRepo.watchActiveRenegotiations(),
       builder: (context, snapshot) {
         final renos = snapshot.data ?? [];
-        if (renos.isEmpty) return const SizedBox.shrink();
-
         final scheme = Theme.of(context).colorScheme;
+
+        if (renos.isEmpty) {
+          return _SectionCard(
+            gradient: LinearGradient(
+              colors: [
+                _amber.withValues(alpha: 0.09),
+                _amber.withValues(alpha: 0.03),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: _amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.auto_fix_high_rounded,
+                        color: _amber,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ajuste inteligente',
+                            style:
+                                Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'IA · Personalizado',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: _amber,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  '¿Algún hábito que no arranca? La IA analiza tus patrones y propone cambios concretos.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: FilledButton.icon(
+                    onPressed:
+                        _generatingReno ? null : _openRenegotiationPicker,
+                    icon: _generatingReno
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.tune_rounded, size: 16),
+                    label: Text(
+                      _generatingReno ? 'Analizando…' : 'Pedir ajuste',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _amber,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         final displayed = renos.take(3).toList();
 
         return _SectionCard(
+          gradient: LinearGradient(
+            colors: [
+              _amber.withValues(alpha: 0.09),
+              _amber.withValues(alpha: 0.03),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Text('🤝', style: TextStyle(fontSize: 18)),
-                  const SizedBox(width: 8),
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: _amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.auto_fix_high_rounded,
+                        color: _amber, size: 18),
+                  ),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Hábitos que ajustar (${renos.length})',
+                      'Ajustes sugeridos',
                       style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${renos.length}',
+                      style:
+                          Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: _amber,
+                                fontWeight: FontWeight.w700,
+                              ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ...displayed.map((reno) => InkWell(
-                    onTap: () => context.goNamed(
-                      'habit-detail',
-                      pathParameters: {'habitId': reno.habitId},
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B),
-                              shape: BoxShape.circle,
-                            ),
+              const SizedBox(height: 14),
+              ...displayed.map((reno) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: InkWell(
+                      onTap: () => context.goNamed(
+                        'habit-detail',
+                        pathParameters: {'habitId': reno.habitId},
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: scheme.surfaceContainerLowest
+                              .withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border(
+                            left: BorderSide(
+                                color: _amber.withValues(alpha: 0.7),
+                                width: 3),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  reno.habitTitle,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(fontWeight: FontWeight.w600),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  reno.diagnosis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                          color: scheme.onSurfaceVariant),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    reno.habitTitle,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    reno.diagnosis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                            color: scheme.onSurfaceVariant),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Icon(Icons.chevron_right_rounded,
-                              size: 18,
-                              color: scheme.onSurfaceVariant
-                                  .withValues(alpha: 0.5)),
-                        ],
+                            const SizedBox(width: 8),
+                            Icon(Icons.chevron_right_rounded,
+                                size: 18,
+                                color: scheme.onSurfaceVariant
+                                    .withValues(alpha: 0.4)),
+                          ],
+                        ),
                       ),
                     ),
                   )),
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                height: 38,
+                child: OutlinedButton.icon(
+                  onPressed:
+                      _generatingReno ? null : _openRenegotiationPicker,
+                  icon: _generatingReno
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.tune_rounded, size: 15),
+                  label: Text(
+                    _generatingReno ? 'Analizando…' : 'Pedir otro ajuste',
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _amber,
+                    side: BorderSide(
+                        color: _amber.withValues(alpha: 0.5), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Future<void> _openRenegotiationPicker() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetCtx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.55,
+        maxChildSize: 0.85,
+        builder: (_, controller) => Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(sheetCtx)
+                    .colorScheme
+                    .onSurfaceVariant
+                    .withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Text(
+                'Selecciona un hábito',
+                style: Theme.of(sheetCtx).textTheme.titleMedium,
+              ),
+            ),
+            Expanded(
+              child: StreamBuilder<List<HabitModel>>(
+                stream: _habitRepo.watchActiveHabits(),
+                builder: (ctx, snapshot) {
+                  final habits = snapshot.data ?? [];
+                  if (habits.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No tienes hábitos activos',
+                        style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(ctx)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    controller: controller,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: habits.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 2),
+                    itemBuilder: (_, i) {
+                      final habit = habits[i];
+                      return ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppTheme.categoryBg(habit.category),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            AppTheme.categoryIcon(habit.category),
+                            size: 20,
+                            color: AppTheme.categoryFg(habit.category),
+                          ),
+                        ),
+                        title: Text(
+                          habit.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          'Racha: ${habit.currentStreak} días',
+                          style: Theme.of(ctx).textTheme.bodySmall,
+                        ),
+                        onTap: () async {
+                          Navigator.of(sheetCtx).pop();
+                          setState(() => _generatingReno = true);
+                          try {
+                            final reason = await _aiRepo
+                                .generateRenegotiation(habit.id);
+                            if (!mounted) return;
+                            if (reason == null) {
+                              AppSnackBar.showSuccess(
+                                context,
+                                'Sugerencia generada. Revísala arriba.',
+                              );
+                            } else if (reason == 'not_eligible') {
+                              AppSnackBar.showInfo(
+                                context,
+                                'Este hábito aún no necesita ajuste — falla menos de 3 días seguidos.',
+                              );
+                            } else if (reason == 'already_pending') {
+                              AppSnackBar.showInfo(
+                                context,
+                                'Ya hay una sugerencia pendiente para este hábito.',
+                              );
+                            } else {
+                              AppSnackBar.showInfo(
+                                context,
+                                'No se pudo generar el ajuste ($reason).',
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              AppSnackBar.showError(context, e.toString());
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _generatingReno = false);
+                            }
+                          }
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
     );
   }
 

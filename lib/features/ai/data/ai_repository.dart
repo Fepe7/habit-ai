@@ -236,12 +236,14 @@ class AIRepository {
 
   // ==================== RENEGOCIACION ====================
 
-  // Dispara la generación manual de renegociación para un hábito concreto
-  Future<bool> generateRenegotiation(String habitId) async {
+  // Dispara la generación manual de renegociación para un hábito concreto.
+  // Devuelve null si la sugerencia se generó correctamente, o la razón si se omitió.
+  Future<String?> generateRenegotiation(String habitId) async {
     try {
       final result = await _generateRenegotiationFn.call({'habitId': habitId});
       final data = _deepCast(result.data);
-      return data['skipped'] != true;
+      if (data['skipped'] == true) return data['reason'] as String? ?? 'unknown';
+      return null;
     } on FirebaseFunctionsException catch (e) {
       throw _mapError(e);
     }
