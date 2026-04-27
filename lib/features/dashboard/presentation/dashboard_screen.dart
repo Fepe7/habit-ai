@@ -133,6 +133,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   .fadeIn(delay: 140.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
+                              const SizedBox(height: 14),
+
                               _buildWeeklyReviewCard(context)
                                   .animate()
                                   .fadeIn(delay: 150.ms, duration: 400.ms)
@@ -367,19 +369,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         height: 1.5,
                       ),
                 ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 40,
-                  child: FilledButton.icon(
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
                     onPressed:
                         _generatingReno ? null : _openRenegotiationPicker,
                     icon: _generatingReno
                         ? const SizedBox(
                             width: 14,
                             height: 14,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.tune_rounded, size: 16),
                     label: Text(
@@ -388,13 +388,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           .textTheme
                           .labelMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _amber,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
                     ),
                   ),
                 ),
@@ -516,11 +509,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   )),
-              const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                height: 38,
-                child: OutlinedButton.icon(
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
                   onPressed:
                       _generatingReno ? null : _openRenegotiationPicker,
                   icon: _generatingReno
@@ -529,21 +520,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           height: 14,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.tune_rounded, size: 15),
+                      : const Icon(Icons.refresh_rounded, size: 16),
                   label: Text(
                     _generatingReno ? 'Analizando…' : 'Pedir otro ajuste',
                     style: Theme.of(context)
                         .textTheme
                         .labelMedium
                         ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _amber,
-                    side: BorderSide(
-                        color: _amber.withValues(alpha: 0.5), width: 1.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
                   ),
                 ),
               ),
