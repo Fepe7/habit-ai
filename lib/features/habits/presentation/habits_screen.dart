@@ -24,6 +24,7 @@ import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';
 import '../../ai/data/ai_repository.dart';
+import '../../ai/domain/renegotiation_model.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -47,7 +48,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   final Map<String, bool> _expandedGroups = {};
   bool _initialized = false;
   List<HabitModel> _currentTodayHabits = [];
-  Set<String> _pendingRenegotiationIds = {};
+  Map<String, RenegotiationModel> _pendingRenegotiations = {};
   StreamSubscription? _renoSub;
 
   // modo selección múltiple
@@ -142,8 +143,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
         _renoSub = _aiRepo.watchActiveRenegotiations().listen((list) {
           if (mounted) {
             setState(() {
-              _pendingRenegotiationIds =
-                  list.map((r) => r.habitId).toSet();
+              _pendingRenegotiations = {
+                for (final r in list) r.habitId: r,
+              };
             });
           }
         });
@@ -282,6 +284,38 @@ class _HabitsScreenState extends State<HabitsScreen> {
         AppSnackBar.showError(context, 'Error al eliminar el hábito');
       }
     }
+  }
+
+  Future<void> _applyRenegotiation(HabitModel habit) async {
+    final reno = _pendingRenegotiations[habit.id];
+    if (reno == null) return;
+    await _aiRepo.markRenegotiationApplied(habit.id);
+    if (!mounted) return;
+    final prefilled = habit.copyWith(
+      title: reno.suggestedTitle,
+      description: reno.suggestedDescription ?? habit.description,
+      reminderTime: reno.suggestedReminderTime ?? habit.reminderTime,
+      targetDays: reno.suggestedTargetDays ?? habit.targetDays,
+    );
+    final updated = await EditHabitSheet.show(context, prefilled);
+    if (updated == null || !mounted) return;
+    try {
+      await _habitRepo.updateHabit(habit.id, {
+        'title': updated.title,
+        'description': updated.description,
+        'category': updated.category,
+        'frequency': updated.frequency,
+        'targetDays': updated.targetDays,
+        'reminderTime': updated.reminderTime,
+      });
+      if (mounted) AppSnackBar.showSuccess(context, 'Hábito ajustado ✓');
+    } catch (_) {
+      if (mounted) AppSnackBar.showError(context, 'Error al actualizar el hábito');
+    }
+  }
+
+  Future<void> _dismissRenegotiation(String habitId) async {
+    await _aiRepo.dismissRenegotiation(habitId);
   }
 
   Future<void> _handleFabTap() async {
@@ -491,7 +525,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterSelection: _enterSelection,
-                            pendingRenegotiationIds: _pendingRenegotiationIds,
+                            pendingRenegotiations: _pendingRenegotiations,
+                            onApplyRenegotiation: _applyRenegotiation,
+                            onDismissRenegotiation: _dismissRenegotiation,
                           ),
                         );
                       }),
@@ -511,7 +547,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterSelection: _enterSelection,
-                            pendingRenegotiationIds: _pendingRenegotiationIds,
+                            pendingRenegotiations: _pendingRenegotiations,
+                            onApplyRenegotiation: _applyRenegotiation,
+                            onDismissRenegotiation: _dismissRenegotiation,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -752,7 +790,9 @@ class _GroupSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final void Function(String) onEnterSelection;
-  final Set<String> pendingRenegotiationIds;
+  final Map<String, RenegotiationModel> pendingRenegotiations;
+  final void Function(HabitModel) onApplyRenegotiation;
+  final void Function(String) onDismissRenegotiation;
 
   const _GroupSection({
     required this.group,
@@ -771,7 +811,9 @@ class _GroupSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterSelection,
-    this.pendingRenegotiationIds = const {},
+    this.pendingRenegotiations = const {},
+    required this.onApplyRenegotiation,
+    required this.onDismissRenegotiation,
   });
 
   @override
@@ -936,8 +978,9 @@ class _GroupSection extends StatelessWidget {
                       isSelected: selectedIds.contains(habit.id),
                       onEnterSelection: () => onEnterSelection(habit.id),
                       onToggleSelect: () => onToggleSelect(habit.id),
-                      hasRenegotiationPending:
-                          pendingRenegotiationIds.contains(habit.id),
+                      renegotiation: pendingRenegotiations[habit.id],
+                      onApplyRenegotiation: () => onApplyRenegotiation(habit),
+                      onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
                     )),
                 ],
               ),
@@ -967,7 +1010,9 @@ class _UngroupedSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final void Function(String) onEnterSelection;
-  final Set<String> pendingRenegotiationIds;
+  final Map<String, RenegotiationModel> pendingRenegotiations;
+  final void Function(HabitModel) onApplyRenegotiation;
+  final void Function(String) onDismissRenegotiation;
 
   const _UngroupedSection({
     required this.habits,
@@ -980,7 +1025,9 @@ class _UngroupedSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterSelection,
-    this.pendingRenegotiationIds = const {},
+    this.pendingRenegotiations = const {},
+    required this.onApplyRenegotiation,
+    required this.onDismissRenegotiation,
   });
 
   @override
@@ -1046,8 +1093,9 @@ class _UngroupedSection extends StatelessWidget {
                   isSelected: selectedIds.contains(habit.id),
                   onEnterSelection: () => onEnterSelection(habit.id),
                   onToggleSelect: () => onToggleSelect(habit.id),
-                  hasRenegotiationPending:
-                      pendingRenegotiationIds.contains(habit.id),
+                  renegotiation: pendingRenegotiations[habit.id],
+                  onApplyRenegotiation: () => onApplyRenegotiation(habit),
+                  onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
                 )),
               ],
             ),

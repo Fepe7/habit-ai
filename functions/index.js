@@ -89,7 +89,7 @@ async function checkRateLimit(uid) {
       (ts) => ts > oneHourAgo
     );
 
-    if (requests.length >= 10) {
+    if (requests.length >= 15) {
       return false;
     }
 
@@ -101,6 +101,8 @@ async function checkRateLimit(uid) {
 
   return true;
 }
+
+
 
 // Cloud Function callable desde Flutter
 exports.generateHabitPlan = onCall(
@@ -127,14 +129,13 @@ exports.generateHabitPlan = onCall(
       );
     }
 
-    // 2. Rate limiting
-    const allowed = await checkRateLimit(uid);
-    if (!allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Has hecho demasiadas peticiones. Espera unos minutos."
-      );
-    }
+     const allowed = await checkRateLimit(uid);
+     if (!allowed) {
+       throw new HttpsError(
+         "resource-exhausted",
+         "Has hecho demasiadas peticiones. Espera unos minutos."
+       );
+     }
 
     // 3. Llamar a Gemini
     try {
@@ -373,13 +374,13 @@ exports.generateWeeklyReview = onCall(
     }
 
     const uid = request.auth.uid;
-    const allowed = await checkRateLimit(uid);
-    if (!allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Has hecho demasiadas peticiones. Espera unos minutos."
-      );
-    }
+     const allowed = await checkRateLimit(uid);
+     if (!allowed) {
+       throw new HttpsError(
+         "resource-exhausted",
+         "Has hecho demasiadas peticiones. Espera unos minutos."
+       );
+     }
 
     try {
       // El boton manual analiza la semana en curso (mas intuitivo para el usuario).
@@ -683,13 +684,13 @@ exports.generateButterflyProjection = onCall(
     }
 
     const uid = request.auth.uid;
-    const allowed = await checkRateLimit(uid);
-    if (!allowed) {
-      throw new HttpsError(
-        "resource-exhausted",
-        "Has hecho demasiadas peticiones. Espera unos minutos."
-      );
-    }
+     const allowed = await checkRateLimit(uid);
+     if (!allowed) {
+       throw new HttpsError(
+         "resource-exhausted",
+         "Has hecho demasiadas peticiones. Espera unos minutos."
+       );
+     }
 
     try {
       return await runButterflyProjection(uid, new Date(), { currentMonth: true });

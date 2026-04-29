@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/habit_model.dart';
+import '../../../ai/domain/renegotiation_model.dart';
 
 /// Card de un habito con zonas de tap separadas:
 /// - circulo izquierdo: toggle completado
@@ -19,7 +20,9 @@ class HabitCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onEnterSelection;
   final VoidCallback? onToggleSelect;
-  final bool hasRenegotiationPending;
+  final RenegotiationModel? renegotiation;
+  final VoidCallback? onApplyRenegotiation;
+  final VoidCallback? onDismissRenegotiation;
 
   const HabitCard({
     super.key,
@@ -34,7 +37,9 @@ class HabitCard extends StatelessWidget {
     this.isSelected = false,
     this.onEnterSelection,
     this.onToggleSelect,
-    this.hasRenegotiationPending = false,
+    this.renegotiation,
+    this.onApplyRenegotiation,
+    this.onDismissRenegotiation,
   });
 
   @override
@@ -52,10 +57,13 @@ class HabitCard extends StatelessWidget {
                 ? Colors.transparent
                 : scheme.surfaceContainerLowest;
 
+    final hasPendingReno = renegotiation != null && renegotiation!.isPending;
+
     Widget card = GestureDetector(
       onLongPress: selectionMode ? null : onEnterSelection,
       child: Container(
       color: isInsideGroup ? cardBg : null,
+      clipBehavior: isInsideGroup ? Clip.none : Clip.antiAlias,
       decoration: isInsideGroup
           ? null
           : BoxDecoration(
@@ -63,7 +71,10 @@ class HabitCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               boxShadow: AppTheme.ambientShadow(),
             ),
-      child: Padding(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+        Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
@@ -122,26 +133,6 @@ class HabitCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (hasRenegotiationPending) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B)
-                                    .withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                '⚠ Renegociar',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFFF59E0B),
-                                ),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
                       if (habit.description.isNotEmpty) ...[
@@ -253,6 +244,14 @@ class HabitCard extends StatelessWidget {
           ],
         ),
       ),
+        if (hasPendingReno)
+          _CoachBanner(
+            renegotiation: renegotiation!,
+            onApply: onApplyRenegotiation,
+            onDismiss: onDismissRenegotiation,
+          ),
+        ],      // cierra Column.children
+      ),        // cierra Column
     ));
 
     // separador sutil entre cards dentro de grupo (sin linea 1px visible)
@@ -348,6 +347,120 @@ class _CheckCircleState extends State<_CheckCircle>
                 ),
               ),
             ),
+    );
+  }
+}
+
+// ==================== COACH BANNER ====================
+
+class _CoachBanner extends StatelessWidget {
+  final RenegotiationModel renegotiation;
+  final VoidCallback? onApply;
+  final VoidCallback? onDismiss;
+
+  const _CoachBanner({
+    required this.renegotiation,
+    this.onApply,
+    this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = TimeOfDay.now();
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFF0F172A),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                '– COACH · PREGUNTA DEL DÍA',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                timeStr,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '"${renegotiation.diagnosis}"',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              height: 1.4,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onApply,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'SÍ, HAZLO →',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: onDismiss,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    side: const BorderSide(color: Colors.white12),
+                    padding: const EdgeInsets.symmetric(vertical: 9),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'OTRA OPCIÓN',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
