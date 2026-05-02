@@ -108,18 +108,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            user?.displayName ?? 'Usuario',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  (FirebaseAuth.instance.currentUser?.displayName?.isNotEmpty == true
+                                          ? FirebaseAuth.instance.currentUser!.displayName!
+                                          : FirebaseAuth.instance.currentUser?.email?.split('@').first) ??
+                                      'Usuario',
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _editName(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit_rounded,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            user?.email ?? '',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.8),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.auto_awesome_rounded,
+                                  size: 13,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'HabitAI',
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -277,6 +324,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _editName(BuildContext context) async {
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) return;
+
+    final current = firebaseUser.displayName ?? '';
+
+    // _EditNameDialog gestiona su propio controller y lo dispone en dispose(),
+    // evitando el crash _dependents.isEmpty que ocurre con dispose() manual
+    // justo cuando la animación de salida del diálogo todavía corre.
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (_) => _EditNameDialog(initialName: current),
+    );
+
+    if (newName == null || newName.isEmpty || newName == current) return;
+
+    try {
+      await firebaseUser.updateDisplayName(newName);
+      if (mounted) setState(() {});
+      if (mounted) AppSnackBar.showSuccess(context, 'Nombre actualizado'); // ignore: use_build_context_synchronously
+    } catch (_) {
+      if (mounted) AppSnackBar.showError(context, 'No se pudo actualizar el nombre'); // ignore: use_build_context_synchronously
+    }
   }
 
   void _showAbout(BuildContext context) {
@@ -987,6 +1059,61 @@ class _SickModeTileState extends State<_SickModeTile> {
               value: _isActive,
               onChanged: (_) => _toggle(),
             ),
+    );
+  }
+}
+
+/// Diálogo para editar el nombre — gestiona su propio TextEditingController
+/// para que dispose() ocurra después de la animación de salida, evitando
+/// el assert _dependents.isEmpty que causa crash con dispose() manual prematuro.
+class _EditNameDialog extends StatefulWidget {
+  final String initialName;
+  const _EditNameDialog({required this.initialName});
+
+  @override
+  State<_EditNameDialog> createState() => _EditNameDialogState();
+}
+
+class _EditNameDialogState extends State<_EditNameDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Cambiar nombre'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        decoration: const InputDecoration(
+          hintText: 'Tu nombre',
+          counterText: '',
+        ),
+        maxLength: 40,
+        onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('Guardar'),
+        ),
+      ],
     );
   }
 }

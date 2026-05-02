@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -46,6 +47,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<HabitModel> _topStreaks = [];
   List<AchievementModel> _achievements = [];
   bool _loading = true;
+  String? _userName;
 
   int get _perfectDays =>
       _weeklyProgress.where((d) => d.total > 0 && d.completed == d.total).length;
@@ -62,6 +64,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _aiRepo = AIRepository(uid: user.uid);
         _habitRepo = HabitRepository(uid: user.uid);
         _levelsRepo = LevelsRepository(uid: user.uid);
+        final fbUser = FirebaseAuth.instance.currentUser;
+        _userName = fbUser?.displayName?.isNotEmpty == true
+            ? fbUser!.displayName
+            : fbUser?.email?.split('@').first;
         _loadStats();
       }
       _initialized = true;
@@ -231,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 Text(
-                  'Tu avance esta semana',
+                  _userName != null ? 'Hola, $_userName' : 'Tu avance esta semana',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -1025,7 +1031,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 8),
         const ChartSkeleton(height: 120),
         const SizedBox(height: 14),
-        const SectionSkeleton(itemCount: 1),
+        const StatRowSkeleton(),
+        const SizedBox(height: 14),
+        const ChartSkeleton(height: 80),
         const SizedBox(height: 14),
         const ChartSkeleton(height: 200),
       ],
@@ -1572,10 +1580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 16),
 
               if (snapshot.connectionState == ConnectionState.waiting)
-                const SizedBox(
-                  height: 100,
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                )
+                const ChartSkeleton(height: 100)
               else if (profile == null || profile.categories.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),

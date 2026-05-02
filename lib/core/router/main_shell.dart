@@ -79,6 +79,41 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final selected = _currentIndex(context);
     final scheme = Theme.of(context).colorScheme;
+    final isWide = MediaQuery.of(context).size.width >= 600;
+
+    // tablets: rail lateral en lugar de bottom bar
+    if (isWide) {
+      return Scaffold(
+        key: MainShell.scaffoldKey,
+        drawer: const AppDrawer(),
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: selected,
+              onDestinationSelected: (index) => context.go(_tabs[index].path),
+              labelType: NavigationRailLabelType.all,
+              backgroundColor: scheme.surfaceContainerLowest,
+              indicatorColor: scheme.primaryContainer.withValues(alpha: 0.3),
+              destinations: _tabs
+                  .map(
+                    (tab) => NavigationRailDestination(
+                      icon: Icon(tab.icon),
+                      selectedIcon: Icon(tab.activeIcon),
+                      label: Text(tab.label),
+                    ),
+                  )
+                  .toList(),
+            ),
+            VerticalDivider(
+              thickness: 1,
+              width: 1,
+              color: scheme.outlineVariant.withValues(alpha: 0.15),
+            ),
+            Expanded(child: widget.child),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       key: MainShell.scaffoldKey,

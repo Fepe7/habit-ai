@@ -39,6 +39,7 @@ class _AIScreenState extends State<AIScreen> {
   late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
   String? _lastUserMessage;
+  String? _userName;
 
   static const _suggestions = [
     'Quiero hacer ejercicio y comer mejor',
@@ -50,7 +51,9 @@ class _AIScreenState extends State<AIScreen> {
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final firebaseUser = FirebaseAuth.instance.currentUser!;
+    final uid = firebaseUser.uid;
+    _userName = firebaseUser.displayName ?? firebaseUser.email?.split('@').first;
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
     _groupRepo = HabitGroupRepository(uid: uid);
@@ -229,7 +232,7 @@ class _AIScreenState extends State<AIScreen> {
                           ),
                         ),
                         Text(
-                          'Powered by Gemini',
+                          _userName != null ? 'Hola, $_userName' : 'Powered by Gemini',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

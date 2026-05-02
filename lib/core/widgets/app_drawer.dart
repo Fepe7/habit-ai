@@ -284,7 +284,10 @@ class _DrawerHeader extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.displayName ?? 'Usuario',
+                          (user?.displayName?.isNotEmpty == true
+                                  ? user!.displayName!
+                                  : user?.email?.split('@').first) ??
+                              'Usuario',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -60,11 +60,36 @@ class AppTheme {
     colors: [tertiary, tertiaryContainer],
   );
 
+  static const LinearGradient successGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF059669), Color(0xFF34D399)],
+  );
+
+  static const LinearGradient errorGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [error, errorContainer],
+  );
+
   static List<BoxShadow> ambientShadow({double opacity = 0.06}) => [
     BoxShadow(
       offset: const Offset(0, 8),
       blurRadius: 24,
       color: onSurface.withValues(alpha: opacity),
+    ),
+  ];
+
+  // sombra con tinte de color — para cards con logros o rachas destacadas
+  static List<BoxShadow> tintedShadow(
+    Color color, {
+    double opacity = 0.22,
+    double blurRadius = 16,
+  }) => [
+    BoxShadow(
+      offset: const Offset(0, 6),
+      blurRadius: blurRadius,
+      color: color.withValues(alpha: opacity),
     ),
   ];
 

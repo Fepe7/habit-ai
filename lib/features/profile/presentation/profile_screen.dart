@@ -109,7 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: _ProfileHeader(
                         initials: initials,
                         displayName: displayName,
-                        email: email,
                         username: userData?.username,
                         isProfilePublic: userData?.isProfilePublic ?? false,
                       )
@@ -288,14 +287,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _ProfileHeader extends StatelessWidget {
   final String initials;
   final String displayName;
-  final String email;
   final String? username;
   final bool isProfilePublic;
 
   const _ProfileHeader({
     required this.initials,
     required this.displayName,
-    required this.email,
     required this.username,
     required this.isProfilePublic,
   });
@@ -378,22 +375,42 @@ class _ProfileHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 4),
-          Text(
-            showUsername ? displayName : email,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          if (showUsername && email.isNotEmpty) ...[
-            const SizedBox(height: 2),
+          if (showUsername)
             Text(
-              email,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
+              displayName,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
-          ],
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: AppTheme.heroGradient,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: AppTheme.ambientShadow(opacity: 0.18),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 14,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'HabitAI',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

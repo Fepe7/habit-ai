@@ -112,6 +112,48 @@ class GridTileSkeleton extends StatelessWidget {
   }
 }
 
+/// Fila de 3 stat cards skeleton — replica _buildStatCards del dashboard
+class StatRowSkeleton extends StatelessWidget {
+  const StatRowSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surfaceContainerHighest;
+
+    return Row(
+      children: [
+        for (int i = 0; i < 3; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 96,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _Bone(width: 36, height: 36, radius: 10, color: surface),
+                  const SizedBox(height: 10),
+                  _Bone(width: 40, height: 16, color: surface),
+                  const SizedBox(height: 6),
+                  _Bone(width: 56, height: 10, color: surface),
+                ],
+              ),
+            )
+                .animate(onPlay: (c) => c.repeat())
+                .shimmer(
+                  duration: 1400.ms,
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Bloque rectangular shimmer — para gráficas
 class ChartSkeleton extends StatelessWidget {
   const ChartSkeleton({super.key, this.height = 180});

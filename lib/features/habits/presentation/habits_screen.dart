@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/router/main_shell.dart';
@@ -47,6 +49,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   final Set<String> _logsFetched = {};
   final Map<String, bool> _expandedGroups = {};
   bool _initialized = false;
+  String? _userName;
   List<HabitModel> _currentTodayHabits = [];
   Map<String, RenegotiationModel> _pendingRenegotiations = {};
   StreamSubscription? _renoSub;
@@ -130,6 +133,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
       final auth = AuthProvider.of(context);
       final user = auth.currentUser;
       if (user != null) {
+        // Firebase Auth directamente — displayName puede ser null si no se configuró
+        final fbUser = FirebaseAuth.instance.currentUser;
+        _userName = fbUser?.displayName?.isNotEmpty == true
+            ? fbUser!.displayName
+            : fbUser?.email?.split('@').first;
         _habitRepo = HabitRepository(uid: user.uid);
         _groupRepo = HabitGroupRepository(uid: user.uid);
         _habitsStream = _habitRepo.watchTodayHabits();
@@ -410,7 +418,10 @@ class _HabitsScreenState extends State<HabitsScreen> {
           : Padding(
               padding: const EdgeInsets.only(bottom: 100),
               child: FloatingActionButton(
-                onPressed: _handleFabTap,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  _handleFabTap();
+                },
                 backgroundColor: scheme.primary,
                 foregroundColor: scheme.onPrimary,
                 tooltip: 'Crear',
@@ -620,9 +631,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'HabitAI',
+                  _userName != null ? 'Hola, $_userName' : 'HabitAI',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: scheme.primary,
+                    color: _userName != null ? scheme.onSurface : scheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

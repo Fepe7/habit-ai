@@ -69,7 +69,11 @@ class HabitCard extends StatelessWidget {
           : BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: AppTheme.ambientShadow(),
+              boxShadow: habit.currentStreak >= 7
+                  ? AppTheme.tintedShadow(AppTheme.tertiary)
+                  : isCompletedToday
+                      ? AppTheme.tintedShadow(AppTheme.primary, opacity: 0.14)
+                      : AppTheme.ambientShadow(),
             ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
