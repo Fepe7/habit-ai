@@ -8,6 +8,7 @@ import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import 'widgets/avatar_picker_sheet.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../levels/data/levels_repository.dart';
@@ -111,6 +112,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         displayName: displayName,
                         username: userData?.username,
                         isProfilePublic: userData?.isProfilePublic ?? false,
+                        photoUrl: userData?.photoUrl,
+                        onAvatarTap: () => AvatarPickerSheet.show(
+                          context,
+                          currentPhotoUrl: userData?.photoUrl,
+                        ),
                       )
                           .animate()
                           .fadeIn(duration: 320.ms)
@@ -289,12 +295,16 @@ class _ProfileHeader extends StatelessWidget {
   final String displayName;
   final String? username;
   final bool isProfilePublic;
+  final String? photoUrl;
+  final VoidCallback? onAvatarTap;
 
   const _ProfileHeader({
     required this.initials,
     required this.displayName,
     required this.username,
     required this.isProfilePublic,
+    this.photoUrl,
+    this.onAvatarTap,
   });
 
   @override
@@ -306,65 +316,87 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
       child: Column(
         children: [
-          // avatar con ring gradient
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primaryContainer, AppTheme.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
+          // avatar con ring gradient, overlay de cámara y tap para editar
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: scheme.surface,
+                    gradient: LinearGradient(
+                      colors: [AppTheme.primaryContainer, AppTheme.primary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                   child: Container(
-                    width: 96,
-                    height: 96,
+                    padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: scheme.primaryContainer,
+                      color: scheme.surface,
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initials,
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _AvatarContent(
+                          initials: initials,
+                          photoUrl: photoUrl,
+                          size: 96,
+                        ),
+                        // overlay oscuro con icono de cámara para indicar que es editable
+                        ClipOval(
+                          child: Container(
+                            width: 96,
+                            height: 96,
+                            color: Colors.black.withValues(alpha: 0.35),
+                            child: const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.camera_alt_rounded,
+                                    color: Colors.white, size: 26),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Editar',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // badge verificado solo si perfil público
+                if (isProfilePublic)
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: scheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: scheme.surface, width: 3),
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
                         color: Colors.white,
+                        size: 14,
                       ),
                     ),
                   ),
-                ),
-              ),
-              if (isProfilePublic)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: scheme.surface, width: 3),
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Text(
@@ -518,6 +550,61 @@ class _StatTile extends StatelessWidget {
                 ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Contenido interior del avatar: foto de red o iniciales con fondo primaryContainer
+class _AvatarContent extends StatelessWidget {
+  final String initials;
+  final String? photoUrl;
+  final double size;
+
+  const _AvatarContent({
+    required this.initials,
+    required this.size,
+    this.photoUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    if (photoUrl != null && photoUrl!.isNotEmpty) {
+      return SizedBox(
+        width: size,
+        height: size,
+        child: ClipOval(
+          child: Image.network(
+            photoUrl!,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildInitials(scheme),
+          ),
+        ),
+      );
+    }
+    return _buildInitials(scheme);
+  }
+
+  Widget _buildInitials(ColorScheme scheme) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: scheme.primaryContainer,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
       ),
     );
   }

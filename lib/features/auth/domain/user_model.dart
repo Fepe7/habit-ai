@@ -26,6 +26,9 @@ class UserModel {
   /// Cuándo se hizo público el perfil por primera vez
   final DateTime? publicProfileCreatedAt;
 
+  /// URL de la foto de perfil en Firebase Storage (null = sin foto)
+  final String? photoUrl;
+
   const UserModel({
     required this.uid,
     required this.email,
@@ -36,6 +39,7 @@ class UserModel {
     this.isProfilePublic = false,
     this.username,
     this.publicProfileCreatedAt,
+    this.photoUrl,
   });
 
   /// Si el modo enfermedad sigue activo ahora mismo
@@ -62,6 +66,7 @@ class UserModel {
       publicProfileCreatedAt: data['publicProfileCreatedAt'] != null
           ? (data['publicProfileCreatedAt'] as Timestamp).toDate()
           : null,
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 
@@ -79,6 +84,7 @@ class UserModel {
       'publicProfileCreatedAt': publicProfileCreatedAt != null
           ? Timestamp.fromDate(publicProfileCreatedAt!)
           : null,
+      'photoUrl': photoUrl,
     };
   }
 
@@ -93,6 +99,8 @@ class UserModel {
     String? username,
     DateTime? publicProfileCreatedAt,
     bool clearUsername = false,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
   }) {
     return UserModel(
       uid: uid,
@@ -104,6 +112,7 @@ class UserModel {
       isProfilePublic: isProfilePublic ?? this.isProfilePublic,
       username: clearUsername ? null : (username ?? this.username),
       publicProfileCreatedAt: publicProfileCreatedAt ?? this.publicProfileCreatedAt,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
     );
   }
 }

@@ -226,6 +226,45 @@ class _DrawerHeader extends StatelessWidget {
     required this.onTap,
   });
 
+  Widget _buildDrawerAvatar(BuildContext context) {
+    final photoUrl = userData?.photoUrl;
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return SizedBox(
+        width: 52,
+        height: 52,
+        child: ClipOval(
+          child: Image.network(
+            photoUrl,
+            width: 52,
+            height: 52,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildInitialsAvatar(context),
+          ),
+        ),
+      );
+    }
+    return _buildInitialsAvatar(context);
+  }
+
+  Widget _buildInitialsAvatar(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        _initials(),
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+      ),
+    );
+  }
+
   String _initials() {
     final name = user?.displayName;
     final email = user?.email;
@@ -262,22 +301,7 @@ class _DrawerHeader extends StatelessWidget {
               padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      shape: BoxShape.circle,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      _initials(),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+                  _buildDrawerAvatar(context),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(

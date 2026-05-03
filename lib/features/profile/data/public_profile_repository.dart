@@ -51,6 +51,7 @@ class PublicProfileRepository {
     required String username,
     required String displayName,
     required String avatarInitials,
+    String? photoUrl,
   }) async {
     // Verificar disponibilidad antes del batch
     final available = await isUsernameAvailable(username);
@@ -90,6 +91,7 @@ class PublicProfileRepository {
       bestStreakEver: bestStreak,
       unlockedAchievements: achievementsSnap.docs.length,
       createdAt: now,
+      photoUrl: photoUrl,
     );
 
     // Batch atómico
@@ -222,6 +224,15 @@ class PublicProfileRepository {
       await _refreshBestStreak();
     } catch (_) {
       // el hábito puede no existir en el perfil público todavía
+    }
+  }
+
+  /// Sincroniza la foto de perfil en el espejo público (si existe el doc)
+  Future<void> syncPhotoUrl(String? url) async {
+    try {
+      await _myProfileRef.update({'photoUrl': url});
+    } catch (_) {
+      // perfil público no existe, ignorar
     }
   }
 

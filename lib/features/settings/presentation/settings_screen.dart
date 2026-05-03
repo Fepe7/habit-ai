@@ -85,23 +85,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 child: Row(
                   children: [
-                    // avatar grande con iniciales
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          _initials(user?.displayName, user?.email),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
+                    // avatar grande: foto o iniciales
+                    _buildSettingsAvatar(
+                      context,
+                      photoUrl: userData?.photoUrl,
+                      initials: _initials(user?.displayName, user?.email),
                     ),
                     const SizedBox(width: 18),
                     Expanded(
@@ -286,6 +274,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     }, // StreamBuilder builder
     ); // StreamBuilder
+  }
+
+  Widget _buildSettingsAvatar(
+    BuildContext context, {
+    required String? photoUrl,
+    required String initials,
+  }) {
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return SizedBox(
+        width: 64,
+        height: 64,
+        child: ClipOval(
+          child: Image.network(
+            photoUrl,
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildInitialsAvatar(context, initials),
+          ),
+        ),
+      );
+    }
+    return _buildInitialsAvatar(context, initials);
+  }
+
+  Widget _buildInitialsAvatar(BuildContext context, String initials) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.25),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+      ),
+    );
   }
 
   String _initials(String? name, String? email) {
@@ -679,6 +710,7 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
           username: chosenUsername,
           displayName: displayName,
           avatarInitials: initials,
+          photoUrl: widget.userData?.photoUrl,
         );
         if (!mounted) return;
         if (!ok) {

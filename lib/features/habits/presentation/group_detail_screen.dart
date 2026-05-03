@@ -183,6 +183,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         profileDoc?['displayName'] as String? ??
             FirebaseAuth.instance.currentUser?.displayName ??
             '';
+    final authorPhotoUrl = profileDoc?['photoUrl'] as String?;
 
     try {
       final templateId = await _communityRepo.publishTemplate(
@@ -191,6 +192,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         authorUsername: username,
         authorDisplayName: displayName,
         description: descCtrl.text.trim(),
+        authorPhotoUrl: authorPhotoUrl,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

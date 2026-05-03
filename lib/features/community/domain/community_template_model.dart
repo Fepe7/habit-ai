@@ -17,6 +17,9 @@ class CommunityTemplateModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// URL de la foto del autor (null = sin foto, usa iniciales)
+  final String? authorPhotoUrl;
+
   const CommunityTemplateModel({
     required this.id,
     required this.authorUid,
@@ -31,6 +34,7 @@ class CommunityTemplateModel {
     this.reportCount = 0,
     required this.createdAt,
     required this.updatedAt,
+    this.authorPhotoUrl,
   });
 
   factory CommunityTemplateModel.fromJson(
@@ -49,6 +53,7 @@ class CommunityTemplateModel {
       reportCount: json['reportCount'] as int? ?? 0,
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       updatedAt: (json['updatedAt'] as Timestamp).toDate(),
+      authorPhotoUrl: json['authorPhotoUrl'] as String?,
     );
   }
 
@@ -66,10 +71,15 @@ class CommunityTemplateModel {
       'reportCount': reportCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
+      'authorPhotoUrl': authorPhotoUrl,
     };
   }
 
-  CommunityTemplateModel copyWith({int? importCount, int? reportCount}) {
+  CommunityTemplateModel copyWith({
+    int? importCount,
+    int? reportCount,
+    String? authorPhotoUrl,
+  }) {
     return CommunityTemplateModel(
       id: id,
       authorUid: authorUid,
@@ -84,6 +94,7 @@ class CommunityTemplateModel {
       reportCount: reportCount ?? this.reportCount,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      authorPhotoUrl: authorPhotoUrl ?? this.authorPhotoUrl,
     );
   }
 }

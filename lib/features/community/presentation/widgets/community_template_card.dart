@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/avatar_circle.dart';
 import '../../domain/community_template_model.dart';
 
 // Card de plantilla para el feed de la comunidad
@@ -78,10 +79,18 @@ class CommunityTemplateCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        // autor
-                        Icon(Icons.person_outline_rounded,
-                            size: 13, color: scheme.onSurfaceVariant),
-                        const SizedBox(width: 3),
+                        // avatar del autor
+                        AvatarCircle(
+                          initials: AvatarCircle.fromName(
+                            template.authorDisplayName.isNotEmpty
+                                ? template.authorDisplayName
+                                : template.authorUsername,
+                            null,
+                          ),
+                          size: 18,
+                          photoUrl: template.authorPhotoUrl,
+                        ),
+                        const SizedBox(width: 5),
                         Flexible(
                           child: Text(
                             template.authorDisplayName.isNotEmpty

@@ -87,6 +87,11 @@ class UserRepository {
     });
   }
 
+  // Actualizar la URL de foto de perfil en Firestore
+  Future<void> updatePhotoUrl(String? url) async {
+    await _userRef.set({'photoUrl': url}, SetOptions(merge: true));
+  }
+
   // Comprobar si ya se concedió escudo por un hito concreto de un hábito
   // (deduplicación para no dar escudos dos veces)
   Future<bool> hasShieldGrant(String habitId, int milestone) async {

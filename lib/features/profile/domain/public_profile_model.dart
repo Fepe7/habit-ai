@@ -25,6 +25,9 @@ class PublicProfileModel {
   /// Cuándo se hizo público el perfil
   final DateTime createdAt;
 
+  /// URL de la foto de perfil (null = sin foto, usa iniciales)
+  final String? photoUrl;
+
   const PublicProfileModel({
     required this.uid,
     required this.username,
@@ -35,6 +38,7 @@ class PublicProfileModel {
     required this.bestStreakEver,
     required this.unlockedAchievements,
     required this.createdAt,
+    this.photoUrl,
   });
 
   factory PublicProfileModel.fromFirestore(
@@ -53,6 +57,7 @@ class PublicProfileModel {
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      photoUrl: data['photoUrl'] as String?,
     );
   }
 
@@ -66,6 +71,7 @@ class PublicProfileModel {
       'bestStreakEver': bestStreakEver,
       'unlockedAchievements': unlockedAchievements,
       'createdAt': Timestamp.fromDate(createdAt),
+      'photoUrl': photoUrl,
     };
   }
 
@@ -77,6 +83,8 @@ class PublicProfileModel {
     int? totalHabits,
     int? bestStreakEver,
     int? unlockedAchievements,
+    String? photoUrl,
+    bool clearPhotoUrl = false,
   }) {
     return PublicProfileModel(
       uid: uid,
@@ -88,6 +96,7 @@ class PublicProfileModel {
       bestStreakEver: bestStreakEver ?? this.bestStreakEver,
       unlockedAchievements: unlockedAchievements ?? this.unlockedAchievements,
       createdAt: createdAt,
+      photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
     );
   }
 }

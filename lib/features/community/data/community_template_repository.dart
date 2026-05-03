@@ -33,6 +33,7 @@ class CommunityTemplateRepository {
     required String authorUsername,
     required String authorDisplayName,
     required String description,
+    String? authorPhotoUrl,
   }) async {
     final now = DateTime.now();
 
@@ -60,6 +61,7 @@ class CommunityTemplateRepository {
       habitCount: habits.length,
       createdAt: now,
       updatedAt: now,
+      authorPhotoUrl: authorPhotoUrl,
     );
 
     // batch: crear plantilla + snapshots de habitos

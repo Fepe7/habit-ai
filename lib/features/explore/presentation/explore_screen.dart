@@ -700,6 +700,7 @@ class _CreatorCard extends StatelessWidget {
                 size: 56,
                 backgroundColor: scheme.surfaceContainerHigh,
                 textColor: scheme.primary,
+                photoUrl: profile.photoUrl,
               ),
             ),
             const SizedBox(height: 10),

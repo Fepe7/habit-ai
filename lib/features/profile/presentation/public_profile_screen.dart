@@ -243,22 +243,10 @@ class _ProfileHeader extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: scheme.surface,
                   ),
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: scheme.primaryContainer,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      profile.avatarInitials.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
+                  child: _publicAvatarContent(
+                    profile.photoUrl,
+                    profile.avatarInitials,
+                    scheme,
                   ),
                 ),
               ),
@@ -303,6 +291,47 @@ class _ProfileHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _publicAvatarContent(
+    String? photoUrl, String initials, ColorScheme scheme) {
+  if (photoUrl != null && photoUrl.isNotEmpty) {
+    return SizedBox(
+      width: 96,
+      height: 96,
+      child: ClipOval(
+        child: Image.network(
+          photoUrl,
+          width: 96,
+          height: 96,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              _publicAvatarInitials(initials, scheme),
+        ),
+      ),
+    );
+  }
+  return _publicAvatarInitials(initials, scheme);
+}
+
+Widget _publicAvatarInitials(String initials, ColorScheme scheme) {
+  return Container(
+    width: 96,
+    height: 96,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: scheme.primaryContainer,
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      initials.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 36,
+        fontWeight: FontWeight.w800,
+        color: Colors.white,
+      ),
+    ),
+  );
 }
 
 class _StatsBento extends StatelessWidget {

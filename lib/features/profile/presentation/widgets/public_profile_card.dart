@@ -36,6 +36,7 @@ class PublicProfileCard extends StatelessWidget {
                 size: 52,
                 backgroundColor: scheme.primaryContainer,
                 textColor: scheme.onPrimaryContainer,
+                photoUrl: profile.photoUrl,
               ),
               const SizedBox(width: 14),
 
