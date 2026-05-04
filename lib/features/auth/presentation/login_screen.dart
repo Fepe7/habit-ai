@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/spark_check_logo.dart';
 
 // Pantalla de login — diseño Editorial Vitality
 class LoginScreen extends StatefulWidget {
@@ -100,11 +101,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       shape: BoxShape.circle,
                       boxShadow: AppTheme.ambientShadow(opacity: 0.18),
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 44,
-                      color: Colors.white,
-                    ),
+                    child: const SparkCheckLogo(size: 56, mono: true),
                   ),
                 )
                     .animate()
