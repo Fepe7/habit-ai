@@ -27,6 +27,7 @@ import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/renegotiation_model.dart';
+import '../../notifications/presentation/notifications_screen.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -53,6 +54,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
   List<HabitModel> _currentTodayHabits = [];
   Map<String, RenegotiationModel> _pendingRenegotiations = {};
   StreamSubscription? _renoSub;
+
+  bool _hasNewNotifs = false;
 
   // modo selección múltiple
   bool _selectionMode = false;
@@ -126,6 +129,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
     }
   }
 
+  Future<void> _checkNewNotifs(String uid) async {
+    final hasNew = await NotificationsService.hasNew(uid);
+    if (mounted) setState(() => _hasNewNotifs = hasNew);
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -148,6 +156,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
           userRepo: UserRepository(uid: user.uid),
         );
         _aiRepo = AIRepository(uid: user.uid);
+        _checkNewNotifs(user.uid);
         _renoSub = _aiRepo.watchActiveRenegotiations().listen((list) {
           if (mounted) {
             setState(() {
@@ -647,19 +656,49 @@ class _HabitsScreenState extends State<HabitsScreen> {
               ],
             ),
           ),
-          // boton de notificaciones / perfil
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLowest,
-              shape: BoxShape.circle,
-              boxShadow: AppTheme.ambientShadow(),
-            ),
-            child: Icon(
-              Icons.notifications_none_rounded,
-              color: scheme.onSurfaceVariant,
-              size: 22,
+          // boton de notificaciones con badge de nuevas
+          GestureDetector(
+            onTap: () {
+              setState(() => _hasNewNotifs = false);
+              NotificationsBottomSheet.show(context);
+            },
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.surfaceContainerLowest,
+                    shape: BoxShape.circle,
+                    boxShadow: AppTheme.ambientShadow(),
+                  ),
+                  child: Icon(
+                    _hasNewNotifs
+                        ? Icons.notifications_rounded
+                        : Icons.notifications_none_rounded,
+                    color: scheme.onSurfaceVariant,
+                    size: 22,
+                  ),
+                ),
+                if (_hasNewNotifs)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: scheme.surfaceContainerLowest,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
