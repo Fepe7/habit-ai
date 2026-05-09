@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ID del cliente web de Firebase — requerido por google_sign_in v7 -->
+    <string name="default_web_client_id">958324745015-j5sd17c4ttccmriqs34gcv4ctbpq8hk2.apps.googleusercontent.com</string>
+</resources>
