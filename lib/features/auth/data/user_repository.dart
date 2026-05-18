@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/user_model.dart';
+import '../../social/data/user_directory_repository.dart';
 
 // Repositorio para leer y modificar datos del usuario en Firestore
 // (escudos de racha, modo enfermedad, etc.)
@@ -92,6 +93,11 @@ class UserRepository {
     await _userRef.set({'photoUrl': url}, SetOptions(merge: true));
   }
 
+  // Cambiar visibilidad del perfil (público/privado)
+  Future<void> setProfilePublic(bool isPublic) async {
+    await _userRef.set({'isProfilePublic': isPublic}, SetOptions(merge: true));
+  }
+
   // Comprobar si ya se concedió escudo por un hito concreto de un hábito
   // (deduplicación para no dar escudos dos veces)
   Future<bool> hasShieldGrant(String habitId, int milestone) async {
@@ -110,5 +116,19 @@ class UserRepository {
         .collection('shield_grants')
         .doc(grantId)
         .set({'grantedAt': FieldValue.serverTimestamp()});
+  }
+
+  /// Migración automática: si el usuario tiene username pero no tiene entrada
+  /// en /user_directory, la crea con valores por defecto.
+  /// Llamar al iniciar sesión de usuarios ya existentes.
+  Future<void> ensureDirectoryEntry() async {
+    final user = await getUser();
+    if (user.username == null) return;
+    final dirRepo = UserDirectoryRepository(uid: _uid);
+    await dirRepo.ensureDirectoryEntry(
+      username: user.username!,
+      displayName: user.displayName ?? '',
+      photoUrl: user.photoUrl,
+    );
   }
 }

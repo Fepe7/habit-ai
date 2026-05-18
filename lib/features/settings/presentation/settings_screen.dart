@@ -167,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 8),
 
-            // perfil público
+            // perfil público y social
             _SectionLabel(label: 'Comunidad'),
             _SectionGroup(
               children: [
@@ -175,6 +175,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   userData: userData,
                   publicProfileRepo: _publicProfileRepo,
                   onExplore: () => context.pushNamed('public-profiles-feed'),
+                ),
+                _SettingsTile(
+                  icon: Icons.people_rounded,
+                  title: 'Seguidores',
+                  subtitle: 'Gestiona tus seguidores y seguidos',
+                  onTap: () => context.pushNamed('followers'),
                 ),
               ],
             ),
@@ -223,8 +229,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SettingsTile(
                   icon: Icons.shield_outlined,
                   title: 'Privacidad',
-                  subtitle: 'Tus datos están protegidos',
-                  onTap: () {},
+                  subtitle: 'Retos, perfil y visibilidad',
+                  onTap: () => context.pushNamed('privacy-settings'),
                   divider: false,
                 ),
               ],

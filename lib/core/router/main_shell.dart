@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/data/user_repository.dart';
 import '../../features/habits/data/habit_repository.dart';
 import '../../services/notification_service.dart';
 import '../widgets/app_drawer.dart';
@@ -29,6 +30,15 @@ class _MainShellState extends State<MainShell> {
     // reprogramar notificaciones una vez por sesion (por si el SO las purgo
     // o el usuario reinstalo la app). No bloquea el primer render
     _rescheduleNotifications();
+    // migrar usuarios existentes al nuevo user_directory si aun no tienen entrada
+    _ensureUserDirectory();
+  }
+
+  Future<void> _ensureUserDirectory() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final repo = UserRepository(uid: uid);
+    await repo.ensureDirectoryEntry();
   }
 
   Future<void> _rescheduleNotifications() async {

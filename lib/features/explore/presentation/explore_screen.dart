@@ -18,6 +18,10 @@ import '../../community/data/community_template_repository.dart';
 import '../../community/domain/community_template_model.dart';
 import '../../profile/data/public_profile_repository.dart';
 import '../../profile/domain/public_profile_model.dart';
+import '../../social/data/follow_repository.dart';
+import '../../social/data/user_directory_repository.dart';
+import '../../social/domain/privacy_level.dart';
+import '../../social/domain/user_directory_entry.dart';
 
 /// Descubrir hábitos — reemplaza la antigua pantalla de búsqueda.
 /// Layout inspirado en el mockup Stitch "Discover Habits and Creators":
@@ -33,6 +37,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   late final CommunityTemplateRepository _templateRepo;
   late final PublicProfileRepository _profileRepo;
   late final ChallengeRepository _challengeRepo;
+  late final FollowRepository _followRepo;
+  late final UserDirectoryRepository _dirRepo;
+  late final String _myUid;
 
   final _searchController = TextEditingController();
   Timer? _debounce;
@@ -52,20 +59,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   // resultados de búsqueda (mezclados)
   List<CommunityTemplateModel> _searchTemplates = [];
-  List<PublicProfileModel> _searchCreators = [];
+  List<UserDirectoryEntry> _searchUsers = [];
   bool _searching = false;
+
+  // estado de follow — cargado una vez para evitar N reads
+  Set<String> _followingUids = {};
+  Set<String> _pendingUids = {};
 
   @override
   void initState() {
     super.initState();
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    _templateRepo = CommunityTemplateRepository(uid: uid);
-    _profileRepo = PublicProfileRepository(uid: uid);
-    _challengeRepo = ChallengeRepository(uid: uid);
+    _myUid = FirebaseAuth.instance.currentUser!.uid;
+    _templateRepo = CommunityTemplateRepository(uid: _myUid);
+    _profileRepo = PublicProfileRepository(uid: _myUid);
+    _challengeRepo = ChallengeRepository(uid: _myUid);
+    _followRepo = FollowRepository(uid: _myUid);
+    _dirRepo = UserDirectoryRepository(uid: _myUid);
     _loadFeatured();
     _loadCreators();
     _loadChallenges();
+    _loadFollowState();
     _searchController.addListener(_onQueryChanged);
+  }
+
+  Future<void> _loadFollowState() async {
+    final uids = await _followRepo.getFollowingUids();
+    if (mounted) setState(() => _followingUids = uids.toSet());
   }
 
   @override
@@ -119,14 +138,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (q.isEmpty) {
         setState(() {
           _searchTemplates = [];
-          _searchCreators = [];
+          _searchUsers = [];
           _searching = false;
         });
         return;
       }
       setState(() => _searching = true);
-      // buscamos plantillas client-side sobre el pool popular + creadores por username
-      final creators = await _profileRepo.searchByUsername(q);
+      // usuarios por username (directory) + plantillas client-side del pool popular
+      final users = await _dirRepo.searchByUsername(q, limit: 10);
       final templates = _featured
           .where((t) =>
               t.title.toLowerCase().contains(q) ||
@@ -134,11 +153,70 @@ class _ExploreScreenState extends State<ExploreScreen> {
           .toList();
       if (!mounted) return;
       setState(() {
-        _searchCreators = creators;
+        _searchUsers = users.where((u) => u.uid != _myUid).toList();
         _searchTemplates = templates;
         _searching = false;
       });
     });
+  }
+
+  Future<void> _followUser(UserDirectoryEntry target) async {
+    if (_followingUids.contains(target.uid)) return;
+    final me = FirebaseAuth.instance.currentUser!;
+    final myEntry = await _dirRepo.getEntry(_myUid);
+    try {
+      if (target.profileVisibility != PrivacyLevel.everyone) {
+        // perfil privado → solicitud
+        final hasPending = await _followRepo.hasPendingFollowRequest(target.uid);
+        if (hasPending) return;
+        await _followRepo.sendFollowRequest(
+          toUid: target.uid,
+          fromUsername: myEntry?.username ?? '',
+          fromDisplayName: me.displayName ?? '',
+          fromPhotoUrl: me.photoURL,
+          toUsername: target.username,
+          toDisplayName: target.displayName,
+          toPhotoUrl: target.photoUrl,
+        );
+        if (mounted) setState(() => _pendingUids.add(target.uid));
+      } else {
+        // perfil público → follow directo
+        await _followRepo.follow(
+          targetUid: target.uid,
+          targetUsername: target.username,
+          targetDisplayName: target.displayName,
+          targetPhotoUrl: target.photoUrl,
+          myUsername: myEntry?.username ?? '',
+          myDisplayName: me.displayName ?? '',
+          myPhotoUrl: me.photoURL,
+        );
+        if (mounted) setState(() => _followingUids.add(target.uid));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _followPublicProfile(PublicProfileModel profile) async {
+    if (_followingUids.contains(profile.uid)) return;
+    final me = FirebaseAuth.instance.currentUser!;
+    final myEntry = await _dirRepo.getEntry(_myUid);
+    try {
+      // los perfiles en public_profiles/ son siempre públicos → follow directo
+      await _followRepo.follow(
+        targetUid: profile.uid,
+        targetUsername: profile.username,
+        targetDisplayName: profile.displayName,
+        targetPhotoUrl: profile.photoUrl,
+        myUsername: myEntry?.username ?? '',
+        myDisplayName: me.displayName ?? '',
+        myPhotoUrl: me.photoURL,
+      );
+      if (mounted) setState(() => _followingUids.add(profile.uid));
+    } catch (_) {}
+  }
+
+  Future<void> _unfollowUid(String uid) async {
+    await _followRepo.unfollow(uid);
+    if (mounted) setState(() => _followingUids.remove(uid));
   }
 
   @override
@@ -484,20 +562,27 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   mainAxisSpacing: 14,
                   childAspectRatio: 0.95,
                 ),
-                itemBuilder: (_, i) => _CreatorCard(
-                  profile: _creators[i],
-                  highlighted: i < 2,
-                  onTap: () => context.goNamed(
-                    'public-profile',
-                    pathParameters: {'userId': _creators[i].uid},
-                  ),
-                )
-                    .animate()
-                    .fadeIn(
-                      delay: Duration(milliseconds: 80 * i.clamp(0, 6)),
-                      duration: 280.ms,
-                    )
-                    .slideY(begin: 0.08, end: 0, duration: 320.ms),
+                itemBuilder: (_, i) {
+                  final p = _creators[i];
+                  return _CreatorCard(
+                    profile: p,
+                    highlighted: i < 2,
+                    isFollowing: _followingUids.contains(p.uid),
+                    onTap: () => context.goNamed(
+                      'public-profile',
+                      pathParameters: {'userId': p.uid},
+                    ),
+                    onFollowToggle: () => _followingUids.contains(p.uid)
+                        ? _unfollowUid(p.uid)
+                        : _followPublicProfile(p),
+                  )
+                      .animate()
+                      .fadeIn(
+                        delay: Duration(milliseconds: 80 * i.clamp(0, 6)),
+                        duration: 280.ms,
+                      )
+                      .slideY(begin: 0.08, end: 0, duration: 320.ms);
+                },
               ),
             ),
         ],
@@ -518,7 +603,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
       ];
     }
-    if (_searchTemplates.isEmpty && _searchCreators.isEmpty) {
+    if (_searchTemplates.isEmpty && _searchUsers.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -531,7 +616,50 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ];
     }
     return [
+      if (_searchUsers.isNotEmpty) ...[
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Personas',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+        ),
+        SliverList.separated(
+          itemCount: _searchUsers.length,
+          separatorBuilder: (_, __) => const Divider(
+            height: 1,
+            indent: 72,
+            endIndent: 20,
+          ),
+          itemBuilder: (_, i) {
+            final u = _searchUsers[i];
+            final isFollowing = _followingUids.contains(u.uid);
+            final isPending = _pendingUids.contains(u.uid);
+            final isPrivate = u.profileVisibility != PrivacyLevel.everyone;
+            return _UserSearchTile(
+              entry: u,
+              isFollowing: isFollowing,
+              isPending: isPending,
+              isPrivate: isPrivate,
+              onTap: () => context.goNamed(
+                'public-profile',
+                pathParameters: {'userId': u.uid},
+              ),
+              onFollowTap: isFollowing
+                  ? () => _unfollowUid(u.uid)
+                  : () => _followUser(u),
+            );
+          },
+        ),
+      ],
       if (_searchTemplates.isNotEmpty) ...[
+        if (_searchUsers.isNotEmpty)
+          const SliverToBoxAdapter(child: SizedBox(height: 20)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -546,7 +674,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         SliverList.separated(
           itemCount: _searchTemplates.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (_, i) => Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _FeaturedTemplateCard(
@@ -554,42 +682,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
               full: true,
               onTap: () =>
                   context.go('/community/${_searchTemplates[i].id}'),
-            ),
-          ),
-        ),
-      ],
-      if (_searchCreators.isNotEmpty) ...[
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            child: Text(
-              'Creadores',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-          ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverGrid.builder(
-            itemCount: _searchCreators.length,
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 14,
-              mainAxisSpacing: 14,
-              childAspectRatio: 0.95,
-            ),
-            itemBuilder: (_, i) => _CreatorCard(
-              profile: _searchCreators[i],
-              highlighted: false,
-              onTap: () => context.goNamed(
-                'public-profile',
-                pathParameters: {'userId': _searchCreators[i].uid},
-              ),
             ),
           ),
         ),
@@ -611,7 +703,7 @@ class _SearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        hintText: 'Buscar plantillas, creadores…',
+        hintText: 'Buscar personas, plantillas…',
         prefixIcon: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant),
         suffixIcon: controller.text.isEmpty
             ? null
@@ -837,12 +929,16 @@ class _FeaturedTemplateCard extends StatelessWidget {
 class _CreatorCard extends StatelessWidget {
   final PublicProfileModel profile;
   final bool highlighted;
+  final bool isFollowing;
   final VoidCallback onTap;
+  final VoidCallback onFollowToggle;
 
   const _CreatorCard({
     required this.profile,
     required this.highlighted,
+    required this.isFollowing,
     required this.onTap,
+    required this.onFollowToggle,
   });
 
   @override
@@ -909,13 +1005,13 @@ class _CreatorCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                      horizontal: 6, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(8),
@@ -924,34 +1020,74 @@ class _CreatorCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.local_fire_department_rounded,
-                          color: AppTheme.tertiaryContainer, size: 13),
-                      const SizedBox(width: 3),
+                          color: AppTheme.tertiaryContainer, size: 12),
+                      const SizedBox(width: 2),
                       Text(
                         '${profile.bestStreakEver}',
                         style: const TextStyle(
                           color: AppTheme.tertiaryContainer,
                           fontWeight: FontWeight.w800,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    '${profile.totalHabits} hábitos',
+                    '${profile.totalHabits} hab.',
                     style: TextStyle(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
                       fontSize: 11,
-                      letterSpacing: 0.3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: isFollowing
+                  ? OutlinedButton(
+                      onPressed: onFollowToggle,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        side: BorderSide(
+                            color: scheme.outline.withValues(alpha: 0.5)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text(
+                        'Siguiendo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: scheme.onSurface,
+                        ),
+                      ),
+                    )
+                  : FilledButton(
+                      onPressed: onFollowToggle,
+                      style: FilledButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: scheme.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text(
+                        'Seguir',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -983,6 +1119,100 @@ class _EmptyInline extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ==================== USER SEARCH TILE (estilo Instagram) ====================
+
+class _UserSearchTile extends StatelessWidget {
+  final UserDirectoryEntry entry;
+  final bool isFollowing;
+  final bool isPending;
+  final bool isPrivate;
+  final VoidCallback onTap;
+  final VoidCallback onFollowTap;
+
+  const _UserSearchTile({
+    required this.entry,
+    required this.isFollowing,
+    required this.isPending,
+    required this.isPrivate,
+    required this.onTap,
+    required this.onFollowTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    Widget trailingButton;
+    if (isFollowing) {
+      trailingButton = OutlinedButton(
+        onPressed: onFollowTap,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(90, 32),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          side: BorderSide(color: scheme.outline.withValues(alpha: 0.4)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: const Text('Siguiendo',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      );
+    } else if (isPending) {
+      trailingButton = OutlinedButton(
+        onPressed: null,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(90, 32),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: const Text('Solicitado',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+      );
+    } else {
+      trailingButton = FilledButton(
+        onPressed: onFollowTap,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size(90, 32),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          backgroundColor: scheme.primary,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Text(
+          isPrivate ? 'Solicitar' : 'Seguir',
+          style: const TextStyle(
+              color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+        ),
+      );
+    }
+
+    return ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      onTap: onTap,
+      leading: AvatarCircle(
+        initials: entry.avatarInitials,
+        photoUrl: entry.photoUrl,
+        size: 44,
+      ),
+      title: Row(
+        children: [
+          Text(entry.displayName,
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          if (isPrivate) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.lock_rounded,
+                size: 13, color: scheme.onSurfaceVariant),
+          ],
+        ],
+      ),
+      subtitle: Text('@${entry.username}',
+          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+      trailing: trailingButton,
     );
   }
 }

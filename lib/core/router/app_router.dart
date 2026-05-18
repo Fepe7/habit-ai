@@ -24,7 +24,9 @@ import '../../features/community/presentation/community_template_detail_screen.d
 import '../../features/explore/presentation/explore_screen.dart';
 import '../../features/challenges/presentation/challenges_screen.dart';
 import '../../features/challenges/presentation/challenge_detail_screen.dart';
+import '../../features/social/presentation/followers_screen.dart';
 import '../../features/habits/presentation/all_habits_screen.dart';
+import '../../features/settings/presentation/privacy_settings_screen.dart';
 import 'main_shell.dart';
 
 // transicion suave fade + slide para pantallas internas
@@ -254,6 +256,22 @@ GoRouter createRouter(AuthRepository authRepository) {
                 ),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/followers',
+            name: 'followers',
+            pageBuilder: (context, state) => _fadeSlideTransition(
+              state: state,
+              child: const FollowersScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/privacy-settings',
+            name: 'privacy-settings',
+            pageBuilder: (context, state) => _fadeSlideTransition(
+              state: state,
+              child: const PrivacySettingsScreen(),
+            ),
           ),
         ],
       ),

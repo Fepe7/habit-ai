@@ -29,6 +29,12 @@ class UserModel {
   /// URL de la foto de perfil en Firebase Storage (null = sin foto)
   final String? photoUrl;
 
+  /// Quién puede enviar retos al usuario: "everyone" | "followers" | "nobody"
+  final String challengePrivacy;
+
+  /// Quién puede ver el perfil completo: "everyone" | "followers" | "nobody"
+  final String profileVisibility;
+
   const UserModel({
     required this.uid,
     required this.email,
@@ -40,6 +46,8 @@ class UserModel {
     this.username,
     this.publicProfileCreatedAt,
     this.photoUrl,
+    this.challengePrivacy = 'everyone',
+    this.profileVisibility = 'everyone',
   });
 
   /// Si el modo enfermedad sigue activo ahora mismo
@@ -67,6 +75,8 @@ class UserModel {
           ? (data['publicProfileCreatedAt'] as Timestamp).toDate()
           : null,
       photoUrl: data['photoUrl'] as String?,
+      challengePrivacy: data['challengePrivacy'] as String? ?? 'everyone',
+      profileVisibility: data['profileVisibility'] as String? ?? 'everyone',
     );
   }
 
@@ -85,6 +95,8 @@ class UserModel {
           ? Timestamp.fromDate(publicProfileCreatedAt!)
           : null,
       'photoUrl': photoUrl,
+      'challengePrivacy': challengePrivacy,
+      'profileVisibility': profileVisibility,
     };
   }
 
@@ -101,6 +113,8 @@ class UserModel {
     bool clearUsername = false,
     String? photoUrl,
     bool clearPhotoUrl = false,
+    String? challengePrivacy,
+    String? profileVisibility,
   }) {
     return UserModel(
       uid: uid,
@@ -113,6 +127,8 @@ class UserModel {
       username: clearUsername ? null : (username ?? this.username),
       publicProfileCreatedAt: publicProfileCreatedAt ?? this.publicProfileCreatedAt,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+      challengePrivacy: challengePrivacy ?? this.challengePrivacy,
+      profileVisibility: profileVisibility ?? this.profileVisibility,
     );
   }
 }

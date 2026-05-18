@@ -7,10 +7,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../social/data/follow_repository.dart';
+import '../../../social/data/user_directory_repository.dart';
+import '../../../social/domain/privacy_level.dart';
+import '../../../social/domain/user_directory_entry.dart';
 import '../../../habits/data/habit_repository.dart';
 import '../../../habits/domain/habit_model.dart';
-import '../../../profile/data/public_profile_repository.dart';
-import '../../../profile/domain/public_profile_model.dart';
 import '../../data/challenge_repository.dart';
 import '../../domain/challenge_participant_model.dart';
 
@@ -40,13 +42,15 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
   int _durationDays = 21;
   Timer? _debounce;
 
-  // búsqueda de usuario
-  List<PublicProfileModel> _searchResults = [];
-  PublicProfileModel? _selectedUser;
+  // búsqueda de usuario (ahora usa UserDirectoryEntry para incluir privacidad)
+  List<UserDirectoryEntry> _searchResults = [];
+  UserDirectoryEntry? _selectedUser;
   bool _searching = false;
   bool _saving = false;
+  Set<String> _myFollowerUids = {};
 
-  late final PublicProfileRepository _profileRepo;
+  late final UserDirectoryRepository _dirRepo;
+  late final FollowRepository _followRepo;
   late final ChallengeRepository _challengeRepo;
   late final HabitRepository _habitRepo;
   late final String _myUid;
@@ -57,10 +61,17 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
   void initState() {
     super.initState();
     _myUid = FirebaseAuth.instance.currentUser!.uid;
-    _profileRepo = PublicProfileRepository(uid: _myUid);
+    _dirRepo = UserDirectoryRepository(uid: _myUid);
+    _followRepo = FollowRepository(uid: _myUid);
     _challengeRepo = ChallengeRepository(uid: _myUid);
     _habitRepo = HabitRepository(uid: _myUid);
     _usernameCtrl.addListener(_onUsernameChanged);
+    _loadFollowerUids();
+  }
+
+  Future<void> _loadFollowerUids() async {
+    final uids = await _followRepo.getFollowerUids();
+    if (mounted) setState(() => _myFollowerUids = uids.toSet());
   }
 
   @override
@@ -84,11 +95,18 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
     }
     setState(() => _searching = true);
     _debounce = Timer(const Duration(milliseconds: 400), () async {
-      final results = await _profileRepo.searchByUsername(query);
+      final all = await _dirRepo.searchByUsername(query);
       if (!mounted) return;
+      // filtrar por privacidad: excluir los que no permiten retos del usuario actual
+      final filtered = all.where((e) {
+        if (e.uid == _myUid) return false;
+        final cp = e.challengePrivacy.value;
+        if (cp == 'nobody') return false;
+        if (cp == 'followers') return _myFollowerUids.contains(e.uid);
+        return true; // "everyone"
+      }).take(5).toList();
       setState(() {
-        _searchResults =
-            results.where((p) => p.uid != _myUid).take(5).toList();
+        _searchResults = filtered;
         _searching = false;
       });
     });
@@ -102,7 +120,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
 
     try {
       final me = FirebaseAuth.instance.currentUser!;
-      final myProfile = await _profileRepo.getPublicProfile(_myUid);
+      final myEntry = await _dirRepo.getEntry(_myUid);
       final desc = _descCtrl.text.trim();
 
       // crear el hábito del creador vinculado al reto
@@ -121,7 +139,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
 
       final creator = ChallengeParticipantModel(
         uid: _myUid,
-        username: myProfile?.username ?? me.displayName ?? '',
+        username: myEntry?.username ?? me.displayName ?? '',
         displayName: me.displayName ?? '',
         photoUrl: me.photoURL,
         habitId: tempHabitId,
@@ -286,7 +304,8 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
 
             if (_selectedUser != null)
               _SelectedUserTile(
-                profile: _selectedUser!,
+                entry: _selectedUser!,
+                isFriend: _myFollowerUids.contains(_selectedUser!.uid),
                 onRemove: () => setState(() => _selectedUser = null),
               )
             else ...[
@@ -328,21 +347,34 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
                     shrinkWrap: true,
                     itemCount: _searchResults.length,
                     itemBuilder: (_, i) {
-                      final p = _searchResults[i];
+                      final entry = _searchResults[i];
+                      final isFriend = _myFollowerUids.contains(entry.uid);
                       return ListTile(
                         leading: AvatarCircle(
-                          initials: p.avatarInitials,
-                          photoUrl: p.photoUrl,
+                          initials: entry.avatarInitials,
+                          photoUrl: entry.photoUrl,
                           size: 36,
                         ),
-                        title: Text(p.displayName,
+                        title: Text(entry.displayName,
                             style:
                                 const TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text('@${p.username}'),
+                        subtitle: Text('@${entry.username}'),
+                        trailing: isFriend
+                            ? Chip(
+                                label: const Text('Seguidor'),
+                                labelStyle: TextStyle(
+                                  fontSize: 11,
+                                  color: scheme.primary,
+                                ),
+                                side: BorderSide.none,
+                                backgroundColor: scheme.primaryContainer
+                                    .withValues(alpha: 0.4),
+                              )
+                            : null,
                         dense: true,
                         onTap: () {
                           setState(() {
-                            _selectedUser = p;
+                            _selectedUser = entry;
                             _searchResults = [];
                             _usernameCtrl.clear();
                           });
@@ -376,10 +408,15 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
 }
 
 class _SelectedUserTile extends StatelessWidget {
-  final PublicProfileModel profile;
+  final UserDirectoryEntry entry;
+  final bool isFriend;
   final VoidCallback onRemove;
 
-  const _SelectedUserTile({required this.profile, required this.onRemove});
+  const _SelectedUserTile({
+    required this.entry,
+    required this.isFriend,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -394,8 +431,8 @@ class _SelectedUserTile extends StatelessWidget {
       child: Row(
         children: [
           AvatarCircle(
-            initials: profile.avatarInitials,
-            photoUrl: profile.photoUrl,
+            initials: entry.avatarInitials,
+            photoUrl: entry.photoUrl,
             size: 36,
           ),
           const SizedBox(width: 10),
@@ -403,9 +440,27 @@ class _SelectedUserTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(profile.displayName,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text('@${profile.username}',
+                Row(
+                  children: [
+                    Text(entry.displayName,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    if (isFriend) ...[
+                      const SizedBox(width: 6),
+                      Chip(
+                        label: const Text('Seguidor'),
+                        labelStyle: TextStyle(
+                          fontSize: 10,
+                          color: scheme.primary,
+                        ),
+                        side: BorderSide.none,
+                        backgroundColor:
+                            scheme.primaryContainer.withValues(alpha: 0.5),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ],
+                ),
+                Text('@${entry.username}',
                     style: TextStyle(
                         fontSize: 12, color: scheme.onSurfaceVariant)),
               ],

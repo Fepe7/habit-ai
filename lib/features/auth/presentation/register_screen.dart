@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../social/data/user_directory_repository.dart';
 
 // Pantalla de registro — diseño Editorial Vitality
 class RegisterScreen extends StatefulWidget {
@@ -18,21 +20,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   String? _errorMessage;
+  // null = sin comprobar, true = disponible, false = ocupado
+  bool? _usernameAvailable;
+  bool _checkingUsername = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _usernameController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkUsername(String value) async {
+    if (!UserDirectoryRepository.isValidUsername(value)) {
+      setState(() {
+        _usernameAvailable = null;
+        _checkingUsername = false;
+      });
+      return;
+    }
+    setState(() => _checkingUsername = true);
+    // instancia temporal sin uid para solo validar disponibilidad
+    final repo = UserDirectoryRepository(uid: 'tmp');
+    final available = await repo.isUsernameAvailable(value);
+    if (mounted) {
+      setState(() {
+        _usernameAvailable = available;
+        _checkingUsername = false;
+      });
+    }
   }
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_usernameAvailable != true) {
+      setState(() => _errorMessage = 'Elige un nombre de usuario válido y disponible');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -41,9 +72,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final authRepository = AuthProvider.of(context);
-      await authRepository.register(
+      final user = await authRepository.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+      );
+
+      // reclamar username en /user_directory y /usernames
+      final dirRepo = UserDirectoryRepository(uid: user.uid);
+      await dirRepo.claimUsername(
+        username: _usernameController.text.trim(),
+        displayName: FirebaseAuth.instance.currentUser?.displayName ??
+            _emailController.text.split('@').first,
+        photoUrl: FirebaseAuth.instance.currentUser?.photoURL,
       );
     } catch (e) {
       setState(() {
@@ -160,6 +200,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
+                const SizedBox(height: 16),
+
+                // username — obligatorio para ser buscable por amigos y retos
+                TextFormField(
+                  controller: _usernameController,
+                  textInputAction: TextInputAction.next,
+                  autocorrect: false,
+                  onChanged: (v) => _checkUsername(v.trim().toLowerCase()),
+                  decoration: InputDecoration(
+                    labelText: 'Nombre de usuario',
+                    prefixText: '@',
+                    hintText: 'tunombre',
+                    prefixIcon: const Icon(Icons.alternate_email_rounded),
+                    suffixIcon: _checkingUsername
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _usernameAvailable == true
+                            ? const Icon(Icons.check_circle_rounded,
+                                color: Colors.green)
+                            : _usernameAvailable == false
+                                ? Icon(Icons.error_outline_rounded,
+                                    color: colorScheme.error)
+                                : null,
+                    helperText: _usernameAvailable == true
+                        ? '¡Disponible!'
+                        : _usernameAvailable == false
+                            ? 'Ya está en uso, prueba otro'
+                            : 'Te identifica en retos y amigos • 3-20 caracteres',
+                    helperStyle: TextStyle(
+                      color: _usernameAvailable == true
+                          ? Colors.green
+                          : _usernameAvailable == false
+                              ? colorScheme.error
+                              : null,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Elige un nombre de usuario';
+                    }
+                    if (!UserDirectoryRepository.isValidUsername(
+                        value.trim())) {
+                      return 'Solo letras minúsculas, números y _ (3-20 caracteres)';
+                    }
+                    if (_usernameAvailable != true) {
+                      return 'Comprueba la disponibilidad del username';
+                    }
+                    return null;
+                  },
+                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
                 const SizedBox(height: 16),
 
                 // contraseña
