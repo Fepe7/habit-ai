@@ -64,35 +64,41 @@ class CommunityTemplateRepository {
       authorPhotoUrl: authorPhotoUrl,
     );
 
-    // batch: crear plantilla + snapshots de habitos
-    final batch = _firestore.batch();
     final templateRef = _templatesRef.doc();
 
-    batch.set(templateRef, template.toJson());
+    // paso 1: crear doc padre solo — las reglas de la subcolección lo necesitan
+    // preexistente para evaluar el get() que verifica authorUid
+    await templateRef.set(template.toJson());
 
-    for (final habit in habits) {
-      final snap = TemplateHabitSnapshot(
-        id: '',
-        title: habit.title,
-        description: habit.description,
-        category: habit.category,
-        frequency: habit.frequency,
-        targetDays: habit.targetDays,
-        reminderTime: habit.reminderTime,
-      );
-      final snapRef = templateRef.collection('habits').doc();
-      batch.set(snapRef, snap.toJson());
+    // paso 2: batch con snapshots de hábitos + marcar grupo origen
+    try {
+      final batch = _firestore.batch();
+      for (final habit in habits) {
+        final snap = TemplateHabitSnapshot(
+          id: '',
+          title: habit.title,
+          description: habit.description,
+          category: habit.category,
+          frequency: habit.frequency,
+          targetDays: habit.targetDays,
+          reminderTime: habit.reminderTime,
+        );
+        final snapRef = templateRef.collection('habits').doc();
+        batch.set(snapRef, snap.toJson());
+      }
+      final groupRef = _firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('habit_groups')
+          .doc(group.id);
+      batch.update(groupRef, {'publishedTemplateId': templateRef.id});
+      await batch.commit();
+    } catch (e) {
+      // rollback: si falla el batch, borrar el doc padre para no dejar basura
+      await templateRef.delete();
+      rethrow;
     }
 
-    // marcar el grupo origen con el templateId
-    final groupRef = _firestore
-        .collection('users')
-        .doc(_uid)
-        .collection('habit_groups')
-        .doc(group.id);
-    batch.update(groupRef, {'publishedTemplateId': templateRef.id});
-
-    await batch.commit();
     return templateRef.id;
   }
 

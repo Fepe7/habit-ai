@@ -133,6 +133,8 @@ class _CommunityTemplateDetailScreenState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final bottomPad =
+        MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 16;
 
     if (_loading) {
       return const Scaffold(
@@ -402,7 +404,7 @@ class _CommunityTemplateDetailScreenState
           // padding inferior + boton importar
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 48),
+              padding: EdgeInsets.fromLTRB(16, 20, 16, bottomPad),
               child: _isMyTemplate
                   ? OutlinedButton.icon(
                       onPressed: null,
