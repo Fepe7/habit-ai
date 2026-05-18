@@ -133,7 +133,8 @@ class PublicProfileRepository {
   }
 
   /// Desactiva el perfil público:
-  /// Borra public_profiles/{uid}, su subcolección de hábitos y usernames/{name}
+  /// Borra public_profiles/{uid}, su subcolección de hábitos y usernames/{name}.
+  /// Anonimiza las plantillas publicadas para no dejar datos personales expuestos.
   Future<void> disablePublicProfile(String username) async {
     // Borrar hábitos públicos primero (subcolección)
     final habitsSnap = await _myPublicHabitsRef.get();
@@ -162,6 +163,25 @@ class PublicProfileRepository {
     );
 
     await batch.commit();
+
+    // Anonimizar plantillas publicadas en batch separado
+    // (evita superar el límite de 500 ops si hay muchos hábitos públicos)
+    final templatesSnap = await _firestore
+        .collection('community_templates')
+        .where('authorUid', isEqualTo: _uid)
+        .get();
+
+    if (templatesSnap.docs.isNotEmpty) {
+      final anonBatch = _firestore.batch();
+      for (final doc in templatesSnap.docs) {
+        anonBatch.update(doc.reference, {
+          'authorUsername': 'usuario',
+          'authorDisplayName': 'Usuario anónimo',
+          'authorPhotoUrl': null,
+        });
+      }
+      await anonBatch.commit();
+    }
   }
 
   /// Cambia el username: libera el antiguo y reserva el nuevo

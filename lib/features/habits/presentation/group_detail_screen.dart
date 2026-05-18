@@ -9,6 +9,7 @@ import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
@@ -133,6 +134,27 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       return;
     }
 
+    // Verificar perfil público ANTES del diálogo — no exponer datos de usuarios privados
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final profileDoc = await _communityRepo.getAuthorPublicProfile(uid);
+    if (profileDoc == null) {
+      if (mounted) {
+        AppSnackBar.showInfo(
+          context,
+          'Activa tu perfil público en Ajustes antes de publicar.',
+        );
+      }
+      return;
+    }
+
+    final username = profileDoc['username'] as String? ?? uid;
+    final displayName = profileDoc['displayName'] as String? ??
+        FirebaseAuth.instance.currentUser?.displayName ??
+        '';
+    final authorPhotoUrl = profileDoc['photoUrl'] as String?;
+
+    if (!mounted) return;
+
     final descCtrl = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
@@ -173,17 +195,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
 
     if (confirmed != true || !mounted) return;
-
-    // obtener datos del perfil publico del usuario
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final profileDoc = await _communityRepo.getAuthorPublicProfile(uid);
-    final username =
-        profileDoc?['username'] as String? ?? uid;
-    final displayName =
-        profileDoc?['displayName'] as String? ??
-            FirebaseAuth.instance.currentUser?.displayName ??
-            '';
-    final authorPhotoUrl = profileDoc?['photoUrl'] as String?;
 
     try {
       final templateId = await _communityRepo.publishTemplate(
@@ -354,10 +365,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               ),
               floatingActionButton: Padding(
                 padding: const EdgeInsets.only(bottom: 100),
-                child: FloatingActionButton(
-                  onPressed: _handleFabTap,
+                child: GradientFab(
                   tooltip: 'Crear',
-                  child: const Icon(Icons.add_rounded),
+                  onTap: _handleFabTap,
                 ),
               ),
               body: _GroupBody(

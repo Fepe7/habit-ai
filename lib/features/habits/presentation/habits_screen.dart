@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/router/main_shell.dart';
@@ -19,6 +18,7 @@ import 'widgets/create_group_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../achievements/data/archivement_repository.dart';
@@ -439,15 +439,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
           ? null
           : Padding(
               padding: const EdgeInsets.only(bottom: 100),
-              child: FloatingActionButton(
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                  _handleFabTap();
-                },
-                backgroundColor: scheme.primary,
-                foregroundColor: scheme.onPrimary,
+              child: GradientFab(
                 tooltip: 'Crear',
-                child: const Icon(Icons.add_rounded),
+                onTap: _handleFabTap,
               ),
             ),
       body: SafeArea(

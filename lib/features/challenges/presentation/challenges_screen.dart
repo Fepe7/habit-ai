@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../data/challenge_repository.dart';
 import '../domain/challenge_model.dart';
@@ -50,15 +51,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
         title: const Text('Mis retos'),
         centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final created = await CreateChallengeSheet.show(context);
-          if (created == true && mounted) {
-            setState(() {});
-          }
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Nuevo reto'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100),
+        child: GradientFab(
+          tooltip: 'Nuevo reto',
+          onTap: () async {
+            final created = await CreateChallengeSheet.show(context);
+            if (created == true && mounted) setState(() {});
+          },
+        ),
       ),
       body: StreamBuilder<List<ChallengeModel>>(
         stream: _repo.watchMyChallenges(),
@@ -136,6 +137,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
     );
   }
 }
+
 
 class _SectionHeader extends StatelessWidget {
   final String title;
