@@ -15,6 +15,7 @@ class HabitModel {
   final DateTime createdAt;
   final bool isActive;
   final String? groupId;
+  final String? challengeId;
 
   const HabitModel({
     required this.id,
@@ -30,6 +31,7 @@ class HabitModel {
     required this.createdAt,
     this.isActive = true,
     this.groupId,
+    this.challengeId,
   });
 
   // Crear desde un doc de Firestore (el id va aparte porque no viene en data())
@@ -48,6 +50,7 @@ class HabitModel {
       createdAt: (json['createdAt'] as Timestamp).toDate(),
       isActive: json['isActive'] as bool? ?? true,
       groupId: json['groupId'] as String?,
+      challengeId: json['challengeId'] as String?,
     );
   }
 
@@ -66,6 +69,7 @@ class HabitModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'isActive': isActive,
       'groupId': groupId,
+      'challengeId': challengeId,
     };
   }
 
@@ -81,6 +85,7 @@ class HabitModel {
     int? bestStreak,
     bool? isActive,
     String? groupId,
+    String? challengeId,
   }) {
     return HabitModel(
       id: id,
@@ -96,6 +101,7 @@ class HabitModel {
       createdAt: createdAt,
       isActive: isActive ?? this.isActive,
       groupId: groupId ?? this.groupId,
+      challengeId: challengeId ?? this.challengeId,
     );
   }
 }

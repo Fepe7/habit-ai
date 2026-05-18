@@ -98,6 +98,37 @@ service cloud.firestore {
       }
     }
 
+    // Retos compartidos entre dos usuarios
+    match /challenges/{challengeId} {
+      allow read: if request.auth != null
+                  && request.auth.uid in resource.data.participantUids;
+      allow create: if request.auth != null
+                    && request.resource.data.creatorUid == request.auth.uid;
+      allow update: if request.auth != null
+                    && request.auth.uid in resource.data.participantUids
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'startDate', 'endDate', 'completedAt']);
+      allow delete: if false;
+
+      match /participants/{participantUid} {
+        allow read: if request.auth != null
+                    && request.auth.uid in
+                       get(/databases/$(database)/documents/challenges/$(challengeId)).data.participantUids;
+        allow create, update: if request.auth != null
+                              && request.auth.uid == participantUid;
+        allow delete: if false;
+      }
+
+      match /progress/{progressUid} {
+        allow read: if request.auth != null
+                    && request.auth.uid in
+                       get(/databases/$(database)/documents/challenges/$(challengeId)).data.participantUids;
+        allow create, update: if request.auth != null
+                              && request.auth.uid == progressUid;
+        allow delete: if false;
+      }
+    }
+
     // Reserva de usernames — lectura abierta para isUsernameAvailable
     match /usernames/{username} {
       allow read: if true;

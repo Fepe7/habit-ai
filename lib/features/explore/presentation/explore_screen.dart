@@ -11,6 +11,9 @@ import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/avatar_circle.dart';
+import '../../challenges/data/challenge_repository.dart';
+import '../../challenges/domain/challenge_model.dart';
+import '../../challenges/presentation/widgets/create_challenge_sheet.dart';
 import '../../community/data/community_template_repository.dart';
 import '../../community/domain/community_template_model.dart';
 import '../../profile/data/public_profile_repository.dart';
@@ -29,6 +32,7 @@ class ExploreScreen extends StatefulWidget {
 class _ExploreScreenState extends State<ExploreScreen> {
   late final CommunityTemplateRepository _templateRepo;
   late final PublicProfileRepository _profileRepo;
+  late final ChallengeRepository _challengeRepo;
 
   final _searchController = TextEditingController();
   Timer? _debounce;
@@ -42,6 +46,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
   List<PublicProfileModel> _creators = [];
   bool _loadingCreators = true;
 
+  // retos activos del usuario
+  List<ChallengeModel> _activeChallenges = [];
+  bool _loadingChallenges = true;
+
   // resultados de búsqueda (mezclados)
   List<CommunityTemplateModel> _searchTemplates = [];
   List<PublicProfileModel> _searchCreators = [];
@@ -53,8 +61,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _templateRepo = CommunityTemplateRepository(uid: uid);
     _profileRepo = PublicProfileRepository(uid: uid);
+    _challengeRepo = ChallengeRepository(uid: uid);
     _loadFeatured();
     _loadCreators();
+    _loadChallenges();
     _searchController.addListener(_onQueryChanged);
   }
 
@@ -74,6 +84,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() {
       _featured = res.templates.take(8).toList();
       _loadingFeatured = false;
+    });
+  }
+
+  Future<void> _loadChallenges() async {
+    final all = await _challengeRepo.watchMyChallenges().first;
+    if (!mounted) return;
+    setState(() {
+      _activeChallenges = all
+          .where((c) =>
+              c.status == ChallengeStatus.active ||
+              c.status == ChallengeStatus.pending)
+          .take(5)
+          .toList();
+      _loadingChallenges = false;
     });
   }
 
@@ -198,6 +222,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
             if (_query.isNotEmpty)
               ..._buildSearchResults(scheme)
             else ...[
+              _buildChallengesSection(scheme),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
               _buildFeaturedSection(scheme),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
               _buildCreatorsSection(scheme),
@@ -205,6 +231,169 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+
+  // ==================== RETOS COMPARTIDOS ====================
+
+  Widget _buildChallengesSection(ColorScheme scheme) {
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            title: 'Retos',
+            action: 'Ver todos',
+            onAction: () => context.go('/challenges'),
+          ),
+          const SizedBox(height: 12),
+          if (_loadingChallenges)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: ChartSkeleton(height: 80),
+            )
+          else if (_activeChallenges.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: GestureDetector(
+                onTap: () async {
+                  final created = await CreateChallengeSheet.show(context);
+                  if (created == true && mounted) _loadChallenges();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFF6366F1).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.handshake_rounded,
+                            color: Color(0xFF6366F1)),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Crea tu primer reto',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: scheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Reta a un amigo a un hábito compartido',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                    ],
+                  ),
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 280.ms)
+                  .slideY(begin: 0.05, end: 0),
+            )
+          else
+            SizedBox(
+              height: 80,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _activeChallenges.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, i) {
+                  final c = _activeChallenges[i];
+                  final catBg = AppTheme.categoryBg(c.habitCategory);
+                  final catFg = AppTheme.categoryFg(c.habitCategory);
+                  return GestureDetector(
+                    onTap: () => context.go('/challenges/${c.id}'),
+                    child: Container(
+                      width: 200,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: scheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: scheme.outlineVariant.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: catBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  AppTheme.categoryIcon(c.habitCategory),
+                                  size: 12,
+                                  color: catFg,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  c.habitTitle,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            c.isPending
+                                ? 'Pendiente de aceptar'
+                                : '${c.durationDays} días',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(
+                        delay: Duration(milliseconds: 60 * i.clamp(0, 5)),
+                        duration: 280.ms,
+                      )
+                      .slideX(begin: 0.1, end: 0, duration: 320.ms);
+                },
+              ),
+            ),
+        ],
       ),
     );
   }

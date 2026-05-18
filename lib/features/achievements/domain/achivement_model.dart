@@ -44,6 +44,7 @@ class AchievementModel {
   static const String total50 = 'total_50';
   static const String total100 = 'total_100';
   static const String perfectWeek = 'perfect_week';
+  static const String challengeCompleted = 'challenge_completed';
 }
 
 // catalogo con la info visual de cada logro
@@ -125,6 +126,13 @@ class AchievementCatalog {
       description: '7 dias seguidos completando todo',
       icon: Icons.workspace_premium_rounded,
       color: Color(0xFFEC4899),
+    ),
+    AchievementInfo(
+      type: AchievementModel.challengeCompleted,
+      title: 'Compañeros de reto',
+      description: 'Completa un reto compartido',
+      icon: Icons.handshake_rounded,
+      color: Color(0xFF6366F1),
     ),
   ];
 

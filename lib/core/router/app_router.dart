@@ -22,6 +22,8 @@ import '../../features/profile/presentation/public_profile_screen.dart';
 import '../../features/community/presentation/community_templates_feed_screen.dart';
 import '../../features/community/presentation/community_template_detail_screen.dart';
 import '../../features/explore/presentation/explore_screen.dart';
+import '../../features/challenges/presentation/challenges_screen.dart';
+import '../../features/challenges/presentation/challenge_detail_screen.dart';
 import '../../features/habits/presentation/all_habits_screen.dart';
 import 'main_shell.dart';
 
@@ -217,6 +219,23 @@ GoRouter createRouter(AuthRepository authRepository) {
             path: '/explore',
             name: 'explore',
             builder: (context, state) => const ExploreScreen(),
+          ),
+          GoRoute(
+            path: '/challenges',
+            name: 'challenges',
+            builder: (context, state) => const ChallengesScreen(),
+            routes: [
+              GoRoute(
+                path: ':challengeId',
+                name: 'challenge-detail',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: ChallengeDetailScreen(
+                    challengeId: state.pathParameters['challengeId']!,
+                  ),
+                ),
+              ),
+            ],
           ),
           GoRoute(
             path: '/community',

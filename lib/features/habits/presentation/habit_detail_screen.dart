@@ -15,6 +15,7 @@ import '../../auth/domain/user_model.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/renegotiation_model.dart';
 import 'widgets/edit_habit_sheet.dart';
+import '../../challenges/data/challenge_repository.dart';
 
 // Pantalla de detalle de un hábito con diseño Editorial Vitality
 class HabitDetailScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
   late final HabitRepository _habitRepo;
   late final UserRepository _userRepo;
   late final AIRepository _aiRepo;
+  late final ChallengeRepository _challengeRepo;
   HabitModel? _habit;
   UserModel? _userData;
   List<HabitLogModel> _recentLogs = [];
@@ -44,6 +46,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     _habitRepo = HabitRepository(uid: uid);
     _userRepo = UserRepository(uid: uid);
     _aiRepo = AIRepository(uid: uid);
+    _challengeRepo = ChallengeRepository(uid: uid);
     _loadData();
   }
 
@@ -98,6 +101,16 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         await _habitRepo.uncheckAndRecalculate(widget.habitId);
       }
       await _loadData();
+
+      // sync progreso al reto compartido
+      if (_habit?.challengeId != null) {
+        try {
+          await _challengeRepo.syncProgressFromToggle(
+            challengeId: _habit!.challengeId!,
+            completed: !wasCompleted,
+          );
+        } catch (_) {}
+      }
     } catch (e) {
       if (mounted) setState(() => _completedToday = wasCompleted);
     }

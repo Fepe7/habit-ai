@@ -28,6 +28,7 @@ import '../../auth/data/user_repository.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/renegotiation_model.dart';
 import '../../notifications/presentation/notifications_screen.dart';
+import '../../challenges/data/challenge_repository.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -42,6 +43,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   late HabitGroupRepository _groupRepo;
   late AchievementChecker _achievementChecker;
   late AIRepository _aiRepo;
+  late ChallengeRepository _challengeRepo;
 
   late Stream<List<HabitModel>> _habitsStream;
   late Stream<List<HabitGroupModel>> _groupsStream;
@@ -156,6 +158,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
           userRepo: UserRepository(uid: user.uid),
         );
         _aiRepo = AIRepository(uid: user.uid);
+        _challengeRepo = ChallengeRepository(uid: user.uid);
         _checkNewNotifs(user.uid);
         _renoSub = _aiRepo.watchActiveRenegotiations().listen((list) {
           if (mounted) {
@@ -229,6 +232,16 @@ class _HabitsScreenState extends State<HabitsScreen> {
             AchievementOverlay.showUnlocked(context, unlocked);
           }
         }
+      } catch (_) {}
+    }
+
+    // sync progreso al reto compartido
+    if (habit.challengeId != null) {
+      try {
+        await _challengeRepo.syncProgressFromToggle(
+          challengeId: habit.challengeId!,
+          completed: !wasCompleted,
+        );
       } catch (_) {}
     }
   }

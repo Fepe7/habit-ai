@@ -14,6 +14,8 @@ import '../../../features/ai/domain/renegotiation_model.dart';
 import '../../../features/ai/domain/weekly_review_model.dart';
 import '../../../features/habits/data/habit_repository.dart';
 import '../../../features/habits/domain/habit_model.dart';
+import '../../../features/challenges/data/challenge_repository.dart';
+import '../../../features/challenges/domain/challenge_model.dart';
 
 /// Gestiona el estado de "visto" y "borrado" de las notificaciones vía SharedPreferences.
 class NotificationsService {
@@ -47,6 +49,34 @@ class NotificationsService {
       final d =
           (achievSnap.docs.first.data()['unlockedAt'] as Timestamp).toDate();
       if (reference == null || d.isAfter(reference)) return true;
+    }
+
+    // Invitaciones de reto pendientes
+    final challengeSnap = await db
+        .collection('challenges')
+        .where('invitedUid', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
+    if (challengeSnap.docs.isNotEmpty) {
+      final d =
+          (challengeSnap.docs.first.data()['createdAt'] as Timestamp).toDate();
+      if (reference == null || d.isAfter(reference)) return true;
+    }
+
+    // Reto aceptado por el compañero (soy el creador)
+    final acceptedSnap = await db
+        .collection('challenges')
+        .where('creatorUid', isEqualTo: uid)
+        .where('status', isEqualTo: 'active')
+        .limit(5)
+        .get();
+    for (final doc in acceptedSnap.docs) {
+      final startDate = doc.data()['startDate'];
+      if (startDate != null) {
+        final d = (startDate as Timestamp).toDate();
+        if (reference == null || d.isAfter(reference)) return true;
+      }
     }
 
     // Última renegociación generada por la IA
@@ -151,6 +181,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     final habitRepo = HabitRepository(uid: uid);
     final achievementRepo = AchievementRepository(uid: uid);
     final aiRepo = AIRepository(uid: uid);
+    final challengeRepo = ChallengeRepository(uid: uid);
 
     final clearedAt = await NotificationsService.getClearedAt();
 
@@ -160,6 +191,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       aiRepo.watchActiveRenegotiations().first,
       aiRepo.watchLatestWeeklyReview().first,
       aiRepo.watchLatestButterfly().first,
+      challengeRepo.watchPendingInvites().first,
+      challengeRepo.watchAcceptedByOthers().first,
     ]);
 
     bool afterCleared(DateTime d) =>
@@ -218,6 +251,35 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
         color: const Color(0xFF8B5CF6),
         routeName: 'butterfly-projection',
         routeParams: {'monthId': butterfly.monthId},
+      ));
+    }
+
+    // invitaciones de reto pendientes (soy el invitado)
+    for (final c in results[5] as List<ChallengeModel>) {
+      if (!afterCleared(c.createdAt)) continue;
+      events.add(_NotifItem(
+        title: '¡Te han retado!',
+        subtitle: '${c.habitTitle} — ${c.durationDays} días',
+        date: c.createdAt,
+        icon: Icons.handshake_rounded,
+        color: const Color(0xFF6366F1),
+        routeName: 'challenge-detail',
+        routeParams: {'challengeId': c.id},
+      ));
+    }
+
+    // retos aceptados por el compañero (soy el creador)
+    for (final c in results[6] as List<ChallengeModel>) {
+      if (c.startDate == null) continue;
+      if (!afterCleared(c.startDate!)) continue;
+      events.add(_NotifItem(
+        title: '¡Tu reto fue aceptado!',
+        subtitle: c.habitTitle,
+        date: c.startDate!,
+        icon: Icons.celebration_rounded,
+        color: const Color(0xFF10B981),
+        routeName: 'challenge-detail',
+        routeParams: {'challengeId': c.id},
       ));
     }
 

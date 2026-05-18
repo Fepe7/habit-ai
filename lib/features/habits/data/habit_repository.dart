@@ -272,7 +272,12 @@ class HabitRepository {
 
   // No borramos, solo desactivamos para no perder los logs
   // Si el perfil es público, quitamos el hábito del espejo público
+  // Si el hábito está vinculado a un reto, abandonamos el reto
   Future<void> deactivateHabit(String habitId) async {
+    // comprobar si el hábito está vinculado a un reto antes del batch
+    final habitSnap = await _habitsRef.doc(habitId).get();
+    final challengeId = habitSnap.data()?['challengeId'] as String?;
+
     final batch = _firestore.batch();
     batch.update(_habitsRef.doc(habitId), {'isActive': false});
 
@@ -282,6 +287,15 @@ class HabitRepository {
 
     await batch.commit();
     await NotificationService.instance.cancelHabitReminders(habitId);
+
+    // abandonar reto vinculado
+    if (challengeId != null) {
+      try {
+        await _firestore.collection('challenges').doc(challengeId).update({
+          'status': 'abandoned',
+        });
+      } catch (_) {}
+    }
   }
 
   // Mover un hábito de un grupo a otro (o quitarlo de grupo)

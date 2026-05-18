@@ -191,6 +191,22 @@ class AchievementChecker {
     }
   }
 
+  // comprobar tras completar un reto compartido
+  Future<List<String>> checkAfterChallengeComplete() async {
+    final unlocked = <String>[];
+
+    if (await _achievementRepo.unlockAchievement(
+      type: AchievementModel.challengeCompleted,
+    )) {
+      unlocked.add(AchievementModel.challengeCompleted);
+    }
+
+    // recompensa: 1 escudo de racha
+    await _userRepo.grantShields(1);
+
+    return unlocked;
+  }
+
   // comprobar si los ultimos 7 dias fueron todos perfectos
   Future<void> _checkPerfectWeek(List<String> unlocked) async {
     final habits = await _habitRepo.watchActiveHabits().first;
