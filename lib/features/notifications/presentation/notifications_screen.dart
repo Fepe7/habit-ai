@@ -130,8 +130,10 @@ class NotificationsBottomSheet extends StatefulWidget {
       _NotificationsBottomSheetState();
 }
 
+typedef _NotifData = ({List<_NotifItem> events, List<_NotifItem> reminders});
+
 class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
-  late final Future<List<_NotifItem>> _future;
+  late Future<_NotifData> _future;
 
   @override
   void initState() {
@@ -144,13 +146,12 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     if (mounted) setState(() => _future = _loadAll());
   }
 
-  Future<List<_NotifItem>> _loadAll() async {
+  Future<_NotifData> _loadAll() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final habitRepo = HabitRepository(uid: uid);
     final achievementRepo = AchievementRepository(uid: uid);
     final aiRepo = AIRepository(uid: uid);
 
-    // Fecha de borrado: items anteriores no se muestran
     final clearedAt = await NotificationsService.getClearedAt();
 
     final results = await Future.wait([
@@ -161,15 +162,16 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       aiRepo.watchLatestButterfly().first,
     ]);
 
-    final items = <_NotifItem>[];
     bool afterCleared(DateTime d) =>
         clearedAt == null || d.isAfter(clearedAt);
 
-    // Logros desbloqueados
+    // ── Eventos borrables ──────────────────────────────────────────────────
+    final events = <_NotifItem>[];
+
     for (final a in results[0] as List<AchievementModel>) {
       if (!afterCleared(a.unlockedAt)) continue;
       final info = AchievementCatalog.getInfo(a.type);
-      items.add(_NotifItem(
+      events.add(_NotifItem(
         title: info.title,
         subtitle: info.description,
         date: a.unlockedAt,
@@ -179,26 +181,10 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       ));
     }
 
-    // Recordatorios activos (hábitos con reminderTime configurado)
-    for (final h
-        in (results[1] as List<HabitModel>).where((h) => h.reminderTime != null)) {
-      if (!afterCleared(h.createdAt)) continue;
-      items.add(_NotifItem(
-        title: h.title,
-        subtitle: 'Recordatorio programado a las ${h.reminderTime}',
-        date: h.createdAt,
-        icon: Icons.notifications_rounded,
-        color: const Color(0xFF38BDF8),
-        routeName: 'habit-detail',
-        routeParams: {'habitId': h.id},
-      ));
-    }
-
-    // Renegociaciones pendientes de la IA
     for (final r
         in (results[2] as List<RenegotiationModel>).where((r) => r.isPending)) {
       if (!afterCleared(r.generatedAt)) continue;
-      items.add(_NotifItem(
+      events.add(_NotifItem(
         title: 'Ajuste sugerido: ${r.habitTitle}',
         subtitle: r.strategy.label,
         date: r.generatedAt,
@@ -209,10 +195,9 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       ));
     }
 
-    // Última revisión semanal generada
     final review = results[3] as WeeklyReviewModel?;
     if (review != null && afterCleared(review.generatedAt)) {
-      items.add(_NotifItem(
+      events.add(_NotifItem(
         title: 'Revisión semanal lista',
         subtitle: review.focus,
         date: review.generatedAt,
@@ -223,10 +208,9 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       ));
     }
 
-    // Última proyección mariposa generada
     final butterfly = results[4] as ButterflyProjectionModel?;
     if (butterfly != null && afterCleared(butterfly.generatedAt)) {
-      items.add(_NotifItem(
+      events.add(_NotifItem(
         title: 'Proyección mensual 🦋',
         subtitle: butterfly.titleKeep,
         date: butterfly.generatedAt,
@@ -237,8 +221,23 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       ));
     }
 
-    items.sort((a, b) => b.date.compareTo(a.date));
-    return items;
+    events.sort((a, b) => b.date.compareTo(a.date));
+
+    // ── Recordatorios permanentes (no afectados por clearAll) ─────────────
+    final reminders = (results[1] as List<HabitModel>)
+        .where((h) => h.reminderTime != null && h.reminderTime!.isNotEmpty)
+        .map((h) => _NotifItem(
+              title: h.title,
+              subtitle: 'Recordatorio a las ${h.reminderTime}',
+              date: h.createdAt,
+              icon: Icons.alarm_rounded,
+              color: const Color(0xFF38BDF8),
+              routeName: 'habit-detail',
+              routeParams: {'habitId': h.id},
+            ))
+        .toList();
+
+    return (events: events, reminders: reminders);
   }
 
   @override
@@ -288,7 +287,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
                     foregroundColor: scheme.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: const Text('Limpiar todo'),
+                  child: const Text('Limpiar actividad'),
                 ),
               ],
             ),
@@ -299,7 +298,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
               minHeight: 200,
               maxHeight: MediaQuery.of(context).size.height * 0.55,
             ),
-            child: FutureBuilder<List<_NotifItem>>(
+            child: FutureBuilder<_NotifData>(
               future: _future,
               builder: (context, snap) {
                 if (snap.connectionState != ConnectionState.done) {
@@ -308,28 +307,86 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
                 if (snap.hasError) {
                   return const _ErrorState();
                 }
-                final items = snap.data ?? [];
-                if (items.isEmpty) {
+                final data = snap.data;
+                final events = data?.events ?? [];
+                final reminders = data?.reminders ?? [];
+                if (events.isEmpty && reminders.isEmpty) {
                   return const _EmptyState();
                 }
-                return ListView.separated(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: items.length,
-                  separatorBuilder: (context, index) => Divider(
-                    height: 1,
-                    color: scheme.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                  itemBuilder: (ctx, i) => _NotifTile(
-                    item: items[i],
-                    index: i,
-                  ),
+                return _TwoSectionList(
+                  events: events,
+                  reminders: reminders,
                 );
               },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Lista con dos secciones: actividad borrable + recordatorios permanentes
+
+class _TwoSectionList extends StatelessWidget {
+  final List<_NotifItem> events;
+  final List<_NotifItem> reminders;
+
+  const _TwoSectionList({required this.events, required this.reminders});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    // Construimos una lista plana: items de eventos, luego cabecera de
+    // recordatorios (si los hay), luego items de recordatorios.
+    final rows = <Widget>[];
+
+    if (events.isEmpty) {
+      rows.add(Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Text(
+          'Sin actividad reciente',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+              ),
+        ),
+      ));
+    } else {
+      for (int i = 0; i < events.length; i++) {
+        rows.add(_NotifTile(item: events[i], index: i));
+        if (i < events.length - 1) {
+          rows.add(Divider(
+              height: 1, color: scheme.outlineVariant.withValues(alpha: 0.5)));
+        }
+      }
+    }
+
+    if (reminders.isNotEmpty) {
+      rows.add(Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+        child: Text(
+          'Recordatorios activos',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                letterSpacing: 0.8,
+              ),
+        ),
+      ));
+      for (int i = 0; i < reminders.length; i++) {
+        rows.add(_NotifTile(item: reminders[i], index: events.length + i));
+        if (i < reminders.length - 1) {
+          rows.add(Divider(
+              height: 1, color: scheme.outlineVariant.withValues(alpha: 0.5)));
+        }
+      }
+    }
+
+    return ListView(
+      shrinkWrap: true,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      children: rows,
     );
   }
 }
