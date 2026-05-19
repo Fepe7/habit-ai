@@ -6,10 +6,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import '../../habits/data/habit_repository.dart';
+import '../../habits/domain/habit_model.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/privacy_level.dart';
 
-/// Pantalla de ajustes de privacidad: quién puede retar al usuario y ver su perfil.
+/// Pantalla de ajustes de privacidad.
 class PrivacySettingsScreen extends StatefulWidget {
   const PrivacySettingsScreen({super.key});
 
@@ -20,6 +22,7 @@ class PrivacySettingsScreen extends StatefulWidget {
 class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   late final UserRepository _userRepo;
   late final UserDirectoryRepository _dirRepo;
+  late final HabitRepository _habitRepo;
 
   @override
   void initState() {
@@ -27,31 +30,35 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _userRepo = UserRepository(uid: uid);
     _dirRepo = UserDirectoryRepository(uid: uid);
+    _habitRepo = HabitRepository(uid: uid);
   }
 
-  Future<void> _updateChallengePrivacy(
-    UserModel user,
-    PrivacyLevel level,
-  ) async {
+  Future<void> _updateChallengePrivacy(PrivacyLevel level) async {
     try {
       await _dirRepo.updatePrivacySettings(challengePrivacy: level);
     } catch (e) {
-      if (mounted) {
-        AppSnackBar.showError(context, 'Error al guardar: $e');
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
     }
   }
 
-  Future<void> _updateProfileVisibility(
-    UserModel user,
-    PrivacyLevel level,
-  ) async {
+  Future<void> _updateProfileVisibility(PrivacyLevel level) async {
     try {
       await _dirRepo.updatePrivacySettings(profileVisibility: level);
     } catch (e) {
-      if (mounted) {
-        AppSnackBar.showError(context, 'Error al guardar: $e');
-      }
+      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
+    }
+  }
+
+  Future<void> _updateSectionVisibility(String field, bool value) async {
+    try {
+      await _dirRepo.updatePrivacySettings(
+        showStats: field == 'showStats' ? value : null,
+        showHabits: field == 'showHabits' ? value : null,
+        showAchievements: field == 'showAchievements' ? value : null,
+        showFollowerCount: field == 'showFollowerCount' ? value : null,
+      );
+    } catch (e) {
+      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
     }
   }
 
@@ -113,7 +120,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 description: 'Controla quién puede invitarte a competir en un hábito',
                 selected: challengeLevel,
                 enabled: hasUsername,
-                onChanged: (level) => _updateChallengePrivacy(user, level),
+                onChanged: _updateChallengePrivacy,
               ).animate().fadeIn(delay: 100.ms),
 
               const SizedBox(height: 20),
@@ -125,7 +132,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 description: 'Stats, hábitos activos y logros en el directorio público',
                 selected: profileLevel,
                 enabled: hasUsername,
-                onChanged: (level) => _updateProfileVisibility(user, level),
+                onChanged: _updateProfileVisibility,
               ).animate().fadeIn(delay: 200.ms),
 
               const SizedBox(height: 20),
@@ -161,13 +168,31 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 ),
               ).animate().fadeIn(delay: 300.ms),
 
+              const SizedBox(height: 20),
+
+              // Visibilidad de secciones del perfil
+              _SectionLabel(label: 'Qué se muestra en tu perfil'),
+              _SectionVisibilityCard(
+                user: user,
+                enabled: hasUsername,
+                onToggle: _updateSectionVisibility,
+              ).animate().fadeIn(delay: 350.ms),
+
+              const SizedBox(height: 20),
+
+              // Selector de hábitos visibles
+              if (hasUsername && user.isProfilePublic)
+                _VisibleHabitsSection(
+                  habitRepo: _habitRepo,
+                ).animate().fadeIn(delay: 400.ms),
+
               const SizedBox(height: 24),
 
               OutlinedButton.icon(
                 onPressed: () => context.pushNamed('followers'),
                 icon: const Icon(Icons.people_outline_rounded),
                 label: const Text('Gestionar seguidores'),
-              ).animate().fadeIn(delay: 300.ms),
+              ).animate().fadeIn(delay: 450.ms),
             ],
           );
         },
@@ -175,6 +200,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     );
   }
 }
+
+// ==================== WIDGETS INTERNOS ====================
 
 class _SectionLabel extends StatelessWidget {
   final String label;
@@ -196,6 +223,169 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+/// Toggles de visibilidad de secciones del perfil
+class _SectionVisibilityCard extends StatelessWidget {
+  final UserModel user;
+  final bool enabled;
+  final void Function(String field, bool value) onToggle;
+
+  const _SectionVisibilityCard({
+    required this.user,
+    required this.enabled,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    final items = [
+      (
+        icon: Icons.bar_chart_rounded,
+        label: 'Estadísticas',
+        field: 'showStats',
+        value: user.showStats,
+      ),
+      (
+        icon: Icons.checklist_rounded,
+        label: 'Hábitos activos',
+        field: 'showHabits',
+        value: user.showHabits,
+      ),
+      (
+        icon: Icons.emoji_events_rounded,
+        label: 'Logros',
+        field: 'showAchievements',
+        value: user.showAchievements,
+      ),
+      (
+        icon: Icons.people_outline_rounded,
+        label: 'Seguidores/Siguiendo',
+        field: 'showFollowerCount',
+        value: user.showFollowerCount,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: items.map((item) {
+          return SwitchListTile(
+            secondary: Icon(item.icon, color: scheme.primary, size: 22),
+            title: Text(
+              item.label,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+            value: item.value,
+            onChanged: enabled
+                ? (val) => onToggle(item.field, val)
+                : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+/// Lista de hábitos activos con toggle individual de visibilidad
+class _VisibleHabitsSection extends StatelessWidget {
+  final HabitRepository habitRepo;
+
+  const _VisibleHabitsSection({required this.habitRepo});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionLabel(label: 'Hábitos visibles en tu perfil'),
+        StreamBuilder<List<HabitModel>>(
+          stream: habitRepo.watchActiveHabits(),
+          builder: (context, snap) {
+            if (!snap.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final habits = snap.data!;
+            if (habits.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    'No tienes hábitos activos',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: scheme.onSurfaceVariant),
+                  ),
+                ),
+              );
+            }
+            return Container(
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(
+                children: habits.map((habit) {
+                  return SwitchListTile(
+                    secondary: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppTheme.categoryBg(habit.category),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        AppTheme.categoryIcon(habit.category),
+                        size: 18,
+                        color: AppTheme.categoryFg(habit.category),
+                      ),
+                    ),
+                    title: Text(
+                      habit.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      AppTheme.categoryLabel(habit.category),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    value: habit.isPubliclyVisible,
+                    onChanged: (val) =>
+                        habitRepo.setHabitPublicVisibility(habit.id, val),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16),
+                  );
+                }).toList(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class _PrivacyCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -203,7 +393,6 @@ class _PrivacyCard extends StatelessWidget {
   final PrivacyLevel selected;
   final bool enabled;
   final ValueChanged<PrivacyLevel> onChanged;
-  // niveles a mostrar — por defecto los 3, para solicitudes solo 2
   final List<PrivacyLevel> options;
 
   const _PrivacyCard({

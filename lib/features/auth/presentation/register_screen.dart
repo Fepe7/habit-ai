@@ -18,6 +18,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _usernameController = TextEditingController();
@@ -32,6 +33,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _usernameController.dispose();
@@ -72,17 +74,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     try {
       final authRepository = AuthProvider.of(context);
+      final name = _nameController.text.trim();
       final user = await authRepository.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        name: name.isNotEmpty ? name : null,
       );
 
       // reclamar username en /user_directory y /usernames
       final dirRepo = UserDirectoryRepository(uid: user.uid);
       await dirRepo.claimUsername(
         username: _usernameController.text.trim(),
-        displayName: FirebaseAuth.instance.currentUser?.displayName ??
-            _emailController.text.split('@').first,
+        displayName: name.isNotEmpty ? name : _emailController.text.split('@').first,
         photoUrl: FirebaseAuth.instance.currentUser?.photoURL,
       );
     } catch (e) {
@@ -202,6 +205,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ).animate().fadeIn(delay: 300.ms, duration: 400.ms),
                 const SizedBox(height: 16),
 
+                // nombre real — aparece en el perfil y como identidad visible
+                TextFormField(
+                  controller: _nameController,
+                  keyboardType: TextInputType.name,
+                  textInputAction: TextInputAction.next,
+                  textCapitalization: TextCapitalization.words,
+                  autofillHints: const [AutofillHints.name],
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre',
+                    hintText: 'Tu nombre real',
+                    prefixIcon: Icon(Icons.person_outline_rounded),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Introduce tu nombre';
+                    }
+                    return null;
+                  },
+                ).animate().fadeIn(delay: 325.ms, duration: 400.ms),
+                const SizedBox(height: 16),
+
                 // username — obligatorio para ser buscable por amigos y retos
                 TextFormField(
                   controller: _usernameController,
@@ -255,7 +279,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                     return null;
                   },
-                ).animate().fadeIn(delay: 350.ms, duration: 400.ms),
+                ).animate().fadeIn(delay: 375.ms, duration: 400.ms),
                 const SizedBox(height: 16),
 
                 // contraseña

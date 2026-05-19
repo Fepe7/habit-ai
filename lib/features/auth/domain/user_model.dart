@@ -35,6 +35,18 @@ class UserModel {
   /// Quién puede ver el perfil completo: "everyone" | "followers" | "nobody"
   final String profileVisibility;
 
+  /// Mostrar bloque de stats en el perfil público
+  final bool showStats;
+
+  /// Mostrar lista de hábitos activos en el perfil público
+  final bool showHabits;
+
+  /// Mostrar logros desbloqueados en el perfil público
+  final bool showAchievements;
+
+  /// Mostrar contador de seguidores/siguiendo en el perfil público
+  final bool showFollowerCount;
+
   const UserModel({
     required this.uid,
     required this.email,
@@ -48,6 +60,10 @@ class UserModel {
     this.photoUrl,
     this.challengePrivacy = 'everyone',
     this.profileVisibility = 'everyone',
+    this.showStats = true,
+    this.showHabits = true,
+    this.showAchievements = true,
+    this.showFollowerCount = true,
   });
 
   /// Si el modo enfermedad sigue activo ahora mismo
@@ -77,6 +93,10 @@ class UserModel {
       photoUrl: data['photoUrl'] as String?,
       challengePrivacy: data['challengePrivacy'] as String? ?? 'everyone',
       profileVisibility: data['profileVisibility'] as String? ?? 'everyone',
+      showStats: data['showStats'] as bool? ?? true,
+      showHabits: data['showHabits'] as bool? ?? true,
+      showAchievements: data['showAchievements'] as bool? ?? true,
+      showFollowerCount: data['showFollowerCount'] as bool? ?? true,
     );
   }
 
@@ -97,6 +117,10 @@ class UserModel {
       'photoUrl': photoUrl,
       'challengePrivacy': challengePrivacy,
       'profileVisibility': profileVisibility,
+      'showStats': showStats,
+      'showHabits': showHabits,
+      'showAchievements': showAchievements,
+      'showFollowerCount': showFollowerCount,
     };
   }
 
@@ -115,6 +139,10 @@ class UserModel {
     bool clearPhotoUrl = false,
     String? challengePrivacy,
     String? profileVisibility,
+    bool? showStats,
+    bool? showHabits,
+    bool? showAchievements,
+    bool? showFollowerCount,
   }) {
     return UserModel(
       uid: uid,
@@ -129,6 +157,10 @@ class UserModel {
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
       challengePrivacy: challengePrivacy ?? this.challengePrivacy,
       profileVisibility: profileVisibility ?? this.profileVisibility,
+      showStats: showStats ?? this.showStats,
+      showHabits: showHabits ?? this.showHabits,
+      showAchievements: showAchievements ?? this.showAchievements,
+      showFollowerCount: showFollowerCount ?? this.showFollowerCount,
     );
   }
 }

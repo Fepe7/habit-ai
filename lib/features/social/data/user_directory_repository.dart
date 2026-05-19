@@ -61,6 +61,11 @@ class UserDirectoryRepository {
       'challengePrivacy': 'everyone',
       'profileVisibility': 'everyone',
       'createdAt': Timestamp.fromDate(now),
+      'isProfilePublic': true,
+      'showStats': true,
+      'showHabits': true,
+      'showAchievements': true,
+      'showFollowerCount': true,
     });
 
     // actualizar username en /users/{uid}
@@ -108,31 +113,32 @@ class UserDirectoryRepository {
 
   // ==================== PRIVACIDAD ====================
 
-  /// Actualiza los ajustes de privacidad del directorio
+  /// Actualiza los ajustes de privacidad del directorio y del perfil del usuario
   Future<void> updatePrivacySettings({
     PrivacyLevel? challengePrivacy,
     PrivacyLevel? profileVisibility,
+    bool? isProfilePublic,
+    bool? showStats,
+    bool? showHabits,
+    bool? showAchievements,
+    bool? showFollowerCount,
   }) async {
     final updates = <String, dynamic>{};
-    if (challengePrivacy != null) {
-      updates['challengePrivacy'] = challengePrivacy.value;
-    }
-    if (profileVisibility != null) {
-      updates['profileVisibility'] = profileVisibility.value;
-    }
+    if (challengePrivacy != null) updates['challengePrivacy'] = challengePrivacy.value;
+    if (profileVisibility != null) updates['profileVisibility'] = profileVisibility.value;
+    if (isProfilePublic != null) updates['isProfilePublic'] = isProfilePublic;
+    if (showStats != null) updates['showStats'] = showStats;
+    if (showHabits != null) updates['showHabits'] = showHabits;
+    if (showAchievements != null) updates['showAchievements'] = showAchievements;
+    if (showFollowerCount != null) updates['showFollowerCount'] = showFollowerCount;
     if (updates.isEmpty) return;
 
-    // actualizar en user_directory y en users/{uid} en batch
+    // sincronizar en user_directory y en users/{uid} en batch
     final batch = _firestore.batch();
-    batch.update(_myEntry, updates);
+    batch.set(_myEntry, updates, SetOptions(merge: true));
     batch.set(
       _firestore.collection('users').doc(_uid),
-      {
-        if (challengePrivacy != null)
-          'challengePrivacy': challengePrivacy.value,
-        if (profileVisibility != null)
-          'profileVisibility': profileVisibility.value,
-      },
+      updates,
       SetOptions(merge: true),
     );
     await batch.commit();

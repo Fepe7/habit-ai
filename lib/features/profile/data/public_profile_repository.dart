@@ -114,9 +114,30 @@ class PublicProfileRepository {
       SetOptions(merge: true),
     );
 
-    // Copiar hábitos activos a la subcolección pública
+    // Crear/actualizar entrada en user_directory (para búsqueda universal)
+    batch.set(
+      _firestore.collection('user_directory').doc(_uid),
+      {
+        'username': username,
+        'displayName': displayName,
+        'photoUrl': photoUrl,
+        'challengePrivacy': 'everyone',
+        'profileVisibility': 'everyone',
+        'createdAt': Timestamp.fromDate(now),
+        'isProfilePublic': true,
+        'showStats': true,
+        'showHabits': true,
+        'showAchievements': true,
+        'showFollowerCount': true,
+      },
+      SetOptions(merge: true),
+    );
+
+    // Copiar solo los hábitos marcados como visibles públicamente
     for (final doc in habitsSnap.docs) {
       final data = doc.data();
+      final isVisible = data['isPubliclyVisible'] as bool? ?? false;
+      if (!isVisible) continue;
       final publicHabit = PublicHabitModel(
         id: doc.id,
         title: data['title'] as String? ?? '',
@@ -132,56 +153,56 @@ class PublicProfileRepository {
     return true;
   }
 
-  /// Desactiva el perfil público:
-  /// Borra public_profiles/{uid}, su subcolección de hábitos y usernames/{name}.
-  /// Anonimiza las plantillas publicadas para no dejar datos personales expuestos.
+  /// Pasa el perfil a modo privado:
+  /// Solo cambia isProfilePublic → false. El doc, el username y los hábitos se conservan.
+  /// Los hábitos marcados como visibles siguen en la subcolección; se ocultarán
+  /// porque la pantalla de perfil respeta isProfilePublic.
   Future<void> disablePublicProfile(String username) async {
-    // Borrar hábitos públicos primero (subcolección)
-    final habitsSnap = await _myPublicHabitsRef.get();
-
     final batch = _firestore.batch();
 
-    for (final doc in habitsSnap.docs) {
-      batch.delete(doc.reference);
-    }
-
-    // Borrar doc de perfil
-    batch.delete(_myProfileRef);
-
-    // Liberar username
-    batch.delete(_usernamesRef.doc(username));
-
-    // Actualizar flag en users/{uid}
+    // solo actualizar el flag — no borrar el doc ni liberar el username
+    batch.set(
+      _myProfileRef,
+      {'isProfilePublic': false},
+      SetOptions(merge: true),
+    );
     batch.set(
       _firestore.collection('users').doc(_uid),
-      {
-        'isProfilePublic': false,
-        'username': null,
-        'publicProfileCreatedAt': null,
-      },
+      {'isProfilePublic': false},
+      SetOptions(merge: true),
+    );
+
+    // sincronizar también en user_directory (merge: true crea si no existe)
+    batch.set(
+      _firestore.collection('user_directory').doc(_uid),
+      {'isProfilePublic': false},
       SetOptions(merge: true),
     );
 
     await batch.commit();
+  }
 
-    // Anonimizar plantillas publicadas en batch separado
-    // (evita superar el límite de 500 ops si hay muchos hábitos públicos)
-    final templatesSnap = await _firestore
-        .collection('community_templates')
-        .where('authorUid', isEqualTo: _uid)
-        .get();
+  /// Reactiva el perfil público (el usuario ya tiene username y doc creado).
+  Future<void> reenablePublicProfile() async {
+    final batch = _firestore.batch();
 
-    if (templatesSnap.docs.isNotEmpty) {
-      final anonBatch = _firestore.batch();
-      for (final doc in templatesSnap.docs) {
-        anonBatch.update(doc.reference, {
-          'authorUsername': 'usuario',
-          'authorDisplayName': 'Usuario anónimo',
-          'authorPhotoUrl': null,
-        });
-      }
-      await anonBatch.commit();
-    }
+    batch.set(
+      _myProfileRef,
+      {'isProfilePublic': true},
+      SetOptions(merge: true),
+    );
+    batch.set(
+      _firestore.collection('users').doc(_uid),
+      {'isProfilePublic': true},
+      SetOptions(merge: true),
+    );
+    batch.set(
+      _firestore.collection('user_directory').doc(_uid),
+      {'isProfilePublic': true},
+      SetOptions(merge: true),
+    );
+
+    await batch.commit();
   }
 
   /// Cambia el username: libera el antiguo y reserva el nuevo

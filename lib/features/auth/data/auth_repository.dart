@@ -30,6 +30,7 @@ class AuthRepository {
   Future<UserModel> register({
     required String email,
     required String password,
+    String? name,
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -37,11 +38,15 @@ class AuthRepository {
         password: password,
       );
       final user = credential.user!;
-      await _ensureUserDoc(user);
+      // guardar nombre en Firebase Auth para que authStateChanges lo lea
+      if (name != null && name.isNotEmpty) {
+        await user.updateDisplayName(name);
+      }
+      await _ensureUserDoc(user, displayName: name);
       return UserModel(
         uid: user.uid,
         email: user.email ?? '',
-        displayName: user.displayName,
+        displayName: name ?? user.displayName,
       );
     } on FirebaseAuthException catch (e) {
       throw e.code;
@@ -115,14 +120,14 @@ class AuthRepository {
   }
 
   // Crea el doc users/{uid} si no existe (primer login)
-  Future<void> _ensureUserDoc(User user) async {
+  Future<void> _ensureUserDoc(User user, {String? displayName}) async {
     final docRef = _firestore.collection('users').doc(user.uid);
     final snapshot = await docRef.get();
     if (snapshot.exists) return;
 
     await docRef.set({
       'email': user.email,
-      'displayName': user.displayName,
+      'displayName': displayName ?? user.displayName,
       'photoURL': user.photoURL,
       'createdAt': FieldValue.serverTimestamp(),
       'onboardingCompleted': false,

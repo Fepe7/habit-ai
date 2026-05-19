@@ -13,6 +13,15 @@ class UserDirectoryEntry {
   final PrivacyLevel profileVisibility;
   final DateTime createdAt;
 
+  /// Si el perfil requiere solicitud para seguir (false = privado)
+  final bool isProfilePublic;
+
+  /// Visibilidad de secciones del perfil
+  final bool showStats;
+  final bool showHabits;
+  final bool showAchievements;
+  final bool showFollowerCount;
+
   const UserDirectoryEntry({
     required this.uid,
     required this.username,
@@ -21,6 +30,11 @@ class UserDirectoryEntry {
     this.challengePrivacy = PrivacyLevel.everyone,
     this.profileVisibility = PrivacyLevel.everyone,
     required this.createdAt,
+    this.isProfilePublic = true,
+    this.showStats = true,
+    this.showHabits = true,
+    this.showAchievements = true,
+    this.showFollowerCount = true,
   });
 
   String get avatarInitials {
@@ -52,6 +66,11 @@ class UserDirectoryEntry {
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
+      isProfilePublic: data['isProfilePublic'] as bool? ?? true,
+      showStats: data['showStats'] as bool? ?? true,
+      showHabits: data['showHabits'] as bool? ?? true,
+      showAchievements: data['showAchievements'] as bool? ?? true,
+      showFollowerCount: data['showFollowerCount'] as bool? ?? true,
     );
   }
 
@@ -62,5 +81,10 @@ class UserDirectoryEntry {
         'challengePrivacy': challengePrivacy.value,
         'profileVisibility': profileVisibility.value,
         'createdAt': Timestamp.fromDate(createdAt),
+        'isProfilePublic': isProfilePublic,
+        'showStats': showStats,
+        'showHabits': showHabits,
+        'showAchievements': showAchievements,
+        'showFollowerCount': showFollowerCount,
       };
 }

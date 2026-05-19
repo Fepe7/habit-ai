@@ -69,7 +69,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         stream: _userRepo.watchUser(),
         builder: (context, userSnap) {
           final userData = userSnap.data;
-          final displayName = userData?.displayName ?? authUser?.displayName ?? 'Usuario';
+          // prioridad: Firestore > Firebase Auth > fallback
+          final displayName = (userData?.displayName?.isNotEmpty == true
+                  ? userData!.displayName!
+                  : null) ??
+              (authUser?.displayName?.isNotEmpty == true
+                  ? authUser!.displayName!
+                  : null) ??
+              'Usuario';
           final email = userData?.email ?? authUser?.email ?? '';
           final initials = _initials(displayName, email);
 
@@ -310,7 +317,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final showUsername = isProfilePublic && username != null && username!.isNotEmpty;
+    final hasUsername = username != null && username!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
@@ -375,7 +382,7 @@ class _ProfileHeader extends StatelessWidget {
                     ),
                   ),
                 ),
-                // badge verificado solo si perfil público
+                // badge verificado si perfil público
                 if (isProfilePublic)
                   Positioned(
                     right: 0,
@@ -399,17 +406,19 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          // nombre real siempre visible como título principal
           Text(
-            showUsername ? '@${username!}' : displayName,
+            displayName,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
                 ),
           ),
           const SizedBox(height: 4),
-          if (showUsername)
+          // @usuario siempre visible si existe
+          if (hasUsername)
             Text(
-              displayName,
+              '@$username',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.w600,

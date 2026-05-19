@@ -689,7 +689,7 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
     if (user == null) return;
 
     if (_isPublic && _username != null) {
-      // desactivar
+      // pasar a privado (solo cambia el flag, no borra el perfil)
       final confirm = await _showDisableConfirm(context);
       if (confirm != true) return;
 
@@ -699,8 +699,16 @@ class _PublicProfileTileState extends State<_PublicProfileTile> {
       } finally {
         if (mounted) setState(() => _loading = false);
       }
+    } else if (!_isPublic && _username != null) {
+      // ya tiene username — reactivar directamente sin pedir username de nuevo
+      setState(() => _loading = true);
+      try {
+        await widget.publicProfileRepo.reenablePublicProfile();
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
     } else {
-      // activar: pedir username
+      // primera vez: pedir username y crear el perfil
       final chosenUsername = await UsernameInputSheet.show(
         context,
         widget.publicProfileRepo,

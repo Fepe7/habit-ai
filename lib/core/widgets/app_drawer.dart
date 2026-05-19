@@ -307,10 +307,15 @@ class _DrawerHeader extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // nombre real: Firestore > Firebase Auth > fallback email prefix
                         Text(
-                          (user?.displayName?.isNotEmpty == true
+                          (userData?.displayName?.isNotEmpty == true
+                                  ? userData!.displayName!
+                                  : null) ??
+                              (user?.displayName?.isNotEmpty == true
                                   ? user!.displayName!
-                                  : user?.email?.split('@').first) ??
+                                  : null) ??
+                              user?.email?.split('@').first ??
                               'Usuario',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -320,8 +325,11 @@ class _DrawerHeader extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 2),
+                        // @username si existe, si no el email
                         Text(
-                          user?.email ?? '',
+                          (userData?.username?.isNotEmpty == true)
+                              ? '@${userData!.username}'
+                              : user?.email ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(

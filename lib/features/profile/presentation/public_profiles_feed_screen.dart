@@ -5,13 +5,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../data/public_profile_repository.dart';
 import '../domain/public_profile_model.dart';
+import '../../social/data/user_directory_repository.dart';
+import '../../social/domain/user_directory_entry.dart';
 import 'widgets/public_profile_card.dart';
 
-/// Directorio global de perfiles públicos con búsqueda por username.
+/// Directorio global de perfiles con búsqueda universal por username.
+/// El feed principal solo muestra perfiles públicos (public_profiles).
+/// La búsqueda devuelve TODOS los usuarios con username, privados incluidos.
 class PublicProfilesFeedScreen extends StatefulWidget {
   const PublicProfilesFeedScreen({super.key});
 
@@ -22,17 +27,18 @@ class PublicProfilesFeedScreen extends StatefulWidget {
 
 class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
   late final PublicProfileRepository _repo;
+  late final UserDirectoryRepository _dirRepo;
   final _searchController = SearchController();
   Timer? _searchDebounce;
 
-  // feed paginado
+  // feed paginado (solo públicos)
   final List<PublicProfileModel> _feedProfiles = [];
   DocumentSnapshot? _lastDoc;
   bool _loadingFeed = false;
   bool _hasMore = true;
 
-  // resultados de búsqueda
-  List<PublicProfileModel>? _searchResults;
+  // resultados de búsqueda (todos los usuarios)
+  List<UserDirectoryEntry>? _searchResults;
   bool _loadingSearch = false;
 
   String _query = '';
@@ -42,6 +48,7 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _repo = PublicProfileRepository(uid: uid);
+    _dirRepo = UserDirectoryRepository(uid: uid);
     _loadFeed();
     _searchController.addListener(_onSearchChanged);
   }
@@ -67,7 +74,7 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
 
     setState(() => _loadingSearch = true);
     _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
-      final results = await _repo.searchByUsername(q);
+      final results = await _dirRepo.searchByUsername(q);
       if (!mounted) return;
       setState(() {
         _searchResults = results;
@@ -117,7 +124,6 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
         bottom: false,
         child: Column(
           children: [
-            // cabecera + search
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Column(
@@ -168,7 +174,6 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
               ),
             ),
 
-            // cuerpo
             Expanded(
               child: isSearching
                   ? _SearchResultsView(
@@ -263,9 +268,10 @@ class _FeedView extends StatelessWidget {
   }
 }
 
+/// Vista de resultados de búsqueda — usa UserDirectoryEntry (todos los usuarios)
 class _SearchResultsView extends StatelessWidget {
   final bool loading;
-  final List<PublicProfileModel> results;
+  final List<UserDirectoryEntry> results;
   final void Function(String uid) onTap;
 
   const _SearchResultsView({
@@ -291,12 +297,87 @@ class _SearchResultsView extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 100),
       itemCount: results.length,
-      itemBuilder: (context, i) => PublicProfileCard(
-        profile: results[i],
+      itemBuilder: (context, i) => _DirectoryEntryCard(
+        entry: results[i],
         onTap: () => onTap(results[i].uid),
       )
           .animate()
           .fadeIn(delay: Duration(milliseconds: i * 40), duration: 250.ms),
+    );
+  }
+}
+
+/// Card para resultados de búsqueda — muestra candado si el perfil es privado
+class _DirectoryEntryCard extends StatelessWidget {
+  final UserDirectoryEntry entry;
+  final VoidCallback onTap;
+
+  const _DirectoryEntryCard({required this.entry, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isPrivate = !entry.isProfilePublic;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 0,
+      color: scheme.surfaceContainerLowest,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              AvatarCircle(
+                initials: entry.avatarInitials,
+                size: 52,
+                backgroundColor: scheme.primaryContainer,
+                textColor: scheme.onPrimaryContainer,
+                photoUrl: entry.photoUrl,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.displayName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '@${entry.username}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.primary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isPrivate)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Icon(
+                    Icons.lock_rounded,
+                    size: 18,
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+                  ),
+                ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

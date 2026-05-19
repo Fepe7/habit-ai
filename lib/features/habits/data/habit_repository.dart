@@ -592,6 +592,39 @@ class HabitRepository {
     }
   }
 
+  /// Activa o desactiva la visibilidad pública de un hábito concreto.
+  /// Si se activa, crea/actualiza el espejo en public_profiles/{uid}/habits.
+  /// Si se desactiva, elimina el espejo.
+  Future<void> setHabitPublicVisibility(
+    String habitId,
+    bool isPubliclyVisible,
+  ) async {
+    await _habitsRef.doc(habitId).update({
+      'isPubliclyVisible': isPubliclyVisible,
+    });
+
+    if (isPubliclyVisible) {
+      final doc = await _habitsRef.doc(habitId).get();
+      if (!doc.exists) return;
+      final habit = HabitModel.fromJson(doc.data()!, doc.id);
+      final publicHabit = PublicHabitModel(
+        id: habit.id,
+        title: habit.title,
+        category: habit.category,
+        emoji: null,
+        currentStreak: habit.currentStreak,
+        bestStreak: habit.bestStreak,
+      );
+      try {
+        await _publicHabitsRef.doc(habitId).set(publicHabit.toJson());
+      } catch (_) {}
+    } else {
+      try {
+        await _publicHabitsRef.doc(habitId).delete();
+      } catch (_) {}
+    }
+  }
+
   // Comprobar si hoy hay un log de tipo escudo activo
   Future<bool> isShieldedToday(String habitId) async {
     final now = DateTime.now();

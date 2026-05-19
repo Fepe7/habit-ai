@@ -28,6 +28,9 @@ class PublicProfileModel {
   /// URL de la foto de perfil (null = sin foto, usa iniciales)
   final String? photoUrl;
 
+  /// Si el perfil permite follow directo (false = requiere solicitud)
+  final bool isProfilePublic;
+
   const PublicProfileModel({
     required this.uid,
     required this.username,
@@ -39,6 +42,7 @@ class PublicProfileModel {
     required this.unlockedAchievements,
     required this.createdAt,
     this.photoUrl,
+    this.isProfilePublic = true,
   });
 
   factory PublicProfileModel.fromFirestore(
@@ -58,6 +62,7 @@ class PublicProfileModel {
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
       photoUrl: data['photoUrl'] as String?,
+      isProfilePublic: data['isProfilePublic'] as bool? ?? true,
     );
   }
 
@@ -72,6 +77,7 @@ class PublicProfileModel {
       'unlockedAchievements': unlockedAchievements,
       'createdAt': Timestamp.fromDate(createdAt),
       'photoUrl': photoUrl,
+      'isProfilePublic': isProfilePublic,
     };
   }
 
@@ -85,6 +91,7 @@ class PublicProfileModel {
     int? unlockedAchievements,
     String? photoUrl,
     bool clearPhotoUrl = false,
+    bool? isProfilePublic,
   }) {
     return PublicProfileModel(
       uid: uid,
@@ -97,6 +104,7 @@ class PublicProfileModel {
       unlockedAchievements: unlockedAchievements ?? this.unlockedAchievements,
       createdAt: createdAt,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+      isProfilePublic: isProfilePublic ?? this.isProfilePublic,
     );
   }
 }
