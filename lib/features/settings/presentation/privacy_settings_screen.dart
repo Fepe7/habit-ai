@@ -1,13 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../profile/data/public_profile_repository.dart';
+import '../../profile/presentation/widgets/username_input_sheet.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/privacy_level.dart';
 
@@ -23,6 +25,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   late final UserRepository _userRepo;
   late final UserDirectoryRepository _dirRepo;
   late final HabitRepository _habitRepo;
+  late final PublicProfileRepository _publicProfileRepo;
 
   @override
   void initState() {
@@ -31,19 +34,12 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     _userRepo = UserRepository(uid: uid);
     _dirRepo = UserDirectoryRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
+    _publicProfileRepo = PublicProfileRepository(uid: uid);
   }
 
   Future<void> _updateChallengePrivacy(PrivacyLevel level) async {
     try {
       await _dirRepo.updatePrivacySettings(challengePrivacy: level);
-    } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
-    }
-  }
-
-  Future<void> _updateProfileVisibility(PrivacyLevel level) async {
-    try {
-      await _dirRepo.updatePrivacySettings(profileVisibility: level);
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
     }
@@ -82,12 +78,12 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           }
 
           final challengeLevel = PrivacyLevelX.fromString(user.challengePrivacy);
-          final profileLevel = PrivacyLevelX.fromString(user.profileVisibility);
           final hasUsername = user.username != null;
 
           return ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
             children: [
+              // banner informativo si aún no tiene username
               if (!hasUsername)
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -103,7 +99,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Necesitas un nombre de usuario para que otros puedan encontrarte.',
+                          'Elige un nombre de usuario para que otros puedan encontrarte.',
                           style: textTheme.bodySmall?.copyWith(
                             color: scheme.onTertiaryContainer,
                           ),
@@ -113,86 +109,46 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   ),
                 ).animate().fadeIn(),
 
-              _SectionLabel(label: 'Retos'),
-              _PrivacyCard(
-                icon: Icons.sports_score_rounded,
-                title: 'Quién puede enviarme retos',
-                description: 'Controla quién puede invitarte a competir en un hábito',
-                selected: challengeLevel,
-                enabled: hasUsername,
-                onChanged: _updateChallengePrivacy,
-              ).animate().fadeIn(delay: 100.ms),
+              // master switch: perfil público / privado
+              _SectionLabel(label: 'Visibilidad'),
+              _ProfilePublicityCard(
+                userData: user,
+                publicProfileRepo: _publicProfileRepo,
+              ).animate().fadeIn(delay: 50.ms),
 
-              const SizedBox(height: 20),
+              if (hasUsername) ...[
+                const SizedBox(height: 24),
 
-              _SectionLabel(label: 'Perfil'),
-              _PrivacyCard(
-                icon: Icons.person_outline_rounded,
-                title: 'Quién puede ver mi perfil completo',
-                description: 'Stats, hábitos activos y logros en el directorio público',
-                selected: profileLevel,
-                enabled: hasUsername,
-                onChanged: _updateProfileVisibility,
-              ).animate().fadeIn(delay: 200.ms),
-
-              const SizedBox(height: 20),
-
-              _SectionLabel(label: 'Seguimiento'),
-              Container(
-                decoration: BoxDecoration(
-                  color: scheme.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: AppTheme.ambientShadow(),
+                // header dinámico: el label cambia según público/privado
+                _SectionLabel(
+                  label: user.isProfilePublic
+                      ? 'Qué ve todo el mundo'
+                      : 'Qué ven tus seguidores',
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: SwitchListTile(
-                  value: !user.isProfilePublic,
-                  onChanged: hasUsername
-                      ? (val) {
-                          _userRepo.setProfilePublic(!val).catchError((e) {
-                            if (mounted) {
-                              AppSnackBar.showError(
-                                  context, 'Error al guardar: $e');
-                            }
-                          });
-                        }
-                      : null,
-                  title: const Text(
-                    'Perfil privado',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: const Text(
-                    'Las solicitudes de seguimiento requieren aprobación',
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ).animate().fadeIn(delay: 300.ms),
+                _SectionVisibilityCard(
+                  user: user,
+                  onToggle: _updateSectionVisibility,
+                ).animate().fadeIn(delay: 100.ms),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
-              // Visibilidad de secciones del perfil
-              _SectionLabel(label: 'Qué se muestra en tu perfil'),
-              _SectionVisibilityCard(
-                user: user,
-                enabled: hasUsername,
-                onToggle: _updateSectionVisibility,
-              ).animate().fadeIn(delay: 350.ms),
-
-              const SizedBox(height: 20),
-
-              // Selector de hábitos visibles
-              if (hasUsername && user.isProfilePublic)
+                // hábitos visibles individualmente — siempre visible
                 _VisibleHabitsSection(
                   habitRepo: _habitRepo,
-                ).animate().fadeIn(delay: 400.ms),
+                ).animate().fadeIn(delay: 150.ms),
 
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              OutlinedButton.icon(
-                onPressed: () => context.pushNamed('followers'),
-                icon: const Icon(Icons.people_outline_rounded),
-                label: const Text('Gestionar seguidores'),
-              ).animate().fadeIn(delay: 450.ms),
+                // retos
+                _SectionLabel(label: 'Retos'),
+                _PrivacyCard(
+                  icon: Icons.sports_score_rounded,
+                  title: 'Quién puede enviarme retos',
+                  description: 'Controla quién puede invitarte a competir en un hábito',
+                  selected: challengeLevel,
+                  onChanged: _updateChallengePrivacy,
+                ).animate().fadeIn(delay: 200.ms),
+              ],
             ],
           );
         },
@@ -223,15 +179,245 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// Toggles de visibilidad de secciones del perfil
+/// Master switch: activar/desactivar perfil público + gestión de username.
+/// Cuando está ON → apareces en el directorio, cualquiera puede seguirte.
+/// Cuando está OFF → no apareces, el seguimiento requiere aprobación.
+class _ProfilePublicityCard extends StatefulWidget {
+  final UserModel? userData;
+  final PublicProfileRepository publicProfileRepo;
+
+  const _ProfilePublicityCard({
+    required this.userData,
+    required this.publicProfileRepo,
+  });
+
+  @override
+  State<_ProfilePublicityCard> createState() => _ProfilePublicityCardState();
+}
+
+class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
+  bool _loading = false;
+
+  bool get _isPublic => widget.userData?.isProfilePublic ?? false;
+  String? get _username => widget.userData?.username;
+
+  Future<void> _toggle(BuildContext context) async {
+    if (_loading) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    if (_isPublic && _username != null) {
+      final confirm = await _showDisableConfirm(context);
+      if (confirm != true) return;
+      setState(() => _loading = true);
+      try {
+        await widget.publicProfileRepo.disablePublicProfile(_username!);
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    } else if (!_isPublic && _username != null) {
+      // ya tiene username — reactivar sin pedir username de nuevo
+      setState(() => _loading = true);
+      try {
+        await widget.publicProfileRepo.reenablePublicProfile();
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    } else {
+      // primera vez: pedir username y crear el perfil
+      final chosenUsername = await UsernameInputSheet.show(
+        context,
+        widget.publicProfileRepo,
+      );
+      if (chosenUsername == null || !mounted) return;
+      setState(() => _loading = true);
+      try {
+        final displayName = user.displayName ?? user.email ?? 'Usuario';
+        final initials = AvatarCircle.fromName(user.displayName, user.email);
+        final ok = await widget.publicProfileRepo.enablePublicProfile(
+          username: chosenUsername,
+          displayName: displayName,
+          avatarInitials: initials,
+          photoUrl: widget.userData?.photoUrl,
+        );
+        if (!mounted) return;
+        if (!ok) {
+          AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
+        }
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _changeUsername(BuildContext context) async {
+    if (_loading || _username == null) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final newUsername = await UsernameInputSheet.show(
+      context,
+      widget.publicProfileRepo,
+      currentUsername: _username,
+    );
+    if (newUsername == null || newUsername == _username || !mounted) return;
+
+    setState(() => _loading = true);
+    try {
+      final displayName = user.displayName ?? user.email ?? 'Usuario';
+      final initials = AvatarCircle.fromName(user.displayName, user.email);
+      final ok = await widget.publicProfileRepo.changeUsername(
+        _username!,
+        newUsername,
+        displayName,
+        initials,
+      );
+      if (!mounted) return;
+      if (!ok) {
+        AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<bool?> _showDisableConfirm(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Desactivar perfil público'),
+        content: const Text(
+          'Tu perfil desaparecerá del directorio. Tus seguidores actuales '
+          'podrán seguir viéndote hasta que los elimines.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _isPublic ? Icons.public_rounded : Icons.lock_outline_rounded,
+                  size: 18,
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Perfil público',
+                      style: textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      _isPublic
+                          ? 'Apareces en el directorio, cualquiera puede seguirte'
+                          : 'Solo tus seguidores pueden verte',
+                      style: textTheme.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _loading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Switch(
+                      value: _isPublic,
+                      onChanged: (_) => _toggle(context),
+                    ),
+            ],
+          ),
+
+          // username + botón cambiar (solo si ya tiene username)
+          if (_username != null) ...[
+            const SizedBox(height: 12),
+            Divider(
+              height: 1,
+              color: scheme.outlineVariant.withValues(alpha: 0.15),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '@$_username',
+                    style: textTheme.labelMedium?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: _loading ? null : () => _changeUsername(context),
+                  child: const Text('Cambiar username'),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Toggles de visibilidad de secciones del perfil.
+/// Aplican tanto para público (lo ve todo el mundo) como privado (lo ven seguidores).
 class _SectionVisibilityCard extends StatelessWidget {
   final UserModel user;
-  final bool enabled;
   final void Function(String field, bool value) onToggle;
 
   const _SectionVisibilityCard({
     required this.user,
-    required this.enabled,
     required this.onToggle,
   });
 
@@ -260,7 +446,7 @@ class _SectionVisibilityCard extends StatelessWidget {
       ),
       (
         icon: Icons.people_outline_rounded,
-        label: 'Seguidores/Siguiendo',
+        label: 'Seguidores / Siguiendo',
         field: 'showFollowerCount',
         value: user.showFollowerCount,
       ),
@@ -282,9 +468,7 @@ class _SectionVisibilityCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
             value: item.value,
-            onChanged: enabled
-                ? (val) => onToggle(item.field, val)
-                : null,
+            onChanged: (val) => onToggle(item.field, val),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
           );
         }).toList(),
@@ -293,7 +477,8 @@ class _SectionVisibilityCard extends StatelessWidget {
   }
 }
 
-/// Lista de hábitos activos con toggle individual de visibilidad
+/// Lista de hábitos activos con toggle individual de visibilidad.
+/// Visible tanto en perfil público como privado (aplica a seguidores).
 class _VisibleHabitsSection extends StatelessWidget {
   final HabitRepository habitRepo;
 
@@ -391,18 +576,14 @@ class _PrivacyCard extends StatelessWidget {
   final String title;
   final String description;
   final PrivacyLevel selected;
-  final bool enabled;
   final ValueChanged<PrivacyLevel> onChanged;
-  final List<PrivacyLevel> options;
 
   const _PrivacyCard({
     required this.icon,
     required this.title,
     required this.description,
     required this.selected,
-    required this.enabled,
     required this.onChanged,
-    this.options = PrivacyLevel.values,
   });
 
   @override
@@ -449,13 +630,13 @@ class _PrivacyCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Row(
-            children: options.map((level) {
+            children: PrivacyLevel.values.map((level) {
               final isSelected = selected == level;
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: GestureDetector(
-                    onTap: enabled ? () => onChanged(level) : null,
+                    onTap: () => onChanged(level),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -463,7 +644,7 @@ class _PrivacyCard extends StatelessWidget {
                         color: isSelected
                             ? scheme.primary
                             : scheme.surfaceContainerHighest
-                                .withValues(alpha: enabled ? 0.5 : 0.25),
+                                .withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -472,10 +653,7 @@ class _PrivacyCard extends StatelessWidget {
                           style: textTheme.labelSmall?.copyWith(
                             color: isSelected
                                 ? scheme.onPrimary
-                                : enabled
-                                    ? scheme.onSurface
-                                    : scheme.onSurface
-                                        .withValues(alpha: 0.4),
+                                : scheme.onSurface,
                             fontWeight: isSelected
                                 ? FontWeight.w700
                                 : FontWeight.w500,
