@@ -24,10 +24,14 @@ class UserDirectoryEntry {
   });
 
   String get avatarInitials {
-    final parts = displayName.trim().split(' ');
-    if (parts.isEmpty) return username.substring(0, 1).toUpperCase();
-    if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    final name = displayName.trim();
+    if (name.isNotEmpty) {
+      final parts = name.split(' ').where((p) => p.isNotEmpty).toList();
+      if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      if (parts.isNotEmpty) return parts[0][0].toUpperCase();
+    }
+    if (username.isNotEmpty) return username[0].toUpperCase();
+    return 'U';
   }
 
   factory UserDirectoryEntry.fromFirestore(
