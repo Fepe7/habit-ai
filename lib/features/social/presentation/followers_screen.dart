@@ -627,10 +627,14 @@ class _RequestTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final initials = () {
-      final parts = request.fromDisplayName.trim().split(' ');
-      if (parts.isEmpty) return '?';
-      if (parts.length == 1) return parts[0].substring(0, 1).toUpperCase();
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+      final name = request.fromDisplayName.trim();
+      if (name.isNotEmpty) {
+        final parts = name.split(' ').where((p) => p.isNotEmpty).toList();
+        if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+        if (parts.isNotEmpty) return parts[0][0].toUpperCase();
+      }
+      if (request.fromUsername.isNotEmpty) return request.fromUsername[0].toUpperCase();
+      return '?';
     }();
 
     return Card(
