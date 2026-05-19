@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "friend_requests",
+      "collectionGroup": "follow_requests",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "toUid", "order": "ASCENDING" },
@@ -10,7 +10,7 @@
       ]
     },
     {
-      "collectionGroup": "friend_requests",
+      "collectionGroup": "follow_requests",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "fromUid", "order": "ASCENDING" },
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "collectionGroup": "friend_requests",
+      "collectionGroup": "follow_requests",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "fromUid", "order": "ASCENDING" },

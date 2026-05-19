@@ -12,7 +12,6 @@ import '../data/follow_repository.dart';
 import '../data/user_directory_repository.dart';
 import '../domain/follow_model.dart';
 import '../domain/follow_request_model.dart';
-import '../domain/privacy_level.dart';
 import '../domain/user_directory_entry.dart';
 
 /// Pantalla de seguidores/siguiendo estilo Instagram.
@@ -165,11 +164,13 @@ class _FollowersTabState extends State<_FollowersTab> {
     final results = await Future.wait([
       widget.followRepo.getFollowingUids(),
       widget.followRepo.getFollowerUids(),
+      widget.followRepo.getSentPendingUids(),
     ]);
     if (mounted) {
       setState(() {
         _followingUids = results[0].toSet();
         _followerUids = results[1].toSet();
+        _pendingUids = results[2].toSet();
       });
     }
   }
@@ -218,7 +219,7 @@ class _FollowersTabState extends State<_FollowersTab> {
 
     try {
       // perfil privado → solicitud
-      if (target.profileVisibility != PrivacyLevel.everyone) {
+      if (!target.isProfilePublic) {
         final hasPending =
             await widget.followRepo.hasPendingFollowRequest(target.uid);
         if (hasPending) {
@@ -355,7 +356,7 @@ class _FollowersTabState extends State<_FollowersTab> {
                 final entry = _searchResults[i];
                 final chip = _chipLabel(entry.uid);
                 final isPrivate =
-                    entry.profileVisibility != PrivacyLevel.everyone;
+                    !entry.isProfilePublic;
                 return ListTile(
                   leading: AvatarCircle(
                     initials: entry.avatarInitials,

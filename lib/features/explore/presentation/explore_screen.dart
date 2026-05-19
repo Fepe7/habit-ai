@@ -20,7 +20,6 @@ import '../../profile/data/public_profile_repository.dart';
 import '../../profile/domain/public_profile_model.dart';
 import '../../social/data/follow_repository.dart';
 import '../../social/data/user_directory_repository.dart';
-import '../../social/domain/privacy_level.dart';
 import '../../social/domain/user_directory_entry.dart';
 
 /// Descubrir hábitos — reemplaza la antigua pantalla de búsqueda.
@@ -83,8 +82,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Future<void> _loadFollowState() async {
-    final uids = await _followRepo.getFollowingUids();
-    if (mounted) setState(() => _followingUids = uids.toSet());
+    final results = await Future.wait([
+      _followRepo.getFollowingUids(),
+      _followRepo.getSentPendingUids(),
+    ]);
+    if (mounted) {
+      setState(() {
+        _followingUids = results[0].toSet();
+        _pendingUids = results[1].toSet();
+      });
+    }
   }
 
   @override
@@ -165,7 +172,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final me = FirebaseAuth.instance.currentUser!;
     final myEntry = await _dirRepo.getEntry(_myUid);
     try {
-      if (target.profileVisibility != PrivacyLevel.everyone) {
+      if (!target.isProfilePublic) {
         // perfil privado → solicitud
         final hasPending = await _followRepo.hasPendingFollowRequest(target.uid);
         if (hasPending) return;
@@ -192,6 +199,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
         );
         if (mounted) setState(() => _followingUids.add(target.uid));
       }
+    } catch (_) {}
+  }
+
+  Future<void> _cancelFollowRequest(UserDirectoryEntry target) async {
+    try {
+      await _followRepo.cancelFollowRequest(target.uid);
+      if (mounted) setState(() => _pendingUids.remove(target.uid));
     } catch (_) {}
   }
 
@@ -640,7 +654,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             final u = _searchUsers[i];
             final isFollowing = _followingUids.contains(u.uid);
             final isPending = _pendingUids.contains(u.uid);
-            final isPrivate = u.profileVisibility != PrivacyLevel.everyone;
+            final isPrivate = !u.isProfilePublic;
             return _UserSearchTile(
               entry: u,
               isFollowing: isFollowing,
@@ -652,7 +666,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               onFollowTap: isFollowing
                   ? () => _unfollowUid(u.uid)
-                  : () => _followUser(u),
+                  : isPending
+                      ? () => _cancelFollowRequest(u)
+                      : () => _followUser(u),
             );
           },
         ),
@@ -1162,10 +1178,11 @@ class _UserSearchTile extends StatelessWidget {
       );
     } else if (isPending) {
       trailingButton = OutlinedButton(
-        onPressed: null,
+        onPressed: onFollowTap,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(90, 32),
           padding: const EdgeInsets.symmetric(horizontal: 14),
+          side: BorderSide(color: scheme.outline.withValues(alpha: 0.4)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),

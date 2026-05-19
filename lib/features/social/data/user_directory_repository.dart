@@ -61,7 +61,7 @@ class UserDirectoryRepository {
       'challengePrivacy': 'everyone',
       'profileVisibility': 'everyone',
       'createdAt': Timestamp.fromDate(now),
-      'isProfilePublic': true,
+      'isProfilePublic': false,
       'showStats': true,
       'showHabits': true,
       'showAchievements': true,
@@ -196,6 +196,7 @@ class UserDirectoryRepository {
       'challengePrivacy': 'everyone',
       'profileVisibility': 'everyone',
       'createdAt': Timestamp.fromDate(DateTime.now()),
+      'isProfilePublic': false,
     });
   }
 

@@ -161,7 +161,10 @@ service cloud.firestore {
                     && resource.data.toUid == request.auth.uid
                     && request.resource.data.diff(resource.data)
                        .affectedKeys().hasOnly(['status', 'respondedAt']);
-      allow delete: if false;
+      // El remitente puede cancelar su solicitud mientras siga pendiente
+      allow delete: if request.auth != null
+                    && resource.data.fromUid == request.auth.uid
+                    && resource.data.status == 'pending';
     }
 
     // Seguidores — el owner lee, el follower crea su doc, ambos pueden borrar

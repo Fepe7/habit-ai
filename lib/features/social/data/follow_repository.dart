@@ -221,6 +221,31 @@ class FollowRepository {
     return snap.docs.map((doc) => doc.id).toList();
   }
 
+  /// Cancela una solicitud pendiente enviada a [toUid].
+  Future<void> cancelFollowRequest(String toUid) async {
+    final snap = await _requestsRef
+        .where('fromUid', isEqualTo: _uid)
+        .where('toUid', isEqualTo: toUid)
+        .where('status', isEqualTo: 'pending')
+        .limit(1)
+        .get();
+    for (final doc in snap.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  /// UIDs a los que ya envié solicitud pendiente (para poblar _pendingUids al arrancar).
+  Future<List<String>> getSentPendingUids() async {
+    final snap = await _requestsRef
+        .where('fromUid', isEqualTo: _uid)
+        .where('status', isEqualTo: 'pending')
+        .get();
+    return snap.docs
+        .map((doc) => doc.data()['toUid'] as String? ?? '')
+        .where((uid) => uid.isNotEmpty)
+        .toList();
+  }
+
   /// ¿Hay una solicitud pendiente de mí hacia [otherUid]?
   Future<bool> hasPendingFollowRequest(String otherUid) async {
     final snap = await _requestsRef

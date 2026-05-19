@@ -90,6 +90,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       if (_followState == _FollowState.following) {
         await _followRepo.unfollow(widget.userId);
         if (mounted) setState(() => _followState = _FollowState.none);
+      } else if (_followState == _FollowState.pending) {
+        await _followRepo.cancelFollowRequest(widget.userId);
+        if (mounted) setState(() => _followState = _FollowState.none);
       } else if (_followState == _FollowState.none) {
         if (entry.isProfilePublic) {
           // follow directo
@@ -117,7 +120,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           if (mounted) setState(() => _followState = _FollowState.pending);
         }
       }
-      // pending: no hay acción (el usuario no puede cancelar solicitudes desde aquí)
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, 'Error: $e');
     } finally {

@@ -30,7 +30,7 @@ class UserDirectoryEntry {
     this.challengePrivacy = PrivacyLevel.everyone,
     this.profileVisibility = PrivacyLevel.everyone,
     required this.createdAt,
-    this.isProfilePublic = true,
+    this.isProfilePublic = false,
     this.showStats = true,
     this.showHabits = true,
     this.showAchievements = true,
@@ -66,7 +66,7 @@ class UserDirectoryEntry {
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
-      isProfilePublic: data['isProfilePublic'] as bool? ?? true,
+      isProfilePublic: data['isProfilePublic'] as bool? ?? false,
       showStats: data['showStats'] as bool? ?? true,
       showHabits: data['showHabits'] as bool? ?? true,
       showAchievements: data['showAchievements'] as bool? ?? true,
