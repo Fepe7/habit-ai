@@ -51,16 +51,15 @@ class NotificationsService {
       if (reference == null || d.isAfter(reference)) return true;
     }
 
-    // Invitaciones de reto pendientes
+    // Invitaciones de reto pendientes (filtro status en cliente)
     final challengeSnap = await db
         .collection('challenges')
         .where('invitedUid', isEqualTo: uid)
-        .where('status', isEqualTo: 'pending')
-        .limit(1)
+        .limit(5)
         .get();
-    if (challengeSnap.docs.isNotEmpty) {
-      final d =
-          (challengeSnap.docs.first.data()['createdAt'] as Timestamp).toDate();
+    for (final doc in challengeSnap.docs) {
+      if (doc.data()['status'] != 'pending') continue;
+      final d = (doc.data()['createdAt'] as Timestamp).toDate();
       if (reference == null || d.isAfter(reference)) return true;
     }
 
@@ -185,14 +184,27 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
 
     final clearedAt = await NotificationsService.getClearedAt();
 
+    // Challenges está en colección raíz — puede fallar por reglas Firestore
+    // si aún no están desplegadas; aislamos para no romper el resto del panel
+    List<ChallengeModel> pendingInvites = [];
+    List<ChallengeModel> acceptedByOthers = [];
+    try {
+      final challengeResults = await Future.wait([
+        challengeRepo.watchPendingInvites().first,
+        challengeRepo.watchAcceptedByOthers().first,
+      ]);
+      pendingInvites = challengeResults[0] as List<ChallengeModel>;
+      acceptedByOthers = challengeResults[1] as List<ChallengeModel>;
+    } catch (_) {
+      // Reglas Firestore para /challenges aún no desplegadas — se ignora
+    }
+
     final results = await Future.wait([
       achievementRepo.watchAchievements().first,
       habitRepo.getActiveHabits(),
       aiRepo.watchActiveRenegotiations().first,
       aiRepo.watchLatestWeeklyReview().first,
       aiRepo.watchLatestButterfly().first,
-      challengeRepo.watchPendingInvites().first,
-      challengeRepo.watchAcceptedByOthers().first,
     ]);
 
     bool afterCleared(DateTime d) =>
@@ -255,7 +267,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     }
 
     // invitaciones de reto pendientes (soy el invitado)
-    for (final c in results[5] as List<ChallengeModel>) {
+    for (final c in pendingInvites) {
       if (!afterCleared(c.createdAt)) continue;
       events.add(_NotifItem(
         title: '¡Te han retado!',
@@ -269,7 +281,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     }
 
     // retos aceptados por el compañero (soy el creador)
-    for (final c in results[6] as List<ChallengeModel>) {
+    for (final c in acceptedByOthers) {
       if (c.startDate == null) continue;
       if (!afterCleared(c.startDate!)) continue;
       events.add(_NotifItem(
