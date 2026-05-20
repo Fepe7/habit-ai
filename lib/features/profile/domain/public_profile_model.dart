@@ -22,6 +22,9 @@ class PublicProfileModel {
   /// Cantidad de logros desbloqueados
   final int unlockedAchievements;
 
+  /// Tipos de logros desbloqueados (para el showcase)
+  final List<String> unlockedAchievementTypes;
+
   /// Cuándo se hizo público el perfil
   final DateTime createdAt;
 
@@ -40,6 +43,7 @@ class PublicProfileModel {
     required this.totalHabits,
     required this.bestStreakEver,
     required this.unlockedAchievements,
+    this.unlockedAchievementTypes = const [],
     required this.createdAt,
     this.photoUrl,
     this.isProfilePublic = true,
@@ -58,6 +62,9 @@ class PublicProfileModel {
       totalHabits: data['totalHabits'] as int? ?? 0,
       bestStreakEver: data['bestStreakEver'] as int? ?? 0,
       unlockedAchievements: data['unlockedAchievements'] as int? ?? 0,
+      unlockedAchievementTypes: List<String>.from(
+        data['unlockedAchievementTypes'] as List<dynamic>? ?? [],
+      ),
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -75,6 +82,7 @@ class PublicProfileModel {
       'totalHabits': totalHabits,
       'bestStreakEver': bestStreakEver,
       'unlockedAchievements': unlockedAchievements,
+      'unlockedAchievementTypes': unlockedAchievementTypes,
       'createdAt': Timestamp.fromDate(createdAt),
       'photoUrl': photoUrl,
       'isProfilePublic': isProfilePublic,
@@ -89,6 +97,7 @@ class PublicProfileModel {
     int? totalHabits,
     int? bestStreakEver,
     int? unlockedAchievements,
+    List<String>? unlockedAchievementTypes,
     String? photoUrl,
     bool clearPhotoUrl = false,
     bool? isProfilePublic,
@@ -102,6 +111,8 @@ class PublicProfileModel {
       totalHabits: totalHabits ?? this.totalHabits,
       bestStreakEver: bestStreakEver ?? this.bestStreakEver,
       unlockedAchievements: unlockedAchievements ?? this.unlockedAchievements,
+      unlockedAchievementTypes:
+          unlockedAchievementTypes ?? this.unlockedAchievementTypes,
       createdAt: createdAt,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
       isProfilePublic: isProfilePublic ?? this.isProfilePublic,

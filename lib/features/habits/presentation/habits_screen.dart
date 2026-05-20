@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,7 @@ import 'widgets/create_group_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../features/profile/data/public_profile_repository.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
@@ -56,6 +58,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   List<HabitModel> _currentTodayHabits = [];
   Map<String, RenegotiationModel> _pendingRenegotiations = {};
   StreamSubscription? _renoSub;
+  final List<StreamSubscription> _notifSubs = [];
 
   bool _hasNewNotifs = false;
 
@@ -136,6 +139,28 @@ class _HabitsScreenState extends State<HabitsScreen> {
     if (mounted) setState(() => _hasNewNotifs = hasNew);
   }
 
+  void _watchNotifs(String uid) {
+    final db = FirebaseFirestore.instance;
+
+    void recheck(_) => _checkNewNotifs(uid);
+
+    _notifSubs.addAll([
+      // nuevo logro desbloqueado
+      db.collection('users').doc(uid).collection('achievements')
+          .snapshots().listen(recheck),
+      // solicitud de seguimiento recibida
+      db.collection('follow_requests')
+          .where('toUid', isEqualTo: uid)
+          .where('status', isEqualTo: 'pending')
+          .snapshots().listen(recheck),
+      // solicitud enviada que fue aceptada
+      db.collection('follow_requests')
+          .where('fromUid', isEqualTo: uid)
+          .where('status', isEqualTo: 'accepted')
+          .snapshots().listen(recheck),
+    ]);
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -156,10 +181,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
           achievementRepo: AchievementRepository(uid: user.uid),
           habitRepo: _habitRepo,
           userRepo: UserRepository(uid: user.uid),
+          publicProfileRepo: PublicProfileRepository(uid: user.uid),
         );
         _aiRepo = AIRepository(uid: user.uid);
         _challengeRepo = ChallengeRepository(uid: user.uid);
         _checkNewNotifs(user.uid);
+        _watchNotifs(user.uid);
         _renoSub = _aiRepo.watchActiveRenegotiations().listen((list) {
           if (mounted) {
             setState(() {
@@ -177,6 +204,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
   @override
   void dispose() {
     _renoSub?.cancel();
+    for (final sub in _notifSubs) {
+      sub.cancel();
+    }
     super.dispose();
   }
 

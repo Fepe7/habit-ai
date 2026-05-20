@@ -280,4 +280,16 @@ class FollowRepository {
   Future<void> removeFollower(String followerUid) async {
     await _followersRef(_uid).doc(followerUid).delete();
   }
+
+  /// Número de seguidores de [uid] (aggregation query, 0 document reads).
+  Future<int> getFollowerCount(String uid) async {
+    final snap = await _followersRef(uid).count().get();
+    return snap.count ?? 0;
+  }
+
+  /// Número de seguidos de [uid] (aggregation query, 0 document reads).
+  Future<int> getFollowingCount(String uid) async {
+    final snap = await _followingRef(uid).count().get();
+    return snap.count ?? 0;
+  }
 }

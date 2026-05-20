@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../achievements/domain/achivement_model.dart';
 import '../../social/data/follow_repository.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/user_directory_entry.dart';
@@ -16,7 +17,7 @@ import '../domain/public_profile_model.dart';
 ///
 /// Flujo:
 ///  1. Lee user_directory/{uid} para saber si privado + ajustes granulares.
-///  2. Lee isFollowing + hasPendingFollowRequest.
+///  2. Lee isFollowing + hasPendingFollowRequest + isMutual + follower/following counts.
 ///  3. Decide qué mostrar según la tabla del plan.
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -37,6 +38,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   PublicProfileModel? _profile;
   UserDirectoryEntry? _dirEntry;
   _FollowState _followState = _FollowState.none;
+  bool _isMutual = false;
+  int _followersCount = 0;
+  int _followingCount = 0;
   bool _loading = true;
   bool _followLoading = false;
 
@@ -53,30 +57,50 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   Future<void> _fetch() async {
-    final results = await Future.wait([
-      _repo.getPublicProfile(widget.userId),
-      _dirRepo.getEntry(widget.userId),
-      _followRepo.isFollowing(widget.userId),
-      _followRepo.hasPendingFollowRequest(widget.userId),
-    ]);
+    try {
+      // los counts se piden en paralelo pero con fallback a 0 si fallan
+      final coreResults = await Future.wait([
+        _repo.getPublicProfile(widget.userId),
+        _dirRepo.getEntry(widget.userId),
+        _followRepo.isFollowing(widget.userId),
+        _followRepo.hasPendingFollowRequest(widget.userId),
+      ]);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    final profile = results[0] as PublicProfileModel?;
-    final dirEntry = results[1] as UserDirectoryEntry?;
-    final isFollowing = results[2] as bool;
-    final hasPending = results[3] as bool;
+      final profile = coreResults[0] as PublicProfileModel?;
+      final dirEntry = coreResults[1] as UserDirectoryEntry?;
+      final isFollowing = coreResults[2] as bool;
+      final hasPending = coreResults[3] as bool;
 
-    setState(() {
-      _profile = profile;
-      _dirEntry = dirEntry;
-      _followState = isFollowing
-          ? _FollowState.following
-          : hasPending
-              ? _FollowState.pending
-              : _FollowState.none;
-      _loading = false;
-    });
+      setState(() {
+        _profile = profile;
+        _dirEntry = dirEntry;
+        _followState = isFollowing
+            ? _FollowState.following
+            : hasPending
+                ? _FollowState.pending
+                : _FollowState.none;
+        _loading = false;
+      });
+
+      // counts e isMutual no bloquean la pantalla — se cargan después
+      final extraResults = await Future.wait([
+        _followRepo.getFollowerCount(widget.userId).catchError((_) => 0),
+        _followRepo.getFollowingCount(widget.userId).catchError((_) => 0),
+        if (!_isOwnProfile)
+          _followRepo.isMutual(widget.userId).catchError((_) => false),
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _followersCount = extraResults[0] as int;
+        _followingCount = extraResults[1] as int;
+        _isMutual = !_isOwnProfile ? extraResults[2] as bool : false;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _handleFollowTap() async {
@@ -91,13 +115,18 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
       if (_followState == _FollowState.following) {
         await _followRepo.unfollow(widget.userId);
-        if (mounted) setState(() => _followState = _FollowState.none);
+        if (mounted) {
+          setState(() {
+            _followState = _FollowState.none;
+            _isMutual = false;
+            _followersCount = (_followersCount - 1).clamp(0, 999999);
+          });
+        }
       } else if (_followState == _FollowState.pending) {
         await _followRepo.cancelFollowRequest(widget.userId);
         if (mounted) setState(() => _followState = _FollowState.none);
       } else if (_followState == _FollowState.none) {
         if (entry.isProfilePublic) {
-          // follow directo
           await _followRepo.follow(
             targetUid: widget.userId,
             targetUsername: entry.username,
@@ -107,9 +136,13 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             myDisplayName: myUser.displayName ?? '',
             myPhotoUrl: myUser.photoURL,
           );
-          if (mounted) setState(() => _followState = _FollowState.following);
+          if (mounted) {
+            setState(() {
+              _followState = _FollowState.following;
+              _followersCount++;
+            });
+          }
         } else {
-          // solicitud
           await _followRepo.sendFollowRequest(
             toUid: widget.userId,
             fromUsername: myUsername,
@@ -141,7 +174,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       );
     }
 
-    // Si no hay datos en ninguna colección: perfil inexistente
     if (_profile == null && _dirEntry == null) {
       return Scaffold(
         backgroundColor: scheme.surface,
@@ -161,7 +193,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       );
     }
 
-    // Determinar si puede ver el contenido completo
     final isPrivate = _dirEntry != null
         ? !_dirEntry!.isProfilePublic
         : (_profile != null ? !_profile!.isProfilePublic : false);
@@ -169,6 +200,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final canSeeContent = !isPrivate ||
         _isOwnProfile ||
         _followState == _FollowState.following;
+
+    final showStats = _dirEntry?.showStats ?? true;
+    final showHabits = _dirEntry?.showHabits ?? true;
+    final showAchievements = _dirEntry?.showAchievements ?? true;
+    final showFollowerCount = _dirEntry?.showFollowerCount ?? true;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -185,7 +221,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          // header siempre visible
           SliverToBoxAdapter(
             child: _ProfileHeader(
               profile: _profile,
@@ -193,6 +228,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               followState: _followState,
               followLoading: _followLoading,
               isOwnProfile: _isOwnProfile,
+              isMutual: _isMutual,
+              followersCount: _followersCount,
+              followingCount: _followingCount,
+              showFollowerCount: showFollowerCount,
               onFollowTap: _handleFollowTap,
             )
                 .animate()
@@ -201,26 +240,36 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           ),
 
           if (!canSeeContent)
-            // perfil privado no seguido
             SliverToBoxAdapter(
               child: _PrivateProfileMessage(
-                isPrivate: isPrivate,
                 isPending: _followState == _FollowState.pending,
               ).animate().fadeIn(delay: 100.ms),
             )
           else ...[
-            // stats (si el usuario los tiene habilitados)
-            if (_profile != null &&
-                (_dirEntry?.showStats ?? true))
+            if (_profile != null && showStats)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                  child: _StatsBento(profile: _profile!),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: _StatsBento(
+                    profile: _profile!,
+                    showAchievements: showAchievements,
+                  ),
                 ).animate().fadeIn(delay: 80.ms, duration: 320.ms),
               ),
 
-            // hábitos (si el usuario los tiene habilitados)
-            if (_dirEntry?.showHabits ?? true)
+            if (_profile != null &&
+                showAchievements &&
+                _profile!.unlockedAchievementTypes.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                  child: _AchievementsShowcase(
+                    types: _profile!.unlockedAchievementTypes,
+                  ),
+                ).animate().fadeIn(delay: 140.ms, duration: 320.ms),
+              ),
+
+            if (showHabits)
               StreamBuilder<List<PublicHabitModel>>(
                 stream: _repo.watchPublicHabits(widget.userId),
                 builder: (context, snap) {
@@ -233,83 +282,10 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     );
                   }
                   final habits = snap.data ?? [];
-                  if (habits.isEmpty) {
-                    return SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                        child: Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                            color: scheme.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'Sin hábitos visibles',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  final byCategory = <String, List<PublicHabitModel>>{};
-                  for (final h in habits) {
-                    byCategory.putIfAbsent(h.category, () => []).add(h);
-                  }
-
-                  return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index == 0) {
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Hábitos activos',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.2,
-                                      ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: scheme.primary.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Text(
-                                    '${habits.length}',
-                                    style: TextStyle(
-                                      color: scheme.primary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        final catIndex = index - 1;
-                        final category = byCategory.keys.elementAt(catIndex);
-                        return _CategorySection(
-                          category: category,
-                          habits: byCategory[category]!,
-                          animationIndex: catIndex,
-                        );
-                      },
-                      childCount: byCategory.length + 1,
+                  return SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                      child: _HabitsGrid(habits: habits),
                     ),
                   );
                 },
@@ -331,6 +307,10 @@ class _ProfileHeader extends StatelessWidget {
   final _FollowState followState;
   final bool followLoading;
   final bool isOwnProfile;
+  final bool isMutual;
+  final int followersCount;
+  final int followingCount;
+  final bool showFollowerCount;
   final VoidCallback onFollowTap;
 
   const _ProfileHeader({
@@ -339,25 +319,31 @@ class _ProfileHeader extends StatelessWidget {
     required this.followState,
     required this.followLoading,
     required this.isOwnProfile,
+    required this.isMutual,
+    required this.followersCount,
+    required this.followingCount,
+    required this.showFollowerCount,
     required this.onFollowTap,
   });
 
   String get _displayName =>
       profile?.displayName ?? dirEntry?.displayName ?? 'Usuario';
-  String get _username =>
-      profile?.username ?? dirEntry?.username ?? '';
+  String get _username => profile?.username ?? dirEntry?.username ?? '';
   String? get _photoUrl => profile?.photoUrl ?? dirEntry?.photoUrl;
   String get _initials =>
       profile?.avatarInitials ?? dirEntry?.avatarInitials ?? 'U';
+  int get _unlockedAchievements => profile?.unlockedAchievements ?? 0;
+  DateTime? get _createdAt => profile?.createdAt;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         children: [
+          // Avatar con badge de verificado (solo para veteranos con 5+ logros)
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -386,24 +372,25 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: scheme.primary,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: scheme.surface, width: 3),
-                  ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 16,
+              if (_unlockedAchievements >= 5)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: scheme.surface, width: 3),
+                    ),
+                    child: const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -423,18 +410,122 @@ class _ProfileHeader extends StatelessWidget {
                 ),
           ),
 
-          // Botón de follow (no mostrar en perfil propio)
+          // "Miembro desde"
+          if (_createdAt != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Miembro desde ${_formatMonth(_createdAt!)}',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
+            ),
+          ],
+
+          // Contadores de seguidores / siguiendo
+          if (showFollowerCount) ...[
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _CounterChip(
+                  value: followersCount,
+                  label: 'seguidores',
+                ),
+                const SizedBox(width: 24),
+                _CounterChip(
+                  value: followingCount,
+                  label: 'siguiendo',
+                ),
+              ],
+            ),
+          ],
+
           if (!isOwnProfile) ...[
             const SizedBox(height: 16),
-            _FollowButton(
-              state: followState,
-              loading: followLoading,
-              onTap: onFollowTap,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isMutual) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.success.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.people_rounded,
+                            size: 13, color: AppTheme.success),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Seguidor mutuo',
+                          style: TextStyle(
+                            color: AppTheme.success,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ],
+                _FollowButton(
+                  state: followState,
+                  loading: followLoading,
+                  onTap: onFollowTap,
+                ),
+              ],
             ),
           ],
         ],
       ),
     );
+  }
+
+  String _formatMonth(DateTime date) {
+    const meses = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+    ];
+    return '${meses[date.month - 1]} ${date.year}';
+  }
+}
+
+class _CounterChip extends StatelessWidget {
+  final int value;
+  final String label;
+
+  const _CounterChip({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Text(
+          _format(value),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.3,
+              ),
+        ),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+      ],
+    );
+  }
+
+  String _format(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }
 
@@ -518,13 +609,9 @@ class _FollowButton extends StatelessWidget {
 }
 
 class _PrivateProfileMessage extends StatelessWidget {
-  final bool isPrivate;
   final bool isPending;
 
-  const _PrivateProfileMessage({
-    required this.isPrivate,
-    required this.isPending,
-  });
+  const _PrivateProfileMessage({required this.isPending});
 
   @override
   Widget build(BuildContext context) {
@@ -566,34 +653,60 @@ class _PrivateProfileMessage extends StatelessWidget {
 
 class _StatsBento extends StatelessWidget {
   final PublicProfileModel profile;
-  const _StatsBento({required this.profile});
+  final bool showAchievements;
+
+  const _StatsBento({
+    required this.profile,
+    required this.showAchievements,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _StatTile(
-            value: '${profile.totalHabits}',
-            label: 'Hábitos',
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                value: '${profile.totalHabits}',
+                label: 'Hábitos',
+                icon: Icons.track_changes_rounded,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatTile(
+                value: '${profile.bestStreakEver}d',
+                label: 'Mejor racha',
+                icon: Icons.local_fire_department_rounded,
+                iconColor: AppTheme.tertiaryContainer,
+                highlighted: true,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            value: '${profile.bestStreakEver}',
-            label: 'Mejor racha',
-            icon: Icons.local_fire_department_rounded,
-            iconColor: AppTheme.tertiaryContainer,
-            highlighted: true,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatTile(
-            value: profile.averageLevel.toStringAsFixed(1),
-            label: 'Nivel',
-          ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _StatTile(
+                value: profile.averageLevel.toStringAsFixed(1),
+                label: 'Nivel medio',
+                icon: Icons.bar_chart_rounded,
+              ),
+            ),
+            if (showAchievements) ...[
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StatTile(
+                  value: '${profile.unlockedAchievements}',
+                  label: 'Logros',
+                  icon: Icons.emoji_events_rounded,
+                  iconColor: const Color(0xFFF59E0B),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );
@@ -637,12 +750,13 @@ class _StatTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (icon != null) ...[
-                Icon(icon, size: 18, color: iconColor),
-                const SizedBox(width: 4),
+                Icon(icon, size: 16,
+                    color: iconColor ?? scheme.onSurfaceVariant),
+                const SizedBox(width: 5),
               ],
               Text(
                 value,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
                     ),
@@ -665,173 +779,297 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
-  final String category;
-  final List<PublicHabitModel> habits;
-  final int animationIndex;
+class _AchievementsShowcase extends StatelessWidget {
+  final List<String> types;
 
-  const _CategorySection({
-    required this.category,
-    required this.habits,
-    required this.animationIndex,
-  });
+  const _AchievementsShowcase({required this.types});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // máximo 5 visibles en el scroll
+    final visible = types.take(5).toList();
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                AppTheme.categoryIcon(category),
-                size: 16,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                AppTheme.categoryLabel(category).toUpperCase(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...habits.map(
-            (h) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _PublicHabitCard(habit: h).animate().fadeIn(
-                    delay: Duration(milliseconds: animationIndex * 60),
-                    duration: 300.ms,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Logros',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
                   ),
             ),
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${types.length}',
+                style: const TextStyle(
+                  color: Color(0xFFF59E0B),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (int i = 0; i < visible.length; i++) ...[
+                _AchievementBadge(type: visible[i], index: i),
+                if (i < visible.length - 1) const SizedBox(width: 16),
+              ],
+              if (types.length > 5) ...[
+                const SizedBox(width: 16),
+                Column(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '+${types.length - 5}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'más',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 14),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _PublicHabitCard extends StatelessWidget {
-  final PublicHabitModel habit;
-  const _PublicHabitCard({required this.habit});
+class _AchievementBadge extends StatelessWidget {
+  final String type;
+  final int index;
+
+  const _AchievementBadge({required this.type, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final info = AchievementCatalog.getInfo(type);
+    return Column(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: info.color.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(info.icon, size: 24, color: info.color),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: 56,
+          child: Text(
+            info.title,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    )
+        .animate(delay: Duration(milliseconds: index * 60))
+        .fadeIn(duration: 280.ms)
+        .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1),
+            duration: 280.ms, curve: Curves.easeOut);
+  }
+}
+
+class _HabitsGrid extends StatelessWidget {
+  final List<PublicHabitModel> habits;
+
+  const _HabitsGrid({required this.habits});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final denom = habit.bestStreak > 0 ? habit.bestStreak : 7;
-    final progress =
-        (habit.currentStreak / denom).clamp(0.0, 1.0).toDouble();
+
+    if (habits.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Center(
+          child: Text(
+            'Sin hábitos visibles',
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Hábitos activos',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.2,
+                  ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: scheme.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${habits.length}',
+                style: TextStyle(
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final chipWidth = (constraints.maxWidth - 10) / 2;
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (int i = 0; i < habits.length; i++)
+                  SizedBox(
+                    width: chipWidth,
+                    child: _HabitChip(habit: habits[i], index: i),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HabitChip extends StatelessWidget {
+  final PublicHabitModel habit;
+  final int index;
+
+  const _HabitChip({required this.habit, required this.index});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final streakActive = habit.currentStreak > 0;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: scheme.outlineVariant.withValues(alpha: 0.2),
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 3.5,
-                    backgroundColor:
-                        scheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(scheme.primary),
-                  ),
-                ),
-                habit.emoji != null
-                    ? Text(habit.emoji!, style: const TextStyle(fontSize: 18))
-                    : Icon(
-                        AppTheme.categoryIcon(habit.category),
-                        size: 20,
-                        color: scheme.primary,
-                      ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  habit.title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'máx ${habit.bestStreak}d',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.local_fire_department_rounded,
-                    size: 14,
-                    color: streakActive
-                        ? AppTheme.tertiaryContainer
-                        : scheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 2),
-                  Text(
-                    '${habit.currentStreak}d',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: streakActive
-                          ? AppTheme.tertiaryContainer
-                          : scheme.onSurfaceVariant,
+              habit.emoji != null
+                  ? Text(habit.emoji!, style: const TextStyle(fontSize: 28))
+                  : Icon(
+                      AppTheme.categoryIcon(habit.category),
+                      size: 28,
+                      color: scheme.primary,
                     ),
-                  ),
-                ],
-              ),
-              Text(
-                'Racha',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontSize: 9,
-                      letterSpacing: 0.5,
+              const Spacer(),
+              if (streakActive)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 13,
+                      color: AppTheme.tertiaryContainer,
                     ),
-              ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${habit.currentStreak}d',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: AppTheme.tertiaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
             ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            habit.title,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            AppTheme.categoryLabel(habit.category),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),
-    );
+    )
+        .animate(delay: Duration(milliseconds: index * 50))
+        .fadeIn(duration: 280.ms)
+        .slideY(begin: 0.06, end: 0, duration: 280.ms);
   }
 }

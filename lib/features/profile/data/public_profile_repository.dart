@@ -81,6 +81,11 @@ class PublicProfileRepository {
       if (streak > bestStreak) bestStreak = streak;
     }
 
+    final achievementTypes = achievementsSnap.docs
+        .map((doc) => doc.data()['type'] as String? ?? '')
+        .where((t) => t.isNotEmpty)
+        .toList();
+
     final profileData = PublicProfileModel(
       uid: _uid,
       username: username,
@@ -90,6 +95,7 @@ class PublicProfileRepository {
       totalHabits: habitsSnap.docs.length,
       bestStreakEver: bestStreak,
       unlockedAchievements: achievementsSnap.docs.length,
+      unlockedAchievementTypes: achievementTypes,
       createdAt: now,
       photoUrl: photoUrl,
     );
@@ -275,6 +281,16 @@ class PublicProfileRepository {
     } catch (_) {
       // perfil público no existe, ignorar
     }
+  }
+
+  /// Sincroniza los tipos de logros desbloqueados en el perfil público
+  Future<void> syncUnlockedAchievements(List<String> types) async {
+    try {
+      await _myProfileRef.update({
+        'unlockedAchievements': types.length,
+        'unlockedAchievementTypes': types,
+      });
+    } catch (_) {}
   }
 
   /// Actualiza nivel y logros en el perfil público

@@ -18,6 +18,7 @@ import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
+import '../../profile/data/public_profile_repository.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';
 
@@ -61,6 +62,7 @@ class _AIScreenState extends State<AIScreen> {
       achievementRepo: AchievementRepository(uid: uid),
       habitRepo: _habitRepo,
       userRepo: UserRepository(uid: uid),
+      publicProfileRepo: PublicProfileRepository(uid: uid),
     );
 
     _messages.add(ChatMessage(

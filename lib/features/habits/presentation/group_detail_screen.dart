@@ -9,6 +9,7 @@ import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../features/profile/data/public_profile_repository.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
@@ -55,6 +56,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       achievementRepo: AchievementRepository(uid: uid),
       habitRepo: _habitRepo,
       userRepo: UserRepository(uid: uid),
+      publicProfileRepo: PublicProfileRepository(uid: uid),
     );
     _groupStream = _groupRepo.watchGroup(widget.groupId);
     _habitsStream = _habitRepo.watchAllHabitsByGroup(widget.groupId);

@@ -1,6 +1,7 @@
 import '../../auth/data/user_repository.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../profile/data/public_profile_repository.dart';
 import '../domain/achivement_model.dart';
 import 'archivement_repository.dart';
 
@@ -9,14 +10,25 @@ class AchievementChecker {
   final AchievementRepository _achievementRepo;
   final HabitRepository _habitRepo;
   final UserRepository _userRepo;
+  final PublicProfileRepository? _publicProfileRepo;
 
   AchievementChecker({
     required AchievementRepository achievementRepo,
     required HabitRepository habitRepo,
     required UserRepository userRepo,
+    PublicProfileRepository? publicProfileRepo,
   })  : _achievementRepo = achievementRepo,
         _habitRepo = habitRepo,
-        _userRepo = userRepo;
+        _userRepo = userRepo,
+        _publicProfileRepo = publicProfileRepo;
+
+  // sincroniza logros desbloqueados al perfil publico si el repo esta inyectado
+  Future<void> _syncAchievementsToPublicProfile() async {
+    if (_publicProfileRepo == null) return;
+    final achievements = await _achievementRepo.watchAchievements().first;
+    final types = achievements.map((a) => a.type).toList();
+    await _publicProfileRepo.syncUnlockedAchievements(types);
+  }
 
   // comprobar todo tras completar un habito
   Future<List<String>> checkAfterToggle({
@@ -87,6 +99,8 @@ class AchievementChecker {
     // semana impecable: comprobar si los ultimos 7 dias fueron perfectos
     await _checkPerfectWeek(unlocked);
 
+    if (unlocked.isNotEmpty) await _syncAchievementsToPublicProfile();
+
     return unlocked;
   }
 
@@ -103,6 +117,8 @@ class AchievementChecker {
 
     // 5 habitos activos
     await _checkHabitCount(unlocked);
+
+    if (unlocked.isNotEmpty) await _syncAchievementsToPublicProfile();
 
     return unlocked;
   }
@@ -125,6 +141,8 @@ class AchievementChecker {
     }
 
     await _checkHabitCount(unlocked);
+
+    if (unlocked.isNotEmpty) await _syncAchievementsToPublicProfile();
 
     return unlocked;
   }
@@ -203,6 +221,8 @@ class AchievementChecker {
 
     // recompensa: 1 escudo de racha
     await _userRepo.grantShields(1);
+
+    if (unlocked.isNotEmpty) await _syncAchievementsToPublicProfile();
 
     return unlocked;
   }

@@ -271,6 +271,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       achievementRepo: AchievementRepository(uid: _uid),
       habitRepo: _habitRepo,
       userRepo: UserRepository(uid: _uid),
+      publicProfileRepo: PublicProfileRepository(uid: _uid),
     );
     final unlocked = await checker.checkAfterChallengeComplete();
     if (unlocked.isNotEmpty && mounted) {
