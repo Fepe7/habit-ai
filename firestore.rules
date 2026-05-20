@@ -167,18 +167,26 @@ service cloud.firestore {
                     && resource.data.status == 'pending';
     }
 
-    // Seguidores — el owner lee, el follower crea su doc, ambos pueden borrar
+    // Seguidores — el follower crea su propio doc O el owner crea al aceptar una solicitud
     match /users/{userId}/followers/{followerId} {
       allow read: if isOwner(userId);
-      allow create: if request.auth != null && request.auth.uid == followerId;
+      allow create: if request.auth != null
+                    && (request.auth.uid == followerId || isOwner(userId));
       allow delete: if isOwner(userId) || request.auth.uid == followerId;
       allow update: if false;
     }
 
-    // Siguiendo — solo el owner
+    // Siguiendo — el owner escribe; el seguido puede crear si aporta prueba de solicitud válida
     match /users/{userId}/following/{followingId} {
       allow read: if isOwner(userId);
-      allow create, delete: if isOwner(userId);
+      allow create: if isOwner(userId)
+                    || (request.auth != null
+                        && request.auth.uid == followingId
+                        && request.resource.data.keys().hasAll(['acceptedRequestId'])
+                        && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.toUid == request.auth.uid
+                        && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.fromUid == userId
+                        && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.status == 'pending');
+      allow delete: if isOwner(userId);
       allow update: if false;
     }
   }

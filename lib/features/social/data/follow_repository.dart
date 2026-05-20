@@ -120,11 +120,13 @@ class FollowRepository {
     });
 
     // toUid aparece en el following de fromUid
+    // acceptedRequestId es la prueba que la regla Firestore necesita para permitir el write cruzado
     batch.set(_followingRef(fromUid).doc(toUid), {
       'username': data['toUsername'],
       'displayName': data['toDisplayName'],
       'photoUrl': data['toPhotoUrl'],
       'followedAt': Timestamp.fromDate(now),
+      'acceptedRequestId': requestId,
     });
 
     await batch.commit();
@@ -166,6 +168,20 @@ class FollowRepository {
         .where('toUid', isEqualTo: _uid)
         .where('status', isEqualTo: 'pending')
         .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) =>
+                FollowRequestModel.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Solicitudes enviadas que ya fueron aceptadas (para notificaciones).
+  Stream<List<FollowRequestModel>> watchAcceptedSentRequests() {
+    return _requestsRef
+        .where('fromUid', isEqualTo: _uid)
+        .where('status', isEqualTo: 'accepted')
+        .orderBy('createdAt', descending: true)
+        .limit(20)
         .snapshots()
         .map((snap) => snap.docs
             .map((doc) =>

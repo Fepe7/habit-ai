@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -358,6 +359,10 @@ class _FollowersTabState extends State<_FollowersTab> {
                 final isPrivate =
                     !entry.isProfilePublic;
                 return ListTile(
+                  onTap: () => context.pushNamed(
+                    'public-profile',
+                    pathParameters: {'userId': entry.uid},
+                  ),
                   leading: AvatarCircle(
                     initials: entry.avatarInitials,
                     photoUrl: entry.photoUrl,
@@ -532,6 +537,9 @@ class _RequestsTab extends StatelessWidget {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snap.hasError) {
+          return Center(child: Text('Error al cargar solicitudes: ${snap.error}'));
+        }
         final requests = snap.data ?? [];
         if (requests.isEmpty) {
           return const EmptyStateView(
@@ -582,6 +590,10 @@ class _FollowTile extends StatelessWidget {
       color: scheme.surfaceContainerLowest,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ListTile(
+        onTap: () => context.pushNamed(
+          'public-profile',
+          pathParameters: {'userId': model.uid},
+        ),
         leading: AvatarCircle(
           initials: model.avatarInitials,
           photoUrl: model.photoUrl,
@@ -647,28 +659,40 @@ class _RequestTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            AvatarCircle(
-              initials: initials,
-              photoUrl: request.fromPhotoUrl,
-              size: 44,
+            GestureDetector(
+              onTap: () => context.pushNamed(
+                'public-profile',
+                pathParameters: {'userId': request.fromUid},
+              ),
+              child: AvatarCircle(
+                initials: initials,
+                photoUrl: request.fromPhotoUrl,
+                size: 44,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    request.fromDisplayName,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    '@${request.fromUsername}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: scheme.onSurfaceVariant,
+              child: GestureDetector(
+                onTap: () => context.pushNamed(
+                  'public-profile',
+                  pathParameters: {'userId': request.fromUid},
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      request.fromDisplayName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                  ),
-                ],
+                    Text(
+                      '@${request.fromUsername}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             IconButton.filled(

@@ -48,6 +48,12 @@ class NotificationService {
       description: _channelDesc,
       importance: Importance.high,
     ));
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      'social_notifications',
+      'Notificaciones sociales',
+      description: 'Solicitudes de seguimiento y actualizaciones sociales',
+      importance: Importance.high,
+    ));
 
     _initialized = true;
   }
@@ -167,6 +173,29 @@ class NotificationService {
   }
 
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  // Muestra una notificacion inmediata para eventos sociales (follow request, aceptacion)
+  Future<void> showSocialNotification({
+    required String title,
+    required String body,
+  }) async {
+    if (!_initialized) return;
+    await _plugin.show(
+      id: DateTime.now().millisecondsSinceEpoch & 0x7FFFFFFF,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'social_notifications',
+          'Notificaciones sociales',
+          channelDescription: 'Solicitudes de seguimiento y actualizaciones sociales',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+    );
+  }
 
   // ==================== helpers ====================
 

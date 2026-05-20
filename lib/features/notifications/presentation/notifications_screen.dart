@@ -16,6 +16,8 @@ import '../../../features/habits/data/habit_repository.dart';
 import '../../../features/habits/domain/habit_model.dart';
 import '../../../features/challenges/data/challenge_repository.dart';
 import '../../../features/challenges/domain/challenge_model.dart';
+import '../../social/data/follow_repository.dart';
+import '../../social/domain/follow_request_model.dart';
 
 /// Gestiona el estado de "visto" y "borrado" de las notificaciones vía SharedPreferences.
 class NotificationsService {
@@ -88,6 +90,37 @@ class NotificationsService {
       final d =
           (renegSnap.docs.first.data()['generatedAt'] as Timestamp).toDate();
       if (reference == null || d.isAfter(reference)) return true;
+    }
+
+    // Solicitudes de seguimiento recibidas
+    final pendingFollowSnap = await db
+        .collection('follow_requests')
+        .where('toUid', isEqualTo: uid)
+        .where('status', isEqualTo: 'pending')
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .get();
+    if (pendingFollowSnap.docs.isNotEmpty) {
+      final d = (pendingFollowSnap.docs.first.data()['createdAt'] as Timestamp)
+          .toDate();
+      if (reference == null || d.isAfter(reference)) return true;
+    }
+
+    // Solicitudes enviadas que fueron aceptadas
+    final acceptedFollowSnap = await db
+        .collection('follow_requests')
+        .where('fromUid', isEqualTo: uid)
+        .where('status', isEqualTo: 'accepted')
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .get();
+    if (acceptedFollowSnap.docs.isNotEmpty) {
+      final respondedAt =
+          acceptedFollowSnap.docs.first.data()['respondedAt'];
+      if (respondedAt != null) {
+        final d = (respondedAt as Timestamp).toDate();
+        if (reference == null || d.isAfter(reference)) return true;
+      }
     }
 
     return false;
@@ -184,17 +217,22 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
 
     final clearedAt = await NotificationsService.getClearedAt();
 
+    // Follow requests — aislado igual que challenges por si las reglas fallan
+    List<FollowRequestModel> pendingFollows = [];
+    List<FollowRequestModel> acceptedFollows = [];
+    try {
+      final followRepo = FollowRepository(uid: uid);
+      pendingFollows = await followRepo.watchPendingFollowRequests().first;
+      acceptedFollows = await followRepo.watchAcceptedSentRequests().first;
+    } catch (_) {}
+
     // Challenges está en colección raíz — puede fallar por reglas Firestore
     // si aún no están desplegadas; aislamos para no romper el resto del panel
     List<ChallengeModel> pendingInvites = [];
     List<ChallengeModel> acceptedByOthers = [];
     try {
-      final challengeResults = await Future.wait([
-        challengeRepo.watchPendingInvites().first,
-        challengeRepo.watchAcceptedByOthers().first,
-      ]);
-      pendingInvites = challengeResults[0] as List<ChallengeModel>;
-      acceptedByOthers = challengeResults[1] as List<ChallengeModel>;
+      pendingInvites = await challengeRepo.watchPendingInvites().first;
+      acceptedByOthers = await challengeRepo.watchAcceptedByOthers().first;
     } catch (_) {
       // Reglas Firestore para /challenges aún no desplegadas — se ignora
     }
@@ -263,6 +301,34 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
         color: const Color(0xFF8B5CF6),
         routeName: 'butterfly-projection',
         routeParams: {'monthId': butterfly.monthId},
+      ));
+    }
+
+    // solicitudes de seguimiento recibidas
+    for (final req in pendingFollows) {
+      if (!afterCleared(req.createdAt)) continue;
+      events.add(_NotifItem(
+        title: 'Nueva solicitud de seguimiento',
+        subtitle: '@${req.fromUsername} quiere seguirte',
+        date: req.createdAt,
+        icon: Icons.person_add_rounded,
+        color: const Color(0xFF38BDF8),
+        routeName: 'followers',
+      ));
+    }
+
+    // solicitudes enviadas que fueron aceptadas
+    for (final req in acceptedFollows) {
+      final date = req.respondedAt ?? req.createdAt;
+      if (!afterCleared(date)) continue;
+      events.add(_NotifItem(
+        title: '¡Solicitud aceptada!',
+        subtitle: '@${req.toUsername} aceptó tu solicitud',
+        date: date,
+        icon: Icons.how_to_reg_rounded,
+        color: const Color(0xFF10B981),
+        routeName: 'public-profile',
+        routeParams: {'userId': req.toUid},
       ));
     }
 

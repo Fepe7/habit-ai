@@ -86,6 +86,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     setState(() => _followLoading = true);
     try {
       final myUser = FirebaseAuth.instance.currentUser!;
+      final myEntry = await _dirRepo.getEntry(_myUid);
+      final myUsername = myEntry?.username ?? '';
 
       if (_followState == _FollowState.following) {
         await _followRepo.unfollow(widget.userId);
@@ -101,7 +103,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             targetUsername: entry.username,
             targetDisplayName: entry.displayName,
             targetPhotoUrl: entry.photoUrl,
-            myUsername: '', // se obtiene en el repo
+            myUsername: myUsername,
             myDisplayName: myUser.displayName ?? '',
             myPhotoUrl: myUser.photoURL,
           );
@@ -110,7 +112,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           // solicitud
           await _followRepo.sendFollowRequest(
             toUid: widget.userId,
-            fromUsername: '',
+            fromUsername: myUsername,
             fromDisplayName: myUser.displayName ?? '',
             fromPhotoUrl: myUser.photoURL,
             toUsername: entry.username,

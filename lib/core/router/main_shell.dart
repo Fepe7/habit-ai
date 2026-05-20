@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/user_repository.dart';
 import '../../features/habits/data/habit_repository.dart';
+import '../../features/social/data/follow_repository.dart';
+import '../../features/social/domain/follow_request_model.dart';
 import '../../services/notification_service.dart';
 import '../widgets/app_drawer.dart';
 
@@ -24,6 +27,11 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
+  StreamSubscription<List<FollowRequestModel>>? _pendingFollowSub;
+  StreamSubscription<List<FollowRequestModel>>? _acceptedFollowSub;
+  int _knownPendingCount = -1;
+  int _knownAcceptedCount = -1;
+
   @override
   void initState() {
     super.initState();
@@ -32,6 +40,51 @@ class _MainShellState extends State<MainShell> {
     _rescheduleNotifications();
     // migrar usuarios existentes al nuevo user_directory si aun no tienen entrada
     _ensureUserDirectory();
+    _watchSocialNotifications();
+  }
+
+  @override
+  void dispose() {
+    _pendingFollowSub?.cancel();
+    _acceptedFollowSub?.cancel();
+    super.dispose();
+  }
+
+  void _watchSocialNotifications() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final repo = FollowRepository(uid: uid);
+
+    _pendingFollowSub = repo.watchPendingFollowRequests().listen((requests) {
+      if (_knownPendingCount == -1) {
+        // primer snapshot: inicializar sin disparar notif
+        _knownPendingCount = requests.length;
+        return;
+      }
+      if (requests.length > _knownPendingCount && requests.isNotEmpty) {
+        final newest = requests.first;
+        NotificationService.instance.showSocialNotification(
+          title: 'Nueva solicitud de seguimiento',
+          body: '@${newest.fromUsername} quiere seguirte',
+        );
+      }
+      _knownPendingCount = requests.length;
+    });
+
+    _acceptedFollowSub = repo.watchAcceptedSentRequests().listen((accepted) {
+      if (_knownAcceptedCount == -1) {
+        _knownAcceptedCount = accepted.length;
+        return;
+      }
+      if (accepted.length > _knownAcceptedCount && accepted.isNotEmpty) {
+        final newest = accepted.first;
+        NotificationService.instance.showSocialNotification(
+          title: '¡Solicitud aceptada!',
+          body: '@${newest.toUsername} aceptó tu solicitud',
+        );
+      }
+      _knownAcceptedCount = accepted.length;
+    });
   }
 
   Future<void> _ensureUserDirectory() async {
