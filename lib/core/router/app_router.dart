@@ -260,10 +260,16 @@ GoRouter createRouter(AuthRepository authRepository) {
           GoRoute(
             path: '/followers',
             name: 'followers',
-            pageBuilder: (context, state) => _fadeSlideTransition(
-              state: state,
-              child: const FollowersScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final tab = int.tryParse(
+                    state.uri.queryParameters['tab'] ?? '',
+                  ) ??
+                  0;
+              return _fadeSlideTransition(
+                state: state,
+                child: FollowersScreen(initialTab: tab),
+              );
+            },
           ),
           GoRoute(
             path: '/privacy-settings',

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -426,7 +427,7 @@ class _ProfileHeader extends StatelessWidget {
             ),
           ],
 
-          // Contadores de seguidores / siguiendo
+          // Contadores de seguidores / siguiendo (tapeables solo en perfil propio)
           if (showFollowerCount) ...[
             const SizedBox(height: 16),
             Row(
@@ -435,11 +436,17 @@ class _ProfileHeader extends StatelessWidget {
                 _CounterChip(
                   value: followersCount,
                   label: 'seguidores',
+                  onTap: isOwnProfile
+                      ? () => context.push('/followers?tab=0')
+                      : null,
                 ),
                 const SizedBox(width: 24),
                 _CounterChip(
                   value: followingCount,
                   label: 'siguiendo',
+                  onTap: isOwnProfile
+                      ? () => context.push('/followers?tab=1')
+                      : null,
                 ),
               ],
             ),
@@ -502,13 +509,18 @@ class _ProfileHeader extends StatelessWidget {
 class _CounterChip extends StatelessWidget {
   final int value;
   final String label;
+  final VoidCallback? onTap;
 
-  const _CounterChip({required this.value, required this.label});
+  const _CounterChip({
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Column(
+    final column = Column(
       children: [
         Text(
           _format(value),
@@ -520,10 +532,18 @@ class _CounterChip extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+                color: onTap != null
+                    ? scheme.primary
+                    : scheme.onSurfaceVariant,
               ),
         ),
       ],
+    );
+    if (onTap == null) return column;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: column,
     );
   }
 

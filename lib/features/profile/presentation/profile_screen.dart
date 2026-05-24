@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
@@ -14,6 +15,7 @@ import '../../habits/domain/habit_model.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
 import '../../levels/presentation/widgets/category_level_card.dart';
+import '../../social/data/follow_repository.dart';
 
 /// Pantalla de perfil del usuario logueado.
 /// Reutiliza la estética de PublicProfileScreen pero con datos propios.
@@ -28,7 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final UserRepository _userRepo;
   late final HabitRepository _habitRepo;
   late final LevelsRepository _levelsRepo;
+  late final FollowRepository _followRepo;
   LevelsProfile? _levels;
+  int _followersCount = 0;
+  int _followingCount = 0;
 
   @override
   void initState() {
@@ -37,13 +42,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _userRepo = UserRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
     _levelsRepo = LevelsRepository(uid: uid);
+    _followRepo = FollowRepository(uid: uid);
     _loadLevels();
+    _loadFollowCounts();
   }
 
   Future<void> _loadLevels() async {
     final profile = await _levelsRepo.computeProfile();
     if (!mounted) return;
     setState(() => _levels = profile);
+  }
+
+  Future<void> _loadFollowCounts() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final results = await Future.wait([
+      _followRepo.getFollowerCount(uid).catchError((_) => 0),
+      _followRepo.getFollowingCount(uid).catchError((_) => 0),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _followersCount = results[0];
+      _followingCount = results[1];
+    });
   }
 
   String _initials(String? displayName, String? email) {
@@ -120,6 +140,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         username: userData?.username,
                         isProfilePublic: userData?.isProfilePublic ?? false,
                         photoUrl: userData?.photoUrl,
+                        followersCount: _followersCount,
+                        followingCount: _followingCount,
                         onAvatarTap: () => AvatarPickerSheet.show(
                           context,
                           currentPhotoUrl: userData?.photoUrl,
@@ -304,12 +326,16 @@ class _ProfileHeader extends StatelessWidget {
   final bool isProfilePublic;
   final String? photoUrl;
   final VoidCallback? onAvatarTap;
+  final int followersCount;
+  final int followingCount;
 
   const _ProfileHeader({
     required this.initials,
     required this.displayName,
     required this.username,
     required this.isProfilePublic,
+    required this.followersCount,
+    required this.followingCount,
     this.photoUrl,
     this.onAvatarTap,
   });
@@ -451,6 +477,25 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+
+          // Contadores de seguidores / siguiendo — tapeables
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _FollowCounter(
+                value: followersCount,
+                label: 'seguidores',
+                onTap: () => context.push('/followers?tab=0'),
+              ),
+              const SizedBox(width: 28),
+              _FollowCounter(
+                value: followingCount,
+                label: 'siguiendo',
+                onTap: () => context.push('/followers?tab=1'),
+              ),
+            ],
           ),
         ],
       ),
@@ -783,5 +828,50 @@ class _ProfileHabitCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Contador tapeable de seguidores/siguiendo para el perfil propio.
+class _FollowCounter extends StatelessWidget {
+  final int value;
+  final String label;
+  final VoidCallback onTap;
+
+  const _FollowCounter({
+    required this.value,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        children: [
+          Text(
+            _format(value),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.3,
+                ),
+          ),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.primary,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _format(int n) {
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
+    return '$n';
   }
 }

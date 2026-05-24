@@ -20,7 +20,10 @@ import '../domain/user_directory_entry.dart';
 /// Tab 2: a quién sigo.
 /// Tab 3: solicitudes pendientes (solo relevante si perfil privado).
 class FollowersScreen extends StatefulWidget {
-  const FollowersScreen({super.key});
+  /// Tab inicial: 0 = Seguidores, 1 = Siguiendo, 2 = Solicitudes
+  final int initialTab;
+
+  const FollowersScreen({super.key, this.initialTab = 0});
 
   @override
   State<FollowersScreen> createState() => _FollowersScreenState();
@@ -39,7 +42,11 @@ class _FollowersScreenState extends State<FollowersScreen>
     _myUid = FirebaseAuth.instance.currentUser!.uid;
     _followRepo = FollowRepository(uid: _myUid);
     _dirRepo = UserDirectoryRepository(uid: _myUid);
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(
+      length: 3,
+      initialIndex: widget.initialTab.clamp(0, 2),
+      vsync: this,
+    );
   }
 
   @override

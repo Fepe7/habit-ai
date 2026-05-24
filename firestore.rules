@@ -169,7 +169,7 @@ service cloud.firestore {
 
     // Seguidores — el follower crea su propio doc O el owner crea al aceptar una solicitud
     match /users/{userId}/followers/{followerId} {
-      allow read: if isOwner(userId);
+      allow read: if request.auth != null;
       allow create: if request.auth != null
                     && (request.auth.uid == followerId || isOwner(userId));
       allow delete: if isOwner(userId) || request.auth.uid == followerId;
@@ -178,7 +178,7 @@ service cloud.firestore {
 
     // Siguiendo — el owner escribe; el seguido puede crear si aporta prueba de solicitud válida
     match /users/{userId}/following/{followingId} {
-      allow read: if isOwner(userId);
+      allow read: if request.auth != null;
       allow create: if isOwner(userId)
                     || (request.auth != null
                         && request.auth.uid == followingId
