@@ -40,7 +40,11 @@ class HabitsScreen extends StatefulWidget {
   State<HabitsScreen> createState() => _HabitsScreenState();
 }
 
-class _HabitsScreenState extends State<HabitsScreen> {
+class _HabitsScreenState extends State<HabitsScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late HabitRepository _habitRepo;
   late HabitGroupRepository _groupRepo;
   late AchievementChecker _achievementChecker;
@@ -461,6 +465,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(

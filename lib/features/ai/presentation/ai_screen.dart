@@ -30,7 +30,11 @@ class AIScreen extends StatefulWidget {
   State<AIScreen> createState() => _AIScreenState();
 }
 
-class _AIScreenState extends State<AIScreen> {
+class _AIScreenState extends State<AIScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _messages = <ChatMessage>[];
@@ -208,6 +212,7 @@ class _AIScreenState extends State<AIScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(

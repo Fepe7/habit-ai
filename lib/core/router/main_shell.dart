@@ -7,6 +7,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/data/user_repository.dart';
 import '../../features/habits/data/habit_repository.dart';
+import '../../features/habits/presentation/habits_screen.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
+import '../../features/ai/presentation/ai_screen.dart';
+import '../../features/explore/presentation/explore_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/social/data/follow_repository.dart';
 import '../../features/social/domain/follow_request_model.dart';
 import '../../services/notification_service.dart';
@@ -31,22 +36,25 @@ class _MainShellState extends State<MainShell> {
   StreamSubscription<List<FollowRequestModel>>? _acceptedFollowSub;
   int _knownPendingCount = -1;
   int _knownAcceptedCount = -1;
-  // badge reactivo: se actualiza con cada snapshot del stream
   int _pendingBadgeCount = 0;
+
+  final PageController _pageController = PageController();
+  // evita bucle: swipe → context.go() → rebuild → jumpToPage → onPageChanged
+  bool _isSwiping = false;
+
+  static const _mainPaths = {'/', '/dashboard', '/ai', '/explore', '/profile'};
 
   @override
   void initState() {
     super.initState();
-    // reprogramar notificaciones una vez por sesion (por si el SO las purgo
-    // o el usuario reinstalo la app). No bloquea el primer render
     _rescheduleNotifications();
-    // migrar usuarios existentes al nuevo user_directory si aun no tienen entrada
     _ensureUserDirectory();
     _watchSocialNotifications();
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _pendingFollowSub?.cancel();
     _acceptedFollowSub?.cancel();
     super.dispose();
@@ -194,15 +202,56 @@ class _MainShellState extends State<MainShell> {
       );
     }
 
+    final location = GoRouterState.of(context).uri.path;
+    final isMainRoute = _mainPaths.contains(location);
+
+    // sincronizar PageView con la ruta actual (deep links, back button)
+    if (isMainRoute && _pageController.hasClients && !_isSwiping) {
+      final currentPage = _pageController.page?.round() ?? 0;
+      if (currentPage != selected) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.jumpToPage(selected);
+          }
+        });
+      }
+    }
+
     return Scaffold(
       key: MainShell.scaffoldKey,
       extendBody: true,
       drawer: const AppDrawer(),
-      body: widget.child,
+      body: isMainRoute
+          ? PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                _isSwiping = true;
+                context.go(_tabs[index].path);
+                Future.microtask(() => _isSwiping = false);
+              },
+              children: const [
+                HabitsScreen(),
+                DashboardScreen(),
+                AIScreen(),
+                ExploreScreen(),
+                ProfileScreen(),
+              ],
+            )
+          : widget.child,
       bottomNavigationBar: _GlassNavBar(
         selectedIndex: selected,
         scheme: scheme,
-        onDestinationSelected: (index) => context.go(_tabs[index].path),
+        onDestinationSelected: (index) {
+          if (isMainRoute && _pageController.hasClients) {
+            _pageController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          } else {
+            context.go(_tabs[index].path);
+          }
+        },
         tabs: _tabs,
         pendingCount: _pendingBadgeCount,
       ),
