@@ -31,6 +31,8 @@ class _MainShellState extends State<MainShell> {
   StreamSubscription<List<FollowRequestModel>>? _acceptedFollowSub;
   int _knownPendingCount = -1;
   int _knownAcceptedCount = -1;
+  // badge reactivo: se actualiza con cada snapshot del stream
+  int _pendingBadgeCount = 0;
 
   @override
   void initState() {
@@ -57,8 +59,9 @@ class _MainShellState extends State<MainShell> {
 
     _pendingFollowSub = repo.watchPendingFollowRequests().listen((requests) {
       if (_knownPendingCount == -1) {
-        // primer snapshot: inicializar sin disparar notif
+        // primer snapshot: inicializar sin disparar notif, pero sí mostrar badge
         _knownPendingCount = requests.length;
+        setState(() => _pendingBadgeCount = requests.length);
         return;
       }
       if (requests.length > _knownPendingCount && requests.isNotEmpty) {
@@ -69,6 +72,7 @@ class _MainShellState extends State<MainShell> {
         );
       }
       _knownPendingCount = requests.length;
+      setState(() => _pendingBadgeCount = requests.length);
     });
 
     _acceptedFollowSub = repo.watchAcceptedSentRequests().listen((accepted) {
@@ -157,15 +161,27 @@ class _MainShellState extends State<MainShell> {
               labelType: NavigationRailLabelType.all,
               backgroundColor: scheme.surfaceContainerLowest,
               indicatorColor: scheme.primaryContainer.withValues(alpha: 0.3),
-              destinations: _tabs
-                  .map(
-                    (tab) => NavigationRailDestination(
-                      icon: Icon(tab.icon),
-                      selectedIcon: Icon(tab.activeIcon),
-                      label: Text(tab.label),
-                    ),
-                  )
-                  .toList(),
+              destinations: List.generate(_tabs.length, (index) {
+                final tab = _tabs[index];
+                // índice 4 = Perfil: mostrar badge con solicitudes pendientes
+                final icon = (index == 4 && _pendingBadgeCount > 0)
+                    ? Badge(
+                        label: Text('$_pendingBadgeCount'),
+                        child: Icon(tab.icon),
+                      )
+                    : Icon(tab.icon);
+                final selectedIcon = (index == 4 && _pendingBadgeCount > 0)
+                    ? Badge(
+                        label: Text('$_pendingBadgeCount'),
+                        child: Icon(tab.activeIcon),
+                      )
+                    : Icon(tab.activeIcon);
+                return NavigationRailDestination(
+                  icon: icon,
+                  selectedIcon: selectedIcon,
+                  label: Text(tab.label),
+                );
+              }),
             ),
             VerticalDivider(
               thickness: 1,
@@ -188,6 +204,7 @@ class _MainShellState extends State<MainShell> {
         scheme: scheme,
         onDestinationSelected: (index) => context.go(_tabs[index].path),
         tabs: _tabs,
+        pendingCount: _pendingBadgeCount,
       ),
     );
   }
@@ -198,7 +215,9 @@ class _MainShellState extends State<MainShell> {
     if (location.startsWith('/ai')) return 2;
     if (location.startsWith('/explore') ||
         location.startsWith('/community') ||
-        location.startsWith('/profiles')) return 3;
+        location.startsWith('/profiles')) {
+      return 3;
+    }
     if (location.startsWith('/profile')) return 4;
     return 0;
   }
@@ -211,12 +230,15 @@ class _GlassNavBar extends StatelessWidget {
     required this.scheme,
     required this.onDestinationSelected,
     required this.tabs,
+    required this.pendingCount,
   });
 
   final int selectedIndex;
   final ColorScheme scheme;
   final ValueChanged<int> onDestinationSelected;
   final List<_TabInfo> tabs;
+  // solicitudes de seguimiento pendientes → badge en tab Perfil
+  final int pendingCount;
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +271,8 @@ class _GlassNavBar extends StatelessWidget {
                       selected: isSelected,
                       scheme: scheme,
                       onTap: () => onDestinationSelected(index),
+                      // badge solo en el tab Perfil (índice 4)
+                      badgeCount: index == 4 ? pendingCount : 0,
                     ),
                   );
                 }),
@@ -269,6 +293,7 @@ class _NavItem extends StatelessWidget {
     required this.selected,
     required this.scheme,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
@@ -277,6 +302,8 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final ColorScheme scheme;
   final VoidCallback onTap;
+  // 0 = sin badge; >0 = muestra el número
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -300,10 +327,14 @@ class _NavItem extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                selected ? activeIcon : icon,
-                color: color,
-                size: 24,
+              child: Badge(
+                isLabelVisible: badgeCount > 0,
+                label: Text('$badgeCount'),
+                child: Icon(
+                  selected ? activeIcon : icon,
+                  color: color,
+                  size: 24,
+                ),
               ),
             ),
             const SizedBox(height: 2),
