@@ -477,8 +477,8 @@ class _SectionVisibilityCard extends StatelessWidget {
   }
 }
 
-/// Lista de hábitos activos con toggle individual de visibilidad.
-/// Visible tanto en perfil público como privado (aplica a seguidores).
+/// Lista de hábitos activos con selector de 3 niveles de visibilidad.
+/// 🌐 Público · 👥 Seguidores · 🔒 Privado
 class _VisibleHabitsSection extends StatelessWidget {
   final HabitRepository habitRepo;
 
@@ -523,43 +523,12 @@ class _VisibleHabitsSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: AppTheme.ambientShadow(),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Column(
                 children: habits.map((habit) {
-                  return SwitchListTile(
-                    secondary: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppTheme.categoryBg(habit.category),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(
-                        AppTheme.categoryIcon(habit.category),
-                        size: 18,
-                        color: AppTheme.categoryFg(habit.category),
-                      ),
-                    ),
-                    title: Text(
-                      habit.title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      AppTheme.categoryLabel(habit.category),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                    ),
-                    value: habit.isPubliclyVisible,
-                    onChanged: (val) =>
-                        habitRepo.setHabitPublicVisibility(habit.id, val),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16),
+                  return _HabitVisibilityRow(
+                    habit: habit,
+                    habitRepo: habitRepo,
                   );
                 }).toList(),
               ),
@@ -567,6 +536,123 @@ class _VisibleHabitsSection extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+/// Fila de un hábito con selector de visibilidad de 3 niveles.
+class _HabitVisibilityRow extends StatelessWidget {
+  final HabitModel habit;
+  final HabitRepository habitRepo;
+
+  const _HabitVisibilityRow({
+    required this.habit,
+    required this.habitRepo,
+  });
+
+  static const _options = [
+    (value: 'public',    icon: Icons.public_rounded,       label: 'Público'),
+    (value: 'followers', icon: Icons.people_rounded,        label: 'Seguidores'),
+    (value: 'private',   icon: Icons.lock_outline_rounded,  label: 'Privado'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // cabecera con icono de categoría + nombre del hábito
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppTheme.categoryBg(habit.category),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  AppTheme.categoryIcon(habit.category),
+                  size: 17,
+                  color: AppTheme.categoryFg(habit.category),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  habit.title,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // selector de 3 opciones
+          Row(
+            children: _options.map((opt) {
+              final selected = habit.visibility == opt.value;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: GestureDetector(
+                    onTap: selected
+                        ? null
+                        : () => habitRepo.setHabitVisibility(
+                              habit.id,
+                              opt.value,
+                            ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? scheme.primary
+                            : scheme.surfaceContainerHighest
+                                .withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            opt.icon,
+                            size: 16,
+                            color: selected
+                                ? scheme.onPrimary
+                                : scheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            opt.label,
+                            style: textTheme.labelSmall?.copyWith(
+                              color: selected
+                                  ? scheme.onPrimary
+                                  : scheme.onSurface,
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 }

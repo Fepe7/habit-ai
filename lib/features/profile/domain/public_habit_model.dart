@@ -8,6 +8,10 @@ class PublicHabitModel {
   final int currentStreak;
   final int bestStreak;
 
+  /// 'public' | 'followers' | 'private'
+  /// Docs sin campo defaultean a 'public' (ya estaban publicados = eran públicos)
+  final String visibility;
+
   const PublicHabitModel({
     required this.id,
     required this.title,
@@ -15,6 +19,7 @@ class PublicHabitModel {
     this.emoji,
     required this.currentStreak,
     required this.bestStreak,
+    this.visibility = 'public',
   });
 
   factory PublicHabitModel.fromFirestore(
@@ -28,6 +33,7 @@ class PublicHabitModel {
       emoji: data['emoji'] as String?,
       currentStreak: data['currentStreak'] as int? ?? 0,
       bestStreak: data['bestStreak'] as int? ?? 0,
+      visibility: data['visibility'] as String? ?? 'public',
     );
   }
 
@@ -38,6 +44,7 @@ class PublicHabitModel {
       'emoji': emoji,
       'currentStreak': currentStreak,
       'bestStreak': bestStreak,
+      'visibility': visibility,
     };
   }
 }

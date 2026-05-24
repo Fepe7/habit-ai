@@ -139,11 +139,14 @@ class PublicProfileRepository {
       SetOptions(merge: true),
     );
 
-    // Copiar solo los hábitos marcados como visibles públicamente
+    // Copiar hábitos no privados al activar el perfil
     for (final doc in habitsSnap.docs) {
       final data = doc.data();
-      final isVisible = data['isPubliclyVisible'] as bool? ?? false;
-      if (!isVisible) continue;
+      // retrocompat: leer 'visibility' o caer en el bool antiguo
+      final rawVisibility = data['visibility'] as String?;
+      final visibility = rawVisibility ??
+          ((data['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private');
+      if (visibility == 'private') continue;
       final publicHabit = PublicHabitModel(
         id: doc.id,
         title: data['title'] as String? ?? '',
@@ -151,6 +154,7 @@ class PublicProfileRepository {
         emoji: data['emoji'] as String?,
         currentStreak: data['currentStreak'] as int? ?? 0,
         bestStreak: data['bestStreak'] as int? ?? 0,
+        visibility: visibility,
       );
       batch.set(_myPublicHabitsRef.doc(doc.id), publicHabit.toJson());
     }
@@ -354,15 +358,28 @@ class PublicProfileRepository {
     return PublicProfileModel.fromFirestore(doc.data()!, doc.id);
   }
 
-  /// Stream de hábitos públicos de un usuario
-  Stream<List<PublicHabitModel>> watchPublicHabits(String uid) {
+  /// Stream de hábitos visibles de un usuario.
+  /// - viewerIsFollower=true  → muestra 'public' y 'followers'
+  /// - viewerIsFollower=false → solo 'public'
+  Stream<List<PublicHabitModel>> watchPublicHabits(
+    String uid, {
+    required bool viewerIsFollower,
+  }) {
     return _publicProfilesRef
         .doc(uid)
         .collection('habits')
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) => PublicHabitModel.fromFirestore(doc.data(), doc.id))
-            .toList());
+        .map((snap) {
+      final all = snap.docs
+          .map((doc) => PublicHabitModel.fromFirestore(doc.data(), doc.id))
+          .toList();
+      // filtrar en cliente por visibilidad según relación del viewer
+      return all.where((h) {
+        if (h.visibility == 'public') return true;
+        if (h.visibility == 'followers' && viewerIsFollower) return true;
+        return false;
+      }).toList();
+    });
   }
 
   // ==================== HELPERS PRIVADOS ====================

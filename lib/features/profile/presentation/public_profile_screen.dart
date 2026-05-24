@@ -271,7 +271,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
 
             if (showHabits)
               StreamBuilder<List<PublicHabitModel>>(
-                stream: _repo.watchPublicHabits(widget.userId),
+                stream: _repo.watchPublicHabits(
+                  widget.userId,
+                  // el owner y sus seguidores ven hábitos 'followers'
+                  viewerIsFollower: _isOwnProfile ||
+                      _followState == _FollowState.following,
+                ),
                 builder: (context, snap) {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const SliverToBoxAdapter(

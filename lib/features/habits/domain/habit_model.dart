@@ -17,8 +17,11 @@ class HabitModel {
   final String? groupId;
   final String? challengeId;
 
-  /// Si este hábito se muestra en el perfil público del usuario
-  final bool isPubliclyVisible;
+  /// Visibilidad en el perfil: 'public' | 'followers' | 'private'
+  final String visibility;
+
+  /// true si el hábito aparece en algún perfil (público o solo seguidores)
+  bool get isVisibleToAnyone => visibility != 'private';
 
   const HabitModel({
     required this.id,
@@ -35,7 +38,7 @@ class HabitModel {
     this.isActive = true,
     this.groupId,
     this.challengeId,
-    this.isPubliclyVisible = false,
+    this.visibility = 'private',
   });
 
   // Crear desde un doc de Firestore (el id va aparte porque no viene en data())
@@ -55,7 +58,9 @@ class HabitModel {
       isActive: json['isActive'] as bool? ?? true,
       groupId: json['groupId'] as String?,
       challengeId: json['challengeId'] as String?,
-      isPubliclyVisible: json['isPubliclyVisible'] as bool? ?? false,
+      // retrocompat: si no hay 'visibility', leer el bool antiguo
+      visibility: json['visibility'] as String? ??
+          ((json['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private'),
     );
   }
 
@@ -75,7 +80,7 @@ class HabitModel {
       'isActive': isActive,
       'groupId': groupId,
       'challengeId': challengeId,
-      'isPubliclyVisible': isPubliclyVisible,
+      'visibility': visibility,
     };
   }
 
@@ -92,7 +97,7 @@ class HabitModel {
     bool? isActive,
     String? groupId,
     String? challengeId,
-    bool? isPubliclyVisible,
+    String? visibility,
   }) {
     return HabitModel(
       id: id,
@@ -109,7 +114,7 @@ class HabitModel {
       isActive: isActive ?? this.isActive,
       groupId: groupId ?? this.groupId,
       challengeId: challengeId ?? this.challengeId,
-      isPubliclyVisible: isPubliclyVisible ?? this.isPubliclyVisible,
+      visibility: visibility ?? this.visibility,
     );
   }
 }
