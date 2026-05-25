@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../data/habit_group_repository.dart';
 import '../../data/habit_repository.dart';
+import '../../domain/habit_group_model.dart';
 import '../../domain/habit_model.dart';
 
 // Bottom sheet para crear un hábito manualmente
@@ -39,12 +41,18 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   List<HabitModel> _availableHabits = [];
   bool _habitsLoaded = false;
 
+  // grupo seleccionado (opcional)
+  HabitGroupModel? _selectedGroup;
+  List<HabitGroupModel> _availableGroups = [];
+  bool _groupsLoaded = false;
+
   static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   @override
   void initState() {
     super.initState();
     _loadAvailableHabits();
+    _loadAvailableGroups();
   }
 
   Future<void> _loadAvailableHabits() async {
@@ -60,6 +68,28 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       }
     } catch (_) {
       if (mounted) setState(() => _habitsLoaded = true);
+    }
+  }
+
+  Future<void> _loadAvailableGroups() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) setState(() => _groupsLoaded = true);
+      return;
+    }
+    try {
+      final groups = await HabitGroupRepository(uid: uid).watchGroups().first;
+      if (!mounted) return;
+      setState(() {
+        _availableGroups = groups;
+        // pre-seleccionar si viene groupId desde el constructor
+        if (widget.groupId != null) {
+          _selectedGroup = groups.where((g) => g.id == widget.groupId).firstOrNull;
+        }
+        _groupsLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _groupsLoaded = true);
     }
   }
 
@@ -83,7 +113,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       targetDays: _targetDays,
       reminderTime: _reminderTime,
       createdAt: DateTime.now(),
-      groupId: widget.groupId,
+      groupId: _selectedGroup?.id,
       // stackAfterHabitId transitorio: el repo lo procesa al crear
       stackAfterHabitId: _stackAnchor?.id,
     );
@@ -288,6 +318,51 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               onClear: () => setState(() => _reminderTime = null),
             ),
             const SizedBox(height: 24),
+
+            // sección grupos
+            if (!_groupsLoaded) ...[
+              _SheetLabel(label: 'Grupo'),
+              const SizedBox(height: 12),
+              const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              const SizedBox(height: 28),
+            ] else if (_availableGroups.isNotEmpty) ...[
+              _SheetLabel(label: 'Grupo'),
+              const SizedBox(height: 6),
+              Text(
+                'Agrupa este hábito con otros relacionados',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StackChip(
+                    label: 'Sin grupo',
+                    icon: Icons.folder_off_rounded,
+                    selected: _selectedGroup == null,
+                    onTap: () => setState(() => _selectedGroup = null),
+                    scheme: scheme,
+                  ),
+                  ..._availableGroups.map((g) => _StackChip(
+                        label: '${g.emoji ?? '📁'} ${g.title}',
+                        icon: Icons.folder_rounded,
+                        selected: _selectedGroup?.id == g.id,
+                        onTap: () => setState(() => _selectedGroup = g),
+                        scheme: scheme,
+                      )),
+                ],
+              ),
+              const SizedBox(height: 28),
+            ],
 
             // sección encadenamiento
             if (!_habitsLoaded) ...[
