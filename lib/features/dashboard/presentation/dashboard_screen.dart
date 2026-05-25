@@ -18,6 +18,7 @@ import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 import '../../ai/domain/butterfly_projection_model.dart';
 import '../../ai/domain/renegotiation_model.dart';
+import '../../ai/domain/pattern_insight_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
@@ -44,6 +45,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _generatingReview = false;
   bool _generatingButterfly = false;
   bool _generatingReno = false;
+  bool _generatingPatterns = false;
 
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
@@ -156,6 +158,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                               _buildButterflyCard(context)
                                   .animate()
                                   .fadeIn(delay: 175.ms, duration: 400.ms)
+                                  .slideY(begin: 0.05),
+
+                              const SizedBox(height: 14),
+
+                              _buildPatternsCard(context)
+                                  .animate()
+                                  .fadeIn(delay: 183.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
@@ -302,6 +311,24 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
     } finally {
       if (mounted) setState(() => _generatingButterfly = false);
+    }
+  }
+
+  Future<void> _generatePatternsManually() async {
+    setState(() => _generatingPatterns = true);
+    try {
+      final periodId = await _aiRepo.generatePatternInsights();
+      if (!mounted) return;
+      if (periodId == null) {
+        AppSnackBar.showInfo(
+          context,
+          'Necesitas al menos 14 días con datos y 3 hábitos activos para detectar patrones',
+        );
+      }
+    } catch (e) {
+      if (mounted) AppSnackBar.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _generatingPatterns = false);
     }
   }
 
@@ -678,6 +705,208 @@ class _DashboardScreenState extends State<DashboardScreen>
           ],
         ),
       ),
+    );
+  }
+
+  // card de detección de patrones con IA — color indigo para diferenciarlo
+  Widget _buildPatternsCard(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    const accent = Color(0xFF6366F1);
+
+    return StreamBuilder<PatternInsightModel?>(
+      stream: _aiRepo.watchLatestPatternInsights(),
+      builder: (context, snapshot) {
+        final model = snapshot.data;
+
+        if (model == null) {
+          return _SectionCard(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.analytics_rounded,
+                    color: accent,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Patrones IA',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Descubre correlaciones ocultas entre tus hábitos',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 36,
+                        child: FilledButton.tonalIcon(
+                          onPressed: _generatingPatterns
+                              ? null
+                              : _generatePatternsManually,
+                          icon: _generatingPatterns
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2),
+                                )
+                              : const Icon(Icons.auto_awesome_rounded,
+                                  size: 16),
+                          label: Text(
+                            _generatingPatterns
+                                ? 'Analizando…'
+                                : 'Detectar patrones',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor:
+                                accent.withValues(alpha: 0.14),
+                            foregroundColor: accent,
+                            minimumSize: const Size(0, 36),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
+                            shape: const StadiumBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // card con insights existentes — tap navega al detalle
+        return GestureDetector(
+          onTap: () => context.goNamed(
+            'pattern-insights',
+            pathParameters: {'periodId': model.periodId},
+          ),
+          child: _SectionCard(
+            gradient: LinearGradient(
+              colors: [
+                accent.withValues(alpha: 0.12),
+                accent.withValues(alpha: 0.04),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.analytics_rounded,
+                        color: accent, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Patrones IA',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    Text(
+                      model.periodId,
+                      style:
+                          Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: accent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color: scheme.onSurfaceVariant
+                            .withValues(alpha: 0.5)),
+                  ],
+                ),
+                if (model.summary.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    model.summary,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      height: 1.5,
+                    ),
+                  ),
+                  if (model.insights.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ...model.insights.take(2).map((insight) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: insight.type.color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  insight.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _generatingPatterns
+                          ? null
+                          : _generatePatternsManually,
+                      icon: _generatingPatterns
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 16),
+                      label: Text(
+                        _generatingPatterns ? 'Regenerando…' : 'Regenerar',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

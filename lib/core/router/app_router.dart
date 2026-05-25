@@ -13,6 +13,7 @@ import '../../features/dashboard/presentation/streaks_detail_screen.dart';
 import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/ai/presentation/weekly_review_screen.dart';
 import '../../features/ai/presentation/butterfly_projection_screen.dart';
+import '../../features/ai/presentation/pattern_insights_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
@@ -172,6 +173,16 @@ GoRouter createRouter(AuthRepository authRepository) {
                   state: state,
                   child: ButterflyProjectionScreen(
                     monthId: state.pathParameters['monthId']!,
+                  ),
+                ),
+              ),
+              GoRoute(
+                path: 'patterns/:periodId',
+                name: 'pattern-insights',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: PatternInsightsScreen(
+                    periodId: state.pathParameters['periodId']!,
                   ),
                 ),
               ),

@@ -48,6 +48,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      match /pattern_insights/{periodId} {
+        allow read:   if isOwner(userId);
+        // escritura solo desde el admin SDK (Cloud Function)
+        allow write: if false;
+      }
+
       match /renegotiations/{habitId} {
         allow read:   if isOwner(userId);
         // el cliente solo puede marcar el ciclo de vida (applied/dismissed)

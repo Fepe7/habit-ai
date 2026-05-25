@@ -4,6 +4,7 @@ import '../domain/habit_plan_model.dart';
 import '../domain/weekly_review_model.dart';
 import '../domain/butterfly_projection_model.dart';
 import '../domain/renegotiation_model.dart';
+import '../domain/pattern_insight_model.dart';
 
 // Llama a la Cloud Function proxy y guarda las conversaciones en Firestore
 class AIRepository {
@@ -17,6 +18,7 @@ class AIRepository {
 
   final HttpsCallable _generateButterflyFn;
   final HttpsCallable _generateRenegotiationFn;
+  final HttpsCallable _generatePatternInsightsFn;
 
   AIRepository({
     required String uid,
@@ -35,7 +37,10 @@ class AIRepository {
             .httpsCallable('generateButterflyProjection'),
         _generateRenegotiationFn = (functions ??
                 FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable('generateRenegotiation');
+            .httpsCallable('generateRenegotiation'),
+        _generatePatternInsightsFn = (functions ??
+                FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable('generatePatternInsights');
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
       _firestore.collection('users').doc(_uid).collection('ai_conversations');
@@ -48,6 +53,9 @@ class AIRepository {
 
   CollectionReference<Map<String, dynamic>> get _renegotiationsRef =>
       _firestore.collection('users').doc(_uid).collection('renegotiations');
+
+  CollectionReference<Map<String, dynamic>> get _patternInsightsRef =>
+      _firestore.collection('users').doc(_uid).collection('pattern_insights');
 
   // Envia un mensaje a la Cloud Function y devuelve la respuesta parseada
   Future<HabitPlanModel> generatePlan(String userMessage) async {
@@ -278,6 +286,40 @@ class AIRepository {
     await _renegotiationsRef.doc(habitId).update({
       'dismissedAt': Timestamp.fromDate(DateTime.now()),
     });
+  }
+
+  // ==================== DETECCION DE PATRONES ====================
+
+  // Dispara la generación manual de insights de patrones del mes en curso.
+  // Devuelve null si hay datos insuficientes (<14 días o <3 hábitos).
+  Future<String?> generatePatternInsights() async {
+    try {
+      final result = await _generatePatternInsightsFn.call();
+      final data = _deepCast(result.data);
+      if (data['skipped'] == true) return null;
+      return data['periodId'] as String?;
+    } on FirebaseFunctionsException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  // Stream con los insights más recientes (para el card del dashboard)
+  Stream<PatternInsightModel?> watchLatestPatternInsights() {
+    return _patternInsightsRef
+        .orderBy('generatedAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      return PatternInsightModel.fromJson(snapshot.docs.first.data());
+    });
+  }
+
+  // Lee los insights de un período concreto por periodId (pantalla de detalle)
+  Future<PatternInsightModel?> getInsightsForPeriod(String periodId) async {
+    final doc = await _patternInsightsRef.doc(periodId).get();
+    if (!doc.exists) return null;
+    return PatternInsightModel.fromJson(doc.data()!);
   }
 
   // Convierte recursivamente Map<Object?, Object?> a Map<String, dynamic>

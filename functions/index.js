@@ -1008,6 +1008,410 @@ exports.renegotiationJob = onSchedule(
   }
 );
 
+// ==================== DETECCION DE PATRONES ====================
+
+// Prompt para detectar correlaciones y patrones entre hábitos
+const PATTERN_INSIGHTS_PROMPT = `
+Eres un analista de datos de hábitos personales. Analiza estadísticas de completado
+y genera insights accionables basados en patrones reales.
+
+TIPOS DE INSIGHT:
+- day_effect: el día de la semana influye significativamente en el completado
+- cross_habit: completar A predice (o impide) completar B
+- time_cluster: los hábitos de mañana y tarde tienen tasas muy distintas
+- category_synergy: una categoría de hábitos arrastra a otra
+- streak_predictor: patrón que predice cuándo se va a romper una racha
+- vulnerability: punto de debilidad recurrente (día, hábito o franja)
+
+REGLAS ESTRICTAS:
+1. Responde ÚNICAMENTE con un objeto JSON válido. Sin texto fuera del JSON.
+2. Genera entre 2 y 6 insights, solo los estadísticamente relevantes.
+3. Omite insights con datos insuficientes o correlaciones débiles.
+4. Tono de descubrimiento: "¿Sabías que...?", "Patrón detectado:", "Tendencia clara:"
+5. Confianza: "high" (≥75%), "medium" (50–74%), "low" (<50%)
+6. El campo "actionable" debe ser un consejo concreto, implementable mañana mismo.
+7. No inventes patrones: si los datos no muestran correlación clara, no la reportes.
+
+FORMATO DE RESPUESTA (JSON):
+{
+  "insights": [
+    {
+      "type": "cross_habit|day_effect|time_cluster|category_synergy|streak_predictor|vulnerability",
+      "title": "Título corto y evocador del hallazgo",
+      "description": "Descripción del patrón en 1-2 frases concretas con datos",
+      "relatedHabits": ["nombre del hábito implicado"],
+      "confidence": "high|medium|low",
+      "actionable": "Consejo concreto implementable mañana"
+    }
+  ],
+  "summary": "Resumen de 1-2 frases con el hallazgo más importante",
+  "dataQuality": "good|limited"
+}
+`;
+
+// Construye la matriz cruzada de patrones para el rango de fechas dado
+async function buildPatternContext(uid, start, end) {
+  const db = admin.firestore();
+
+  const habitsSnapshot = await db
+    .collection("users").doc(uid).collection("habits")
+    .where("isActive", "==", true).get();
+
+  const habits = habitsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  if (habits.length === 0) {
+    return { habits: [], totalLogs: 0, analyzedDays: 0 };
+  }
+
+  // Cargar logs completados por hábito dentro del rango
+  const habitCompletedDates = {};
+  let totalLogs = 0;
+
+  for (const habit of habits) {
+    const logsSnapshot = await db
+      .collection("users").doc(uid).collection("habits").doc(habit.id)
+      .collection("logs")
+      .where("date", ">=", admin.firestore.Timestamp.fromDate(start))
+      .where("date", "<=", admin.firestore.Timestamp.fromDate(end))
+      .get();
+
+    const completedDates = new Set();
+    for (const doc of logsSnapshot.docs) {
+      const d = doc.data();
+      if (d.completed === true) {
+        const ts = d.date.toDate();
+        completedDates.add(`${ts.getFullYear()}-${ts.getMonth()}-${ts.getDate()}`);
+        totalLogs++;
+      }
+    }
+    habitCompletedDates[habit.id] = completedDates;
+  }
+
+  // Construir días analizados: fechas donde hay al menos un hábito programado
+  const analyzedDays = [];
+  const cursor = new Date(start);
+  while (cursor <= end) {
+    const weekday = cursor.getDay() === 0 ? 7 : cursor.getDay();
+    const dateKey = `${cursor.getFullYear()}-${cursor.getMonth()}-${cursor.getDate()}`;
+    const scheduled = [];
+    const completed = [];
+
+    for (const habit of habits) {
+      if ((habit.targetDays || []).includes(weekday)) {
+        scheduled.push(habit.id);
+        if (habitCompletedDates[habit.id]?.has(dateKey)) {
+          completed.push(habit.id);
+        }
+      }
+    }
+
+    if (scheduled.length > 0) {
+      analyzedDays.push({ weekday, dateKey, scheduled, completed });
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  // dayOfWeekStats: tasa media de completado por día de semana (1=lunes … 7=domingo)
+  const dayOfWeekStats = {};
+  for (let d = 1; d <= 7; d++) {
+    const daysForWeekday = analyzedDays.filter((day) => day.weekday === d);
+    if (daysForWeekday.length === 0) continue;
+    const totalRate = daysForWeekday.reduce(
+      (sum, day) => sum + (day.scheduled.length > 0 ? day.completed.length / day.scheduled.length : 0),
+      0
+    );
+    dayOfWeekStats[d] = {
+      sampleDays: daysForWeekday.length,
+      completionRate: Math.round((totalRate / daysForWeekday.length) * 100) / 100,
+    };
+  }
+
+  // crossHabitPairs: P(B completado | A completado) para pares con ≥5 días co-programados
+  const crossHabitPairs = [];
+  for (let i = 0; i < habits.length; i++) {
+    for (let j = 0; j < habits.length; j++) {
+      if (i === j) continue;
+      const hA = habits[i].id;
+      const hB = habits[j].id;
+      const coScheduled = analyzedDays.filter(
+        (day) => day.scheduled.includes(hA) && day.scheduled.includes(hB)
+      );
+      if (coScheduled.length < 5) continue;
+      const aCompleted = coScheduled.filter((day) => day.completed.includes(hA));
+      if (aCompleted.length === 0) continue;
+      const bothCompleted = aCompleted.filter((day) => day.completed.includes(hB));
+      const pBgivenA = bothCompleted.length / aCompleted.length;
+      if (pBgivenA > 0.6 || pBgivenA < 0.3) {
+        crossHabitPairs.push({
+          habitA: habits[i].title,
+          habitB: habits[j].title,
+          pBgivenA: Math.round(pBgivenA * 100) / 100,
+          coScheduledDays: coScheduled.length,
+        });
+      }
+    }
+  }
+  // Top 10 por fuerza de correlación (más alejada del 50%)
+  crossHabitPairs.sort(
+    (a, b) => Math.abs(b.pBgivenA - 0.5) - Math.abs(a.pBgivenA - 0.5)
+  );
+  const topCrossPairs = crossHabitPairs.slice(0, 10);
+
+  // streakBreakPatterns: día de semana donde empiezan más rupturas de racha
+  const streakBreaks = {};
+  for (const habit of habits) {
+    let prevCompleted = true;
+    for (const day of analyzedDays) {
+      if (!day.scheduled.includes(habit.id)) continue;
+      const done = day.completed.includes(habit.id);
+      if (!done && prevCompleted) {
+        streakBreaks[day.weekday] = (streakBreaks[day.weekday] || 0) + 1;
+      }
+      prevCompleted = done;
+    }
+  }
+
+  // timeCluster: tasas de completado por franja horaria (mañana <12:00 vs tarde ≥12:00)
+  const calcClusterStats = (clusterHabits) => {
+    if (clusterHabits.length === 0) return null;
+    let totalSch = 0, totalComp = 0;
+    for (const habit of clusterHabits) {
+      for (const day of analyzedDays) {
+        if (day.scheduled.includes(habit.id)) {
+          totalSch++;
+          if (day.completed.includes(habit.id)) totalComp++;
+        }
+      }
+    }
+    return {
+      count: clusterHabits.length,
+      completionRate: totalSch > 0 ? Math.round((totalComp / totalSch) * 100) / 100 : null,
+    };
+  };
+
+  const morningHabits = habits.filter((h) => {
+    const hour = h.reminderTime ? parseInt(h.reminderTime.split(":")[0], 10) : NaN;
+    return !isNaN(hour) && hour < 12;
+  });
+  const afternoonHabits = habits.filter((h) => {
+    const hour = h.reminderTime ? parseInt(h.reminderTime.split(":")[0], 10) : NaN;
+    return !isNaN(hour) && hour >= 12;
+  });
+
+  return {
+    habits: habits.map((h) => ({
+      id: h.id,
+      title: h.title,
+      category: h.category || "otro",
+      reminderTime: h.reminderTime || null,
+    })),
+    totalLogs,
+    analyzedDays: analyzedDays.length,
+    dayOfWeekStats,
+    crossHabitPairs: topCrossPairs,
+    streakBreakPatterns: streakBreaks,
+    timeCluster: {
+      morning: calcClusterStats(morningHabits),
+      afternoon: calcClusterStats(afternoonHabits),
+    },
+  };
+}
+
+// Lógica compartida: genera los insights de patrones para un usuario en un período
+async function runPatternInsights(uid, now, { manual = false } = {}) {
+  const { start, end } = manual ? getCurrentMonthRange(now) : getPreviousMonthRange(now);
+  const periodId = getMonthId(start);
+
+  const context = await buildPatternContext(uid, start, end);
+
+  console.log(`[patterns] uid=${uid} analyzedDays=${context.analyzedDays} habits=${context.habits.length} totalLogs=${context.totalLogs}`);
+
+  // Threshold: mínimo 14 días con datos y ≥3 hábitos activos
+  if (context.analyzedDays < 14 || context.habits.length < 3) {
+    console.log(`[patterns] skipped — analyzedDays=${context.analyzedDays} (need 14), habits=${context.habits.length} (need 3)`);
+    return { skipped: true, reason: "insufficient_data", periodId };
+  }
+
+  const dayNames = { 1: "lunes", 2: "martes", 3: "miércoles", 4: "jueves", 5: "viernes", 6: "sábado", 7: "domingo" };
+
+  const dowLines = Object.entries(context.dayOfWeekStats)
+    .map(([d, s]) => `  ${dayNames[d] || d}: ${(s.completionRate * 100).toFixed(0)}% (${s.sampleDays} días de muestra)`)
+    .join("\n");
+
+  const crossLines =
+    context.crossHabitPairs.length > 0
+      ? context.crossHabitPairs
+          .map((p) => `  "${p.habitA}" → "${p.habitB}": P=${(p.pBgivenA * 100).toFixed(0)}% cuando A se completa (${p.coScheduledDays} días juntos)`)
+          .join("\n")
+      : "  Sin pares con suficientes días co-programados";
+
+  const breakLines =
+    Object.keys(context.streakBreakPatterns).length > 0
+      ? Object.entries(context.streakBreakPatterns)
+          .sort((a, b) => b[1] - a[1])
+          .map(([d, count]) => `  ${dayNames[d] || d}: ${count} rupturas de racha`)
+          .join("\n")
+      : "  Sin datos de rupturas";
+
+  const clusterLines = [
+    context.timeCluster.morning
+      ? `  Mañana (<12:00) — ${context.timeCluster.morning.count} hábitos: ${context.timeCluster.morning.completionRate !== null ? (context.timeCluster.morning.completionRate * 100).toFixed(0) + "%" : "sin datos"}`
+      : "  Sin hábitos de mañana",
+    context.timeCluster.afternoon
+      ? `  Tarde (≥12:00) — ${context.timeCluster.afternoon.count} hábitos: ${context.timeCluster.afternoon.completionRate !== null ? (context.timeCluster.afternoon.completionRate * 100).toFixed(0) + "%" : "sin datos"}`
+      : "  Sin hábitos de tarde",
+  ].join("\n");
+
+  const userMessage = `Analiza los patrones de mis hábitos del período ${start.toISOString().slice(0, 10)} al ${end.toISOString().slice(0, 10)}.
+
+Hábitos activos (${context.habits.length}):
+${context.habits.map((h) => `- "${h.title}" (${h.category})${h.reminderTime ? ` a las ${h.reminderTime}` : ""}`).join("\n")}
+
+Días analizados con hábitos programados: ${context.analyzedDays}
+Total check-ins completados en el período: ${context.totalLogs}
+
+Tasa de completado por día de la semana:
+${dowLines}
+
+Correlaciones entre hábitos (P(B | A completado)):
+${crossLines}
+
+Días donde más se inician rupturas de racha:
+${breakLines}
+
+Completado por franja horaria:
+${clusterLines}
+
+Genera entre 2 y 6 insights relevantes basándote exclusivamente en los datos anteriores.`;
+
+  const apiKey = geminiApiKey.value();
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.5-pro",
+    systemInstruction: PATTERN_INSIGHTS_PROMPT,
+  });
+
+  console.log(`[patterns] llamando a Gemini con ${context.habits.length} hábitos y ${context.crossHabitPairs.length} pares cruzados`);
+  const result = await model.generateContent(userMessage);
+  console.log(`[patterns] Gemini respondió`);
+  const text = result.response.text();
+
+  let parsed;
+  try {
+    const raw = extractJson(text);
+    console.log(`[patterns] JSON extraído (${raw.length} chars)`);
+    parsed = JSON.parse(raw);
+    console.log(`[patterns] parse OK — ${parsed.insights?.length ?? 0} insights, quality=${parsed.dataQuality}`);
+  } catch (e) {
+    console.error("[patterns] No se pudo parsear:", e.message, "| texto:", text.substring(0, 200));
+    throw new HttpsError("internal", "La IA devolvió un formato no válido.");
+  }
+
+  const insightDoc = {
+    periodId,
+    generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    periodStart: admin.firestore.Timestamp.fromDate(start),
+    periodEnd: admin.firestore.Timestamp.fromDate(end),
+    stats: {
+      totalHabits: context.habits.length,
+      totalLogs: context.totalLogs,
+      analyzedDays: context.analyzedDays,
+    },
+    insights: parsed.insights || [],
+    summary: parsed.summary || "",
+    dataQuality: parsed.dataQuality || "limited",
+  };
+
+  console.log(`[patterns] escribiendo en Firestore: users/${uid}/pattern_insights/${periodId}`);
+  await admin.firestore()
+    .collection("users").doc(uid)
+    .collection("pattern_insights").doc(periodId)
+    .set(insightDoc);
+  console.log(`[patterns] guardado OK`);
+
+  return { skipped: false, periodId };
+}
+
+// Trigger manual desde la app — analiza el mes en curso
+exports.generatePatternInsights = onCall(
+  {
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Debes iniciar sesión para usar el asistente."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const allowed = await checkRateLimit(uid);
+    if (!allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Has hecho demasiadas peticiones. Espera unos minutos."
+      );
+    }
+
+    try {
+      return await runPatternInsights(uid, new Date(), { manual: true });
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      console.error("Error en generatePatternInsights:", error);
+      throw new HttpsError(
+        "internal",
+        "No se pudo generar los insights. Inténtalo más tarde."
+      );
+    }
+  }
+);
+
+// Job programado: martes a las 10:00 Europa/Madrid (un día después de la revisión semanal)
+exports.patternInsightsJob = onSchedule(
+  {
+    schedule: "0 10 * * 2",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = new Date();
+
+    const usersSnapshot = await db
+      .collection("users")
+      .where("onboardingCompleted", "==", true)
+      .get();
+
+    console.log(`patternInsightsJob: procesando ${usersSnapshot.size} usuarios`);
+
+    let generated = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      try {
+        const result = await runPatternInsights(userDoc.id, now);
+        if (result.skipped) {
+          skipped += 1;
+        } else {
+          generated += 1;
+        }
+      } catch (e) {
+        errors += 1;
+        console.error(`Error procesando ${userDoc.id}:`, e.message);
+      }
+    }
+
+    console.log(
+      `patternInsightsJob terminado: ${generated} generados, ${skipped} omitidos, ${errors} errores`
+    );
+  }
+);
+
 // Extrae JSON limpio de la respuesta de Gemini (Blindado)
 function extractJson(text) {
   const jsonStartIndex = text.indexOf('{');
