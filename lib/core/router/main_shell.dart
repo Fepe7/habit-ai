@@ -243,11 +243,8 @@ class _MainShellState extends State<MainShell> {
         scheme: scheme,
         onDestinationSelected: (index) {
           if (isMainRoute && _pageController.hasClients) {
-            _pageController.animateToPage(
-              index,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
+            // tap en nav bar → salto instantáneo (sin animación de deslizamiento)
+            _pageController.jumpToPage(index);
           } else {
             context.go(_tabs[index].path);
           }
