@@ -1243,23 +1243,9 @@ class _HabitsScreenState extends State<HabitsScreen>
           ),
           const SizedBox(width: 8),
           PopupMenuButton<String>(
-            icon: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest,
-                shape: BoxShape.circle,
-                boxShadow: AppTheme.ambientShadow(),
-              ),
-              child: Icon(
-                Icons.more_vert_rounded,
-                color: scheme.onSurfaceVariant,
-                size: 22,
-              ),
-            ),
+            position: PopupMenuPosition.under,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            splashRadius: 20,
             onSelected: (v) {
               if (v == 'select') _enterSelection();
             },
@@ -1275,6 +1261,20 @@ class _HabitsScreenState extends State<HabitsScreen>
                 ),
               ),
             ],
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              child: Icon(
+                Icons.more_vert_rounded,
+                color: scheme.onSurfaceVariant,
+                size: 22,
+              ),
+            ),
           ),
         ],
       ),
