@@ -11,6 +11,7 @@ import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../domain/habit_log_model.dart';
 import 'widgets/habit_card.dart';
+import 'widgets/habit_stack_connector.dart';
 import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
@@ -65,6 +66,9 @@ class _HabitsScreenState extends State<HabitsScreen>
   final List<StreamSubscription> _notifSubs = [];
 
   bool _hasNewNotifs = false;
+
+  // IDs de hábitos que deben mostrar el nudge "¡Siguiente!" (siguiente en cadena)
+  final Set<String> _nudgeHabitIds = {};
 
   // modo selección múltiple
   bool _selectionMode = false;
@@ -254,6 +258,32 @@ class _HabitsScreenState extends State<HabitsScreen>
     }
 
     if (!wasCompleted) {
+      // nudge al siguiente hábito de la cadena (si existe y no está completado)
+      if (habit.stackId != null) {
+        final stackHabits = _currentTodayHabits
+            .where((h) => h.stackId == habit.stackId && h.isActive)
+            .toList()
+          ..sort((a, b) => a.stackOrder.compareTo(b.stackOrder));
+
+        final idx = stackHabits.indexWhere((h) => h.id == habit.id);
+        if (idx >= 0 && idx < stackHabits.length - 1) {
+          final nextHabit = stackHabits[idx + 1];
+          if (!(_completedToday[nextHabit.id] ?? false)) {
+            setState(() => _nudgeHabitIds.add(nextHabit.id));
+            // quitar el nudge tras 4 segundos
+            Future.delayed(const Duration(seconds: 4), () {
+              if (mounted) setState(() => _nudgeHabitIds.remove(nextHabit.id));
+            });
+          }
+        } else if (idx == stackHabits.length - 1) {
+          // era el último de la cadena: comprobar si toda la cadena está completa
+          final allDone = stackHabits.every((h) => _completedToday[h.id] == true);
+          if (allDone && mounted) {
+            AppSnackBar.showSuccess(context, '¡Cadena completa! 🔥');
+          }
+        }
+      }
+
       try {
         final updated = await _habitRepo.getHabit(habit.id);
         if (updated != null && mounted) {
@@ -296,6 +326,7 @@ class _HabitsScreenState extends State<HabitsScreen>
       if (updated.groupId != habit.groupId) {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
+      // los cambios de cadena se gestionan directamente desde EditHabitSheet
       if (mounted) {
         AppSnackBar.showSuccess(context, 'Hábito actualizado');
       }
@@ -590,6 +621,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             pendingRenegotiations: _pendingRenegotiations,
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
+                            nudgeHabitIds: _nudgeHabitIds,
                           ),
                         );
                       }),
@@ -612,6 +644,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             pendingRenegotiations: _pendingRenegotiations,
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
+                            nudgeHabitIds: _nudgeHabitIds,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -756,6 +789,85 @@ class _HabitsScreenState extends State<HabitsScreen>
   }
 }
 
+// ==================== HELPER DE CADENAS DE HÁBITOS ====================
+
+/// Convierte una lista plana de hábitos en widgets, agrupando los encadenados
+/// (mismo stackId) con conectores visuales entre ellos. Los hábitos sin cadena
+/// se renderizan como cards normales. Las cadenas se renderizan primero, luego
+/// los hábitos individuales.
+List<Widget> _buildStackedHabitWidgets({
+  required List<HabitModel> habits,
+  required Map<String, bool> completedToday,
+  required Set<String> nudgeHabitIds,
+  required void Function(HabitModel) onToggleHabit,
+  required void Function(HabitModel) onTapHabit,
+  required void Function(HabitModel) onEditHabit,
+  required void Function(HabitModel) onDeleteHabit,
+  required bool selectionMode,
+  required Set<String> selectedIds,
+  required void Function(String) onToggleSelect,
+  required void Function(String) onEnterSelection,
+  required Map<String, RenegotiationModel> pendingRenegotiations,
+  required void Function(HabitModel) onApplyRenegotiation,
+  required void Function(String) onDismissRenegotiation,
+}) {
+  // separar encadenados de individuales
+  final Map<String, List<HabitModel>> byStack = {};
+  final List<HabitModel> individuals = [];
+
+  for (final h in habits) {
+    if (h.stackId != null) {
+      byStack.putIfAbsent(h.stackId!, () => []).add(h);
+    } else {
+      individuals.add(h);
+    }
+  }
+
+  // ordenar cada cadena por stackOrder
+  for (final list in byStack.values) {
+    list.sort((a, b) => a.stackOrder.compareTo(b.stackOrder));
+  }
+
+  Widget buildCard(HabitModel habit, {int stackPosition = 0}) => HabitCard(
+        key: ValueKey(habit.id),
+        habit: habit,
+        isCompletedToday: completedToday[habit.id] ?? false,
+        onToggle: () => onToggleHabit(habit),
+        onTap: () => onTapHabit(habit),
+        onEdit: () => onEditHabit(habit),
+        onDelete: () => onDeleteHabit(habit),
+        isInsideGroup: true,
+        selectionMode: selectionMode,
+        isSelected: selectedIds.contains(habit.id),
+        onEnterSelection: () => onEnterSelection(habit.id),
+        onToggleSelect: () => onToggleSelect(habit.id),
+        renegotiation: pendingRenegotiations[habit.id],
+        onApplyRenegotiation: () => onApplyRenegotiation(habit),
+        onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
+        isNextInStack: nudgeHabitIds.contains(habit.id),
+        stackPosition: stackPosition,
+      );
+
+  final widgets = <Widget>[];
+
+  // cadenas primero
+  for (final stackHabits in byStack.values) {
+    for (int i = 0; i < stackHabits.length; i++) {
+      widgets.add(buildCard(stackHabits[i], stackPosition: i));
+      if (i < stackHabits.length - 1) {
+        widgets.add(const HabitStackConnector());
+      }
+    }
+  }
+
+  // hábitos individuales (sin cadena)
+  for (final h in individuals) {
+    widgets.add(buildCard(h));
+  }
+
+  return widgets;
+}
+
 // ==================== HERO DE PROGRESO ====================
 
 class _DailyProgressHero extends StatelessWidget {
@@ -885,6 +997,7 @@ class _GroupSection extends StatelessWidget {
   final Map<String, RenegotiationModel> pendingRenegotiations;
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
+  final Set<String> nudgeHabitIds;
 
   const _GroupSection({
     required this.group,
@@ -906,6 +1019,7 @@ class _GroupSection extends StatelessWidget {
     this.pendingRenegotiations = const {},
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
+    this.nudgeHabitIds = const {},
   });
 
   @override
@@ -1057,23 +1171,22 @@ class _GroupSection extends StatelessWidget {
                       ),
                     )
                   else
-                    ...habits.map((habit) => HabitCard(
-                      key: ValueKey(habit.id),
-                      habit: habit,
-                      isCompletedToday: completedToday[habit.id] ?? false,
-                      onToggle: () => onToggleHabit(habit),
-                      onTap: () => onTapHabit(habit),
-                      onEdit: () => onEditHabit(habit),
-                      onDelete: () => onDeleteHabit(habit),
-                      isInsideGroup: true,
+                    ..._buildStackedHabitWidgets(
+                      habits: habits,
+                      completedToday: completedToday,
+                      nudgeHabitIds: nudgeHabitIds,
+                      onToggleHabit: onToggleHabit,
+                      onTapHabit: onTapHabit,
+                      onEditHabit: onEditHabit,
+                      onDeleteHabit: onDeleteHabit,
                       selectionMode: selectionMode,
-                      isSelected: selectedIds.contains(habit.id),
-                      onEnterSelection: () => onEnterSelection(habit.id),
-                      onToggleSelect: () => onToggleSelect(habit.id),
-                      renegotiation: pendingRenegotiations[habit.id],
-                      onApplyRenegotiation: () => onApplyRenegotiation(habit),
-                      onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
-                    )),
+                      selectedIds: selectedIds,
+                      onToggleSelect: onToggleSelect,
+                      onEnterSelection: onEnterSelection,
+                      pendingRenegotiations: pendingRenegotiations,
+                      onApplyRenegotiation: onApplyRenegotiation,
+                      onDismissRenegotiation: onDismissRenegotiation,
+                    ),
                 ],
               ),
               crossFadeState: isExpanded
@@ -1105,6 +1218,7 @@ class _UngroupedSection extends StatelessWidget {
   final Map<String, RenegotiationModel> pendingRenegotiations;
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
+  final Set<String> nudgeHabitIds;
 
   const _UngroupedSection({
     required this.habits,
@@ -1120,6 +1234,7 @@ class _UngroupedSection extends StatelessWidget {
     this.pendingRenegotiations = const {},
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
+    this.nudgeHabitIds = const {},
   });
 
   @override
@@ -1162,7 +1277,7 @@ class _UngroupedSection extends StatelessWidget {
             ),
           ),
 
-          // cards de habitos sueltos en contenedor
+          // cards de habitos sueltos en contenedor (con soporte de cadenas)
           Container(
             decoration: BoxDecoration(
               color: scheme.surfaceContainerLowest,
@@ -1171,25 +1286,22 @@ class _UngroupedSection extends StatelessWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
-              children: [
-                ...habits.map((habit) => HabitCard(
-                  key: ValueKey(habit.id),
-                  habit: habit,
-                  isCompletedToday: completedToday[habit.id] ?? false,
-                  onToggle: () => onToggleHabit(habit),
-                  onTap: () => onTapHabit(habit),
-                  onEdit: () => onEditHabit(habit),
-                  onDelete: () => onDeleteHabit(habit),
-                  isInsideGroup: true,
-                  selectionMode: selectionMode,
-                  isSelected: selectedIds.contains(habit.id),
-                  onEnterSelection: () => onEnterSelection(habit.id),
-                  onToggleSelect: () => onToggleSelect(habit.id),
-                  renegotiation: pendingRenegotiations[habit.id],
-                  onApplyRenegotiation: () => onApplyRenegotiation(habit),
-                  onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
-                )),
-              ],
+              children: _buildStackedHabitWidgets(
+                habits: habits,
+                completedToday: completedToday,
+                nudgeHabitIds: nudgeHabitIds,
+                onToggleHabit: onToggleHabit,
+                onTapHabit: onTapHabit,
+                onEditHabit: onEditHabit,
+                onDeleteHabit: onDeleteHabit,
+                selectionMode: selectionMode,
+                selectedIds: selectedIds,
+                onToggleSelect: onToggleSelect,
+                onEnterSelection: onEnterSelection,
+                pendingRenegotiations: pendingRenegotiations,
+                onApplyRenegotiation: onApplyRenegotiation,
+                onDismissRenegotiation: onDismissRenegotiation,
+              ),
             ),
           ),
         ],

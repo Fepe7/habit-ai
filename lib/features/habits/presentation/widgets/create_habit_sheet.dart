@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../data/habit_repository.dart';
 import '../../domain/habit_model.dart';
 
 // Bottom sheet para crear un hábito manualmente
@@ -32,7 +34,28 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   final List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
   String? _reminderTime;
 
+  // hábito seleccionado como ancla de cadena (opcional)
+  HabitModel? _stackAnchor;
+  List<HabitModel> _availableHabits = [];
+
   static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableHabits();
+  }
+
+  Future<void> _loadAvailableHabits() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final habits = await HabitRepository(uid: uid).getActiveHabits();
+      if (mounted) {
+        setState(() => _availableHabits = habits);
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -55,6 +78,8 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       reminderTime: _reminderTime,
       createdAt: DateTime.now(),
       groupId: widget.groupId,
+      // stackAfterHabitId transitorio: el repo lo procesa al crear
+      stackAfterHabitId: _stackAnchor?.id,
     );
 
     Navigator.of(context).pop(habit);
@@ -256,7 +281,43 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               onPickTime: _pickTime,
               onClear: () => setState(() => _reminderTime = null),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
+
+            // sección encadenamiento (solo si hay hábitos disponibles)
+            if (_availableHabits.isNotEmpty) ...[
+              _SheetLabel(label: 'Encadenar después de...'),
+              const SizedBox(height: 6),
+              Text(
+                'Se mostrará como siguiente paso al completar el hábito ancla',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  // chip "Ninguno" (quitar ancla)
+                  _StackChip(
+                    label: 'Ninguno',
+                    icon: Icons.link_off_rounded,
+                    selected: _stackAnchor == null,
+                    onTap: () => setState(() => _stackAnchor = null),
+                    scheme: scheme,
+                  ),
+                  ..._availableHabits.map((h) => _StackChip(
+                        label: h.title,
+                        icon: Icons.link_rounded,
+                        selected: _stackAnchor?.id == h.id,
+                        onTap: () => setState(() => _stackAnchor = h),
+                        scheme: scheme,
+                      )),
+                ],
+              ),
+              const SizedBox(height: 28),
+            ] else
+              const SizedBox(height: 4),
 
             // CTA
             GradientButton(
@@ -288,6 +349,64 @@ class _SheetLabel extends StatelessWidget {
         color: scheme.onSurfaceVariant,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _StackChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  final ColorScheme scheme;
+
+  const _StackChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected
+              ? scheme.primaryContainer
+              : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? scheme.primary
+                : scheme.outlineVariant.withValues(alpha: 0.15),
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? scheme.primary : scheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

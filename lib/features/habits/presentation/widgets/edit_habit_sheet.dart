@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/habit_group_repository.dart';
+import '../../data/habit_repository.dart';
 import '../../domain/habit_group_model.dart';
 import '../../domain/habit_model.dart';
 
@@ -43,6 +44,10 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   String? _selectedGroupId;
   List<HabitGroupModel> _groups = [];
 
+  // cadena: hábitos en la misma cadena que este (para mostrar contexto)
+  List<HabitModel> _stackSiblings = [];
+  bool _stackLoaded = false;
+
   static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   @override
@@ -56,6 +61,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     _reminderTime = widget.habit.reminderTime;
     _selectedGroupId = widget.habit.groupId;
     _loadGroups();
+    _loadStackSiblings();
   }
 
   Future<void> _loadGroups() async {
@@ -65,6 +71,41 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       final groups =
           await HabitGroupRepository(uid: uid).watchGroups().first;
       if (mounted) setState(() => _groups = groups);
+    } catch (_) {}
+  }
+
+  Future<void> _loadStackSiblings() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || widget.habit.stackId == null) {
+      if (mounted) setState(() => _stackLoaded = true);
+      return;
+    }
+    try {
+      final siblings = await HabitRepository(uid: uid)
+          .watchStackHabits(widget.habit.stackId!)
+          .first;
+      if (mounted) {
+        setState(() {
+          _stackSiblings = siblings;
+          _stackLoaded = true;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _stackLoaded = true);
+    }
+  }
+
+  Future<void> _removeFromStack() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      await HabitRepository(uid: uid).removeFromStack(widget.habit.id);
+      if (mounted) {
+        setState(() {
+          _stackSiblings = [];
+          _stackLoaded = true;
+        });
+      }
     } catch (_) {}
   }
 
@@ -94,6 +135,9 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       createdAt: widget.habit.createdAt,
       isActive: widget.habit.isActive,
       groupId: _selectedGroupId,
+      // preservar campos de cadena
+      stackId: widget.habit.stackId,
+      stackOrder: widget.habit.stackOrder,
     );
 
     Navigator.of(context).pop(updated);
@@ -317,9 +361,146 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                       )),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
             ] else
               const SizedBox(height: 4),
+
+            // sección cadena de hábitos
+            if (_stackLoaded) ...[
+              _SheetLabel(label: 'Cadena de hábitos'),
+              const SizedBox(height: 12),
+              if (_stackSiblings.isNotEmpty) ...[
+                // mostrar los hábitos de la cadena con indicador de posición
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: scheme.primary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.link_rounded,
+                              size: 14, color: scheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_stackSiblings.length} hábitos encadenados',
+                            style:
+                                Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      color: scheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ..._stackSiblings.map((h) {
+                        final isThis = h.id == widget.habit.id;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isThis
+                                      ? scheme.primary
+                                      : scheme.outlineVariant.withValues(
+                                          alpha: 0.3),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${h.stackOrder + 1}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: isThis
+                                          ? Colors.white
+                                          : scheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  h.title,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: isThis
+                                            ? scheme.onSurface
+                                            : scheme.onSurfaceVariant,
+                                        fontWeight: isThis
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
+                                      ),
+                                ),
+                              ),
+                              if (isThis)
+                                Text(
+                                  '← este',
+                                  style:
+                                      Theme.of(context).textTheme.labelSmall?.copyWith(
+                                            color: scheme.primary,
+                                          ),
+                                ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 10),
+                      // botón para salir de la cadena
+                      GestureDetector(
+                        onTap: _removeFromStack,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppTheme.error.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.link_off_rounded,
+                                  size: 14, color: AppTheme.error),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Quitar de la cadena',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else
+                Text(
+                  'Este hábito no pertenece a ninguna cadena. Puedes encadenarlo al crear hábitos nuevos.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              const SizedBox(height: 28),
+            ],
 
           // botón guardar debajo del recordatorio
           GradientButton(

@@ -17,11 +17,27 @@ class HabitModel {
   final String? groupId;
   final String? challengeId;
 
+  // --- Habit Stacking (Atomic Habits: "Después de X, haré Y") ---
+  // stackId = ID del hábito raíz de la cadena (null si no pertenece a ninguna)
+  final String? stackId;
+  // Posición en la cadena (0 = ancla/raíz, 1+ = encadenados)
+  final int stackOrder;
+
+  // Campo transitorio — NO se persiste en Firestore.
+  // Usado para pasar "encadenar después de este hábito" desde la UI al repositorio.
+  final String? stackAfterHabitId;
+
   /// Visibilidad en el perfil: 'public' | 'followers' | 'private'
   final String visibility;
 
   /// true si el hábito aparece en algún perfil (público o solo seguidores)
   bool get isVisibleToAnyone => visibility != 'private';
+
+  /// true si pertenece a una cadena de hábitos
+  bool get isInStack => stackId != null;
+
+  /// true si es el ancla (primer hábito) de su cadena
+  bool get isStackAnchor => stackId != null && stackOrder == 0;
 
   const HabitModel({
     required this.id,
@@ -39,6 +55,9 @@ class HabitModel {
     this.groupId,
     this.challengeId,
     this.visibility = 'private',
+    this.stackId,
+    this.stackOrder = 0,
+    this.stackAfterHabitId,
   });
 
   // Crear desde un doc de Firestore (el id va aparte porque no viene en data())
@@ -61,6 +80,9 @@ class HabitModel {
       // retrocompat: si no hay 'visibility', leer el bool antiguo
       visibility: json['visibility'] as String? ??
           ((json['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private'),
+      stackId: json['stackId'] as String?,
+      stackOrder: json['stackOrder'] as int? ?? 0,
+      // stackAfterHabitId es transitorio, nunca viene de Firestore
     );
   }
 
@@ -81,6 +103,9 @@ class HabitModel {
       'groupId': groupId,
       'challengeId': challengeId,
       'visibility': visibility,
+      'stackId': stackId,
+      'stackOrder': stackOrder,
+      // stackAfterHabitId es transitorio, no va a Firestore
     };
   }
 
@@ -98,6 +123,9 @@ class HabitModel {
     String? groupId,
     String? challengeId,
     String? visibility,
+    String? stackId,
+    int? stackOrder,
+    String? stackAfterHabitId,
   }) {
     return HabitModel(
       id: id,
@@ -115,6 +143,9 @@ class HabitModel {
       groupId: groupId ?? this.groupId,
       challengeId: challengeId ?? this.challengeId,
       visibility: visibility ?? this.visibility,
+      stackId: stackId ?? this.stackId,
+      stackOrder: stackOrder ?? this.stackOrder,
+      stackAfterHabitId: stackAfterHabitId ?? this.stackAfterHabitId,
     );
   }
 }

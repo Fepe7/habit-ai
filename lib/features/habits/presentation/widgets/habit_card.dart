@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/habit_model.dart';
 import '../../../ai/domain/renegotiation_model.dart';
@@ -24,6 +25,12 @@ class HabitCard extends StatelessWidget {
   final VoidCallback? onApplyRenegotiation;
   final VoidCallback? onDismissRenegotiation;
 
+  // --- Stacking ---
+  // true si este hábito es el siguiente en completarse dentro de su cadena
+  final bool isNextInStack;
+  // posición en la cadena (0 = ancla, 1+ = encadenados)
+  final int stackPosition;
+
   const HabitCard({
     super.key,
     required this.habit,
@@ -40,6 +47,8 @@ class HabitCard extends StatelessWidget {
     this.renegotiation,
     this.onApplyRenegotiation,
     this.onDismissRenegotiation,
+    this.isNextInStack = false,
+    this.stackPosition = 0,
   });
 
   @override
@@ -58,6 +67,32 @@ class HabitCard extends StatelessWidget {
                 : scheme.surfaceContainerLowest;
 
     final hasPendingReno = renegotiation != null && renegotiation!.isPending;
+
+    // chip "¡Siguiente!" visible cuando este hábito es el próximo en su cadena
+    final nextChip = isNextInStack && !isCompletedToday
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              gradient: AppTheme.heroGradient,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.link_rounded, size: 10, color: Colors.white),
+                const SizedBox(width: 4),
+                Text(
+                  '¡Siguiente!',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          )
+        : null;
 
     Widget card = GestureDetector(
       onLongPress: selectionMode ? null : onEnterSelection,
@@ -185,6 +220,8 @@ class HabitCard extends StatelessWidget {
                               textColor: scheme.onSurfaceVariant,
                               bgColor: scheme.surfaceContainerHighest,
                             ),
+                          // chip de nudge: es el siguiente en la cadena
+                          ?nextChip,
                         ],
                       ),
                     ],
@@ -257,6 +294,17 @@ class HabitCard extends StatelessWidget {
         ],      // cierra Column.children
       ),        // cierra Column
     ));
+
+    // efecto shimmer en el hábito que es siguiente en la cadena
+    if (isNextInStack && !isCompletedToday) {
+      card = card
+          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .shimmer(
+            duration: 1400.ms,
+            delay: 200.ms,
+            color: scheme.primary.withValues(alpha: 0.12),
+          );
+    }
 
     // separador sutil entre cards dentro de grupo (sin linea 1px visible)
     if (isInsideGroup) {

@@ -75,6 +75,7 @@ class HabitRepository {
   }
 
   // Crear habito nuevo (+ sync en perfil público si está activo)
+  // Si habit.stackAfterHabitId != null, encadena el nuevo hábito tras ese ancla.
   Future<String> createHabit(HabitModel habit) async {
     final docRef = await _habitsRef.add(habit.toJson());
     final newId = docRef.id;
@@ -102,6 +103,15 @@ class HabitRepository {
       _withId(habit, newId),
     );
 
+    // encadenar si el usuario seleccionó un ancla en el sheet de creación
+    if (habit.stackAfterHabitId != null) {
+      try {
+        await addToStack(newId, habit.stackAfterHabitId!);
+      } catch (_) {
+        // error de cadena no bloquea la creación
+      }
+    }
+
     return newId;
   }
 
@@ -121,6 +131,8 @@ class HabitRepository {
         isActive: h.isActive,
         groupId: h.groupId,
         visibility: h.visibility,
+        stackId: h.stackId,
+        stackOrder: h.stackOrder,
       );
 
   // Crear varios habitos a la vez (para cuando la IA genera un plan)
@@ -275,10 +287,12 @@ class HabitRepository {
   // No borramos, solo desactivamos para no perder los logs
   // Si el perfil es público, quitamos el hábito del espejo público
   // Si el hábito está vinculado a un reto, abandonamos el reto
+  // Si el hábito está en una cadena, lo sacamos y reordenamos
   Future<void> deactivateHabit(String habitId) async {
-    // comprobar si el hábito está vinculado a un reto antes del batch
+    // leer el hábito antes del batch para conocer challengeId y stackId
     final habitSnap = await _habitsRef.doc(habitId).get();
     final challengeId = habitSnap.data()?['challengeId'] as String?;
+    final stackId = habitSnap.data()?['stackId'] as String?;
 
     final batch = _firestore.batch();
     batch.update(_habitsRef.doc(habitId), {'isActive': false});
@@ -289,6 +303,13 @@ class HabitRepository {
 
     await batch.commit();
     await NotificationService.instance.cancelHabitReminders(habitId);
+
+    // sacar de la cadena y reordenar los que queden
+    if (stackId != null) {
+      try {
+        await removeFromStack(habitId);
+      } catch (_) {}
+    }
 
     // abandonar reto vinculado
     if (challengeId != null) {
@@ -621,6 +642,127 @@ class HabitRepository {
         await _publicHabitsRef.doc(habitId).delete();
       } catch (_) {}
     }
+  }
+
+  // ==================== HABIT STACKING ====================
+
+  // Stream en tiempo real de todos los hábitos de una cadena (por stackId)
+  Stream<List<HabitModel>> watchStackHabits(String stackId) {
+    return _habitsRef
+        .where('stackId', isEqualTo: stackId)
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((d) => HabitModel.fromJson(d.data(), d.id))
+            .toList()
+          ..sort((a, b) => a.stackOrder.compareTo(b.stackOrder)));
+  }
+
+  // Encadena un hábito tras un ancla.
+  // Si el ancla no tiene stackId, se convierte en raíz de una nueva cadena.
+  // El nuevo hábito ocupa el siguiente puesto libre al final de la cadena.
+  Future<void> addToStack(String habitId, String anchorHabitId) async {
+    final anchorDoc = await _habitsRef.doc(anchorHabitId).get();
+    if (!anchorDoc.exists) return;
+
+    final anchorData = anchorDoc.data()!;
+    // si el ancla no tiene stackId, ella misma es la raíz: su ID es el stackId
+    final String stackId = anchorData['stackId'] as String? ?? anchorHabitId;
+
+    // contar cuántos hábitos hay ya en la cadena para calcular el siguiente orden
+    final existingSnap = await _habitsRef
+        .where('stackId', isEqualTo: stackId)
+        .where('isActive', isEqualTo: true)
+        .get();
+    final nextOrder = existingSnap.docs.length; // 0-based: si hay 1, el nuevo es posición 1
+
+    final batch = _firestore.batch();
+
+    // si el ancla era raíz sin stackId, actualizarla para que tenga stackId = su propio ID
+    if (anchorData['stackId'] == null) {
+      batch.update(_habitsRef.doc(anchorHabitId), {
+        'stackId': stackId,
+        'stackOrder': 0,
+      });
+    }
+
+    // asignar stackId y posición al hábito nuevo
+    batch.update(_habitsRef.doc(habitId), {
+      'stackId': stackId,
+      'stackOrder': nextOrder,
+    });
+
+    await batch.commit();
+  }
+
+  // Saca un hábito de su cadena y reordena los que quedan
+  Future<void> removeFromStack(String habitId) async {
+    final habitDoc = await _habitsRef.doc(habitId).get();
+    if (!habitDoc.exists) return;
+
+    final data = habitDoc.data()!;
+    final stackId = data['stackId'] as String?;
+    if (stackId == null) return;
+
+    final removedOrder = data['stackOrder'] as int? ?? 0;
+
+    // limpiar el hábito que sale
+    await _habitsRef.doc(habitId).update({
+      'stackId': null,
+      'stackOrder': 0,
+    });
+
+    // obtener los hábitos restantes de la cadena para reordenar
+    final remainingSnap = await _habitsRef
+        .where('stackId', isEqualTo: stackId)
+        .where('isActive', isEqualTo: true)
+        .get();
+
+    if (remainingSnap.docs.isEmpty) return;
+
+    // los que estaban después del removido bajan su orden en 1
+    final batch = _firestore.batch();
+    for (final doc in remainingSnap.docs) {
+      final order = doc.data()['stackOrder'] as int? ?? 0;
+      if (order > removedOrder) {
+        batch.update(doc.reference, {'stackOrder': order - 1});
+      }
+    }
+
+    // si solo queda un hábito en la cadena, ya no forma una cadena real
+    // se mantiene con stackId para que pueda volver a crecer, pero si queda 1, limpiar
+    if (remainingSnap.docs.length == 1) {
+      batch.update(remainingSnap.docs.first.reference, {
+        'stackId': null,
+        'stackOrder': 0,
+      });
+    }
+
+    await batch.commit();
+  }
+
+  // Reordena los hábitos de una cadena según el nuevo orden de IDs
+  Future<void> reorderStack(String stackId, List<String> orderedIds) async {
+    final batch = _firestore.batch();
+    for (int i = 0; i < orderedIds.length; i++) {
+      batch.update(_habitsRef.doc(orderedIds[i]), {'stackOrder': i});
+    }
+    await batch.commit();
+  }
+
+  // Disuelve una cadena: quita stackId/stackOrder de todos sus hábitos
+  Future<void> dissolveStack(String stackId) async {
+    final snap = await _habitsRef
+        .where('stackId', isEqualTo: stackId)
+        .get();
+
+    if (snap.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (final doc in snap.docs) {
+      batch.update(doc.reference, {'stackId': null, 'stackOrder': 0});
+    }
+    await batch.commit();
   }
 
   // Comprobar si hoy hay un log de tipo escudo activo
