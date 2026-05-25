@@ -32,6 +32,8 @@ class HabitCard extends StatelessWidget {
   final int stackPosition;
   // total de hábitos en la cadena (0 si no pertenece a ninguna)
   final int stackTotal;
+  // título del hábito que completó el usuario para llegar aquí (contexto del nudge)
+  final String? nudgeFromHabitTitle;
 
   const HabitCard({
     super.key,
@@ -52,6 +54,7 @@ class HabitCard extends StatelessWidget {
     this.isNextInStack = false,
     this.stackPosition = 0,
     this.stackTotal = 0,
+    this.nudgeFromHabitTitle,
   });
 
   @override
@@ -71,7 +74,11 @@ class HabitCard extends StatelessWidget {
 
     final hasPendingReno = renegotiation != null && renegotiation!.isPending;
 
-    // chip "¡Siguiente!" visible cuando este hábito es el próximo en su cadena
+    // chip de contexto: "🔗 Después de X" o "¡Siguiente!" según si hay título disponible
+    final nudgeLabel = nudgeFromHabitTitle != null
+        ? 'Después de "${nudgeFromHabitTitle!.length > 18 ? '${nudgeFromHabitTitle!.substring(0, 16)}…' : nudgeFromHabitTitle}"'
+        : '¡Siguiente!';
+
     final nextChip = isNextInStack && !isCompletedToday
         ? Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -85,7 +92,7 @@ class HabitCard extends StatelessWidget {
                 const Icon(Icons.link_rounded, size: 10, color: Colors.white),
                 const SizedBox(width: 4),
                 Text(
-                  '¡Siguiente!',
+                  nudgeLabel,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,

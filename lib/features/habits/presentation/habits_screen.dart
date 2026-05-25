@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
@@ -12,6 +13,7 @@ import '../domain/habit_group_model.dart';
 import '../domain/habit_log_model.dart';
 import 'widgets/habit_card.dart';
 import 'widgets/habit_stack_connector.dart';
+import 'widgets/stack_complete_overlay.dart';
 import 'widgets/empty_habits_view.dart';
 import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
@@ -67,8 +69,10 @@ class _HabitsScreenState extends State<HabitsScreen>
 
   bool _hasNewNotifs = false;
 
-  // IDs de hábitos que deben mostrar el nudge "¡Siguiente!" (siguiente en cadena)
+  // IDs de hábitos que deben mostrar el nudge (siguiente en cadena)
   final Set<String> _nudgeHabitIds = {};
+  // título del hábito completado que disparó el nudge, por ID del receptor
+  final Map<String, String> _nudgeFromTitles = {};
 
   // modo selección múltiple
   bool _selectionMode = false;
@@ -269,17 +273,26 @@ class _HabitsScreenState extends State<HabitsScreen>
         if (idx >= 0 && idx < stackHabits.length - 1) {
           final nextHabit = stackHabits[idx + 1];
           if (!(_completedToday[nextHabit.id] ?? false)) {
-            setState(() => _nudgeHabitIds.add(nextHabit.id));
+            setState(() {
+              _nudgeHabitIds.add(nextHabit.id);
+              // guardar el título del hábito que dispara el nudge
+              _nudgeFromTitles[nextHabit.id] = habit.title;
+            });
             // quitar el nudge tras 4 segundos
             Future.delayed(const Duration(seconds: 4), () {
-              if (mounted) setState(() => _nudgeHabitIds.remove(nextHabit.id));
+              if (mounted) {
+                setState(() {
+                  _nudgeHabitIds.remove(nextHabit.id);
+                  _nudgeFromTitles.remove(nextHabit.id);
+                });
+              }
             });
           }
         } else if (idx == stackHabits.length - 1) {
-          // era el último de la cadena: comprobar si toda la cadena está completa
+          // era el último: comprobar si toda la cadena está completa
           final allDone = stackHabits.every((h) => _completedToday[h.id] == true);
           if (allDone && mounted) {
-            AppSnackBar.showSuccess(context, '¡Cadena completa! 🔥');
+            StackCompleteOverlay.show(context, habitCount: stackHabits.length);
           }
         }
       }
@@ -427,6 +440,11 @@ class _HabitsScreenState extends State<HabitsScreen>
   Future<void> _doCreateHabit() async {
     final habit = await CreateHabitSheet.show(context);
     if (habit == null) return;
+
+    // saber si es la primera cadena del usuario antes de crear
+    final isFirstStack = habit.stackAfterHabitId != null &&
+        !_currentTodayHabits.any((h) => h.stackId != null);
+
     try {
       await _habitRepo.createHabit(habit);
     } catch (e) {
@@ -434,12 +452,31 @@ class _HabitsScreenState extends State<HabitsScreen>
       return;
     }
     if (mounted) AppSnackBar.showSuccess(context, 'Hábito creado');
+
+    // onboarding: mostrar explicación la primera vez que se crea una cadena
+    if (isFirstStack && mounted) {
+      final prefs = await SharedPreferences.getInstance();
+      final shown = prefs.getBool('stack_onboarding_shown') ?? false;
+      if (!shown && mounted) {
+        await prefs.setBool('stack_onboarding_shown', true);
+        _showStackOnboarding();
+      }
+    }
+
     try {
       final unlocked = await _achievementChecker.checkAfterCreate();
       if (unlocked.isNotEmpty && mounted) {
         AchievementOverlay.showUnlocked(context, unlocked);
       }
     } catch (_) {}
+  }
+
+  void _showStackOnboarding() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _StackOnboardingSheet(),
+    );
   }
 
   Future<void> _doCreateGroup() async {
@@ -622,6 +659,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
+                            nudgeFromTitles: _nudgeFromTitles,
                           ),
                         );
                       }),
@@ -645,6 +683,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
+                            nudgeFromTitles: _nudgeFromTitles,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -799,6 +838,7 @@ List<Widget> _buildStackedHabitWidgets({
   required List<HabitModel> habits,
   required Map<String, bool> completedToday,
   required Set<String> nudgeHabitIds,
+  Map<String, String> nudgeFromTitles = const {},
   required void Function(HabitModel) onToggleHabit,
   required void Function(HabitModel) onTapHabit,
   required void Function(HabitModel) onEditHabit,
@@ -852,6 +892,7 @@ List<Widget> _buildStackedHabitWidgets({
         isNextInStack: nudgeHabitIds.contains(habit.id),
         stackPosition: stackPosition,
         stackTotal: stackTotal,
+        nudgeFromHabitTitle: nudgeFromTitles[habit.id],
       );
 
   final widgets = <Widget>[];
@@ -1119,6 +1160,7 @@ class _GroupSection extends StatelessWidget {
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
+  final Map<String, String> nudgeFromTitles;
 
   const _GroupSection({
     required this.group,
@@ -1141,6 +1183,7 @@ class _GroupSection extends StatelessWidget {
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
+    this.nudgeFromTitles = const {},
   });
 
   @override
@@ -1296,6 +1339,7 @@ class _GroupSection extends StatelessWidget {
                       habits: habits,
                       completedToday: completedToday,
                       nudgeHabitIds: nudgeHabitIds,
+                      nudgeFromTitles: nudgeFromTitles,
                       onToggleHabit: onToggleHabit,
                       onTapHabit: onTapHabit,
                       onEditHabit: onEditHabit,
@@ -1340,6 +1384,7 @@ class _UngroupedSection extends StatelessWidget {
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
+  final Map<String, String> nudgeFromTitles;
 
   const _UngroupedSection({
     required this.habits,
@@ -1356,6 +1401,7 @@ class _UngroupedSection extends StatelessWidget {
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
+    this.nudgeFromTitles = const {},
   });
 
   @override
@@ -1411,6 +1457,7 @@ class _UngroupedSection extends StatelessWidget {
                 habits: habits,
                 completedToday: completedToday,
                 nudgeHabitIds: nudgeHabitIds,
+                nudgeFromTitles: nudgeFromTitles,
                 onToggleHabit: onToggleHabit,
                 onTapHabit: onTapHabit,
                 onEditHabit: onEditHabit,
@@ -1427,6 +1474,166 @@ class _UngroupedSection extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ==================== ONBOARDING CADENAS ====================
+
+/// Bottom sheet explicativo que aparece la primera vez que el usuario crea una cadena.
+class _StackOnboardingSheet extends StatelessWidget {
+  const _StackOnboardingSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: scheme.outlineVariant.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppTheme.heroGradient,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.link_rounded, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¡Primera cadena creada!',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Así funciona el hábito atómico',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _OnboardingStep(
+            number: '1',
+            title: 'Completa el hábito ancla',
+            subtitle: 'El primer hábito de la cadena se resalta cuando lo terminas.',
+            scheme: scheme,
+          ),
+          const SizedBox(height: 16),
+          _OnboardingStep(
+            number: '2',
+            title: 'El siguiente se ilumina',
+            subtitle: 'Verás "Después de X" en el hábito encadenado. Es tu señal.',
+            scheme: scheme,
+          ),
+          const SizedBox(height: 16),
+          _OnboardingStep(
+            number: '3',
+            title: 'Completa toda la cadena',
+            subtitle: 'Cuando terminas todos recibes una celebración especial 🔥',
+            scheme: scheme,
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('¡Entendido!'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OnboardingStep extends StatelessWidget {
+  final String number;
+  final String title;
+  final String subtitle;
+  final ColorScheme scheme;
+
+  const _OnboardingStep({
+    required this.number,
+    required this.title,
+    required this.subtitle,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: scheme.primary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
