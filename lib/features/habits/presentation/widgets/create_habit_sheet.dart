@@ -37,6 +37,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   // hábito seleccionado como ancla de cadena (opcional)
   HabitModel? _stackAnchor;
   List<HabitModel> _availableHabits = [];
+  bool _habitsLoaded = false;
 
   static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
@@ -52,9 +53,14 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
     try {
       final habits = await HabitRepository(uid: uid).getActiveHabits();
       if (mounted) {
-        setState(() => _availableHabits = habits);
+        setState(() {
+          _availableHabits = habits;
+          _habitsLoaded = true;
+        });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => _habitsLoaded = true);
+    }
   }
 
   @override
@@ -283,8 +289,19 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             ),
             const SizedBox(height: 24),
 
-            // sección encadenamiento (solo si hay hábitos disponibles)
-            if (_availableHabits.isNotEmpty) ...[
+            // sección encadenamiento
+            if (!_habitsLoaded) ...[
+              _SheetLabel(label: 'Encadenar después de...'),
+              const SizedBox(height: 12),
+              const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              const SizedBox(height: 28),
+            ] else if (_availableHabits.isNotEmpty) ...[
               _SheetLabel(label: 'Encadenar después de...'),
               const SizedBox(height: 6),
               Text(

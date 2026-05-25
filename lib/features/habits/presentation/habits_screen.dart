@@ -441,9 +441,8 @@ class _HabitsScreenState extends State<HabitsScreen>
     final habit = await CreateHabitSheet.show(context);
     if (habit == null) return;
 
-    // saber si es la primera cadena del usuario antes de crear
-    final isFirstStack = habit.stackAfterHabitId != null &&
-        !_currentTodayHabits.any((h) => h.stackId != null);
+    // guardar si el usuario encadenó este hábito (para el onboarding)
+    final encadenado = habit.stackAfterHabitId != null;
 
     try {
       await _habitRepo.createHabit(habit);
@@ -453,8 +452,8 @@ class _HabitsScreenState extends State<HabitsScreen>
     }
     if (mounted) AppSnackBar.showSuccess(context, 'Hábito creado');
 
-    // onboarding: mostrar explicación la primera vez que se crea una cadena
-    if (isFirstStack && mounted) {
+    // onboarding: mostrar la primera vez que se usa el encadenamiento
+    if (encadenado && mounted) {
       final prefs = await SharedPreferences.getInstance();
       final shown = prefs.getBool('stack_onboarding_shown') ?? false;
       if (!shown && mounted) {
