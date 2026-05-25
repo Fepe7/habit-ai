@@ -828,7 +828,12 @@ List<Widget> _buildStackedHabitWidgets({
     list.sort((a, b) => a.stackOrder.compareTo(b.stackOrder));
   }
 
-  Widget buildCard(HabitModel habit, {int stackPosition = 0}) => HabitCard(
+  Widget buildCard(
+    HabitModel habit, {
+    int stackPosition = 0,
+    int stackTotal = 0,
+  }) =>
+      HabitCard(
         key: ValueKey(habit.id),
         habit: habit,
         isCompletedToday: completedToday[habit.id] ?? false,
@@ -846,18 +851,29 @@ List<Widget> _buildStackedHabitWidgets({
         onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
         isNextInStack: nudgeHabitIds.contains(habit.id),
         stackPosition: stackPosition,
+        stackTotal: stackTotal,
       );
 
   final widgets = <Widget>[];
 
-  // cadenas primero
+  // cadenas primero: header + cards con conectores
   for (final stackHabits in byStack.values) {
-    for (int i = 0; i < stackHabits.length; i++) {
-      widgets.add(buildCard(stackHabits[i], stackPosition: i));
-      if (i < stackHabits.length - 1) {
+    final total = stackHabits.length;
+    final completed =
+        stackHabits.where((h) => completedToday[h.id] == true).length;
+
+    // header de cadena con progreso
+    widgets.add(_StackHeader(total: total, completed: completed));
+
+    for (int i = 0; i < total; i++) {
+      widgets.add(buildCard(stackHabits[i], stackPosition: i, stackTotal: total));
+      if (i < total - 1) {
         widgets.add(const HabitStackConnector());
       }
     }
+
+    // separador sutil tras cada cadena (si después vienen más hábitos)
+    widgets.add(const _StackDivider());
   }
 
   // hábitos individuales (sin cadena)
@@ -866,6 +882,111 @@ List<Widget> _buildStackedHabitWidgets({
   }
 
   return widgets;
+}
+
+// ==================== STACK HEADER ====================
+
+/// Cabecera de una cadena de hábitos: etiqueta + barra de progreso.
+class _StackHeader extends StatelessWidget {
+  final int total;
+  final int completed;
+
+  const _StackHeader({required this.total, required this.completed});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final allDone = completed == total;
+    final progress = total > 0 ? completed / total : 0.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          // icono de cadena
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: allDone
+                  ? AppTheme.primary.withValues(alpha: 0.15)
+                  : scheme.primaryContainer.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              allDone ? Icons.check_rounded : Icons.link_rounded,
+              size: 14,
+              color: scheme.primary,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // etiqueta
+          Text(
+            'CADENA',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.0,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '·  $total hábitos',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const Spacer(),
+          // contador completados
+          Text(
+            '$completed/$total',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: allDone ? AppTheme.primary : scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // barra de progreso compacta
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              width: 56,
+              height: 5,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeOutCubic,
+                builder: (context, v, child) => LinearProgressIndicator(
+                  value: v,
+                  backgroundColor: scheme.outlineVariant.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation(
+                    allDone ? AppTheme.primary : scheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Separador sutil entre cadenas o entre cadena e hábitos individuales.
+class _StackDivider extends StatelessWidget {
+  const _StackDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Divider(
+      height: 1,
+      indent: 16,
+      endIndent: 16,
+      color: scheme.outlineVariant.withValues(alpha: 0.15),
+    );
+  }
 }
 
 // ==================== HERO DE PROGRESO ====================

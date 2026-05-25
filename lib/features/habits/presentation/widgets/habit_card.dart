@@ -30,6 +30,8 @@ class HabitCard extends StatelessWidget {
   final bool isNextInStack;
   // posición en la cadena (0 = ancla, 1+ = encadenados)
   final int stackPosition;
+  // total de hábitos en la cadena (0 si no pertenece a ninguna)
+  final int stackTotal;
 
   const HabitCard({
     super.key,
@@ -49,6 +51,7 @@ class HabitCard extends StatelessWidget {
     this.onDismissRenegotiation,
     this.isNextInStack = false,
     this.stackPosition = 0,
+    this.stackTotal = 0,
   });
 
   @override
@@ -219,6 +222,15 @@ class HabitCard extends StatelessWidget {
                               iconColor: scheme.onSurfaceVariant,
                               textColor: scheme.onSurfaceVariant,
                               bgColor: scheme.surfaceContainerHighest,
+                            ),
+                          // chip de posición en cadena: ej. 🔗 1/3
+                          if (habit.isInStack && stackTotal > 0)
+                            _MetaChip(
+                              icon: Icons.link_rounded,
+                              label: '${stackPosition + 1}/$stackTotal',
+                              iconColor: scheme.primary.withValues(alpha: 0.8),
+                              textColor: scheme.primary,
+                              bgColor: scheme.primaryContainer.withValues(alpha: 0.25),
                             ),
                           // chip de nudge: es el siguiente en la cadena
                           ?nextChip,
