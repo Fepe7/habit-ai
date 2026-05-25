@@ -262,6 +262,11 @@ class _HabitsScreenState extends State<HabitsScreen>
     }
 
     if (!wasCompleted) {
+      // feedback de XP extra por ser hábito atómico (encadenado)
+      if (habit.isInStack && mounted) {
+        _showStackXpToast(context);
+      }
+
       // nudge al siguiente hábito de la cadena (si existe y no está completado)
       if (habit.stackId != null) {
         final stackHabits = _currentTodayHabits
@@ -476,6 +481,18 @@ class _HabitsScreenState extends State<HabitsScreen>
       backgroundColor: Colors.transparent,
       builder: (ctx) => const _StackOnboardingSheet(),
     );
+  }
+
+  // Toast flotante ligero que muestra el bonus de XP por hábito atómico
+  void _showStackXpToast(BuildContext context) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (ctx) => _XpToast(onDone: () {
+        if (entry.mounted) entry.remove();
+      }),
+    );
+    overlay.insert(entry);
   }
 
   Future<void> _doCreateGroup() async {
@@ -1633,6 +1650,118 @@ class _OnboardingStep extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ==================== XP TOAST ====================
+
+/// Toast ligero "+5 XP 🔗" que aparece al completar un hábito encadenado.
+class _XpToast extends StatefulWidget {
+  final VoidCallback onDone;
+  const _XpToast({required this.onDone});
+
+  @override
+  State<_XpToast> createState() => _XpToastState();
+}
+
+class _XpToastState extends State<_XpToast>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+
+    _opacity = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 55),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 25),
+    ]).animate(_ctrl);
+
+    _slide = TweenSequence([
+      TweenSequenceItem(
+        tween: Tween(begin: const Offset(0, 0.5), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 20,
+      ),
+      TweenSequenceItem(tween: ConstantTween(Offset.zero), weight: 55),
+      TweenSequenceItem(
+        tween: Tween(begin: Offset.zero, end: const Offset(0, -0.4))
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 25,
+      ),
+    ]).animate(_ctrl);
+
+    _ctrl.forward().then((_) => widget.onDone());
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bottom = MediaQuery.of(context).padding.bottom + 120;
+
+    return Positioned(
+      bottom: bottom,
+      left: 0,
+      right: 0,
+      child: IgnorePointer(
+        child: AnimatedBuilder(
+          animation: _ctrl,
+          builder: (ctx, child) => FractionalTranslation(
+            translation: _slide.value,
+            child: Opacity(opacity: _opacity.value, child: child),
+          ),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: scheme.primary.withValues(alpha: 0.3),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.primary.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.link_rounded, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    '+5 XP · Hábito atómico',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: scheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text('⚡', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

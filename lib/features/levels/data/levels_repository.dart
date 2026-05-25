@@ -36,14 +36,18 @@ class LevelsRepository {
     for (final habit in habits) {
       final category = habit.category;
 
-      // 10 XP base por cada log completado histórico
+      // XP base por log completado:
+      // - 10 XP si el hábito es individual
+      // - 15 XP si pertenece a una cadena (bonus por hábito atómico)
+      final xpPerLog = habit.isInStack ? 15 : 10;
+
       final logs = await _habitRepo.getLogsByDateRange(
         habitId: habit.id,
         startDate: habit.createdAt,
         endDate: DateTime.now(),
       );
       final completedCount = logs.where((l) => l.completed).length;
-      xpByCategory[category] = (xpByCategory[category] ?? 0) + completedCount * 10;
+      xpByCategory[category] = (xpByCategory[category] ?? 0) + completedCount * xpPerLog;
 
       // +5 XP bonus por cada día de racha actual (máx 50)
       final streakBonus = (habit.currentStreak * 5).clamp(0, 50);
