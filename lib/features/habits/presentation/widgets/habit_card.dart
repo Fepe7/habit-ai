@@ -34,6 +34,8 @@ class HabitCard extends StatelessWidget {
   final int stackTotal;
   // título del hábito que completó el usuario para llegar aquí (contexto del nudge)
   final String? nudgeFromHabitTitle;
+  // si se pasa, reemplaza onEnterSelection en el long press (p.ej. modo reorden de cadena)
+  final VoidCallback? onLongPressOverride;
 
   const HabitCard({
     super.key,
@@ -55,6 +57,7 @@ class HabitCard extends StatelessWidget {
     this.stackPosition = 0,
     this.stackTotal = 0,
     this.nudgeFromHabitTitle,
+    this.onLongPressOverride,
   });
 
   @override
@@ -105,7 +108,7 @@ class HabitCard extends StatelessWidget {
         : null;
 
     Widget card = GestureDetector(
-      onLongPress: selectionMode ? null : onEnterSelection,
+      onLongPress: selectionMode ? null : (onLongPressOverride ?? onEnterSelection),
       child: Container(
       color: isInsideGroup ? cardBg : null,
       clipBehavior: isInsideGroup ? Clip.none : Clip.antiAlias,

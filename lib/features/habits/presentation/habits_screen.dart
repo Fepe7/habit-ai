@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -495,6 +496,12 @@ class _HabitsScreenState extends State<HabitsScreen>
     overlay.insert(entry);
   }
 
+  Future<void> _reorderStack(String stackId, List<String> orderedIds) async {
+    try {
+      await _habitRepo.reorderStack(stackId, orderedIds);
+    } catch (_) {}
+  }
+
   Future<void> _doCreateGroup() async {
     final group = await CreateGroupSheet.show(context);
     if (group == null || !mounted) return;
@@ -676,6 +683,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
+                            onReorderStack: _reorderStack,
                           ),
                         );
                       }),
@@ -700,6 +708,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
+                            onReorderStack: _reorderStack,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -866,6 +875,7 @@ List<Widget> _buildStackedHabitWidgets({
   required Map<String, RenegotiationModel> pendingRenegotiations,
   required void Function(HabitModel) onApplyRenegotiation,
   required void Function(String) onDismissRenegotiation,
+  required Future<void> Function(String stackId, List<String> orderedIds) onReorderStack,
 }) {
   // separar encadenados de individuales
   final Map<String, List<HabitModel>> byStack = {};
@@ -884,12 +894,7 @@ List<Widget> _buildStackedHabitWidgets({
     list.sort((a, b) => a.stackOrder.compareTo(b.stackOrder));
   }
 
-  Widget buildCard(
-    HabitModel habit, {
-    int stackPosition = 0,
-    int stackTotal = 0,
-  }) =>
-      HabitCard(
+  Widget buildCard(HabitModel habit) => HabitCard(
         key: ValueKey(habit.id),
         habit: habit,
         isCompletedToday: completedToday[habit.id] ?? false,
@@ -906,31 +911,32 @@ List<Widget> _buildStackedHabitWidgets({
         onApplyRenegotiation: () => onApplyRenegotiation(habit),
         onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
         isNextInStack: nudgeHabitIds.contains(habit.id),
-        stackPosition: stackPosition,
-        stackTotal: stackTotal,
         nudgeFromHabitTitle: nudgeFromTitles[habit.id],
       );
 
   final widgets = <Widget>[];
 
-  // cadenas primero: header + cards con conectores
-  for (final stackHabits in byStack.values) {
-    final total = stackHabits.length;
-    final completed =
-        stackHabits.where((h) => completedToday[h.id] == true).length;
-
-    // header de cadena con progreso
-    widgets.add(_StackHeader(total: total, completed: completed));
-
-    for (int i = 0; i < total; i++) {
-      widgets.add(buildCard(stackHabits[i], stackPosition: i, stackTotal: total));
-      if (i < total - 1) {
-        widgets.add(const HabitStackConnector());
-      }
-    }
-
-    // separador sutil tras cada cadena (si después vienen más hábitos)
-    widgets.add(const _StackDivider());
+  // cadenas: cada grupo va en un _StackSection que gestiona el reorden
+  for (final entry in byStack.entries) {
+    widgets.add(_StackSection(
+      key: ValueKey('stack_${entry.key}'),
+      habits: entry.value,
+      completedToday: completedToday,
+      nudgeHabitIds: nudgeHabitIds,
+      nudgeFromTitles: nudgeFromTitles,
+      onToggleHabit: onToggleHabit,
+      onTapHabit: onTapHabit,
+      onEditHabit: onEditHabit,
+      onDeleteHabit: onDeleteHabit,
+      selectionMode: selectionMode,
+      selectedIds: selectedIds,
+      onToggleSelect: onToggleSelect,
+      onEnterSelection: onEnterSelection,
+      pendingRenegotiations: pendingRenegotiations,
+      onApplyRenegotiation: onApplyRenegotiation,
+      onDismissRenegotiation: onDismissRenegotiation,
+      onReorderStack: onReorderStack,
+    ));
   }
 
   // hábitos individuales (sin cadena)
@@ -939,6 +945,257 @@ List<Widget> _buildStackedHabitWidgets({
   }
 
   return widgets;
+}
+
+// ==================== STACK SECTION (con modo reorden) ====================
+
+class _StackSection extends StatefulWidget {
+  final List<HabitModel> habits; // ya ordenados por stackOrder
+  final Map<String, bool> completedToday;
+  final Set<String> nudgeHabitIds;
+  final Map<String, String> nudgeFromTitles;
+  final void Function(HabitModel) onToggleHabit;
+  final void Function(HabitModel) onTapHabit;
+  final void Function(HabitModel) onEditHabit;
+  final void Function(HabitModel) onDeleteHabit;
+  final bool selectionMode;
+  final Set<String> selectedIds;
+  final void Function(String) onToggleSelect;
+  final void Function(String) onEnterSelection;
+  final Map<String, RenegotiationModel> pendingRenegotiations;
+  final void Function(HabitModel) onApplyRenegotiation;
+  final void Function(String) onDismissRenegotiation;
+  final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
+
+  const _StackSection({
+    super.key,
+    required this.habits,
+    required this.completedToday,
+    required this.nudgeHabitIds,
+    this.nudgeFromTitles = const {},
+    required this.onToggleHabit,
+    required this.onTapHabit,
+    required this.onEditHabit,
+    required this.onDeleteHabit,
+    required this.selectionMode,
+    required this.selectedIds,
+    required this.onToggleSelect,
+    required this.onEnterSelection,
+    required this.pendingRenegotiations,
+    required this.onApplyRenegotiation,
+    required this.onDismissRenegotiation,
+    required this.onReorderStack,
+  });
+
+  @override
+  State<_StackSection> createState() => _StackSectionState();
+}
+
+class _StackSectionState extends State<_StackSection> {
+  bool _reorderMode = false;
+  late List<HabitModel> _habits;
+
+  @override
+  void initState() {
+    super.initState();
+    _habits = List.from(widget.habits);
+  }
+
+  @override
+  void didUpdateWidget(_StackSection old) {
+    super.didUpdateWidget(old);
+    // no pisar la lista local si estamos arrastrando
+    if (!_reorderMode) {
+      _habits = List.from(widget.habits);
+    }
+  }
+
+  void _enterReorder() {
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _habits = List.from(widget.habits); // copia fresca
+      _reorderMode = true;
+    });
+  }
+
+  void _exitReorder() => setState(() => _reorderMode = false);
+
+  void _onReorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex--;
+    setState(() {
+      final item = _habits.removeAt(oldIndex);
+      _habits.insert(newIndex, item);
+    });
+    final stackId = _habits.first.stackId;
+    if (stackId == null) return;
+    widget.onReorderStack(stackId, _habits.map((h) => h.id).toList());
+  }
+
+  Widget _buildCard(HabitModel habit, int pos, int total) => HabitCard(
+        key: ValueKey(habit.id),
+        habit: habit,
+        isCompletedToday: widget.completedToday[habit.id] ?? false,
+        onToggle: () => widget.onToggleHabit(habit),
+        onTap: () => widget.onTapHabit(habit),
+        onEdit: () => widget.onEditHabit(habit),
+        onDelete: () => widget.onDeleteHabit(habit),
+        isInsideGroup: true,
+        selectionMode: widget.selectionMode,
+        isSelected: widget.selectedIds.contains(habit.id),
+        onEnterSelection: () => widget.onEnterSelection(habit.id),
+        onToggleSelect: () => widget.onToggleSelect(habit.id),
+        renegotiation: widget.pendingRenegotiations[habit.id],
+        onApplyRenegotiation: () => widget.onApplyRenegotiation(habit),
+        onDismissRenegotiation: () => widget.onDismissRenegotiation(habit.id),
+        isNextInStack: widget.nudgeHabitIds.contains(habit.id),
+        stackPosition: pos,
+        stackTotal: total,
+        nudgeFromHabitTitle: widget.nudgeFromTitles[habit.id],
+        // long press en hábito encadenado → modo reorden (en vez de selección)
+        onLongPressOverride: widget.selectionMode ? null : _enterReorder,
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final total = _habits.length;
+    final completed =
+        _habits.where((h) => widget.completedToday[h.id] == true).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // header: normal o reorden
+        if (_reorderMode)
+          _buildReorderHeader(context, scheme)
+        else
+          _StackHeader(total: total, completed: completed),
+
+        // contenido: cards normales o lista reordenable
+        if (_reorderMode)
+          ReorderableListView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false,
+            onReorder: _onReorder,
+            // sombra sutil al arrastrar
+            proxyDecorator: (child, index, animation) => Material(
+              elevation: 6,
+              shadowColor: scheme.primary.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.transparent,
+              child: child,
+            ),
+            children: [
+              for (int i = 0; i < _habits.length; i++)
+                ReorderableDragStartListener(
+                  key: ValueKey(_habits[i].id),
+                  index: i,
+                  child: _ReorderRow(habit: _habits[i], scheme: scheme),
+                ),
+            ],
+          )
+        else
+          for (int i = 0; i < _habits.length; i++) ...[
+            _buildCard(_habits[i], i, _habits.length),
+            if (i < _habits.length - 1) const HabitStackConnector(),
+          ],
+
+        const _StackDivider(),
+      ],
+    );
+  }
+
+  Widget _buildReorderHeader(BuildContext context, ColorScheme scheme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 6),
+      child: Row(
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.4),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.open_with_rounded, size: 14, color: scheme.primary),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            'Arrastra para reordenar',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const Spacer(),
+          TextButton(
+            onPressed: _exitReorder,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text('Listo'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Fila compacta usada dentro de ReorderableListView — solo muestra lo esencial.
+class _ReorderRow extends StatelessWidget {
+  final HabitModel habit;
+  final ColorScheme scheme;
+
+  const _ReorderRow({required this.habit, required this.scheme});
+
+  @override
+  Widget build(BuildContext context) {
+    final catBg = AppTheme.categoryBg(habit.category);
+    final catFg = AppTheme.categoryFg(habit.category);
+    final catIcon = AppTheme.categoryIcon(habit.category);
+
+    return Container(
+      color: Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          // icono de categoría
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: catBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(catIcon, size: 18, color: catFg),
+          ),
+          const SizedBox(width: 12),
+          // título
+          Expanded(
+            child: Text(
+              habit.title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // handle de arrastre
+          Icon(
+            Icons.drag_handle_rounded,
+            color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+            size: 22,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ==================== STACK HEADER ====================
@@ -1177,6 +1434,7 @@ class _GroupSection extends StatelessWidget {
   final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
+  final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
 
   const _GroupSection({
     required this.group,
@@ -1200,6 +1458,7 @@ class _GroupSection extends StatelessWidget {
     required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
+    required this.onReorderStack,
   });
 
   @override
@@ -1367,6 +1626,7 @@ class _GroupSection extends StatelessWidget {
                       pendingRenegotiations: pendingRenegotiations,
                       onApplyRenegotiation: onApplyRenegotiation,
                       onDismissRenegotiation: onDismissRenegotiation,
+                      onReorderStack: onReorderStack,
                     ),
                 ],
               ),
@@ -1401,6 +1661,7 @@ class _UngroupedSection extends StatelessWidget {
   final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
+  final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
 
   const _UngroupedSection({
     required this.habits,
@@ -1418,6 +1679,7 @@ class _UngroupedSection extends StatelessWidget {
     required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
+    required this.onReorderStack,
   });
 
   @override
@@ -1485,6 +1747,7 @@ class _UngroupedSection extends StatelessWidget {
                 pendingRenegotiations: pendingRenegotiations,
                 onApplyRenegotiation: onApplyRenegotiation,
                 onDismissRenegotiation: onDismissRenegotiation,
+                onReorderStack: onReorderStack,
               ),
             ),
           ),
