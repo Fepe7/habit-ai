@@ -1258,6 +1258,8 @@ class _HabitsScreenState extends State<HabitsScreen>
               ),
             ),
             padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            splashRadius: 20,
             onSelected: (v) {
               if (v == 'select') _enterSelection();
             },
