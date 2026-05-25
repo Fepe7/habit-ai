@@ -1238,12 +1238,15 @@ class _InfoRow extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const Spacer(),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
