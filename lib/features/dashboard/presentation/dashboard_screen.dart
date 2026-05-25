@@ -1356,7 +1356,9 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // fila de 3 stat cards
   Widget _buildStatCards(BuildContext context) {
-    return Row(
+    return IntrinsicHeight(
+      child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           child: _StatCard(
@@ -1389,6 +1391,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
         ),
       ],
+    ),
     );
   }
 
@@ -2044,6 +2047,7 @@ class _StatCard extends StatelessWidget {
         boxShadow: AppTheme.ambientShadow(),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             width: 36,

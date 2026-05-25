@@ -1169,27 +1169,28 @@ class _HabitsScreenState extends State<HabitsScreen>
     final dateStr = '${now.day} ${months[now.month - 1]}';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+      padding: const EdgeInsets.fromLTRB(20, 20, 16, 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const DrawerMenuButton(),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   _userName != null ? 'Hola, $_userName' : 'HabitAI',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: _userName != null ? scheme.onSurface : scheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
                 Text(
                   '$dayName, $dateStr',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
                 ),
