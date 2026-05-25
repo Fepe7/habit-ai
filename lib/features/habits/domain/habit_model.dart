@@ -23,6 +23,9 @@ class HabitModel {
   // Posición en la cadena (0 = ancla/raíz, 1+ = encadenados)
   final int stackOrder;
 
+  // Orden dentro de su grupo (o de "sin grupo") para drag & drop
+  final int sortOrder;
+
   // Campo transitorio — NO se persiste en Firestore.
   // Usado para pasar "encadenar después de este hábito" desde la UI al repositorio.
   final String? stackAfterHabitId;
@@ -58,6 +61,7 @@ class HabitModel {
     this.stackId,
     this.stackOrder = 0,
     this.stackAfterHabitId,
+    this.sortOrder = 0,
   });
 
   // Crear desde un doc de Firestore (el id va aparte porque no viene en data())
@@ -82,6 +86,7 @@ class HabitModel {
           ((json['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private'),
       stackId: json['stackId'] as String?,
       stackOrder: json['stackOrder'] as int? ?? 0,
+      sortOrder: json['sortOrder'] as int? ?? 0,
       // stackAfterHabitId es transitorio, nunca viene de Firestore
     );
   }
@@ -105,6 +110,7 @@ class HabitModel {
       'visibility': visibility,
       'stackId': stackId,
       'stackOrder': stackOrder,
+      'sortOrder': sortOrder,
       // stackAfterHabitId es transitorio, no va a Firestore
     };
   }
@@ -121,11 +127,13 @@ class HabitModel {
     int? bestStreak,
     bool? isActive,
     String? groupId,
+    bool clearGroupId = false,
     String? challengeId,
     String? visibility,
     String? stackId,
     int? stackOrder,
     String? stackAfterHabitId,
+    int? sortOrder,
   }) {
     return HabitModel(
       id: id,
@@ -140,12 +148,13 @@ class HabitModel {
       isAIGenerated: isAIGenerated,
       createdAt: createdAt,
       isActive: isActive ?? this.isActive,
-      groupId: groupId ?? this.groupId,
+      groupId: clearGroupId ? null : (groupId ?? this.groupId),
       challengeId: challengeId ?? this.challengeId,
       visibility: visibility ?? this.visibility,
       stackId: stackId ?? this.stackId,
       stackOrder: stackOrder ?? this.stackOrder,
       stackAfterHabitId: stackAfterHabitId ?? this.stackAfterHabitId,
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 }

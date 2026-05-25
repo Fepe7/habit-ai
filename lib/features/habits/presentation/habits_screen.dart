@@ -64,6 +64,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   bool _initialized = false;
   String? _userName;
   List<HabitModel> _currentTodayHabits = [];
+  List<HabitGroupModel>? _lastGroups;
   Map<String, RenegotiationModel> _pendingRenegotiations = {};
   StreamSubscription? _renoSub;
   final List<StreamSubscription> _notifSubs = [];
@@ -75,14 +76,18 @@ class _HabitsScreenState extends State<HabitsScreen>
   // título del hábito completado que disparó el nudge, por ID del receptor
   final Map<String, String> _nudgeFromTitles = {};
 
-  // modo selección múltiple
+  // modo selección múltiple (activado desde menú ⋮)
   bool _selectionMode = false;
   final Set<String> _selectedHabitIds = {};
 
-  void _enterSelection(String id) {
+  // modo reorden global (activado con long-press)
+  bool _fullReorderMode = false;
+  List<_ReorderItem> _reorderItems = [];
+
+  void _enterSelection() {
     setState(() {
       _selectionMode = true;
-      _selectedHabitIds.add(id);
+      _selectedHabitIds.clear();
     });
   }
 
@@ -502,6 +507,228 @@ class _HabitsScreenState extends State<HabitsScreen>
     } catch (_) {}
   }
 
+  // ==================== MODO REORDEN GLOBAL ====================
+
+  void _enterFullReorder() {
+    HapticFeedback.mediumImpact();
+
+    final groups = _lastGroups ?? [];
+    final allHabits = _currentTodayHabits;
+
+    final habitsByGroup = <String, List<HabitModel>>{};
+    final ungroupedHabits = <HabitModel>[];
+    final groupIds = groups.map((g) => g.id).toSet();
+
+    for (final habit in allHabits) {
+      final gid = habit.groupId;
+      if (gid == null) {
+        ungroupedHabits.add(habit);
+      } else if (!groupIds.contains(gid)) {
+        ungroupedHabits.add(habit);
+      } else {
+        habitsByGroup.putIfAbsent(gid, () => []).add(habit);
+      }
+    }
+
+    final items = <_ReorderItem>[];
+
+    for (final group in groups) {
+      items.add(_ReorderItem.groupHeader(
+        id: group.id,
+        label: group.title,
+        emoji: group.emoji,
+      ));
+
+      final groupHabits = habitsByGroup[group.id] ?? [];
+      groupHabits.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      _addHabitsToReorderList(items, groupHabits, group.id);
+    }
+
+    // sección "Sin grupo"
+    items.add(_ReorderItem.groupHeader(
+      id: '_ungrouped',
+      label: 'Sin grupo',
+      emoji: null,
+    ));
+    ungroupedHabits.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    _addHabitsToReorderList(items, ungroupedHabits, null);
+
+    setState(() {
+      _fullReorderMode = true;
+      _reorderItems = items;
+    });
+  }
+
+  void _addHabitsToReorderList(
+      List<_ReorderItem> items, List<HabitModel> habits, String? groupId) {
+    final byStack = <String, List<HabitModel>>{};
+    final individuals = <HabitModel>[];
+
+    for (final h in habits) {
+      if (h.stackId != null) {
+        byStack.putIfAbsent(h.stackId!, () => []).add(h);
+      } else {
+        individuals.add(h);
+      }
+    }
+
+    for (final list in byStack.values) {
+      list.sort((a, b) => a.stackOrder.compareTo(b.stackOrder));
+    }
+
+    for (final entry in byStack.entries) {
+      if (entry.value.length == 1) {
+        individuals.add(entry.value.first);
+      } else {
+        items.add(_ReorderItem.stack(
+          id: entry.key,
+          habits: entry.value,
+          groupId: groupId,
+        ));
+      }
+    }
+
+    for (final h in individuals) {
+      items.add(_ReorderItem.habit(habit: h, groupId: groupId));
+    }
+  }
+
+  void _exitFullReorder() {
+    setState(() {
+      _fullReorderMode = false;
+      _reorderItems = [];
+    });
+  }
+
+  void _onFullReorder(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex--;
+    final item = _reorderItems[oldIndex];
+    if (item.type == _ReorderItemType.groupHeader) return;
+
+    setState(() {
+      _reorderItems.removeAt(oldIndex);
+      _reorderItems.insert(newIndex, item);
+    });
+  }
+
+  Future<void> _saveReorder() async {
+    final updates = <ReorderUpdate>[];
+    String? currentGroupId;
+    int sortIndex = 0;
+
+    for (final item in _reorderItems) {
+      if (item.type == _ReorderItemType.groupHeader) {
+        currentGroupId = item.id == '_ungrouped' ? null : item.id;
+        sortIndex = 0;
+        continue;
+      }
+
+      if (item.type == _ReorderItemType.habit) {
+        final h = item.habit!;
+        if (h.sortOrder != sortIndex || h.groupId != currentGroupId) {
+          updates.add(ReorderUpdate(
+            habitId: h.id,
+            sortOrder: sortIndex,
+            groupId: currentGroupId,
+            oldGroupId: h.groupId,
+          ));
+        }
+        sortIndex++;
+      } else if (item.type == _ReorderItemType.stack) {
+        for (final h in item.stackHabits!) {
+          if (h.sortOrder != sortIndex || h.groupId != currentGroupId) {
+            updates.add(ReorderUpdate(
+              habitId: h.id,
+              sortOrder: sortIndex,
+              groupId: currentGroupId,
+              oldGroupId: h.groupId,
+            ));
+          }
+        }
+        sortIndex++;
+      }
+    }
+
+    _exitFullReorder();
+
+    if (updates.isEmpty) return;
+
+    try {
+      await _habitRepo.reorderHabits(updates);
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.showError(context, 'Error al guardar el orden');
+      }
+    }
+  }
+
+  // ==================== SELECCIÓN: MOVER A GRUPO ====================
+
+  Future<void> _bulkMoveToGroup() async {
+    final groups = _lastGroups ?? [];
+    final targetGroupId = await showModalBottomSheet<String?>(
+      context: context,
+      builder: (ctx) {
+        final scheme = Theme.of(ctx).colorScheme;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  'Mover a grupo',
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.layers_clear_rounded, color: scheme.onSurfaceVariant),
+                title: const Text('Sin grupo'),
+                onTap: () => Navigator.of(ctx).pop('_none'),
+              ),
+              for (final g in groups)
+                ListTile(
+                  leading: Text(g.emoji ?? '📁', style: const TextStyle(fontSize: 20)),
+                  title: Text(g.title),
+                  onTap: () => Navigator.of(ctx).pop(g.id),
+                ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (targetGroupId == null) return;
+
+    final newGroupId = targetGroupId == '_none' ? null : targetGroupId;
+    final ids = List<String>.from(_selectedHabitIds);
+    _exitSelection();
+
+    try {
+      for (final id in ids) {
+        final habit = _currentTodayHabits.firstWhere(
+          (h) => h.id == id,
+          orElse: () => _currentTodayHabits.first,
+        );
+        if (habit.id == id && habit.groupId != newGroupId) {
+          await _habitRepo.reassignGroup(id, habit.groupId, newGroupId);
+        }
+      }
+      if (mounted) {
+        final count = ids.length;
+        AppSnackBar.showSuccess(
+          context,
+          '$count hábito${count == 1 ? '' : 's'} movido${count == 1 ? '' : 's'}',
+        );
+      }
+    } catch (_) {
+      if (mounted) AppSnackBar.showError(context, 'Error al mover los hábitos');
+    }
+  }
+
   Future<void> _doCreateGroup() async {
     final group = await CreateGroupSheet.show(context);
     if (group == null || !mounted) return;
@@ -561,7 +788,7 @@ class _HabitsScreenState extends State<HabitsScreen>
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
-      floatingActionButton: _selectionMode
+      floatingActionButton: (_selectionMode || _fullReorderMode)
           ? null
           : Padding(
               padding: const EdgeInsets.only(bottom: 100),
@@ -595,6 +822,7 @@ class _HabitsScreenState extends State<HabitsScreen>
 
                 // grupos antes del early-return para poder mostrarlos aunque no haya hábitos hoy
                 final groups = groupsSnapshot.data ?? [];
+                _lastGroups = groups;
                 final groupsLoaded = groupsSnapshot.hasData;
 
                 // estado vacío solo si no hay hábitos NI grupos activos
@@ -631,8 +859,18 @@ class _HabitsScreenState extends State<HabitsScreen>
                   }
                 }
 
+                // ordenar por sortOrder dentro de cada grupo
+                for (final list in habitsByGroup.values) {
+                  list.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+                }
+                ungroupedHabits.sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
                 // todos los grupos activos, incluyendo los vacíos
                 final activeGroups = groups.toList();
+
+                if (_fullReorderMode) {
+                  return _buildFullReorderView(context);
+                }
 
                 return RefreshIndicator(
                   onRefresh: _refresh,
@@ -677,7 +915,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             selectionMode: _selectionMode,
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
-                            onEnterSelection: _enterSelection,
+                            onEnterReorder: _enterFullReorder,
                             pendingRenegotiations: _pendingRenegotiations,
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
@@ -702,7 +940,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             selectionMode: _selectionMode,
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
-                            onEnterSelection: _enterSelection,
+                            onEnterReorder: _enterFullReorder,
                             pendingRenegotiations: _pendingRenegotiations,
                             onApplyRenegotiation: _applyRenegotiation,
                             onDismissRenegotiation: _dismissRenegotiation,
@@ -726,6 +964,161 @@ class _HabitsScreenState extends State<HabitsScreen>
   }
 
   // header asimetrico: saludo izquierda, fecha derecha (o barra de selección)
+  Widget _buildFullReorderView(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        // header "Arrastra para reordenar" + "Listo"
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer.withValues(alpha: 0.4),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.open_with_rounded, size: 16, color: scheme.primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Arrastra para reordenar',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: _saveReorder,
+                child: const Text('Listo'),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: _exitFullReorder,
+                tooltip: 'Cancelar',
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: ReorderableListView.builder(
+            buildDefaultDragHandles: false,
+            onReorder: _onFullReorder,
+            proxyDecorator: (child, index, animation) => Material(
+              elevation: 6,
+              shadowColor: scheme.primary.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.transparent,
+              child: child,
+            ),
+            itemCount: _reorderItems.length,
+            itemBuilder: (context, i) {
+              final item = _reorderItems[i];
+
+              if (item.type == _ReorderItemType.groupHeader) {
+                return Container(
+                  key: ValueKey('header_${item.id}'),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+                  child: Row(
+                    children: [
+                      if (item.emoji != null)
+                        Text(item.emoji!, style: const TextStyle(fontSize: 20))
+                      else
+                        Icon(
+                          item.id == '_ungrouped'
+                              ? Icons.layers_clear_rounded
+                              : Icons.folder_rounded,
+                          size: 20,
+                          color: scheme.primary,
+                        ),
+                      const SizedBox(width: 10),
+                      Text(
+                        item.label,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (item.type == _ReorderItemType.stack) {
+                final count = item.stackHabits!.length;
+                final title = item.stackHabits!.first.title;
+                return ReorderableDragStartListener(
+                  key: ValueKey('stack_${item.id}'),
+                  index: i,
+                  child: Container(
+                    color: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: scheme.primaryContainer.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.link_rounded, size: 18, color: scheme.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Cadena · $count hábitos',
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.drag_handle_rounded,
+                          color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          size: 22,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // habit individual
+              return ReorderableDragStartListener(
+                key: ValueKey('habit_${item.habit!.id}'),
+                index: i,
+                child: _ReorderRow(habit: item.habit!, scheme: scheme),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
@@ -747,6 +1140,14 @@ class _HabitsScreenState extends State<HabitsScreen>
                   fontWeight: FontWeight.w600,
                 ),
               ),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.drive_file_move_rounded,
+                color: count > 0 ? scheme.primary : scheme.onSurfaceVariant,
+              ),
+              tooltip: 'Mover a grupo',
+              onPressed: count > 0 ? _bulkMoveToGroup : null,
             ),
             IconButton(
               icon: Icon(
@@ -840,6 +1241,39 @@ class _HabitsScreenState extends State<HabitsScreen>
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            icon: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              child: Icon(
+                Icons.more_vert_rounded,
+                color: scheme.onSurfaceVariant,
+                size: 22,
+              ),
+            ),
+            padding: EdgeInsets.zero,
+            onSelected: (v) {
+              if (v == 'select') _enterSelection();
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'select',
+                child: Row(
+                  children: [
+                    Icon(Icons.checklist_rounded, size: 20),
+                    SizedBox(width: 12),
+                    Text('Seleccionar hábitos'),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -871,7 +1305,7 @@ List<Widget> _buildStackedHabitWidgets({
   required bool selectionMode,
   required Set<String> selectedIds,
   required void Function(String) onToggleSelect,
-  required void Function(String) onEnterSelection,
+  required VoidCallback onEnterReorder,
   required Map<String, RenegotiationModel> pendingRenegotiations,
   required void Function(HabitModel) onApplyRenegotiation,
   required void Function(String) onDismissRenegotiation,
@@ -905,13 +1339,13 @@ List<Widget> _buildStackedHabitWidgets({
         isInsideGroup: true,
         selectionMode: selectionMode,
         isSelected: selectedIds.contains(habit.id),
-        onEnterSelection: () => onEnterSelection(habit.id),
         onToggleSelect: () => onToggleSelect(habit.id),
         renegotiation: pendingRenegotiations[habit.id],
         onApplyRenegotiation: () => onApplyRenegotiation(habit),
         onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
         isNextInStack: nudgeHabitIds.contains(habit.id),
         nudgeFromHabitTitle: nudgeFromTitles[habit.id],
+        onLongPressOverride: onEnterReorder,
       );
 
   final widgets = <Widget>[];
@@ -931,7 +1365,7 @@ List<Widget> _buildStackedHabitWidgets({
       selectionMode: selectionMode,
       selectedIds: selectedIds,
       onToggleSelect: onToggleSelect,
-      onEnterSelection: onEnterSelection,
+      onEnterReorder: onEnterReorder,
       pendingRenegotiations: pendingRenegotiations,
       onApplyRenegotiation: onApplyRenegotiation,
       onDismissRenegotiation: onDismissRenegotiation,
@@ -961,7 +1395,7 @@ class _StackSection extends StatefulWidget {
   final bool selectionMode;
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
-  final void Function(String) onEnterSelection;
+  final VoidCallback onEnterReorder;
   final Map<String, RenegotiationModel> pendingRenegotiations;
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
@@ -980,7 +1414,7 @@ class _StackSection extends StatefulWidget {
     required this.selectionMode,
     required this.selectedIds,
     required this.onToggleSelect,
-    required this.onEnterSelection,
+    required this.onEnterReorder,
     required this.pendingRenegotiations,
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
@@ -1042,7 +1476,6 @@ class _StackSectionState extends State<_StackSection> {
         isInsideGroup: true,
         selectionMode: widget.selectionMode,
         isSelected: widget.selectedIds.contains(habit.id),
-        onEnterSelection: () => widget.onEnterSelection(habit.id),
         onToggleSelect: () => widget.onToggleSelect(habit.id),
         renegotiation: widget.pendingRenegotiations[habit.id],
         onApplyRenegotiation: () => widget.onApplyRenegotiation(habit),
@@ -1051,8 +1484,7 @@ class _StackSectionState extends State<_StackSection> {
         stackPosition: pos,
         stackTotal: total,
         nudgeFromHabitTitle: widget.nudgeFromTitles[habit.id],
-        // long press en hábito encadenado → modo reorden (en vez de selección)
-        onLongPressOverride: widget.selectionMode ? null : _enterReorder,
+        onLongPressOverride: widget.selectionMode ? null : widget.onEnterReorder,
       );
 
   @override
@@ -1069,7 +1501,10 @@ class _StackSectionState extends State<_StackSection> {
         if (_reorderMode)
           _buildReorderHeader(context, scheme)
         else
-          _StackHeader(total: total, completed: completed),
+          GestureDetector(
+            onLongPress: _enterReorder,
+            child: _StackHeader(total: total, completed: completed),
+          ),
 
         // contenido: cards normales o lista reordenable
         if (_reorderMode)
@@ -1428,7 +1863,7 @@ class _GroupSection extends StatelessWidget {
   final bool selectionMode;
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
-  final void Function(String) onEnterSelection;
+  final VoidCallback onEnterReorder;
   final Map<String, RenegotiationModel> pendingRenegotiations;
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
@@ -1452,7 +1887,7 @@ class _GroupSection extends StatelessWidget {
     this.selectionMode = false,
     this.selectedIds = const {},
     required this.onToggleSelect,
-    required this.onEnterSelection,
+    required this.onEnterReorder,
     this.pendingRenegotiations = const {},
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
@@ -1622,7 +2057,7 @@ class _GroupSection extends StatelessWidget {
                       selectionMode: selectionMode,
                       selectedIds: selectedIds,
                       onToggleSelect: onToggleSelect,
-                      onEnterSelection: onEnterSelection,
+                      onEnterReorder: onEnterReorder,
                       pendingRenegotiations: pendingRenegotiations,
                       onApplyRenegotiation: onApplyRenegotiation,
                       onDismissRenegotiation: onDismissRenegotiation,
@@ -1655,7 +2090,7 @@ class _UngroupedSection extends StatelessWidget {
   final bool selectionMode;
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
-  final void Function(String) onEnterSelection;
+  final VoidCallback onEnterReorder;
   final Map<String, RenegotiationModel> pendingRenegotiations;
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
@@ -1673,7 +2108,7 @@ class _UngroupedSection extends StatelessWidget {
     this.selectionMode = false,
     this.selectedIds = const {},
     required this.onToggleSelect,
-    required this.onEnterSelection,
+    required this.onEnterReorder,
     this.pendingRenegotiations = const {},
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
@@ -1743,7 +2178,7 @@ class _UngroupedSection extends StatelessWidget {
                 selectionMode: selectionMode,
                 selectedIds: selectedIds,
                 onToggleSelect: onToggleSelect,
-                onEnterSelection: onEnterSelection,
+                onEnterReorder: onEnterReorder,
                 pendingRenegotiations: pendingRenegotiations,
                 onApplyRenegotiation: onApplyRenegotiation,
                 onDismissRenegotiation: onDismissRenegotiation,
@@ -2027,4 +2462,65 @@ class _XpToastState extends State<_XpToast>
       ),
     );
   }
+}
+
+// ==================== REORDER ITEM MODEL ====================
+
+enum _ReorderItemType { groupHeader, habit, stack }
+
+class _ReorderItem {
+  final _ReorderItemType type;
+  final String id;
+  final String label;
+  final String? emoji;
+  final String? groupId;
+  final HabitModel? habit;
+  final List<HabitModel>? stackHabits;
+
+  const _ReorderItem._({
+    required this.type,
+    required this.id,
+    required this.label,
+    this.emoji,
+    this.groupId,
+    this.habit,
+    this.stackHabits,
+  });
+
+  factory _ReorderItem.groupHeader({
+    required String id,
+    required String label,
+    String? emoji,
+  }) =>
+      _ReorderItem._(
+        type: _ReorderItemType.groupHeader,
+        id: id,
+        label: label,
+        emoji: emoji,
+      );
+
+  factory _ReorderItem.habit({
+    required HabitModel habit,
+    String? groupId,
+  }) =>
+      _ReorderItem._(
+        type: _ReorderItemType.habit,
+        id: habit.id,
+        label: habit.title,
+        groupId: groupId,
+        habit: habit,
+      );
+
+  factory _ReorderItem.stack({
+    required String id,
+    required List<HabitModel> habits,
+    String? groupId,
+  }) =>
+      _ReorderItem._(
+        type: _ReorderItemType.stack,
+        id: id,
+        label: habits.first.title,
+        groupId: groupId,
+        stackHabits: habits,
+      );
 }

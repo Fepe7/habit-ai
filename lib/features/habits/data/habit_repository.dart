@@ -4,6 +4,20 @@ import '../domain/habit_log_model.dart';
 import '../../profile/domain/public_habit_model.dart';
 import '../../../services/notification_service.dart';
 
+class ReorderUpdate {
+  final String habitId;
+  final int sortOrder;
+  final String? groupId;
+  final String? oldGroupId;
+
+  const ReorderUpdate({
+    required this.habitId,
+    required this.sortOrder,
+    required this.groupId,
+    required this.oldGroupId,
+  });
+}
+
 // CRUD de habitos y logs en Firestore
 class HabitRepository {
   final FirebaseFirestore _firestore;
@@ -133,6 +147,7 @@ class HabitRepository {
         visibility: h.visibility,
         stackId: h.stackId,
         stackOrder: h.stackOrder,
+        sortOrder: h.sortOrder,
       );
 
   // Crear varios habitos a la vez (para cuando la IA genera un plan)
@@ -344,6 +359,41 @@ class HabitRepository {
     if (newGroupId != null) {
       batch.update(groupsRef.doc(newGroupId),
           {'habitCount': FieldValue.increment(1)});
+    }
+
+    await batch.commit();
+  }
+
+  // Batch: persiste nuevo orden y grupo tras drag & drop
+  Future<void> reorderHabits(List<ReorderUpdate> updates) async {
+    if (updates.isEmpty) return;
+
+    final batch = _firestore.batch();
+    final groupDeltas = <String, int>{};
+
+    for (final u in updates) {
+      batch.update(_habitsRef.doc(u.habitId), {
+        'sortOrder': u.sortOrder,
+        'groupId': u.groupId,
+      });
+
+      if (u.oldGroupId != u.groupId) {
+        if (u.oldGroupId != null) {
+          groupDeltas[u.oldGroupId!] = (groupDeltas[u.oldGroupId!] ?? 0) - 1;
+        }
+        if (u.groupId != null) {
+          groupDeltas[u.groupId!] = (groupDeltas[u.groupId!] ?? 0) + 1;
+        }
+      }
+    }
+
+    final groupsRef =
+        _firestore.collection('users').doc(_uid).collection('habit_groups');
+    for (final entry in groupDeltas.entries) {
+      if (entry.value != 0) {
+        batch.update(
+            groupsRef.doc(entry.key), {'habitCount': FieldValue.increment(entry.value)});
+      }
     }
 
     await batch.commit();

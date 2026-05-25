@@ -108,7 +108,7 @@ class HabitCard extends StatelessWidget {
         : null;
 
     Widget card = GestureDetector(
-      onLongPress: selectionMode ? null : (onLongPressOverride ?? onEnterSelection),
+      onLongPress: selectionMode ? null : onLongPressOverride,
       child: Container(
       color: isInsideGroup ? cardBg : null,
       clipBehavior: isInsideGroup ? Clip.none : Clip.antiAlias,
