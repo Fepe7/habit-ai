@@ -229,8 +229,9 @@ class _MainShellState extends State<MainShell> {
               physics: const _QuickSwipePhysics(),
               onPageChanged: (index) {
                 _isSwiping = true;
-                // vibración ligera al cambiar de tab con swipe, estilo Instagram
-                HapticFeedback.selectionClick();
+                // vibración ligera al cambiar de tab con swipe
+                // lightImpact usa VIRTUAL_KEY en Android, fiable en casi todos los dispositivos
+                HapticFeedback.lightImpact();
                 context.go(_tabs[index].path);
                 Future.microtask(() => _isSwiping = false);
               },
