@@ -226,6 +226,8 @@ class _MainShellState extends State<MainShell> {
               controller: _pageController,
               onPageChanged: (index) {
                 _isSwiping = true;
+                // vibración ligera al cambiar de tab con swipe, estilo Instagram
+                HapticFeedback.selectionClick();
                 context.go(_tabs[index].path);
                 Future.microtask(() => _isSwiping = false);
               },
