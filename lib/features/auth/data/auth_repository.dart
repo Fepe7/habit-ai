@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../domain/user_model.dart';
 
@@ -149,5 +150,127 @@ class AuthRepository {
   Future<void> signOut() async {
     await GoogleSignIn.instance.signOut();
     await _auth.signOut();
+  }
+
+  // Eliminar cuenta y todos los datos asociados
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) throw 'No hay sesión activa';
+    final uid = user.uid;
+
+    // 1. leer username antes de borrar datos
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    final username = userDoc.data()?['username'] as String?;
+
+    // 2. borrar subcolecciones de users/{uid}
+    await _deleteSubcollections(uid);
+
+    // 3. borrar doc principal del usuario
+    await _firestore.collection('users').doc(uid).delete();
+
+    // 4. borrar entrada de directorio y username reservado
+    await _firestore.collection('user_directory').doc(uid).delete();
+    if (username != null) {
+      await _firestore.collection('usernames').doc(username).delete();
+    }
+
+    // 5. borrar follow_requests donde participe
+    await _deleteFollowRequests(uid);
+
+    // 6. borrar referencias en followers/following de otros usuarios
+    await _deleteFollowRelations(uid);
+
+    // 7. borrar avatar de Storage
+    try {
+      await FirebaseStorage.instance.ref('users/$uid/avatar.jpg').delete();
+    } catch (_) {}
+
+    // 8. cerrar Google y borrar cuenta de Auth
+    await GoogleSignIn.instance.signOut();
+    await user.delete();
+  }
+
+  Future<void> _deleteSubcollections(String uid) async {
+    final userRef = _firestore.collection('users').doc(uid);
+    const subs = [
+      'habits',
+      'achievements',
+      'ai_conversations',
+      'weekly_reviews',
+      'butterfly_projections',
+      'pattern_insights',
+      'renegotiations',
+      'shield_grants',
+      'followers',
+      'following',
+    ];
+
+    for (final sub in subs) {
+      final colRef = userRef.collection(sub);
+      final docs = await colRef.get();
+      for (final doc in docs.docs) {
+        // habits tiene subcolección logs
+        if (sub == 'habits') {
+          final logs = await doc.reference.collection('logs').get();
+          for (final log in logs.docs) {
+            await log.reference.delete();
+          }
+        }
+        await doc.reference.delete();
+      }
+    }
+  }
+
+  Future<void> _deleteFollowRequests(String uid) async {
+    // solicitudes enviadas
+    final sent = await _firestore
+        .collection('follow_requests')
+        .where('fromUid', isEqualTo: uid)
+        .get();
+    for (final doc in sent.docs) {
+      await doc.reference.delete();
+    }
+    // solicitudes recibidas
+    final received = await _firestore
+        .collection('follow_requests')
+        .where('toUid', isEqualTo: uid)
+        .get();
+    for (final doc in received.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  Future<void> _deleteFollowRelations(String uid) async {
+    // borrar mi doc de los followers de la gente que sigo
+    final myFollowing = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('following')
+        .get();
+    for (final doc in myFollowing.docs) {
+      final otherUid = doc.id;
+      await _firestore
+          .collection('users')
+          .doc(otherUid)
+          .collection('followers')
+          .doc(uid)
+          .delete();
+    }
+
+    // borrar mi doc del following de la gente que me sigue
+    final myFollowers = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('followers')
+        .get();
+    for (final doc in myFollowers.docs) {
+      final otherUid = doc.id;
+      await _firestore
+          .collection('users')
+          .doc(otherUid)
+          .collection('following')
+          .doc(uid)
+          .delete();
+    }
   }
 }

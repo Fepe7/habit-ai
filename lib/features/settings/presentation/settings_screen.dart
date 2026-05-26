@@ -289,13 +289,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   boxShadow: AppTheme.ambientShadow(),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: _SettingsTile(
-                  icon: Icons.logout_rounded,
-                  title: 'Cerrar sesión',
-                  subtitle: null,
-                  isDestructive: true,
-                  onTap: () => _confirmSignOut(context, auth),
-                  divider: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SettingsTile(
+                      icon: Icons.logout_rounded,
+                      title: 'Cerrar sesión',
+                      subtitle: null,
+                      isDestructive: true,
+                      onTap: () => _confirmSignOut(context, auth),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.delete_forever_rounded,
+                      title: 'Eliminar cuenta',
+                      subtitle: 'Se borrarán todos tus datos',
+                      isDestructive: true,
+                      onTap: () => _confirmDeleteAccount(context, auth),
+                      divider: false,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -386,6 +398,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context, dynamic auth) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+          'Se borrarán permanentemente todos tus datos: hábitos, rachas, '
+          'logros, conversaciones con la IA, seguidores y tu perfil.\n\n'
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Continuar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    // segunda confirmación: escribir ELIMINAR
+    final typed = await showDialog<String>(
+      context: context, // ignore: use_build_context_synchronously
+      builder: (_) => const _ConfirmDeleteDialog(),
+    );
+    if (typed != 'ELIMINAR' || !mounted) return;
+
+    // mostrar loading
+    showDialog(
+      context: context, // ignore: use_build_context_synchronously
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await auth.deleteAccount();
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop(); // ignore: use_build_context_synchronously
+      if (mounted) {
+        AppSnackBar.showError(
+          context, // ignore: use_build_context_synchronously
+          e.toString().contains('requires-recent-login')
+              ? 'Por seguridad, cierra sesión, vuelve a entrar e inténtalo de nuevo'
+              : 'Error al eliminar la cuenta: $e',
+        );
+      }
+    }
   }
 
   Future<void> _editName(BuildContext context) async {
@@ -971,6 +1039,71 @@ class _EditNameDialogState extends State<_EditNameDialog> {
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
           child: const Text('Guardar'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ConfirmDeleteDialog extends StatefulWidget {
+  const _ConfirmDeleteDialog();
+
+  @override
+  State<_ConfirmDeleteDialog> createState() => _ConfirmDeleteDialogState();
+}
+
+class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
+  final _controller = TextEditingController();
+  bool _matches = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(
+      () => setState(() => _matches = _controller.text.trim() == 'ELIMINAR'),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return AlertDialog(
+      title: const Text('Confirmar eliminación'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Escribe ELIMINAR para confirmar:',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            autocorrect: false,
+            decoration: InputDecoration(
+              hintText: 'ELIMINAR',
+              hintStyle: TextStyle(color: scheme.onSurfaceVariant.withValues(alpha: 0.3)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: _matches ? () => Navigator.pop(context, 'ELIMINAR') : null,
+          style: FilledButton.styleFrom(backgroundColor: scheme.error),
+          child: const Text('Eliminar cuenta'),
         ),
       ],
     );
