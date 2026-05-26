@@ -1,8 +1,9 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
+import 'package:vibration/vibration.dart';
 
 /// Servicio singleton para feedback sensorial al completar hábitos.
-/// Combina vibración prolongada + sonido de check.
+/// Combina vibración continua de 500ms + sonido de check.
 class FeedbackService {
   FeedbackService._();
   static final FeedbackService instance = FeedbackService._();
@@ -17,25 +18,33 @@ class FeedbackService {
     _initialized = true;
   }
 
-  /// Vibración doble (medio + pesado) y sonido de check completado.
+  /// Vibración continua de 500ms y sonido de check completado.
   Future<void> habitCompleted() async {
-    // Vibración más prolongada: dos pulsos
-    await HapticFeedback.mediumImpact();
-    await Future.delayed(const Duration(milliseconds: 80));
-    await HapticFeedback.heavyImpact();
+    // Vibración de 500ms continuos (con fallback a HapticFeedback si el device no soporta)
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(duration: 500);
+    } else {
+      await HapticFeedback.heavyImpact();
+    }
 
-    // Sonido de check
+    // Sonido de check (en paralelo con la vibración)
     try {
       await _init();
       await _player.seek(Duration.zero);
       await _player.resume();
     } catch (_) {
-      // Si falla el audio, la vibración ya se ejecutó — no es crítico
+      // Si falla el audio no es crítico
     }
   }
 
-  /// Vibración ligera para des-completar un hábito.
+  /// Vibración corta para des-completar un hábito.
   Future<void> habitUncompleted() async {
-    await HapticFeedback.lightImpact();
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(duration: 80);
+    } else {
+      await HapticFeedback.lightImpact();
+    }
   }
 }
