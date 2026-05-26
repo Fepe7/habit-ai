@@ -18,13 +18,13 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 
 22. ✅ Renegociación inteligente — Si 3 días fallando, IA propone adaptar. Desplegado.
 
-23. 🔲 Detección de patrones con IA — Correlaciones entre logs ("Completas 90% los días que haces ejercicio por la mañana"). Queries Firestore + Gemini interpreta.
+23. ✅ Detección de patrones con IA — Correlaciones entre logs, Cloud Function + Gemini interpreta, pantalla de insights. Desplegado.
 
 24. ✅ Modo día libre / escudos de racha — Escudos ganados en rachas largas, modo enfermedad congela racha.
 
 ### Fase C — Engagement diario
 
-25. 🔲 Habit stacking (Atomic Habits) — Encadenar hábitos. Campo `parentHabitId` + vista de cadena.
+25. ✅ Habit stacking (Atomic Habits) — Cadenas de hábitos con grupos, drag & drop, bonus XP, onboarding. Desplegado.
 26. 🔲 Tracking de energía/ánimo — Slider 1-5 diario. IA cruza con hábitos para correlaciones.
 27. 🔲 Widgets de home screen — `home_widget` (Android nativo + iOS WidgetKit). Check-in sin abrir app.
 
@@ -58,9 +58,9 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 **SocialNotificationsScreen**: bandeja de solicitudes (Aceptar/Rechazar). Badge en BottomNav cuando hay pendientes.
 
 30. ✅ Plantillas de la comunidad — `community_templates/{templateId}`. Feed paginado, filtros, import con tap.
-31. ✅ Perfiles públicos — Base implementada. Pendiente sistema de follows completo.
-32. 🔲 Sistema de follows / solicitudes — FollowRepository, PublicProfileScreen contextual, SocialNotificationsScreen.
-33. 🔲 Retos compartidos — 21 días con otro usuario. Doc compartido, reglas cruzadas. Requiere follows mutuos.
+31. ✅ Perfiles públicos — Perfil completo con logros, stats, seguidores, sincronización en tiempo real.
+32. ✅ Sistema de follows / solicitudes — FollowRepository, solicitudes para privados, follow directo para públicos, badges en BottomNav, pantalla de seguidores/seguidos, cancelación de solicitudes.
+33. ✅ Retos compartidos — 21 días con otro usuario. Doc compartido, seguimiento de progreso dual. Desplegado.
 34. 🔲 Aplausos anónimos — 👏 desde perfil de seguido → notificación push. Solo entre follows.
 35. 🔲 Tabla de líderes por categoría — Rankings semanales entre seguidores. Cloud Function agrega filtrando grafo.
 36. 🔲 Accountability buddy — Match automático por hábitos similares. 7 días de check-ins mutuos.
@@ -71,6 +71,19 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 
 39. ✅ Sistema de logros con niveles — Principiante → Experto por categoría, radar chart hexagonal.
 40. 🔲 Contrato de compromiso — Cantidad simbólica o donación a ONG. Modelo StickK. Requiere pasarela de pago.
+
+### Fase G — Preparación para lanzamiento público
+
+41. ✅ Política de privacidad y términos de uso — Documentos legales en Firebase Hosting, links en Settings y registro.
+42. ✅ Release signing Android — Keystore de producción, build.gradle.kts configurado, AAB generado.
+43. ✅ Eliminación de cuenta — Borrado completo de datos (Firestore, Storage, Auth) con doble confirmación.
+44. ✅ Feedback háptico — Vibración en check-in, navegación entre pestañas, botones. FeedbackService centralizado.
+45. ✅ Reordenamiento de hábitos — Drag & drop global y edición por lotes.
+46. ✅ Visibilidad granular de hábitos — Cada hábito con visibility individual, sobreescribe config global.
+47. 🔲 Firebase Crashlytics + Analytics
+48. 🔲 Manejo de modo offline
+49. 🔲 Push notifications con FCM
+50. 🔲 Tests mínimos (modelos + repos)
 
 ---
 
