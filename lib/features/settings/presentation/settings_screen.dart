@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -228,6 +229,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Privacidad',
                   subtitle: 'Retos, perfil y visibilidad',
                   onTap: () => context.pushNamed('privacy-settings'),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // legal
+            _SectionLabel(label: 'Legal'),
+            _SectionGroup(
+              children: [
+                _SettingsTile(
+                  icon: Icons.policy_outlined,
+                  title: 'Política de privacidad',
+                  subtitle: 'Cómo tratamos tus datos',
+                  onTap: () => launchUrl(
+                    Uri.parse('https://habit-ai-184ad.web.app/privacy.html'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                _SettingsTile(
+                  icon: Icons.description_outlined,
+                  title: 'Términos de uso',
+                  subtitle: 'Condiciones del servicio',
+                  onTap: () => launchUrl(
+                    Uri.parse('https://habit-ai-184ad.web.app/terms.html'),
+                    mode: LaunchMode.externalApplication,
+                  ),
                   divider: false,
                 ),
               ],

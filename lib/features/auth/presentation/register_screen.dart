@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
@@ -410,6 +412,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
                 ).animate().fadeIn(delay: 700.ms, duration: 400.ms),
                 const SizedBox(height: 20),
+
+                // texto legal
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Al crear tu cuenta aceptas la '),
+                        TextSpan(
+                          text: 'Política de Privacidad',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => launchUrl(
+                                  Uri.parse('https://habit-ai-184ad.web.app/privacy.html'),
+                                  mode: LaunchMode.externalApplication,
+                                ),
+                        ),
+                        const TextSpan(text: ' y los '),
+                        TextSpan(
+                          text: 'Términos de Uso',
+                          style: TextStyle(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => launchUrl(
+                                  Uri.parse('https://habit-ai-184ad.web.app/terms.html'),
+                                  mode: LaunchMode.externalApplication,
+                                ),
+                        ),
+                        const TextSpan(text: '.'),
+                      ],
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 725.ms, duration: 400.ms),
+                const SizedBox(height: 12),
 
                 // link login
                 TextButton(

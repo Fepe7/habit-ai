@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidad — HabitAI</title>
+  <style>
+    :root { --bg: #FFFFFF; --text: #0F172A; --muted: #64748B; --primary: #38BDF8; --surface: #F0F9FF; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.7; padding: 2rem 1rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.3rem; margin-top: 2rem; margin-bottom: 0.5rem; color: var(--text); }
+    p, li { color: var(--muted); margin-bottom: 0.8rem; }
+    ul { padding-left: 1.5rem; }
+    .badge { display: inline-block; background: var(--surface); color: var(--primary); padding: 0.2rem 0.8rem; border-radius: 1rem; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    a { color: var(--primary); }
+    .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #E2E8F0; font-size: 0.85rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Política de Privacidad</h1>
+    <span class="badge">Última actualización: 26 de mayo de 2026</span>
+
+    <p>HabitAI ("la app", "nosotros") es una aplicación de gestión de hábitos con asistencia de inteligencia artificial. Esta política explica qué datos recogemos, para qué los usamos y qué derechos tienes sobre ellos.</p>
+
+    <h2>1. Datos que recogemos</h2>
+    <ul>
+      <li><strong>Datos de cuenta:</strong> email, nombre y foto de perfil (si inicias sesión con Google). Se almacenan en Firebase Authentication.</li>
+      <li><strong>Datos de hábitos:</strong> nombre, categoría, frecuencia, horario, registros diarios (check-ins) y rachas. Se almacenan en Cloud Firestore.</li>
+      <li><strong>Datos de la IA:</strong> las conversaciones que mantienes con el asistente de IA y los análisis generados (revisiones semanales, proyecciones, patrones). Se almacenan en Cloud Firestore.</li>
+      <li><strong>Avatar:</strong> si subes una foto de perfil personalizada, se almacena en Firebase Storage.</li>
+      <li><strong>Datos de perfil social:</strong> nombre de usuario, biografía, configuración de visibilidad, relaciones de seguimiento.</li>
+    </ul>
+
+    <h2>2. Para qué usamos tus datos</h2>
+    <ul>
+      <li>Proporcionarte el servicio: mostrar tus hábitos, rachas y estadísticas.</li>
+      <li>Generar análisis personalizados con IA (Gemini de Google) para ayudarte a mejorar tus hábitos.</li>
+      <li>Permitir funciones sociales: perfiles públicos, seguimiento entre usuarios, plantillas compartidas.</li>
+      <li>Enviar notificaciones relevantes (recordatorios de hábitos, revisiones semanales).</li>
+      <li>Mejorar la app mediante análisis agregados y anónimos.</li>
+    </ul>
+
+    <h2>3. Cómo procesamos los datos con IA</h2>
+    <p>Tus datos de hábitos se envían a la API de Gemini (Google) a través de Cloud Functions seguras en servidores europeos (europe-west1) para generar análisis personalizados. Nunca enviamos tu email ni datos identificativos a la IA; solo datos de hábitos anonimizados. Google no utiliza estos datos para entrenar sus modelos.</p>
+
+    <h2>4. Dónde se almacenan tus datos</h2>
+    <p>Todos los datos se almacenan en servidores de Firebase (Google Cloud) ubicados en Europa. La comunicación se realiza siempre mediante conexiones cifradas (HTTPS/TLS).</p>
+
+    <h2>5. Con quién compartimos tus datos</h2>
+    <ul>
+      <li><strong>Google/Firebase:</strong> como proveedor de infraestructura (autenticación, base de datos, almacenamiento, funciones en la nube).</li>
+      <li><strong>Google Gemini:</strong> datos anonimizados de hábitos para análisis con IA.</li>
+      <li><strong>Otros usuarios:</strong> solo la información que tú configures como pública (perfil, hábitos con visibilidad pública).</li>
+      <li><strong>No vendemos tus datos</strong> a terceros ni los usamos con fines publicitarios.</li>
+    </ul>
+
+    <h2>6. Tus derechos</h2>
+    <p>Conforme al RGPD (Reglamento General de Protección de Datos), tienes derecho a:</p>
+    <ul>
+      <li><strong>Acceso:</strong> consultar qué datos tenemos sobre ti (visible desde la propia app).</li>
+      <li><strong>Rectificación:</strong> modificar tus datos desde la app (perfil, hábitos).</li>
+      <li><strong>Supresión:</strong> eliminar tu cuenta y todos tus datos desde Ajustes → Eliminar cuenta.</li>
+      <li><strong>Portabilidad:</strong> solicitar una copia de tus datos contactándonos por email.</li>
+      <li><strong>Oposición:</strong> dejar de usar la app y solicitar la eliminación de tu cuenta.</li>
+    </ul>
+
+    <h2>7. Retención de datos</h2>
+    <p>Conservamos tus datos mientras mantengas tu cuenta activa. Si eliminas tu cuenta, todos tus datos se borran de forma permanente en un plazo máximo de 30 días.</p>
+
+    <h2>8. Seguridad</h2>
+    <p>Protegemos tus datos mediante:</p>
+    <ul>
+      <li>Autenticación segura con Firebase Auth (tokens JWT).</li>
+      <li>Reglas de seguridad en Firestore que garantizan que solo tú accedes a tus datos.</li>
+      <li>Claves de API almacenadas como secretos en Cloud Functions, nunca expuestas en el cliente.</li>
+      <li>Comunicaciones cifradas de extremo a extremo (HTTPS/TLS).</li>
+    </ul>
+
+    <h2>9. Menores de edad</h2>
+    <p>HabitAI no está dirigida a menores de 16 años. No recogemos datos de menores de forma intencionada. Si detectamos una cuenta de un menor, la eliminaremos.</p>
+
+    <h2>10. Cambios en esta política</h2>
+    <p>Si modificamos esta política, te notificaremos a través de la app. El uso continuado de la app tras la notificación implica la aceptación de los cambios.</p>
+
+    <h2>11. Contacto</h2>
+    <p>Para cualquier consulta sobre privacidad, escríbenos a:</p>
+    <p><strong>Email:</strong> <a href="mailto:andreistaicu568@gmail.com">andreistaicu568@gmail.com</a></p>
+
+    <div class="footer">
+      <p>HabitAI · Desarrollada por Andrei Felipe Staicu · © 2026</p>
+    </div>
+  </div>
+</body>
+</html>
