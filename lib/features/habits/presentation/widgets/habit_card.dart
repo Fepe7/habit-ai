@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/habit_model.dart';
 import '../../../ai/domain/renegotiation_model.dart';
@@ -143,7 +143,12 @@ class HabitCard extends StatelessWidget {
             else
               GestureDetector(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  // Feedback sensorial según estado resultante
+                  if (!isCompletedToday) {
+                    FeedbackService.instance.habitCompleted();
+                  } else {
+                    FeedbackService.instance.habitUncompleted();
+                  }
                   onToggle();
                 },
                 child: Padding(
