@@ -1,9 +1,7 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:vibration/vibration.dart';
 
-/// Servicio singleton para feedback sensorial al completar hábitos.
-/// Combina vibración con patrón + sonido discreto de confirmación.
+/// Servicio singleton para feedback háptico al completar hábitos.
 class FeedbackService {
   FeedbackService._();
   static final FeedbackService instance = FeedbackService._();
@@ -15,17 +13,6 @@ class FeedbackService {
       Vibration.vibrate(pattern: [0, 250, 100, 250]);
     } else {
       await HapticFeedback.heavyImpact();
-    }
-
-    // Nuevo player cada vez para garantizar reproducción desde el inicio
-    try {
-      final player = AudioPlayer();
-      await player.setVolume(0.8);
-      await player.play(AssetSource('sounds/habit_complete.mp3'));
-      // Liberar recursos al terminar
-      player.onPlayerComplete.listen((_) => player.dispose());
-    } catch (_) {
-      // Audio no crítico — vibración ya se ejecutó
     }
   }
 
