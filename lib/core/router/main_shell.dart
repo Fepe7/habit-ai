@@ -226,6 +226,7 @@ class _MainShellState extends State<MainShell> {
       body: isMainRoute
           ? PageView(
               controller: _pageController,
+              physics: const _QuickSwipePhysics(),
               onPageChanged: (index) {
                 _isSwiping = true;
                 // vibración ligera al cambiar de tab con swipe, estilo Instagram
@@ -415,6 +416,20 @@ class _TabInfo {
     required this.activeIcon,
     required this.label,
   });
+}
+
+/// Física de PageView con umbral reducido para cambiar de tab.
+/// Amplifica el offset del dedo ~1.8× → basta con ~30% del ancho en vez del 50%.
+class _QuickSwipePhysics extends PageScrollPhysics {
+  const _QuickSwipePhysics({super.parent});
+
+  @override
+  _QuickSwipePhysics applyTo(ScrollPhysics? ancestor) =>
+      _QuickSwipePhysics(parent: buildParent(ancestor));
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) =>
+      super.applyPhysicsToUserOffset(position, offset) * 1.8;
 }
 
 /// Alto fijo de la barra de navegación (sin safe area inferior)
