@@ -419,7 +419,9 @@ class _TabInfo {
 }
 
 /// Física de PageView con umbral reducido para cambiar de tab.
-/// Amplifica el offset del dedo ~1.8× → basta con ~30% del ancho en vez del 50%.
+/// Dos ajustes combinados:
+///   1. applyPhysicsToUserOffset × 2.5 → arrastre lento: con ~20% del ancho ya cambia
+///   2. minFlingVelocity bajo → swipe rápido y corto también dispara el cambio
 class _QuickSwipePhysics extends PageScrollPhysics {
   const _QuickSwipePhysics({super.parent});
 
@@ -427,9 +429,17 @@ class _QuickSwipePhysics extends PageScrollPhysics {
   _QuickSwipePhysics applyTo(ScrollPhysics? ancestor) =>
       _QuickSwipePhysics(parent: buildParent(ancestor));
 
+  /// Amplifica el desplazamiento físico del dedo para que el PageView
+  /// "llegue" al 50% de umbral con mucho menos recorrido real.
   @override
   double applyPhysicsToUserOffset(ScrollMetrics position, double offset) =>
-      super.applyPhysicsToUserOffset(position, offset) * 1.8;
+      super.applyPhysicsToUserOffset(position, offset) * 2.5;
+
+  /// Velocidad mínima para que un swipe rápido cuente como fling.
+  /// Valor por defecto en Android ronda 365 px/s — reducirlo a 100
+  /// hace que swipes cortos pero veloces también cambien de tab.
+  @override
+  double get minFlingVelocity => 100.0;
 }
 
 /// Alto fijo de la barra de navegación (sin safe area inferior)
