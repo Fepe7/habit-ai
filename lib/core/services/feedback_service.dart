@@ -23,7 +23,8 @@ class FeedbackService {
     // Vibración de 500ms continuos (con fallback a HapticFeedback si el device no soporta)
     final hasVibrator = await Vibration.hasVibrator() ?? false;
     if (hasVibrator) {
-      Vibration.vibrate(duration: 500);
+      // Patrón: [delay, on, off, on] en ms → 250ms ON · 100ms pausa · 250ms ON
+      Vibration.vibrate(pattern: [0, 250, 100, 250]);
     } else {
       await HapticFeedback.heavyImpact();
     }
