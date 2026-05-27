@@ -6,6 +6,7 @@ import '../../../core/widgets/ux/skeletons.dart';
 import '../data/archivement_repository.dart';
 import '../domain/achivement_model.dart';
 import '../../../l10n/app_localizations.dart';
+import 'achievement_l10n.dart';
 
 // Pantalla con todos los logros (desbloqueados y bloqueados)
 class AchievementsScreen extends StatefulWidget {
@@ -214,7 +215,7 @@ class _AchievementTile extends StatelessWidget {
 
           // titulo
           Text(
-            info.title,
+            AchievementL10n.title(info.type, S.of(context)),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isUnlocked
@@ -229,7 +230,7 @@ class _AchievementTile extends StatelessWidget {
 
           // descripcion
           Text(
-            info.description,
+            AchievementL10n.description(info.type, S.of(context)),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: isUnlocked
                       ? colorScheme.onSurfaceVariant

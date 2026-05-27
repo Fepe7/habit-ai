@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../achievements/presentation/achievement_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../achievements/domain/achivement_model.dart';
@@ -186,7 +188,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               Icon(Icons.person_off_outlined,
                   size: 64, color: scheme.outlineVariant),
               const SizedBox(height: 16),
-              Text('Perfil no disponible',
+              Text(S.of(context).publicProfileNotAvailable,
                   style: Theme.of(context).textTheme.titleMedium),
             ],
           ),
@@ -420,7 +422,7 @@ class _ProfileHeader extends StatelessWidget {
           if (_createdAt != null) ...[
             const SizedBox(height: 6),
             Text(
-              'Miembro desde ${_formatMonth(_createdAt!)}',
+              S.of(context).publicProfileMemberSince(_formatMonth(_createdAt!, S.of(context))),
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
@@ -435,7 +437,7 @@ class _ProfileHeader extends StatelessWidget {
               children: [
                 _CounterChip(
                   value: followersCount,
-                  label: 'seguidores',
+                  label: S.of(context).profileFollowers,
                   onTap: isOwnProfile
                       ? () => context.push('/followers?tab=0')
                       : null,
@@ -443,7 +445,7 @@ class _ProfileHeader extends StatelessWidget {
                 const SizedBox(width: 24),
                 _CounterChip(
                   value: followingCount,
-                  label: 'siguiendo',
+                  label: S.of(context).profileFollowing,
                   onTap: isOwnProfile
                       ? () => context.push('/followers?tab=1')
                       : null,
@@ -472,7 +474,7 @@ class _ProfileHeader extends StatelessWidget {
                             size: 13, color: AppTheme.success),
                         const SizedBox(width: 5),
                         Text(
-                          'Seguidor mutuo',
+                          S.of(context).publicProfileMutualFollower,
                           style: TextStyle(
                             color: AppTheme.success,
                             fontWeight: FontWeight.w700,
@@ -497,10 +499,11 @@ class _ProfileHeader extends StatelessWidget {
     );
   }
 
-  String _formatMonth(DateTime date) {
-    const meses = [
-      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
+  String _formatMonth(DateTime date, S l10n) {
+    final meses = [
+      l10n.monthFullJan, l10n.monthFullFeb, l10n.monthFullMar, l10n.monthFullApr,
+      l10n.monthFullMay, l10n.monthFullJun, l10n.monthFullJul, l10n.monthFullAug,
+      l10n.monthFullSep, l10n.monthFullOct, l10n.monthFullNov, l10n.monthFullDec,
     ];
     return '${meses[date.month - 1]} ${date.year}';
   }
@@ -574,21 +577,22 @@ class _FollowButton extends StatelessWidget {
     Color fg;
     IconData icon;
 
+    final l10n = S.of(context);
     switch (state) {
       case _FollowState.following:
-        label = 'Siguiendo';
+        label = l10n.exploreFollowing;
         bg = scheme.surfaceContainerHighest;
         fg = scheme.onSurface;
         icon = Icons.check_rounded;
         break;
       case _FollowState.pending:
-        label = 'Solicitado';
+        label = l10n.exploreRequested;
         bg = scheme.surfaceContainerHighest;
         fg = scheme.onSurfaceVariant;
         icon = Icons.hourglass_top_rounded;
         break;
       case _FollowState.none:
-        label = 'Seguir';
+        label = l10n.exploreFollow;
         bg = scheme.primary;
         fg = scheme.onPrimary;
         icon = Icons.person_add_rounded;
@@ -653,7 +657,7 @@ class _PrivateProfileMessage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Esta cuenta es privada',
+            S.of(context).publicProfilePrivate,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -662,8 +666,8 @@ class _PrivateProfileMessage extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isPending
-                ? 'Tu solicitud está pendiente de aprobación.'
-                : 'Síguelo para ver sus hábitos y estadísticas.',
+                ? S.of(context).publicProfileRequestPending
+                : S.of(context).publicProfileFollowToSee,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -694,7 +698,7 @@ class _StatsBento extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 value: '${profile.totalHabits}',
-                label: 'Hábitos',
+                label: S.of(context).profileHabits,
                 icon: Icons.track_changes_rounded,
               ),
             ),
@@ -702,7 +706,7 @@ class _StatsBento extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 value: '${profile.bestStreakEver}d',
-                label: 'Mejor racha',
+                label: S.of(context).profileBestStreak,
                 icon: Icons.local_fire_department_rounded,
                 iconColor: AppTheme.tertiaryContainer,
                 highlighted: true,
@@ -716,7 +720,7 @@ class _StatsBento extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 value: profile.averageLevel.toStringAsFixed(1),
-                label: 'Nivel medio',
+                label: S.of(context).publicProfileAverageLevel,
                 icon: Icons.bar_chart_rounded,
               ),
             ),
@@ -725,7 +729,7 @@ class _StatsBento extends StatelessWidget {
               Expanded(
                 child: _StatTile(
                   value: '${profile.unlockedAchievements}',
-                  label: 'Logros',
+                  label: S.of(context).achievementsTitle,
                   icon: Icons.emoji_events_rounded,
                   iconColor: const Color(0xFFF59E0B),
                 ),
@@ -821,7 +825,7 @@ class _AchievementsShowcase extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Logros',
+              S.of(context).achievementsTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,
@@ -879,7 +883,7 @@ class _AchievementsShowcase extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'más',
+                      S.of(context).publicProfileMore,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -919,7 +923,7 @@ class _AchievementBadge extends StatelessWidget {
         SizedBox(
           width: 56,
           child: Text(
-            info.title,
+            AchievementL10n.title(type, S.of(context)),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 10,
@@ -956,7 +960,7 @@ class _HabitsGrid extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            'Sin hábitos visibles',
+            S.of(context).publicProfileNoHabits,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -972,7 +976,7 @@ class _HabitsGrid extends StatelessWidget {
         Row(
           children: [
             Text(
-              'Hábitos activos',
+              S.of(context).profileActiveHabits,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.2,

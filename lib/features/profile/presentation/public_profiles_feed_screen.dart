@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
@@ -135,7 +136,7 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Explorar perfiles',
+                          S.of(context).publicProfilesFeedTitle,
                           style: Theme.of(context)
                               .textTheme
                               .headlineSmall
@@ -147,7 +148,7 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
                   const SizedBox(height: 10),
                   SearchBar(
                     controller: _searchController,
-                    hintText: 'Buscar por @username…',
+                    hintText: S.of(context).publicProfilesFeedSearchHint,
                     leading: const Icon(Icons.search_rounded),
                     trailing: [
                       if (_query.isNotEmpty)
@@ -223,10 +224,10 @@ class _FeedView extends StatelessWidget {
     }
 
     if (profiles.isEmpty) {
-      return const EmptyStateView(
+      return EmptyStateView(
         icon: Icons.people_outline_rounded,
-        title: 'Todavía no hay perfiles públicos',
-        subtitle: 'Activa tu perfil en Ajustes para aparecer aquí.',
+        title: S.of(context).exploreNoProfiles,
+        subtitle: S.of(context).publicProfilesFeedEmptySubtitle,
       );
     }
 
@@ -287,10 +288,10 @@ class _SearchResultsView extends StatelessWidget {
     }
 
     if (results.isEmpty) {
-      return const EmptyStateView(
+      return EmptyStateView(
         icon: Icons.manage_search_rounded,
-        title: 'Sin resultados',
-        subtitle: 'Prueba con otro @username',
+        title: S.of(context).exploreNoResults,
+        subtitle: S.of(context).publicProfilesFeedNoResultsSubtitle,
       );
     }
 

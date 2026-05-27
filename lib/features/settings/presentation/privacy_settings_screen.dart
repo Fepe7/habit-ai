@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
 import '../../auth/data/user_repository.dart';
@@ -65,7 +66,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacidad'),
+        title: Text(S.of(context).settingsPrivacy),
         backgroundColor: scheme.surface,
         scrolledUnderElevation: 0,
       ),
@@ -99,7 +100,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Elige un nombre de usuario para que otros puedan encontrarte.',
+                          S.of(context).privacyUsernameHint,
                           style: textTheme.bodySmall?.copyWith(
                             color: scheme.onTertiaryContainer,
                           ),
@@ -110,7 +111,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 ).animate().fadeIn(),
 
               // master switch: perfil público / privado
-              _SectionLabel(label: 'Visibilidad'),
+              _SectionLabel(label: S.of(context).privacySectionVisibility),
               _ProfilePublicityCard(
                 userData: user,
                 publicProfileRepo: _publicProfileRepo,
@@ -122,8 +123,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 // header dinámico: el label cambia según público/privado
                 _SectionLabel(
                   label: user.isProfilePublic
-                      ? 'Qué ve todo el mundo'
-                      : 'Qué ven tus seguidores',
+                      ? S.of(context).privacyPublicViewLabel
+                      : S.of(context).privacyFollowersViewLabel,
                 ),
                 _SectionVisibilityCard(
                   user: user,
@@ -140,11 +141,11 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const SizedBox(height: 24),
 
                 // retos
-                _SectionLabel(label: 'Retos'),
+                _SectionLabel(label: S.of(context).exploreChallenges),
                 _PrivacyCard(
                   icon: Icons.sports_score_rounded,
-                  title: 'Quién puede enviarme retos',
-                  description: 'Controla quién puede invitarte a competir en un hábito',
+                  title: S.of(context).privacyChallengesTitle,
+                  description: S.of(context).privacyChallengesDesc,
                   selected: challengeLevel,
                   onChanged: _updateChallengePrivacy,
                 ).animate().fadeIn(delay: 200.ms),
@@ -242,7 +243,7 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
         );
         if (!mounted) return;
         if (!ok) {
-          AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
+          AppSnackBar.showInfo(context, S.of(context).privacyUsernameTaken); // ignore: use_build_context_synchronously
         }
       } finally {
         if (mounted) setState(() => _loading = false);
@@ -274,7 +275,7 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
       );
       if (!mounted) return;
       if (!ok) {
-        AppSnackBar.showInfo(context, 'El username ya está ocupado'); // ignore: use_build_context_synchronously
+        AppSnackBar.showInfo(context, S.of(context).privacyUsernameTaken); // ignore: use_build_context_synchronously
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -285,22 +286,19 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Desactivar perfil público'),
-        content: const Text(
-          'Tu perfil desaparecerá del directorio. Tus seguidores actuales '
-          'podrán seguir viéndote hasta que los elimines.',
-        ),
+        title: Text(S.of(ctx).privacyDisableTitle),
+        content: Text(S.of(ctx).privacyDisableContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).commonCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Desactivar'),
+            child: Text(S.of(ctx).privacyDisableButton),
           ),
         ],
       ),
@@ -343,14 +341,14 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Perfil público',
+                      S.of(context).privacyPublicProfileTitle,
                       style: textTheme.bodyMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                     Text(
                       _isPublic
-                          ? 'Apareces en el directorio, cualquiera puede seguirte'
-                          : 'Solo tus seguidores pueden verte',
+                          ? S.of(context).privacyPublicProfileDescOn
+                          : S.of(context).privacyPublicProfileDescOff,
                       style: textTheme.bodySmall
                           ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
@@ -399,7 +397,7 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
                 const Spacer(),
                 TextButton(
                   onPressed: _loading ? null : () => _changeUsername(context),
-                  child: const Text('Cambiar username'),
+                  child: Text(S.of(context).privacyChangeUsername),
                 ),
               ],
             ),
@@ -425,28 +423,29 @@ class _SectionVisibilityCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
+    final l10n = S.of(context);
     final items = [
       (
         icon: Icons.bar_chart_rounded,
-        label: 'Estadísticas',
+        label: l10n.privacyStatsLabel,
         field: 'showStats',
         value: user.showStats,
       ),
       (
         icon: Icons.checklist_rounded,
-        label: 'Hábitos activos',
+        label: l10n.privacyHabitsLabel,
         field: 'showHabits',
         value: user.showHabits,
       ),
       (
         icon: Icons.emoji_events_rounded,
-        label: 'Logros',
+        label: l10n.achievementsTitle,
         field: 'showAchievements',
         value: user.showAchievements,
       ),
       (
         icon: Icons.people_outline_rounded,
-        label: 'Seguidores / Siguiendo',
+        label: l10n.privacyFollowersLabel,
         field: 'showFollowerCount',
         value: user.showFollowerCount,
       ),
@@ -491,7 +490,7 @@ class _VisibleHabitsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionLabel(label: 'Hábitos visibles en tu perfil'),
+        _SectionLabel(label: S.of(context).privacyVisibleHabitsSection),
         StreamBuilder<List<HabitModel>>(
           stream: habitRepo.watchActiveHabits(),
           builder: (context, snap) {
@@ -508,7 +507,7 @@ class _VisibleHabitsSection extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    'No tienes hábitos activos',
+                    S.of(context).privacyNoHabits,
                     style: Theme.of(context)
                         .textTheme
                         .bodyMedium
@@ -550,16 +549,16 @@ class _HabitVisibilityRow extends StatelessWidget {
     required this.habitRepo,
   });
 
-  static const _options = [
-    (value: 'public',    icon: Icons.public_rounded,       label: 'Público'),
-    (value: 'followers', icon: Icons.people_rounded,        label: 'Seguidores'),
-    (value: 'private',   icon: Icons.lock_outline_rounded,  label: 'Privado'),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = S.of(context);
+    final options = [
+      (value: 'public',    icon: Icons.public_rounded,       label: l10n.privacyOptionPublic),
+      (value: 'followers', icon: Icons.people_rounded,        label: l10n.privacyOptionFollowers),
+      (value: 'private',   icon: Icons.lock_outline_rounded,  label: l10n.privacyOptionPrivate),
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -598,7 +597,7 @@ class _HabitVisibilityRow extends StatelessWidget {
           const SizedBox(height: 8),
           // selector de 3 opciones
           Row(
-            children: _options.map((opt) {
+            children: options.map((opt) {
               final selected = habit.visibility == opt.value;
               return Expanded(
                 child: Padding(
@@ -672,10 +671,19 @@ class _PrivacyCard extends StatelessWidget {
     required this.onChanged,
   });
 
+  String _levelLabel(PrivacyLevel level, S l10n) {
+    switch (level) {
+      case PrivacyLevel.everyone: return l10n.privacyLevelEveryone;
+      case PrivacyLevel.followers: return l10n.privacyOptionFollowers;
+      case PrivacyLevel.nobody: return l10n.privacyLevelNobody;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = S.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -735,7 +743,7 @@ class _PrivacyCard extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          level.label,
+                          _levelLabel(level, l10n),
                           style: textTheme.labelSmall?.copyWith(
                             color: isSelected
                                 ? scheme.onPrimary

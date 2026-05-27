@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/achivement_model.dart';
+import 'achievement_l10n.dart';
 
 // Muestra un banner celebratorio cuando se desbloquea un logro
 class AchievementOverlay {
@@ -104,7 +106,7 @@ class _AchievementBanner extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Logro desbloqueado!',
+                        S.of(context).achievementUnlockedBanner,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: info.color,
                               fontWeight: FontWeight.w600,
@@ -113,14 +115,14 @@ class _AchievementBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        info.title,
+                        AchievementL10n.title(info.type, S.of(context)),
                         style:
                             Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                       ),
                       Text(
-                        info.description,
+                        AchievementL10n.description(info.type, S.of(context)),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: Theme.of(context)
                                   .colorScheme

@@ -464,10 +464,10 @@ class _HabitsScreenState extends State<HabitsScreen>
       await _habitRepo.createHabit(habit);
       AnalyticsService.instance.logHabitCreated(habit.category);
     } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al crear el hábito');
+      if (mounted) AppSnackBar.showError(context, S.of(context).drawerHabitCreateError);
       return;
     }
-    if (mounted) AppSnackBar.showSuccess(context, 'Hábito creado');
+    if (mounted) AppSnackBar.showSuccess(context, S.of(context).drawerHabitCreated);
 
     // onboarding: mostrar la primera vez que se usa el encadenamiento
     if (encadenado && mounted) {
@@ -663,7 +663,7 @@ class _HabitsScreenState extends State<HabitsScreen>
       await _habitRepo.reorderHabits(updates);
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al guardar el orden');
+        AppSnackBar.showError(context, S.of(context).habitsOrderSaveError);
       }
     }
   }
@@ -1197,7 +1197,7 @@ class _HabitsScreenState extends State<HabitsScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _userName != null ? s.habitsGreeting(_userName!) : 'HabitAI',
+                  _userName != null ? s.habitsGreeting(_userName!) : s.appTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: _userName != null ? scheme.onSurface : scheme.primary,
                     fontWeight: FontWeight.w700,
@@ -2020,7 +2020,7 @@ class _GroupSection extends StatelessWidget {
                             children: [
                               Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
                               const SizedBox(width: 12),
-                              Text('Eliminar grupo', style: const TextStyle(color: AppTheme.error)),
+                              Text(S.of(context).habitsDeleteGroup, style: const TextStyle(color: AppTheme.error)),
                             ],
                           ),
                         ),

@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Widget genérico de estado de error con botón opcional de reintento
 class ErrorStateView extends StatelessWidget {
   const ErrorStateView({
     super.key,
     required this.message,
-    this.title = 'Algo salió mal',
+    this.title,
     this.onRetry,
     this.icon = Icons.cloud_off_outlined,
   });
 
   final String message;
-  final String title;
+  final String? title;
   final VoidCallback? onRetry;
   final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = S.of(context);
 
     return Center(
       child: Padding(
@@ -41,7 +43,7 @@ class ErrorStateView extends StatelessWidget {
             const SizedBox(height: 24),
 
             Text(
-              title,
+              title ?? l10n.errorDefault,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -69,7 +71,7 @@ class ErrorStateView extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Reintentar'),
+                label: Text(l10n.snackbarRetry),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colorScheme.error,
                   side: BorderSide(color: colorScheme.error.withValues(alpha: 0.5)),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../achievements/presentation/achievement_l10n.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../features/achievements/data/archivement_repository.dart';
@@ -196,19 +198,23 @@ typedef _NotifData = ({List<_NotifItem> events, List<_NotifItem> reminders});
 
 class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
   late Future<_NotifData> _future;
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _future = _loadAll();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      _future = _loadAll(S.of(context));
+    }
   }
 
   Future<void> _clearAll() async {
     await NotificationsService.clearAll();
-    if (mounted) setState(() => _future = _loadAll());
+    if (mounted) setState(() => _future = _loadAll(S.of(context)));
   }
 
-  Future<_NotifData> _loadAll() async {
+  Future<_NotifData> _loadAll(S l10n) async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     final habitRepo = HabitRepository(uid: uid);
     final achievementRepo = AchievementRepository(uid: uid);
@@ -255,8 +261,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       if (!afterCleared(a.unlockedAt)) continue;
       final info = AchievementCatalog.getInfo(a.type);
       events.add(_NotifItem(
-        title: info.title,
-        subtitle: info.description,
+        title: AchievementL10n.title(a.type, l10n),
+        subtitle: AchievementL10n.description(a.type, l10n),
         date: a.unlockedAt,
         icon: info.icon,
         color: info.color,
@@ -268,7 +274,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
         in (results[2] as List<RenegotiationModel>).where((r) => r.isPending)) {
       if (!afterCleared(r.generatedAt)) continue;
       events.add(_NotifItem(
-        title: 'Ajuste sugerido: ${r.habitTitle}',
+        title: l10n.notificationsAdjustSuggested(r.habitTitle),
         subtitle: r.strategy.label,
         date: r.generatedAt,
         icon: Icons.psychology_rounded,
@@ -281,7 +287,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     final review = results[3] as WeeklyReviewModel?;
     if (review != null && afterCleared(review.generatedAt)) {
       events.add(_NotifItem(
-        title: 'Revisión semanal lista',
+        title: l10n.notificationsWeeklyReviewReady,
         subtitle: review.focus,
         date: review.generatedAt,
         icon: Icons.bar_chart_rounded,
@@ -294,7 +300,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     final butterfly = results[4] as ButterflyProjectionModel?;
     if (butterfly != null && afterCleared(butterfly.generatedAt)) {
       events.add(_NotifItem(
-        title: 'Proyección mensual 🦋',
+        title: l10n.notificationsMonthlyProjection,
         subtitle: butterfly.titleKeep,
         date: butterfly.generatedAt,
         icon: Icons.timeline_rounded,
@@ -308,8 +314,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     for (final req in pendingFollows) {
       if (!afterCleared(req.createdAt)) continue;
       events.add(_NotifItem(
-        title: 'Nueva solicitud de seguimiento',
-        subtitle: '@${req.fromUsername} quiere seguirte',
+        title: l10n.navNewFollowRequest,
+        subtitle: l10n.navFollowRequestBody(req.fromUsername),
         date: req.createdAt,
         icon: Icons.person_add_rounded,
         color: const Color(0xFF38BDF8),
@@ -322,8 +328,8 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       final date = req.respondedAt ?? req.createdAt;
       if (!afterCleared(date)) continue;
       events.add(_NotifItem(
-        title: '¡Solicitud aceptada!',
-        subtitle: '@${req.toUsername} aceptó tu solicitud',
+        title: l10n.navFollowAccepted,
+        subtitle: l10n.navFollowAcceptedBody(req.toUsername),
         date: date,
         icon: Icons.how_to_reg_rounded,
         color: const Color(0xFF10B981),
@@ -336,7 +342,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
     for (final c in pendingInvites) {
       if (!afterCleared(c.createdAt)) continue;
       events.add(_NotifItem(
-        title: '¡Te han retado!',
+        title: l10n.notificationsChallengeReceived,
         subtitle: '${c.habitTitle} — ${c.durationDays} días',
         date: c.createdAt,
         icon: Icons.handshake_rounded,
@@ -351,7 +357,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
       if (c.startDate == null) continue;
       if (!afterCleared(c.startDate!)) continue;
       events.add(_NotifItem(
-        title: '¡Tu reto fue aceptado!',
+        title: l10n.notificationsChallengeAccepted,
         subtitle: c.habitTitle,
         date: c.startDate!,
         icon: Icons.celebration_rounded,
@@ -368,7 +374,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
         .where((h) => h.reminderTime != null && h.reminderTime!.isNotEmpty)
         .map((h) => _NotifItem(
               title: h.title,
-              subtitle: 'Recordatorio a las ${h.reminderTime}',
+              subtitle: l10n.notificationsReminderAt(h.reminderTime!),
               date: h.createdAt,
               icon: Icons.alarm_rounded,
               color: const Color(0xFF38BDF8),
@@ -415,7 +421,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'Notificaciones',
+                    S.of(context).notificationsTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -427,7 +433,7 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
                     foregroundColor: scheme.onSurfaceVariant,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
-                  child: const Text('Limpiar actividad'),
+                  child: Text(S.of(context).notificationsClearActivity),
                 ),
               ],
             ),
@@ -487,7 +493,7 @@ class _TwoSectionList extends StatelessWidget {
       rows.add(Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
         child: Text(
-          'Sin actividad reciente',
+          S.of(context).notificationsNoActivity,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
               ),
@@ -507,7 +513,7 @@ class _TwoSectionList extends StatelessWidget {
       rows.add(Padding(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
         child: Text(
-          'Recordatorios activos',
+          S.of(context).notificationsActiveReminders,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
                 letterSpacing: 0.8,
@@ -573,7 +579,7 @@ class _NotifTile extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(
-        _formatDate(item.date),
+        _formatDate(item.date, S.of(context)),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -593,7 +599,7 @@ class _NotifTile extends StatelessWidget {
         .slideY(begin: 0.06, curve: Curves.easeOutCubic);
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, S l10n) {
     final now = DateTime.now();
     final diff = now.difference(date);
 
@@ -602,10 +608,10 @@ class _NotifTile extends StatelessWidget {
       final m = date.minute.toString().padLeft(2, '0');
       return '$h:$m';
     }
-    if (diff.inDays == 1) return 'Ayer';
-    if (diff.inDays < 7) return 'Hace ${diff.inDays}d';
-    if (diff.inDays < 30) return 'Hace ${(diff.inDays / 7).floor()}sem';
-    return 'Hace ${(diff.inDays / 30).floor()}mes';
+    if (diff.inDays == 1) return l10n.notificationsYesterday;
+    if (diff.inDays < 7) return l10n.notificationsDaysAgo(diff.inDays);
+    if (diff.inDays < 30) return l10n.notificationsWeeksAgo((diff.inDays / 7).floor());
+    return l10n.notificationsMonthsAgo((diff.inDays / 30).floor());
   }
 }
 
@@ -693,14 +699,14 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Sin notificaciones',
+              S.of(context).notificationsEmpty,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Aquí aparecerán tus logros, recordatorios y sugerencias de la IA.',
+              S.of(context).notificationsEmptySubtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
@@ -721,7 +727,7 @@ class _ErrorState extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Text(
-        'No se pudieron cargar las notificaciones.',
+        S.of(context).notificationsLoadError,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Theme.of(context).colorScheme.error,
             ),

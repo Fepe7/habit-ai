@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
 import '../../../core/widgets/ux/empty_state_view.dart';
@@ -61,14 +62,14 @@ class _FollowersScreenState extends State<FollowersScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Seguidores'),
+        title: Text(S.of(context).followersTabFollowers),
         backgroundColor: scheme.surface,
         scrolledUnderElevation: 0,
         bottom: TabBar(
           controller: _tabCtrl,
           tabs: [
-            const Tab(text: 'Seguidores'),
-            const Tab(text: 'Siguiendo'),
+            Tab(text: S.of(context).followersTabFollowers),
+            Tab(text: S.of(context).followersTabFollowing),
             Tab(
               child: StreamBuilder<List<FollowRequestModel>>(
                 stream: _followRepo.watchPendingFollowRequests(),
@@ -77,7 +78,7 @@ class _FollowersScreenState extends State<FollowersScreen>
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('Solicitudes'),
+                      Text(S.of(context).followersTabRequests),
                       if (count > 0) ...[
                         const SizedBox(width: 6),
                         Container(
@@ -207,13 +208,13 @@ class _FollowersTabState extends State<_FollowersTab> {
     });
   }
 
-  String _chipLabel(String uid) {
+  String _chipLabel(String uid, S l10n) {
     final iFollow = _followingUids.contains(uid);
     final followsMe = _followerUids.contains(uid);
-    if (iFollow && followsMe) return 'Mutuo';
-    if (iFollow) return 'Siguiendo';
-    if (followsMe) return 'Te sigue';
-    if (_pendingUids.contains(uid)) return 'Solicitado';
+    if (iFollow && followsMe) return l10n.followersMutual;
+    if (iFollow) return l10n.exploreFollowing;
+    if (followsMe) return l10n.followersFollowsYou;
+    if (_pendingUids.contains(uid)) return l10n.exploreRequested;
     return '';
   }
 
@@ -231,7 +232,7 @@ class _FollowersTabState extends State<_FollowersTab> {
         final hasPending =
             await widget.followRepo.hasPendingFollowRequest(target.uid);
         if (hasPending) {
-          if (mounted) AppSnackBar.showInfo(context, 'Solicitud ya enviada');
+          if (mounted) AppSnackBar.showInfo(context, S.of(context).followersRequestAlreadySent);
           return;
         }
         final targetEntry = await widget.dirRepo.getEntry(target.uid);
@@ -246,7 +247,7 @@ class _FollowersTabState extends State<_FollowersTab> {
         );
         if (mounted) {
           AppSnackBar.showInfo(
-              context, 'Solicitud enviada a @${target.username}');
+              context, S.of(context).followersRequestSent(target.username));
           setState(() => _pendingUids.add(target.uid));
         }
       } else {
@@ -261,7 +262,7 @@ class _FollowersTabState extends State<_FollowersTab> {
           myPhotoUrl: me.photoURL,
         );
         if (mounted) {
-          AppSnackBar.showInfo(context, 'Siguiendo a @${target.username}');
+          AppSnackBar.showInfo(context, S.of(context).followersNowFollowing(target.username));
           setState(() {
             _followingUids.add(target.uid);
             _searchResults = [];
@@ -278,17 +279,17 @@ class _FollowersTabState extends State<_FollowersTab> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar seguidor'),
-        content: Text('¿Eliminar a @${follower.username} de tus seguidores?'),
+        title: Text(S.of(ctx).followersRemoveTitle),
+        content: Text(S.of(ctx).followersRemoveContent(follower.username)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              'Eliminar',
+              S.of(ctx).commonDelete,
               style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
@@ -298,7 +299,7 @@ class _FollowersTabState extends State<_FollowersTab> {
     if (confirm != true) return;
     await widget.followRepo.removeFollower(follower.uid);
     if (mounted) {
-      AppSnackBar.showInfo(context, 'Seguidor eliminado');
+      AppSnackBar.showInfo(context, S.of(context).followersRemoved);
       setState(() => _followerUids.remove(follower.uid));
     }
   }
@@ -315,7 +316,7 @@ class _FollowersTabState extends State<_FollowersTab> {
             controller: _searchCtrl,
             autocorrect: false,
             decoration: InputDecoration(
-              hintText: 'Buscar por @username',
+              hintText: S.of(context).followersSearchHint,
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: _searching
                   ? const Padding(
@@ -362,7 +363,7 @@ class _FollowersTabState extends State<_FollowersTab> {
               itemCount: _searchResults.length,
               itemBuilder: (_, i) {
                 final entry = _searchResults[i];
-                final chip = _chipLabel(entry.uid);
+                final chip = _chipLabel(entry.uid, S.of(context));
                 final isPrivate =
                     !entry.isProfilePublic;
                 return ListTile(
@@ -401,7 +402,7 @@ class _FollowersTabState extends State<_FollowersTab> {
                         )
                       : TextButton(
                           onPressed: () => _followOrRequest(entry),
-                          child: Text(isPrivate ? 'Solicitar' : 'Seguir'),
+                          child: Text(isPrivate ? S.of(context).exploreRequest : S.of(context).exploreFollow),
                         ),
                   dense: true,
                 );
@@ -420,11 +421,10 @@ class _FollowersTabState extends State<_FollowersTab> {
               }
               final followers = snap.data ?? [];
               if (followers.isEmpty) {
-                return const EmptyStateView(
+                return EmptyStateView(
                   icon: Icons.people_outline_rounded,
-                  title: 'Aún no tienes seguidores',
-                  subtitle:
-                      'Busca usuarios por @username para seguirlos o que te sigan',
+                  title: S.of(context).followersEmptyTitle,
+                  subtitle: S.of(context).followersEmptySubtitle,
                 );
               }
               return ListView.builder(
@@ -436,10 +436,10 @@ class _FollowersTabState extends State<_FollowersTab> {
                   return _FollowTile(
                     model: f,
                     trailingLabel: _followingUids.contains(f.uid)
-                        ? 'Mutuo'
-                        : 'Te sigue',
+                        ? S.of(context).followersMutual
+                        : S.of(context).followersFollowsYou,
                     onAction: () => _removeFollower(f),
-                    actionLabel: 'Eliminar',
+                    actionLabel: S.of(context).commonDelete,
                   ).animate().fadeIn(delay: Duration(milliseconds: i * 40));
                 },
               );
@@ -471,17 +471,17 @@ class _FollowingTabState extends State<_FollowingTab> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Dejar de seguir'),
-        content: Text('¿Dejar de seguir a @${f.username}?'),
+        title: Text(S.of(ctx).followersUnfollow),
+        content: Text(S.of(ctx).followersUnfollowContent(f.username)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(S.of(ctx).commonCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              'Dejar de seguir',
+              S.of(ctx).followersUnfollow,
               style:
                   TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
@@ -491,7 +491,7 @@ class _FollowingTabState extends State<_FollowingTab> {
     );
     if (confirm != true) return;
     await widget.followRepo.unfollow(f.uid);
-    if (mounted) AppSnackBar.showInfo(context, 'Dejaste de seguir a @${f.username}');
+    if (mounted) AppSnackBar.showInfo(context, S.of(context).followersUnfollowed(f.username));
   }
 
   @override
@@ -504,22 +504,22 @@ class _FollowingTabState extends State<_FollowingTab> {
         }
         final following = snap.data ?? [];
         if (following.isEmpty) {
-          return const EmptyStateView(
+          return EmptyStateView(
             icon: Icons.person_search_rounded,
-            title: 'No sigues a nadie',
-            subtitle: 'Busca usuarios en la pestaña Seguidores',
+            title: S.of(context).followingEmptyTitle,
+            subtitle: S.of(context).followingEmptySubtitle,
           );
         }
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           itemCount: following.length,
-          itemBuilder: (_, i) {
+          itemBuilder: (context, i) {
             final f = following[i];
             return _FollowTile(
               model: f,
-              trailingLabel: 'Siguiendo',
+              trailingLabel: S.of(context).exploreFollowing,
               onAction: () => _unfollow(f),
-              actionLabel: 'Dejar de seguir',
+              actionLabel: S.of(context).followersUnfollow,
             ).animate().fadeIn(delay: Duration(milliseconds: i * 40));
           },
         );
@@ -545,15 +545,14 @@ class _RequestsTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
-          return Center(child: Text('Error al cargar solicitudes: ${snap.error}'));
+          return Center(child: Text(S.of(context).followersRequestsError('${snap.error}')));
         }
         final requests = snap.data ?? [];
         if (requests.isEmpty) {
-          return const EmptyStateView(
+          return EmptyStateView(
             icon: Icons.mark_email_unread_outlined,
-            title: 'Sin solicitudes pendientes',
-            subtitle:
-                'Aquí aparecerán las solicitudes de seguimiento que recibas',
+            title: S.of(context).followersRequestsEmptyTitle,
+            subtitle: S.of(context).followersRequestsEmptySubtitle,
           );
         }
         return ListView.builder(

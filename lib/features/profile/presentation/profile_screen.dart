@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               (authUser?.displayName?.isNotEmpty == true
                   ? authUser!.displayName!
                   : null) ??
-              'Usuario';
+              S.of(context)!.settingsFallbackUsername;
           final email = userData?.email ?? authUser?.email ?? '';
           final initials = _initials(displayName, email);
 
@@ -392,15 +392,15 @@ class _ProfileHeader extends StatelessWidget {
                             width: 96,
                             height: 96,
                             color: Colors.black.withValues(alpha: 0.35),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.camera_alt_rounded,
+                                const Icon(Icons.camera_alt_rounded,
                                     color: Colors.white, size: 26),
-                                SizedBox(height: 2),
+                                const SizedBox(height: 2),
                                 Text(
-                                  'Editar',
-                                  style: TextStyle(
+                                  S.of(context)!.commonEdit,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
@@ -474,7 +474,7 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'HabitAI',
+                  S.of(context)!.appTitle,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -527,14 +527,14 @@ class _StatsBento extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: '$totalHabits',
-            label: 'Hábitos',
+            label: S.of(context)!.profileHabits,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _StatTile(
             value: '$bestStreakEver',
-            label: 'Mejor racha',
+            label: S.of(context)!.profileBestStreak,
             icon: Icons.local_fire_department_rounded,
             iconColor: AppTheme.tertiaryContainer,
             highlighted: true,
@@ -544,7 +544,7 @@ class _StatsBento extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: averageLevel == null ? '—' : averageLevel!.toStringAsFixed(1),
-            label: 'Nivel',
+            label: S.of(context)!.profileLevel,
           ),
         ),
       ],
@@ -822,7 +822,7 @@ class _ProfileHabitCard extends StatelessWidget {
                 ],
               ),
               Text(
-                'Racha',
+                S.of(context)!.profileStreak,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontSize: 9,

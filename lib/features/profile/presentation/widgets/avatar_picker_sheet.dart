@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/widgets/ux/app_snackbar.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/data/avatar_storage_repository.dart';
 import '../../../auth/data/user_repository.dart';
 import '../../data/public_profile_repository.dart';
@@ -71,11 +72,11 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
       await PublicProfileRepository(uid: uid).syncPhotoUrl(url);
 
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Foto de perfil actualizada');
+      AppSnackBar.showSuccess(context, S.of(context).avatarPickerUpdated);
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'No se pudo subir la foto');
+      AppSnackBar.showError(context, S.of(context).avatarPickerUploadError);
       setState(() => _loading = false);
     }
   }
@@ -89,11 +90,11 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
       await PublicProfileRepository(uid: uid).syncPhotoUrl(null);
 
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Foto eliminada');
+      AppSnackBar.showSuccess(context, S.of(context).avatarPickerRemoved);
       Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'No se pudo eliminar la foto');
+      AppSnackBar.showError(context, S.of(context).avatarPickerRemoveError);
       setState(() => _loading = false);
     }
   }
@@ -110,7 +111,7 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
           const CircularProgressIndicator(),
           const SizedBox(height: 16),
           Text(
-            'Procesando foto…',
+            S.of(context).avatarPickerProcessing,
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
@@ -142,7 +143,7 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
               child: Text(
-                'Foto de perfil',
+                S.of(context).avatarPickerTitle,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -159,8 +160,8 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
                 child: Icon(Icons.photo_library_rounded,
                     size: 18, color: scheme.primary),
               ),
-              title: const Text('Elegir de la galería'),
-              subtitle: const Text('Se recortará al centro automáticamente'),
+              title: Text(S.of(context).avatarPickerGallery),
+              subtitle: Text(S.of(context).avatarPickerCropNote),
               onTap: () => _pick(ImageSource.gallery),
             ),
             ListTile(
@@ -174,8 +175,8 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
                 child: Icon(Icons.camera_alt_rounded,
                     size: 18, color: scheme.primary),
               ),
-              title: const Text('Hacer una foto'),
-              subtitle: const Text('Se recortará al centro automáticamente'),
+              title: Text(S.of(context).avatarPickerCamera),
+              subtitle: Text(S.of(context).avatarPickerCropNote),
               onTap: () => _pick(ImageSource.camera),
             ),
             if (hasPhoto)
@@ -191,7 +192,7 @@ class _AvatarPickerSheetState extends State<AvatarPickerSheet> {
                       size: 18, color: scheme.error),
                 ),
                 title: Text(
-                  'Quitar foto',
+                  S.of(context).avatarPickerRemove,
                   style: TextStyle(color: scheme.error),
                 ),
                 onTap: _removePhoto,

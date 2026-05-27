@@ -15,6 +15,7 @@ import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/domain/achivement_model.dart';
+import '../../achievements/presentation/achievement_l10n.dart';
 import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/weekly_review_model.dart';
 import '../../ai/domain/butterfly_projection_model.dart';
@@ -1749,7 +1750,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     SizedBox(
                       width: 64,
                       child: Text(
-                        info.title,
+                        AchievementL10n.title(achievement.type, S.of(context)),
                         style: Theme.of(context).textTheme.labelSmall,
                         textAlign: TextAlign.center,
                         maxLines: 2,

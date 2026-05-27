@@ -1771,6 +1771,12 @@ abstract class S {
   /// **'Logros'**
   String get achievementsTitle;
 
+  /// No description provided for @achievementUnlockedBanner.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Logro desbloqueado!'**
+  String get achievementUnlockedBanner;
+
   /// No description provided for @achievementsUnlocked.
   ///
   /// In es, this message translates to:
@@ -2412,6 +2418,18 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Guardar cambios'**
   String get editHabitSaveCta;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar'**
+  String get commonDelete;
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar'**
+  String get commonCancel;
 
   /// No description provided for @commonEdit.
   ///
@@ -3762,6 +3780,708 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Confirmar'**
   String get usernameSheetConfirm;
+
+  /// Título genérico de error
+  ///
+  /// In es, this message translates to:
+  /// **'Algo salió mal'**
+  String get errorDefault;
+
+  /// No description provided for @habitDetailInfo.
+  ///
+  /// In es, this message translates to:
+  /// **'Información'**
+  String get habitDetailInfo;
+
+  /// No description provided for @habitDetailAIGenerated.
+  ///
+  /// In es, this message translates to:
+  /// **'Generado por IA'**
+  String get habitDetailAIGenerated;
+
+  /// No description provided for @habitDetailFrequency.
+  ///
+  /// In es, this message translates to:
+  /// **'Frecuencia'**
+  String get habitDetailFrequency;
+
+  /// No description provided for @habitsOrderSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al guardar el orden'**
+  String get habitsOrderSaveError;
+
+  /// No description provided for @habitsDeleteGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar grupo'**
+  String get habitsDeleteGroup;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Notificaciones'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsClearActivity.
+  ///
+  /// In es, this message translates to:
+  /// **'Limpiar actividad'**
+  String get notificationsClearActivity;
+
+  /// No description provided for @notificationsActiveReminders.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorios activos'**
+  String get notificationsActiveReminders;
+
+  /// No description provided for @notificationsAdjustSuggested.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajuste sugerido: {habitTitle}'**
+  String notificationsAdjustSuggested(String habitTitle);
+
+  /// No description provided for @notificationsWeeklyReviewReady.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión semanal lista'**
+  String get notificationsWeeklyReviewReady;
+
+  /// No description provided for @notificationsMonthlyProjection.
+  ///
+  /// In es, this message translates to:
+  /// **'Proyección mensual 🦋'**
+  String get notificationsMonthlyProjection;
+
+  /// No description provided for @notificationsChallengeReceived.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Te han retado!'**
+  String get notificationsChallengeReceived;
+
+  /// No description provided for @notificationsChallengeAccepted.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Tu reto fue aceptado!'**
+  String get notificationsChallengeAccepted;
+
+  /// No description provided for @notificationsReminderAt.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorio a las {time}'**
+  String notificationsReminderAt(String time);
+
+  /// No description provided for @notificationsYesterday.
+  ///
+  /// In es, this message translates to:
+  /// **'Ayer'**
+  String get notificationsYesterday;
+
+  /// No description provided for @notificationsDaysAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {days}d'**
+  String notificationsDaysAgo(int days);
+
+  /// No description provided for @notificationsWeeksAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {weeks}sem'**
+  String notificationsWeeksAgo(int weeks);
+
+  /// No description provided for @notificationsMonthsAgo.
+  ///
+  /// In es, this message translates to:
+  /// **'Hace {months}mes'**
+  String notificationsMonthsAgo(int months);
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin notificaciones'**
+  String get notificationsEmpty;
+
+  /// No description provided for @notificationsEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí aparecerán tus logros, recordatorios y sugerencias de la IA.'**
+  String get notificationsEmptySubtitle;
+
+  /// No description provided for @notificationsNoActivity.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin actividad reciente'**
+  String get notificationsNoActivity;
+
+  /// No description provided for @notificationsLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron cargar las notificaciones.'**
+  String get notificationsLoadError;
+
+  /// No description provided for @followersTabFollowers.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidores'**
+  String get followersTabFollowers;
+
+  /// No description provided for @followersTabFollowing.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiendo'**
+  String get followersTabFollowing;
+
+  /// No description provided for @followersTabRequests.
+  ///
+  /// In es, this message translates to:
+  /// **'Solicitudes'**
+  String get followersTabRequests;
+
+  /// No description provided for @followersMutual.
+  ///
+  /// In es, this message translates to:
+  /// **'Mutuo'**
+  String get followersMutual;
+
+  /// No description provided for @followersFollowsYou.
+  ///
+  /// In es, this message translates to:
+  /// **'Te sigue'**
+  String get followersFollowsYou;
+
+  /// No description provided for @followersUnfollow.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejar de seguir'**
+  String get followersUnfollow;
+
+  /// No description provided for @followersRemoveTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar seguidor'**
+  String get followersRemoveTitle;
+
+  /// No description provided for @followersRemoveContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar a @{username} de tus seguidores?'**
+  String followersRemoveContent(String username);
+
+  /// No description provided for @followersUnfollowContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Dejar de seguir a @{username}?'**
+  String followersUnfollowContent(String username);
+
+  /// No description provided for @followersRequestAlreadySent.
+  ///
+  /// In es, this message translates to:
+  /// **'Solicitud ya enviada'**
+  String get followersRequestAlreadySent;
+
+  /// No description provided for @followersRequestSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Solicitud enviada a @{username}'**
+  String followersRequestSent(String username);
+
+  /// No description provided for @followersNowFollowing.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiendo a @{username}'**
+  String followersNowFollowing(String username);
+
+  /// No description provided for @followersRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidor eliminado'**
+  String get followersRemoved;
+
+  /// No description provided for @followersUnfollowed.
+  ///
+  /// In es, this message translates to:
+  /// **'Dejaste de seguir a @{username}'**
+  String followersUnfollowed(String username);
+
+  /// No description provided for @followersRequestsError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar solicitudes: {error}'**
+  String followersRequestsError(String error);
+
+  /// No description provided for @followersEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no tienes seguidores'**
+  String get followersEmptyTitle;
+
+  /// No description provided for @followersEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca usuarios por @username para seguirlos o que te sigan'**
+  String get followersEmptySubtitle;
+
+  /// No description provided for @followingEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No sigues a nadie'**
+  String get followingEmptyTitle;
+
+  /// No description provided for @followingEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Busca usuarios en la pestaña Seguidores'**
+  String get followingEmptySubtitle;
+
+  /// No description provided for @followersRequestsEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin solicitudes pendientes'**
+  String get followersRequestsEmptyTitle;
+
+  /// No description provided for @followersRequestsEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Aquí aparecerán las solicitudes de seguimiento que recibas'**
+  String get followersRequestsEmptySubtitle;
+
+  /// No description provided for @followersSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por @username'**
+  String get followersSearchHint;
+
+  /// No description provided for @publicProfileNotAvailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil no disponible'**
+  String get publicProfileNotAvailable;
+
+  /// No description provided for @publicProfileMemberSince.
+  ///
+  /// In es, this message translates to:
+  /// **'Miembro desde {month}'**
+  String publicProfileMemberSince(String month);
+
+  /// No description provided for @publicProfileMutualFollower.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidor mutuo'**
+  String get publicProfileMutualFollower;
+
+  /// No description provided for @publicProfilePrivate.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta es privada'**
+  String get publicProfilePrivate;
+
+  /// No description provided for @publicProfileRequestPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu solicitud está pendiente de aprobación.'**
+  String get publicProfileRequestPending;
+
+  /// No description provided for @publicProfileFollowToSee.
+  ///
+  /// In es, this message translates to:
+  /// **'Síguelo para ver sus hábitos y estadísticas.'**
+  String get publicProfileFollowToSee;
+
+  /// No description provided for @publicProfileNoHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin hábitos visibles'**
+  String get publicProfileNoHabits;
+
+  /// No description provided for @publicProfileMore.
+  ///
+  /// In es, this message translates to:
+  /// **'más'**
+  String get publicProfileMore;
+
+  /// No description provided for @publicProfilesFeedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Explorar perfiles'**
+  String get publicProfilesFeedTitle;
+
+  /// No description provided for @publicProfilesFeedSearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por @username…'**
+  String get publicProfilesFeedSearchHint;
+
+  /// No description provided for @publicProfilesFeedEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa tu perfil en Ajustes para aparecer aquí.'**
+  String get publicProfilesFeedEmptySubtitle;
+
+  /// No description provided for @publicProfilesFeedNoResultsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Prueba con otro @username'**
+  String get publicProfilesFeedNoResultsSubtitle;
+
+  /// No description provided for @avatarPickerTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de perfil'**
+  String get avatarPickerTitle;
+
+  /// No description provided for @avatarPickerGallery.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir de la galería'**
+  String get avatarPickerGallery;
+
+  /// No description provided for @avatarPickerCamera.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer una foto'**
+  String get avatarPickerCamera;
+
+  /// No description provided for @avatarPickerRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar foto'**
+  String get avatarPickerRemove;
+
+  /// No description provided for @avatarPickerCropNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Se recortará al centro automáticamente'**
+  String get avatarPickerCropNote;
+
+  /// No description provided for @avatarPickerUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto de perfil actualizada'**
+  String get avatarPickerUpdated;
+
+  /// No description provided for @avatarPickerUploadError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo subir la foto'**
+  String get avatarPickerUploadError;
+
+  /// No description provided for @avatarPickerRemoved.
+  ///
+  /// In es, this message translates to:
+  /// **'Foto eliminada'**
+  String get avatarPickerRemoved;
+
+  /// No description provided for @avatarPickerRemoveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar la foto'**
+  String get avatarPickerRemoveError;
+
+  /// No description provided for @avatarPickerProcessing.
+  ///
+  /// In es, this message translates to:
+  /// **'Procesando foto…'**
+  String get avatarPickerProcessing;
+
+  /// No description provided for @publicProfileLevelShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Niv. {level}'**
+  String publicProfileLevelShort(String level);
+
+  /// No description provided for @publicProfileAverageLevel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nivel medio'**
+  String get publicProfileAverageLevel;
+
+  /// No description provided for @privacySectionVisibility.
+  ///
+  /// In es, this message translates to:
+  /// **'Visibilidad'**
+  String get privacySectionVisibility;
+
+  /// No description provided for @privacyPublicProfileTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil público'**
+  String get privacyPublicProfileTitle;
+
+  /// No description provided for @privacyPublicProfileDescOn.
+  ///
+  /// In es, this message translates to:
+  /// **'Apareces en el directorio, cualquiera puede seguirte'**
+  String get privacyPublicProfileDescOn;
+
+  /// No description provided for @privacyPublicProfileDescOff.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo tus seguidores pueden verte'**
+  String get privacyPublicProfileDescOff;
+
+  /// No description provided for @privacyChangeUsername.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar username'**
+  String get privacyChangeUsername;
+
+  /// No description provided for @privacyUsernameTaken.
+  ///
+  /// In es, this message translates to:
+  /// **'El username ya está ocupado'**
+  String get privacyUsernameTaken;
+
+  /// No description provided for @privacyUsernameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige un nombre de usuario para que otros puedan encontrarte.'**
+  String get privacyUsernameHint;
+
+  /// No description provided for @privacyDisableTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Desactivar perfil público'**
+  String get privacyDisableTitle;
+
+  /// No description provided for @privacyDisableContent.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu perfil desaparecerá del directorio. Tus seguidores actuales podrán seguir viéndote hasta que los elimines.'**
+  String get privacyDisableContent;
+
+  /// No description provided for @privacyDisableButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Desactivar'**
+  String get privacyDisableButton;
+
+  /// No description provided for @privacyNoHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes hábitos activos'**
+  String get privacyNoHabits;
+
+  /// No description provided for @privacyPublicViewLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué ve todo el mundo'**
+  String get privacyPublicViewLabel;
+
+  /// No description provided for @privacyFollowersViewLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Qué ven tus seguidores'**
+  String get privacyFollowersViewLabel;
+
+  /// No description provided for @privacyChallengesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Quién puede enviarme retos'**
+  String get privacyChallengesTitle;
+
+  /// No description provided for @privacyChallengesDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Controla quién puede invitarte a competir en un hábito'**
+  String get privacyChallengesDesc;
+
+  /// No description provided for @privacyVisibleHabitsSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos visibles en tu perfil'**
+  String get privacyVisibleHabitsSection;
+
+  /// No description provided for @privacyHabitsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos activos'**
+  String get privacyHabitsLabel;
+
+  /// No description provided for @privacyStatsLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas'**
+  String get privacyStatsLabel;
+
+  /// No description provided for @privacyFollowersLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidores / Siguiendo'**
+  String get privacyFollowersLabel;
+
+  /// No description provided for @privacyOptionPublic.
+  ///
+  /// In es, this message translates to:
+  /// **'Público'**
+  String get privacyOptionPublic;
+
+  /// No description provided for @privacyOptionFollowers.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidores'**
+  String get privacyOptionFollowers;
+
+  /// No description provided for @privacyOptionPrivate.
+  ///
+  /// In es, this message translates to:
+  /// **'Privado'**
+  String get privacyOptionPrivate;
+
+  /// No description provided for @privacyLevelEveryone.
+  ///
+  /// In es, this message translates to:
+  /// **'Todos'**
+  String get privacyLevelEveryone;
+
+  /// No description provided for @privacyLevelNobody.
+  ///
+  /// In es, this message translates to:
+  /// **'Nadie'**
+  String get privacyLevelNobody;
+
+  /// No description provided for @achievementFirstHabitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Primer paso'**
+  String get achievementFirstHabitTitle;
+
+  /// No description provided for @achievementFirstHabitDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea tu primer hábito'**
+  String get achievementFirstHabitDesc;
+
+  /// No description provided for @achievementAiPlanTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Asistente personal'**
+  String get achievementAiPlanTitle;
+
+  /// No description provided for @achievementAiPlanDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Genera un plan con la IA'**
+  String get achievementAiPlanDesc;
+
+  /// No description provided for @achievementPerfectDayTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Día perfecto'**
+  String get achievementPerfectDayTitle;
+
+  /// No description provided for @achievementPerfectDayDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa todos los hábitos del día'**
+  String get achievementPerfectDayDesc;
+
+  /// No description provided for @achievementStreak3Title.
+  ///
+  /// In es, this message translates to:
+  /// **'En marcha'**
+  String get achievementStreak3Title;
+
+  /// No description provided for @achievementStreak3Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consigue una racha de 3 días'**
+  String get achievementStreak3Desc;
+
+  /// No description provided for @achievementStreak7Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana de fuego'**
+  String get achievementStreak7Title;
+
+  /// No description provided for @achievementStreak7Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consigue una racha de 7 días'**
+  String get achievementStreak7Desc;
+
+  /// No description provided for @achievementStreak14Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Imparable'**
+  String get achievementStreak14Title;
+
+  /// No description provided for @achievementStreak14Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consigue una racha de 14 días'**
+  String get achievementStreak14Desc;
+
+  /// No description provided for @achievementStreak30Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyenda'**
+  String get achievementStreak30Title;
+
+  /// No description provided for @achievementStreak30Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Consigue una racha de 30 días'**
+  String get achievementStreak30Desc;
+
+  /// No description provided for @achievementHabits5Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Cinco en acción'**
+  String get achievementHabits5Title;
+
+  /// No description provided for @achievementHabits5Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Ten 5 hábitos activos'**
+  String get achievementHabits5Desc;
+
+  /// No description provided for @achievementTotal50Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Medio centenar'**
+  String get achievementTotal50Title;
+
+  /// No description provided for @achievementTotal50Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa 50 check-ins en total'**
+  String get achievementTotal50Desc;
+
+  /// No description provided for @achievementTotal100Title.
+  ///
+  /// In es, this message translates to:
+  /// **'Centenario'**
+  String get achievementTotal100Title;
+
+  /// No description provided for @achievementTotal100Desc.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa 100 check-ins en total'**
+  String get achievementTotal100Desc;
+
+  /// No description provided for @achievementPerfectWeekTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana impecable'**
+  String get achievementPerfectWeekTitle;
+
+  /// No description provided for @achievementPerfectWeekDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'7 días seguidos completando todo'**
+  String get achievementPerfectWeekDesc;
+
+  /// No description provided for @achievementChallengeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañeros de reto'**
+  String get achievementChallengeTitle;
+
+  /// No description provided for @achievementChallengeDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Completa un reto compartido'**
+  String get achievementChallengeDesc;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

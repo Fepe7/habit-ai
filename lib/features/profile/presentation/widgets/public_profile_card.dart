@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/avatar_circle.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/public_profile_model.dart';
 
 /// Card de un perfil público en el feed.
@@ -68,15 +69,15 @@ class PublicProfileCard extends StatelessWidget {
                       children: [
                         _StatChip(
                           icon: Icons.checklist_rounded,
-                          label: '${profile.totalHabits} hábitos',
+                          label: '${profile.totalHabits} ${S.of(context).profileHabits.toLowerCase()}',
                         ),
                         _StatChip(
                           icon: Icons.local_fire_department_rounded,
-                          label: '${profile.bestStreakEver} días',
+                          label: '${profile.bestStreakEver} ${S.of(context).days.toLowerCase()}',
                         ),
                         _StatChip(
                           icon: Icons.auto_awesome_rounded,
-                          label: 'Niv. ${profile.averageLevel.toStringAsFixed(1)}',
+                          label: S.of(context).publicProfileLevelShort(profile.averageLevel.toStringAsFixed(1)),
                         ),
                       ],
                     ),

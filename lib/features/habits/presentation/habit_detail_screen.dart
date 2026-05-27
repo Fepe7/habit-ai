@@ -466,7 +466,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 const SizedBox(height: 24),
 
                 // sección actividad últimos 30 días
-                _SectionLabel(label: 'Últimos 30 días')
+                _SectionLabel(label: s.weeklyDetailLast30Days)
                     .animate()
                     .fadeIn(delay: 300.ms, duration: 300.ms),
                 const SizedBox(height: 12),
@@ -479,7 +479,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                 const SizedBox(height: 24),
 
                 // info adicional
-                _SectionLabel(label: 'Información')
+                _SectionLabel(label: s.habitDetailInfo)
                     .animate()
                     .fadeIn(delay: 400.ms, duration: 300.ms),
                 const SizedBox(height: 12),
@@ -659,7 +659,7 @@ class _HeroHeader extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'Generado por IA',
+                                S.of(context)!.habitDetailAIGenerated,
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.white.withValues(alpha: 0.8),
@@ -1191,7 +1191,7 @@ class _InfoCard extends StatelessWidget {
         children: [
           _InfoRow(
             icon: Icons.repeat_rounded,
-            label: 'Frecuencia',
+            label: s.habitDetailFrequency,
             value: habit.frequency == 'daily' ? s.habitDetailFilterDaily : habit.frequency,
           ),
           Divider(
@@ -1201,8 +1201,8 @@ class _InfoCard extends StatelessWidget {
           ),
           _InfoRow(
             icon: Icons.calendar_today_rounded,
-            label: 'Días',
-            value: days.isNotEmpty ? days : 'Todos',
+            label: s.days,
+            value: days.isNotEmpty ? days : s.habitDetailFilterAll,
           ),
           if (habit.reminderTime != null) ...[
             Divider(
@@ -1212,7 +1212,7 @@ class _InfoCard extends StatelessWidget {
             ),
             _InfoRow(
               icon: Icons.schedule_rounded,
-              label: 'Recordatorio',
+              label: s.habitFieldReminder,
               value: habit.reminderTime!,
             ),
           ],

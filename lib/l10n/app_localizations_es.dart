@@ -999,6 +999,9 @@ class SEs extends S {
   String get achievementsTitle => 'Logros';
 
   @override
+  String get achievementUnlockedBanner => '¡Logro desbloqueado!';
+
+  @override
   String achievementsUnlocked(int count) {
     return '$count logros desbloqueados';
   }
@@ -1343,6 +1346,12 @@ class SEs extends S {
 
   @override
   String get editHabitSaveCta => 'Guardar cambios';
+
+  @override
+  String get commonDelete => 'Eliminar';
+
+  @override
+  String get commonCancel => 'Cancelar';
 
   @override
   String get commonEdit => 'Editar';
@@ -2134,4 +2143,393 @@ class SEs extends S {
 
   @override
   String get usernameSheetConfirm => 'Confirmar';
+
+  @override
+  String get errorDefault => 'Algo salió mal';
+
+  @override
+  String get habitDetailInfo => 'Información';
+
+  @override
+  String get habitDetailAIGenerated => 'Generado por IA';
+
+  @override
+  String get habitDetailFrequency => 'Frecuencia';
+
+  @override
+  String get habitsOrderSaveError => 'Error al guardar el orden';
+
+  @override
+  String get habitsDeleteGroup => 'Eliminar grupo';
+
+  @override
+  String get notificationsTitle => 'Notificaciones';
+
+  @override
+  String get notificationsClearActivity => 'Limpiar actividad';
+
+  @override
+  String get notificationsActiveReminders => 'Recordatorios activos';
+
+  @override
+  String notificationsAdjustSuggested(String habitTitle) {
+    return 'Ajuste sugerido: $habitTitle';
+  }
+
+  @override
+  String get notificationsWeeklyReviewReady => 'Revisión semanal lista';
+
+  @override
+  String get notificationsMonthlyProjection => 'Proyección mensual 🦋';
+
+  @override
+  String get notificationsChallengeReceived => '¡Te han retado!';
+
+  @override
+  String get notificationsChallengeAccepted => '¡Tu reto fue aceptado!';
+
+  @override
+  String notificationsReminderAt(String time) {
+    return 'Recordatorio a las $time';
+  }
+
+  @override
+  String get notificationsYesterday => 'Ayer';
+
+  @override
+  String notificationsDaysAgo(int days) {
+    return 'Hace ${days}d';
+  }
+
+  @override
+  String notificationsWeeksAgo(int weeks) {
+    return 'Hace ${weeks}sem';
+  }
+
+  @override
+  String notificationsMonthsAgo(int months) {
+    return 'Hace ${months}mes';
+  }
+
+  @override
+  String get notificationsEmpty => 'Sin notificaciones';
+
+  @override
+  String get notificationsEmptySubtitle =>
+      'Aquí aparecerán tus logros, recordatorios y sugerencias de la IA.';
+
+  @override
+  String get notificationsNoActivity => 'Sin actividad reciente';
+
+  @override
+  String get notificationsLoadError =>
+      'No se pudieron cargar las notificaciones.';
+
+  @override
+  String get followersTabFollowers => 'Seguidores';
+
+  @override
+  String get followersTabFollowing => 'Siguiendo';
+
+  @override
+  String get followersTabRequests => 'Solicitudes';
+
+  @override
+  String get followersMutual => 'Mutuo';
+
+  @override
+  String get followersFollowsYou => 'Te sigue';
+
+  @override
+  String get followersUnfollow => 'Dejar de seguir';
+
+  @override
+  String get followersRemoveTitle => 'Eliminar seguidor';
+
+  @override
+  String followersRemoveContent(String username) {
+    return '¿Eliminar a @$username de tus seguidores?';
+  }
+
+  @override
+  String followersUnfollowContent(String username) {
+    return '¿Dejar de seguir a @$username?';
+  }
+
+  @override
+  String get followersRequestAlreadySent => 'Solicitud ya enviada';
+
+  @override
+  String followersRequestSent(String username) {
+    return 'Solicitud enviada a @$username';
+  }
+
+  @override
+  String followersNowFollowing(String username) {
+    return 'Siguiendo a @$username';
+  }
+
+  @override
+  String get followersRemoved => 'Seguidor eliminado';
+
+  @override
+  String followersUnfollowed(String username) {
+    return 'Dejaste de seguir a @$username';
+  }
+
+  @override
+  String followersRequestsError(String error) {
+    return 'Error al cargar solicitudes: $error';
+  }
+
+  @override
+  String get followersEmptyTitle => 'Aún no tienes seguidores';
+
+  @override
+  String get followersEmptySubtitle =>
+      'Busca usuarios por @username para seguirlos o que te sigan';
+
+  @override
+  String get followingEmptyTitle => 'No sigues a nadie';
+
+  @override
+  String get followingEmptySubtitle =>
+      'Busca usuarios en la pestaña Seguidores';
+
+  @override
+  String get followersRequestsEmptyTitle => 'Sin solicitudes pendientes';
+
+  @override
+  String get followersRequestsEmptySubtitle =>
+      'Aquí aparecerán las solicitudes de seguimiento que recibas';
+
+  @override
+  String get followersSearchHint => 'Buscar por @username';
+
+  @override
+  String get publicProfileNotAvailable => 'Perfil no disponible';
+
+  @override
+  String publicProfileMemberSince(String month) {
+    return 'Miembro desde $month';
+  }
+
+  @override
+  String get publicProfileMutualFollower => 'Seguidor mutuo';
+
+  @override
+  String get publicProfilePrivate => 'Esta cuenta es privada';
+
+  @override
+  String get publicProfileRequestPending =>
+      'Tu solicitud está pendiente de aprobación.';
+
+  @override
+  String get publicProfileFollowToSee =>
+      'Síguelo para ver sus hábitos y estadísticas.';
+
+  @override
+  String get publicProfileNoHabits => 'Sin hábitos visibles';
+
+  @override
+  String get publicProfileMore => 'más';
+
+  @override
+  String get publicProfilesFeedTitle => 'Explorar perfiles';
+
+  @override
+  String get publicProfilesFeedSearchHint => 'Buscar por @username…';
+
+  @override
+  String get publicProfilesFeedEmptySubtitle =>
+      'Activa tu perfil en Ajustes para aparecer aquí.';
+
+  @override
+  String get publicProfilesFeedNoResultsSubtitle => 'Prueba con otro @username';
+
+  @override
+  String get avatarPickerTitle => 'Foto de perfil';
+
+  @override
+  String get avatarPickerGallery => 'Elegir de la galería';
+
+  @override
+  String get avatarPickerCamera => 'Hacer una foto';
+
+  @override
+  String get avatarPickerRemove => 'Quitar foto';
+
+  @override
+  String get avatarPickerCropNote => 'Se recortará al centro automáticamente';
+
+  @override
+  String get avatarPickerUpdated => 'Foto de perfil actualizada';
+
+  @override
+  String get avatarPickerUploadError => 'No se pudo subir la foto';
+
+  @override
+  String get avatarPickerRemoved => 'Foto eliminada';
+
+  @override
+  String get avatarPickerRemoveError => 'No se pudo eliminar la foto';
+
+  @override
+  String get avatarPickerProcessing => 'Procesando foto…';
+
+  @override
+  String publicProfileLevelShort(String level) {
+    return 'Niv. $level';
+  }
+
+  @override
+  String get publicProfileAverageLevel => 'Nivel medio';
+
+  @override
+  String get privacySectionVisibility => 'Visibilidad';
+
+  @override
+  String get privacyPublicProfileTitle => 'Perfil público';
+
+  @override
+  String get privacyPublicProfileDescOn =>
+      'Apareces en el directorio, cualquiera puede seguirte';
+
+  @override
+  String get privacyPublicProfileDescOff => 'Solo tus seguidores pueden verte';
+
+  @override
+  String get privacyChangeUsername => 'Cambiar username';
+
+  @override
+  String get privacyUsernameTaken => 'El username ya está ocupado';
+
+  @override
+  String get privacyUsernameHint =>
+      'Elige un nombre de usuario para que otros puedan encontrarte.';
+
+  @override
+  String get privacyDisableTitle => 'Desactivar perfil público';
+
+  @override
+  String get privacyDisableContent =>
+      'Tu perfil desaparecerá del directorio. Tus seguidores actuales podrán seguir viéndote hasta que los elimines.';
+
+  @override
+  String get privacyDisableButton => 'Desactivar';
+
+  @override
+  String get privacyNoHabits => 'No tienes hábitos activos';
+
+  @override
+  String get privacyPublicViewLabel => 'Qué ve todo el mundo';
+
+  @override
+  String get privacyFollowersViewLabel => 'Qué ven tus seguidores';
+
+  @override
+  String get privacyChallengesTitle => 'Quién puede enviarme retos';
+
+  @override
+  String get privacyChallengesDesc =>
+      'Controla quién puede invitarte a competir en un hábito';
+
+  @override
+  String get privacyVisibleHabitsSection => 'Hábitos visibles en tu perfil';
+
+  @override
+  String get privacyHabitsLabel => 'Hábitos activos';
+
+  @override
+  String get privacyStatsLabel => 'Estadísticas';
+
+  @override
+  String get privacyFollowersLabel => 'Seguidores / Siguiendo';
+
+  @override
+  String get privacyOptionPublic => 'Público';
+
+  @override
+  String get privacyOptionFollowers => 'Seguidores';
+
+  @override
+  String get privacyOptionPrivate => 'Privado';
+
+  @override
+  String get privacyLevelEveryone => 'Todos';
+
+  @override
+  String get privacyLevelNobody => 'Nadie';
+
+  @override
+  String get achievementFirstHabitTitle => 'Primer paso';
+
+  @override
+  String get achievementFirstHabitDesc => 'Crea tu primer hábito';
+
+  @override
+  String get achievementAiPlanTitle => 'Asistente personal';
+
+  @override
+  String get achievementAiPlanDesc => 'Genera un plan con la IA';
+
+  @override
+  String get achievementPerfectDayTitle => 'Día perfecto';
+
+  @override
+  String get achievementPerfectDayDesc => 'Completa todos los hábitos del día';
+
+  @override
+  String get achievementStreak3Title => 'En marcha';
+
+  @override
+  String get achievementStreak3Desc => 'Consigue una racha de 3 días';
+
+  @override
+  String get achievementStreak7Title => 'Semana de fuego';
+
+  @override
+  String get achievementStreak7Desc => 'Consigue una racha de 7 días';
+
+  @override
+  String get achievementStreak14Title => 'Imparable';
+
+  @override
+  String get achievementStreak14Desc => 'Consigue una racha de 14 días';
+
+  @override
+  String get achievementStreak30Title => 'Leyenda';
+
+  @override
+  String get achievementStreak30Desc => 'Consigue una racha de 30 días';
+
+  @override
+  String get achievementHabits5Title => 'Cinco en acción';
+
+  @override
+  String get achievementHabits5Desc => 'Ten 5 hábitos activos';
+
+  @override
+  String get achievementTotal50Title => 'Medio centenar';
+
+  @override
+  String get achievementTotal50Desc => 'Completa 50 check-ins en total';
+
+  @override
+  String get achievementTotal100Title => 'Centenario';
+
+  @override
+  String get achievementTotal100Desc => 'Completa 100 check-ins en total';
+
+  @override
+  String get achievementPerfectWeekTitle => 'Semana impecable';
+
+  @override
+  String get achievementPerfectWeekDesc => '7 días seguidos completando todo';
+
+  @override
+  String get achievementChallengeTitle => 'Compañeros de reto';
+
+  @override
+  String get achievementChallengeDesc => 'Completa un reto compartido';
 }
