@@ -1,0 +1,210 @@
+{
+  "@@locale": "es",
+
+  "appTitle": "HabitAI",
+  "@appTitle": { "description": "Nombre de la aplicación" },
+
+  "cancel": "Cancelar",
+  "@cancel": { "description": "Botón cancelar genérico" },
+
+  "save": "Guardar",
+  "@save": { "description": "Botón guardar genérico" },
+
+  "confirm": "Continuar",
+  "@confirm": { "description": "Botón confirmar genérico" },
+
+  "activate": "Activar",
+  "@activate": { "description": "Botón activar" },
+
+  "days": "Días",
+  "@days": { "description": "Días (slider label)" },
+
+  "daysLabel": "{count, plural, =1{1 día} other{{count} días}}",
+  "@daysLabel": {
+    "description": "Número de días con plural",
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "settingsTitle": "Ajustes",
+  "@settingsTitle": { "description": "Título pantalla de ajustes" },
+
+  "settingsSectionCommunity": "Comunidad",
+  "@settingsSectionCommunity": {},
+
+  "settingsExploreDirectory": "Explorar directorio",
+  "@settingsExploreDirectory": {},
+
+  "settingsExploreDirectorySubtitle": "Descubre perfiles públicos de otros usuarios",
+  "@settingsExploreDirectorySubtitle": {},
+
+  "settingsFollowers": "Seguidores",
+  "@settingsFollowers": {},
+
+  "settingsFollowersSubtitle": "Gestiona tus seguidores y seguidos",
+  "@settingsFollowersSubtitle": {},
+
+  "settingsSectionAppearance": "Apariencia",
+  "@settingsSectionAppearance": {},
+
+  "settingsThemeLabel": "Tema",
+  "@settingsThemeLabel": {},
+
+  "settingsSectionLanguage": "Idioma",
+  "@settingsSectionLanguage": {},
+
+  "settingsSectionGeneral": "General",
+  "@settingsSectionGeneral": {},
+
+  "settingsAchievements": "Logros",
+  "@settingsAchievements": {},
+
+  "settingsAchievementsSubtitle": "Tus logros desbloqueados",
+  "@settingsAchievementsSubtitle": {},
+
+  "settingsSectionInfo": "Información",
+  "@settingsSectionInfo": {},
+
+  "settingsAbout": "Acerca de HabitAI",
+  "@settingsAbout": {},
+
+  "settingsAboutSubtitle": "Versión 1.0.0 — TFG 2º DAM",
+  "@settingsAboutSubtitle": {},
+
+  "settingsPrivacy": "Privacidad",
+  "@settingsPrivacy": {},
+
+  "settingsPrivacySubtitle": "Retos, perfil y visibilidad",
+  "@settingsPrivacySubtitle": {},
+
+  "settingsSectionLegal": "Legal",
+  "@settingsSectionLegal": {},
+
+  "settingsPrivacyPolicy": "Política de privacidad",
+  "@settingsPrivacyPolicy": {},
+
+  "settingsPrivacyPolicySubtitle": "Cómo tratamos tus datos",
+  "@settingsPrivacyPolicySubtitle": {},
+
+  "settingsTerms": "Términos de uso",
+  "@settingsTerms": {},
+
+  "settingsTermsSubtitle": "Condiciones del servicio",
+  "@settingsTermsSubtitle": {},
+
+  "settingsSectionStreakProtection": "Protección de rachas",
+  "@settingsSectionStreakProtection": {},
+
+  "settingsSignOut": "Cerrar sesión",
+  "@settingsSignOut": {},
+
+  "settingsSignOutConfirmTitle": "Cerrar sesión",
+  "@settingsSignOutConfirmTitle": {},
+
+  "settingsSignOutConfirmContent": "¿Estás seguro de que quieres cerrar sesión?",
+  "@settingsSignOutConfirmContent": {},
+
+  "settingsDeleteAccount": "Eliminar cuenta",
+  "@settingsDeleteAccount": {},
+
+  "settingsDeleteAccountSubtitle": "Se borrarán todos tus datos",
+  "@settingsDeleteAccountSubtitle": {},
+
+  "settingsDeleteAccountConfirmContent": "Se borrarán permanentemente todos tus datos: hábitos, rachas, logros, conversaciones con la IA, seguidores y tu perfil.\n\nEsta acción no se puede deshacer.",
+  "@settingsDeleteAccountConfirmContent": {},
+
+  "settingsDeleteConfirmTitle": "Confirmar eliminación",
+  "@settingsDeleteConfirmTitle": {},
+
+  "settingsDeleteConfirmPrompt": "Escribe ELIMINAR para confirmar:",
+  "@settingsDeleteConfirmPrompt": {},
+
+  "settingsEditNameTitle": "Cambiar nombre",
+  "@settingsEditNameTitle": {},
+
+  "settingsEditNameHint": "Tu nombre",
+  "@settingsEditNameHint": {},
+
+  "settingsNameUpdated": "Nombre actualizado",
+  "@settingsNameUpdated": {},
+
+  "settingsNameUpdateError": "No se pudo actualizar el nombre",
+  "@settingsNameUpdateError": {},
+
+  "settingsDeleteRequiresRelogin": "Por seguridad, cierra sesión, vuelve a entrar e inténtalo de nuevo",
+  "@settingsDeleteRequiresRelogin": {},
+
+  "settingsDeleteAccountError": "Error al eliminar la cuenta: {error}",
+  "@settingsDeleteAccountError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "settingsFallbackUsername": "Usuario",
+  "@settingsFallbackUsername": {},
+
+  "settingsNotifications": "Notificaciones",
+  "@settingsNotifications": {},
+
+  "settingsNotificationsEnabled": "Recibirás recordatorios de tus hábitos",
+  "@settingsNotificationsEnabled": {},
+
+  "settingsNotificationsDisabled": "Recordatorios desactivados",
+  "@settingsNotificationsDisabled": {},
+
+  "settingsNotificationsSystemPrompt": "Activa las notificaciones en los ajustes del sistema",
+  "@settingsNotificationsSystemPrompt": {},
+
+  "settingsSickMode": "Modo enfermedad",
+  "@settingsSickMode": {},
+
+  "settingsSickModeSubtitle": "Protege todas las rachas sin gastar escudos",
+  "@settingsSickModeSubtitle": {},
+
+  "settingsSickModeActive": "Activo — termina en {days, plural, =1{1 día} other{{days} días}}",
+  "@settingsSickModeActive": {
+    "description": "Estado del modo enfermedad activo con días restantes",
+    "placeholders": {
+      "days": { "type": "int" }
+    }
+  },
+
+  "settingsSickModeDialogTitle": "Modo enfermedad",
+  "@settingsSickModeDialogTitle": {},
+
+  "settingsSickModeDialogContent": "Tus rachas quedarán protegidas durante este período. Máximo 7 días.",
+  "@settingsSickModeDialogContent": {},
+
+  "settingsShieldsTile": "Escudos de racha",
+  "@settingsShieldsTile": {},
+
+  "settingsShieldsCount": "{count, plural, =1{{count} disponible de 5} other{{count} disponibles de 5}}",
+  "@settingsShieldsCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "settingsShieldsTooltip": "Gana escudos completando rachas de 7, 30 y 90 días.\nÚsalos en HabitAI para proteger tu racha si fallas un día.",
+  "@settingsShieldsTooltip": {},
+
+  "themeLight": "Claro",
+  "@themeLight": {},
+
+  "themeDark": "Oscuro",
+  "@themeDark": {},
+
+  "themeAuto": "Auto",
+  "@themeAuto": {},
+
+  "languageSelectorLabel": "Idioma",
+  "@languageSelectorLabel": {},
+
+  "languageEs": "Español",
+  "@languageEs": {},
+
+  "languageEn": "English",
+  "@languageEn": {}
+}

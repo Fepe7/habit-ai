@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../domain/habit_plan_model.dart';
 import '../domain/weekly_review_model.dart';
 import '../domain/butterfly_projection_model.dart';
@@ -15,6 +16,8 @@ class AIRepository {
 
   // Historial del chat para mantener contexto entre mensajes
   final List<Map<String, String>> _chatHistory = [];
+
+  // El locale se lee de LocaleProvider.currentCode — sin necesidad de context
 
   final HttpsCallable _generateButterflyFn;
   final HttpsCallable _generateRenegotiationFn;
@@ -63,6 +66,7 @@ class AIRepository {
       final result = await _generatePlanFn.call({
         'message': userMessage,
         'history': _chatHistory,
+        'locale': LocaleProvider.currentCode,
       });
 
       // Firebase devuelve Map<Object?, Object?>, hay que convertirlo recursivamente
@@ -179,7 +183,7 @@ class AIRepository {
   // Devuelve null si el backend decidio omitirla por falta de logs.
   Future<String?> generateWeeklyReview() async {
     try {
-      final result = await _generateWeeklyReviewFn.call();
+      final result = await _generateWeeklyReviewFn.call({'locale': LocaleProvider.currentCode});
       final data = _deepCast(result.data);
       if (data['skipped'] == true) return null;
       return data['weekId'] as String?;
@@ -213,7 +217,7 @@ class AIRepository {
   // Devuelve null si no hay suficientes logs (< 10
   Future<String?> generateButterflyProjection() async {
     try {
-      final result = await _generateButterflyFn.call();
+      final result = await _generateButterflyFn.call({'locale': LocaleProvider.currentCode});
       final data = _deepCast(result.data);
       if (data['skipped'] == true) return null;
       return data['monthId'] as String?;
@@ -248,7 +252,7 @@ class AIRepository {
   // Devuelve null si la sugerencia se generó correctamente, o la razón si se omitió.
   Future<String?> generateRenegotiation(String habitId) async {
     try {
-      final result = await _generateRenegotiationFn.call({'habitId': habitId});
+      final result = await _generateRenegotiationFn.call({'habitId': habitId, 'locale': LocaleProvider.currentCode});
       final data = _deepCast(result.data);
       if (data['skipped'] == true) return data['reason'] as String? ?? 'unknown';
       return null;
@@ -294,7 +298,7 @@ class AIRepository {
   // Devuelve null si hay datos insuficientes (<14 días o <3 hábitos).
   Future<String?> generatePatternInsights() async {
     try {
-      final result = await _generatePatternInsightsFn.call();
+      final result = await _generatePatternInsightsFn.call({'locale': LocaleProvider.currentCode});
       final data = _deepCast(result.data);
       if (data['skipped'] == true) return null;
       return data['periodId'] as String?;

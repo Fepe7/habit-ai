@@ -6,12 +6,14 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/l10n/locale_provider.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../../services/notification_service.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Pantalla de ajustes — Editorial Vitality
 class SettingsScreen extends StatefulWidget {
@@ -37,6 +39,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final auth = AuthProvider.of(context);
     final user = auth.currentUser;
     final themeProvider = ThemeProvider.of(context);
+    final localeProvider = LocaleProvider.of(context);
+    final s = S.of(context);
 
     return StreamBuilder<UserModel>(
       stream: _userRepo.watchUser(),
@@ -59,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Ajustes',
+                      s.settingsTitle,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -99,7 +103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   (FirebaseAuth.instance.currentUser?.displayName?.isNotEmpty == true
                                           ? FirebaseAuth.instance.currentUser!.displayName!
                                           : FirebaseAuth.instance.currentUser?.email?.split('@').first) ??
-                                      'Usuario',
+                                      s.settingsFallbackUsername,
                                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -143,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'HabitAI',
+                                  s.appTitle,
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -164,19 +168,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 8),
 
             // accesos a la parte social
-            _SectionLabel(label: 'Comunidad'),
+            _SectionLabel(label: s.settingsSectionCommunity),
             _SectionGroup(
               children: [
                 _SettingsTile(
                   icon: Icons.explore_rounded,
-                  title: 'Explorar directorio',
-                  subtitle: 'Descubre perfiles públicos de otros usuarios',
+                  title: s.settingsExploreDirectory,
+                  subtitle: s.settingsExploreDirectorySubtitle,
                   onTap: () => context.pushNamed('public-profiles-feed'),
                 ),
                 _SettingsTile(
                   icon: Icons.people_rounded,
-                  title: 'Seguidores',
-                  subtitle: 'Gestiona tus seguidores y seguidos',
+                  title: s.settingsFollowers,
+                  subtitle: s.settingsFollowersSubtitle,
                   onTap: () => context.pushNamed('followers'),
                   divider: false,
                 ),
@@ -186,7 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
 
             // apariencia
-            _SectionLabel(label: 'Apariencia'),
+            _SectionLabel(label: s.settingsSectionAppearance),
             _SectionGroup(
               children: [
                 _ThemeTile(
@@ -198,14 +202,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
+            // idioma
+            _SectionLabel(label: s.settingsSectionLanguage),
+            _SectionGroup(
+              children: [
+                _LanguageTile(
+                  currentLocale: localeProvider.locale,
+                  onChanged: (locale) => localeProvider.setLocale(locale),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
             // general
-            _SectionLabel(label: 'General'),
+            _SectionLabel(label: s.settingsSectionGeneral),
             _SectionGroup(
               children: [
                 _SettingsTile(
                   icon: Icons.emoji_events_rounded,
-                  title: 'Logros',
-                  subtitle: 'Tus logros desbloqueados',
+                  title: s.settingsAchievements,
+                  subtitle: s.settingsAchievementsSubtitle,
                   onTap: () => context.goNamed('achievements'),
                 ),
                 const _NotificationsTile(),
@@ -214,20 +231,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            // informacion
-            _SectionLabel(label: 'Información'),
+            // información
+            _SectionLabel(label: s.settingsSectionInfo),
             _SectionGroup(
               children: [
                 _SettingsTile(
                   icon: Icons.info_outline_rounded,
-                  title: 'Acerca de HabitAI',
-                  subtitle: 'Versión 1.0.0 — TFG 2º DAM',
+                  title: s.settingsAbout,
+                  subtitle: s.settingsAboutSubtitle,
                   onTap: () => _showAbout(context),
                 ),
                 _SettingsTile(
                   icon: Icons.shield_outlined,
-                  title: 'Privacidad',
-                  subtitle: 'Retos, perfil y visibilidad',
+                  title: s.settingsPrivacy,
+                  subtitle: s.settingsPrivacySubtitle,
                   onTap: () => context.pushNamed('privacy-settings'),
                 ),
               ],
@@ -236,13 +253,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
 
             // legal
-            _SectionLabel(label: 'Legal'),
+            _SectionLabel(label: s.settingsSectionLegal),
             _SectionGroup(
               children: [
                 _SettingsTile(
                   icon: Icons.policy_outlined,
-                  title: 'Política de privacidad',
-                  subtitle: 'Cómo tratamos tus datos',
+                  title: s.settingsPrivacyPolicy,
+                  subtitle: s.settingsPrivacyPolicySubtitle,
                   onTap: () => launchUrl(
                     Uri.parse('https://habit-ai-184ad.web.app/privacy.html'),
                     mode: LaunchMode.externalApplication,
@@ -250,8 +267,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 _SettingsTile(
                   icon: Icons.description_outlined,
-                  title: 'Términos de uso',
-                  subtitle: 'Condiciones del servicio',
+                  title: s.settingsTerms,
+                  subtitle: s.settingsTermsSubtitle,
                   onTap: () => launchUrl(
                     Uri.parse('https://habit-ai-184ad.web.app/terms.html'),
                     mode: LaunchMode.externalApplication,
@@ -264,7 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 12),
 
             // sección de escudos de racha y modo enfermedad
-            _SectionLabel(label: 'Protección de rachas'),
+            _SectionLabel(label: s.settingsSectionStreakProtection),
             _SectionGroup(
               children: [
                 // contador de escudos
@@ -279,7 +296,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            // cerrar sesion en su propio grupo con color de error
+            // cerrar sesión en su propio grupo con color de error
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Container(
@@ -294,15 +311,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _SettingsTile(
                       icon: Icons.logout_rounded,
-                      title: 'Cerrar sesión',
+                      title: s.settingsSignOut,
                       subtitle: null,
                       isDestructive: true,
                       onTap: () => _confirmSignOut(context, auth),
                     ),
                     _SettingsTile(
                       icon: Icons.delete_forever_rounded,
-                      title: 'Eliminar cuenta',
-                      subtitle: 'Se borrarán todos tus datos',
+                      title: s.settingsDeleteAccount,
+                      subtitle: s.settingsDeleteAccountSubtitle,
                       isDestructive: true,
                       onTap: () => _confirmDeleteAccount(context, auth),
                       divider: false,
@@ -334,7 +351,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 64,
             height: 64,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildInitialsAvatar(context, initials),
+            errorBuilder: (context, error, stack) => _buildInitialsAvatar(context, initials),
           ),
         ),
       );
@@ -375,15 +392,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _confirmSignOut(BuildContext context, dynamic auth) {
+    final s = S.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Estás seguro de que quieres cerrar sesión?'),
+        title: Text(s.settingsSignOutConfirmTitle),
+        content: Text(s.settingsSignOutConfirmContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () {
@@ -393,7 +411,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Cerrar sesión'),
+            child: Text(s.settingsSignOut),
           ),
         ],
       ),
@@ -401,26 +419,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, dynamic auth) async {
+    final s = S.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar cuenta'),
-        content: const Text(
-          'Se borrarán permanentemente todos tus datos: hábitos, rachas, '
-          'logros, conversaciones con la IA, seguidores y tu perfil.\n\n'
-          'Esta acción no se puede deshacer.',
-        ),
+        title: Text(s.settingsDeleteAccount),
+        content: Text(s.settingsDeleteAccountConfirmContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
-            child: const Text('Continuar'),
+            child: Text(s.confirm),
           ),
         ],
       ),
@@ -449,8 +464,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AppSnackBar.showError(
           context, // ignore: use_build_context_synchronously
           e.toString().contains('requires-recent-login')
-              ? 'Por seguridad, cierra sesión, vuelve a entrar e inténtalo de nuevo'
-              : 'Error al eliminar la cuenta: $e',
+              ? s.settingsDeleteRequiresRelogin
+              : s.settingsDeleteAccountError(e.toString()),
         );
       }
     }
@@ -461,6 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (firebaseUser == null) return;
 
     final current = firebaseUser.displayName ?? '';
+    final s = S.of(context);
 
     // _EditNameDialog gestiona su propio controller y lo dispone en dispose(),
     // evitando el crash _dependents.isEmpty que ocurre con dispose() manual
@@ -475,9 +491,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await firebaseUser.updateDisplayName(newName);
       if (mounted) setState(() {});
-      if (mounted) AppSnackBar.showSuccess(context, 'Nombre actualizado'); // ignore: use_build_context_synchronously
+      if (mounted) AppSnackBar.showSuccess(context, s.settingsNameUpdated); // ignore: use_build_context_synchronously
     } catch (_) {
-      if (mounted) AppSnackBar.showError(context, 'No se pudo actualizar el nombre'); // ignore: use_build_context_synchronously
+      if (mounted) AppSnackBar.showError(context, s.settingsNameUpdateError); // ignore: use_build_context_synchronously
     }
   }
 
@@ -622,6 +638,7 @@ class _ThemeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -642,7 +659,7 @@ class _ThemeTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tema',
+                  s.settingsThemeLabel,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -657,25 +674,98 @@ class _ThemeTile extends StatelessWidget {
                         scheme.primaryContainer.withValues(alpha: 0.3),
                     selectedForegroundColor: scheme.primary,
                   ),
-                  segments: const [
+                  segments: [
                     ButtonSegment(
                       value: ThemeMode.light,
-                      icon: Icon(Icons.light_mode_outlined, size: 16),
-                      label: Text('Claro'),
+                      icon: const Icon(Icons.light_mode_outlined, size: 16),
+                      label: Text(s.themeLight),
                     ),
                     ButtonSegment(
                       value: ThemeMode.system,
-                      icon: Icon(Icons.phone_android_outlined, size: 16),
-                      label: Text('Auto'),
+                      icon: const Icon(Icons.phone_android_outlined, size: 16),
+                      label: Text(s.themeAuto),
                     ),
                     ButtonSegment(
                       value: ThemeMode.dark,
-                      icon: Icon(Icons.dark_mode_outlined, size: 16),
-                      label: Text('Oscuro'),
+                      icon: const Icon(Icons.dark_mode_outlined, size: 16),
+                      label: Text(s.themeDark),
                     ),
                   ],
                   selected: {currentMode},
                   onSelectionChanged: (s) => onChanged(s.first),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Selector de idioma con SegmentedButton — mismo estilo que _ThemeTile
+class _LanguageTile extends StatelessWidget {
+  final Locale? currentLocale;
+  final ValueChanged<Locale?> onChanged;
+
+  const _LanguageTile({required this.currentLocale, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+
+    // null = idioma del dispositivo; lo mostramos como español si no hay nada
+    final selectedCode = currentLocale?.languageCode ?? 'es';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.language_rounded, size: 18, color: scheme.primary),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  s.settingsSectionLanguage,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SegmentedButton<String>(
+                  style: SegmentedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    selectedBackgroundColor:
+                        scheme.primaryContainer.withValues(alpha: 0.3),
+                    selectedForegroundColor: scheme.primary,
+                  ),
+                  segments: [
+                    ButtonSegment(
+                      value: 'es',
+                      label: Text(s.languageEs),
+                    ),
+                    ButtonSegment(
+                      value: 'en',
+                      label: Text(s.languageEn),
+                    ),
+                  ],
+                  selected: {selectedCode},
+                  onSelectionChanged: (sel) {
+                    onChanged(Locale(sel.first));
+                  },
                 ),
               ],
             ),
@@ -694,6 +784,8 @@ class _ShieldCountTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+
     // puntos visuales: hasta 5 escudos
     final shields = List.generate(
       5,
@@ -707,8 +799,7 @@ class _ShieldCountTile extends StatelessWidget {
     );
 
     return Tooltip(
-      message: 'Gana escudos completando rachas de 7, 30 y 90 días.\n'
-          'Úsalos en HabitAI para proteger tu racha si fallas un día.',
+      message: s.settingsShieldsTooltip,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -725,13 +816,13 @@ class _ShieldCountTile extends StatelessWidget {
               child: Icon(Icons.shield_rounded, size: 18, color: scheme.primary),
             ),
             title: Text(
-              'Escudos de racha',
+              s.settingsShieldsTile,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
             ),
             subtitle: Text(
-              '$shieldsCount disponible${shieldsCount == 1 ? '' : 's'} de 5',
+              s.settingsShieldsCount(shieldsCount),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             trailing: Row(
@@ -785,7 +876,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
         if (!granted) {
           if (mounted) {
             AppSnackBar.showInfo(context,
-                'Activa las notificaciones en los ajustes del sistema'); // ignore: use_build_context_synchronously
+                S.of(context).settingsNotificationsSystemPrompt); // ignore: use_build_context_synchronously
           }
           return;
         }
@@ -809,6 +900,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       leading: Container(
@@ -821,15 +913,13 @@ class _NotificationsTileState extends State<_NotificationsTile> {
         child: Icon(Icons.notifications_outlined, size: 18, color: scheme.primary),
       ),
       title: Text(
-        'Notificaciones',
+        s.settingsNotifications,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w500,
         ),
       ),
       subtitle: Text(
-        _enabled
-            ? 'Recibirás recordatorios de tus hábitos'
-            : 'Recordatorios desactivados',
+        _enabled ? s.settingsNotificationsEnabled : s.settingsNotificationsDisabled,
         style: Theme.of(context).textTheme.bodySmall,
       ),
       trailing: _loading
@@ -866,13 +956,14 @@ class _SickModeTileState extends State<_SickModeTile> {
     return until.isAfter(DateTime.now());
   }
 
-  String get _subtitle {
+  String _subtitle(BuildContext context) {
+    final s = S.of(context);
     if (_isActive) {
       final until = widget.userData!.sickModeUntil!;
       final diff = until.difference(DateTime.now()).inDays + 1;
-      return 'Activo — termina en $diff día${diff == 1 ? '' : 's'}';
+      return s.settingsSickModeActive(diff);
     }
-    return 'Protege todas las rachas sin gastar escudos';
+    return s.settingsSickModeSubtitle;
   }
 
   Future<void> _toggle() async {
@@ -898,24 +989,22 @@ class _SickModeTileState extends State<_SickModeTile> {
   }
 
   Future<int?> _showDaysPicker(BuildContext context) async {
+    final s = S.of(context);
     int selectedDays = 1;
     return showDialog<int>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlg) => AlertDialog(
-          title: const Text('Modo enfermedad'),
+          title: Text(s.settingsSickModeDialogTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Tus rachas quedarán protegidas durante este período. '
-                'Máximo 7 días.',
-              ),
+              Text(s.settingsSickModeDialogContent),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Días: '),
+                  Text('${s.days}: '),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Slider(
@@ -923,7 +1012,7 @@ class _SickModeTileState extends State<_SickModeTile> {
                       min: 1,
                       max: 7,
                       divisions: 6,
-                      label: '$selectedDays día${selectedDays == 1 ? '' : 's'}',
+                      label: s.daysLabel(selectedDays),
                       onChanged: (v) =>
                           setDlg(() => selectedDays = v.round()),
                     ),
@@ -936,11 +1025,11 @@ class _SickModeTileState extends State<_SickModeTile> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(null),
-              child: const Text('Cancelar'),
+              child: Text(s.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(selectedDays),
-              child: const Text('Activar'),
+              child: Text(s.activate),
             ),
           ],
         ),
@@ -966,14 +1055,14 @@ class _SickModeTileState extends State<_SickModeTile> {
             size: 18, color: scheme.primary),
       ),
       title: Text(
-        'Modo enfermedad',
+        S.of(context).settingsSickMode,
         style: Theme.of(context)
             .textTheme
             .bodyLarge
             ?.copyWith(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        _subtitle,
+        _subtitle(context),
         style: Theme.of(context).textTheme.bodySmall,
       ),
       trailing: _loading
@@ -1018,14 +1107,15 @@ class _EditNameDialogState extends State<_EditNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return AlertDialog(
-      title: const Text('Cambiar nombre'),
+      title: Text(s.settingsEditNameTitle),
       content: TextField(
         controller: _controller,
         autofocus: true,
         textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
-          hintText: 'Tu nombre',
+        decoration: InputDecoration(
+          hintText: s.settingsEditNameHint,
           counterText: '',
         ),
         maxLength: 40,
@@ -1034,11 +1124,11 @@ class _EditNameDialogState extends State<_EditNameDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Cancelar'),
+          child: Text(s.cancel),
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
-          child: const Text('Guardar'),
+          child: Text(s.save),
         ),
       ],
     );
@@ -1059,6 +1149,8 @@ class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
   @override
   void initState() {
     super.initState();
+    // la palabra clave "ELIMINAR" es intencional y no se localiza:
+    // actúa como barrera de seguridad invariante
     _controller.addListener(
       () => setState(() => _matches = _controller.text.trim() == 'ELIMINAR'),
     );
@@ -1073,14 +1165,15 @@ class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return AlertDialog(
-      title: const Text('Confirmar eliminación'),
+      title: Text(s.settingsDeleteConfirmTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Escribe ELIMINAR para confirmar:',
+            s.settingsDeleteConfirmPrompt,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -1097,13 +1190,16 @@ class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, null),
-          child: const Text('Cancelar'),
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(s.cancel),
         ),
         FilledButton(
-          onPressed: _matches ? () => Navigator.pop(context, 'ELIMINAR') : null,
-          style: FilledButton.styleFrom(backgroundColor: scheme.error),
-          child: const Text('Eliminar cuenta'),
+          onPressed: _matches ? () => Navigator.of(context).pop(_controller.text.trim()) : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: scheme.error,
+            foregroundColor: scheme.onError,
+          ),
+          child: Text(s.settingsDeleteAccount),
         ),
       ],
     );

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/l10n/locale_provider.dart';
+import 'l10n/app_localizations.dart';
 
 // Para poder acceder al AuthRepository desde cualquier pantalla
 // sin tener que pasarlo por constructor
@@ -54,6 +57,8 @@ class _HabitAIAppState extends State<HabitAIApp> {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = LocaleProvider.of(context);
+
     return AuthProvider(
       authRepository: _authRepository,
       child: MaterialApp.router(
@@ -62,6 +67,14 @@ class _HabitAIAppState extends State<HabitAIApp> {
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeProvider.of(context).themeMode,
+        locale: localeProvider.locale,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: S.supportedLocales,
         routerConfig: _router,
       ),
     );
