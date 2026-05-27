@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
@@ -233,6 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // header asimetrico: titulo izquierda, icono derecha
   Widget _buildHeader(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
       child: Row(
@@ -245,13 +247,13 @@ class _DashboardScreenState extends State<DashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Progreso',
+                  s.dashboardTitle,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
-                  _userName != null ? 'Hola, $_userName' : 'Tu avance esta semana',
+                  _userName != null ? s.dashboardGreeting(_userName!) : s.dashboardWeekProgress,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -280,10 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       final weekId = await _aiRepo.generateWeeklyReview();
       if (!mounted) return;
       if (weekId == null) {
-        AppSnackBar.showInfo(
-          context,
-          'Necesitas al menos 3 check-ins esta semana para generar la revisión',
-        );
+        AppSnackBar.showInfo(context, S.of(context).dashboardWeeklyReviewNeedMore);
       }
     } catch (e) {
       if (mounted) {
@@ -300,10 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       final monthId = await _aiRepo.generateButterflyProjection();
       if (!mounted) return;
       if (monthId == null) {
-        AppSnackBar.showInfo(
-          context,
-          'Necesitas al menos 10 check-ins este mes para generar la proyección',
-        );
+        AppSnackBar.showInfo(context, S.of(context).dashboardButterflyNeedMore);
       }
     } catch (e) {
       if (mounted) {
@@ -320,10 +316,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       final periodId = await _aiRepo.generatePatternInsights();
       if (!mounted) return;
       if (periodId == null) {
-        AppSnackBar.showInfo(
-          context,
-          'Necesitas al menos 14 días con datos y 3 hábitos activos para detectar patrones',
-        );
+        AppSnackBar.showInfo(context, S.of(context).dashboardPatternsNeedMore);
       }
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, e.toString());
@@ -341,6 +334,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       builder: (context, snapshot) {
         final renos = snapshot.data ?? [];
         final scheme = Theme.of(context).colorScheme;
+        final s = S.of(context);
 
         if (renos.isEmpty) {
           return _SectionCard(
@@ -376,13 +370,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Ajuste inteligente',
+                            s.dashboardSmartAdjust,
                             style:
                                 Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'IA · Personalizado',
+                            s.dashboardAIPersonalized,
                             style: Theme.of(context)
                                 .textTheme
                                 .labelSmall
@@ -398,7 +392,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  '¿Algún hábito que no arranca? La IA analiza tus patrones y propone cambios concretos.',
+                  s.dashboardAdjustDescription,
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -421,7 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           )
                         : const Icon(Icons.tune_rounded, size: 16),
                     label: Text(
-                      _generatingReno ? 'Analizando…' : 'Pedir ajuste',
+                      _generatingReno ? s.dashboardAnalyzing : s.dashboardRequestAdjust,
                       style: Theme.of(context)
                           .textTheme
                           .labelMedium
@@ -463,7 +457,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Ajustes sugeridos',
+                      s.dashboardSuggestedAdjusts,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -560,7 +554,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         )
                       : const Icon(Icons.refresh_rounded, size: 16),
                   label: Text(
-                    _generatingReno ? 'Analizando…' : 'Pedir otro ajuste',
+                    _generatingReno ? s.dashboardAnalyzing : s.dashboardRequestAdjust,
                     style: Theme.of(context)
                         .textTheme
                         .labelMedium
@@ -603,7 +597,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
               child: Text(
-                'Selecciona un hábito',
+                S.of(sheetCtx).dashboardSelectHabit,
                 style: Theme.of(sheetCtx).textTheme.titleMedium,
               ),
             ),
@@ -615,7 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   if (habits.isEmpty) {
                     return Center(
                       child: Text(
-                        'No tienes hábitos activos',
+                        S.of(ctx).dashboardNoActiveHabits,
                         style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                               color: Theme.of(ctx)
                                   .colorScheme
@@ -654,7 +648,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           overflow: TextOverflow.ellipsis,
                         ),
                         subtitle: Text(
-                          'Racha: ${habit.currentStreak} días',
+                          S.of(ctx).dashboardStreakDays(habit.currentStreak),
                           style: Theme.of(ctx).textTheme.bodySmall,
                         ),
                         onTap: () async {
@@ -664,26 +658,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                             final reason = await _aiRepo
                                 .generateRenegotiation(habit.id);
                             if (!mounted) return;
+                            final s2 = S.of(context);
                             if (reason == null) {
-                              AppSnackBar.showSuccess(
-                                context,
-                                'Sugerencia generada. Revísala arriba.',
-                              );
+                              AppSnackBar.showSuccess(context, s2.dashboardAdjustGenerated);
                             } else if (reason == 'not_eligible') {
-                              AppSnackBar.showInfo(
-                                context,
-                                'Este hábito aún no necesita ajuste — falla menos de 3 días seguidos.',
-                              );
+                              AppSnackBar.showInfo(context, s2.dashboardAdjustNotNeeded);
                             } else if (reason == 'already_pending') {
-                              AppSnackBar.showInfo(
-                                context,
-                                'Ya hay una sugerencia pendiente para este hábito.',
-                              );
+                              AppSnackBar.showInfo(context, s2.dashboardAdjustPending);
                             } else {
-                              AppSnackBar.showInfo(
-                                context,
-                                'No se pudo generar el ajuste ($reason).',
-                              );
+                              AppSnackBar.showInfo(context, s2.dashboardAdjustError(reason));
                             }
                           } catch (e) {
                             if (mounted) {
@@ -717,6 +700,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       stream: _aiRepo.watchLatestPatternInsights(),
       builder: (context, snapshot) {
         final model = snapshot.data;
+        final s = S.of(context);
 
         if (model == null) {
           return _SectionCard(
@@ -740,12 +724,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Patrones IA',
+                        s.dashboardPatternsTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Descubre correlaciones ocultas entre tus hábitos',
+                        s.dashboardPatternsSubtitle,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),
@@ -766,8 +750,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   size: 16),
                           label: Text(
                             _generatingPatterns
-                                ? 'Analizando…'
-                                : 'Detectar patrones',
+                                ? s.dashboardAnalyzing
+                                : s.dashboardDetectPatterns,
                             style: Theme.of(context)
                                 .textTheme
                                 .labelMedium
@@ -917,6 +901,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       stream: _aiRepo.watchLatestButterfly(),
       builder: (context, snapshot) {
         final projection = snapshot.data;
+        final s = S.of(context);
 
         if (projection == null) {
           return _SectionCard(
@@ -936,12 +921,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Efecto Mariposa',
+                        s.dashboardButterflyTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Descubre cómo serás en 3 años si mantienes tus hábitos',
+                        s.dashboardButterflySubtitle,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),
@@ -962,8 +947,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   size: 16),
                           label: Text(
                             _generatingButterfly
-                                ? 'Generando…'
-                                : 'Generar proyección',
+                                ? s.dashboardGenerating
+                                : s.dashboardGenerateProjection,
                             style: Theme.of(context)
                                 .textTheme
                                 .labelMedium
@@ -1079,7 +1064,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             )
                           : const Icon(Icons.refresh_rounded, size: 16),
                       label: Text(
-                        _generatingButterfly ? 'Regenerando…' : 'Regenerar',
+                        _generatingButterfly ? s.dashboardRegenerating : s.dashboardRegenerate,
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium
@@ -1103,6 +1088,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       stream: _aiRepo.watchLatestWeeklyReview(),
       builder: (context, snapshot) {
         final review = snapshot.data;
+        final s = S.of(context);
 
         if (review == null) {
           return _SectionCard(
@@ -1123,12 +1109,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Revisión semanal',
+                        s.dashboardWeeklyReviewTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Pide a la IA que analice tu semana: rachas, wins y áreas de mejora',
+                        s.dashboardWeeklyReviewSubtitle,
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       const SizedBox(height: 12),
@@ -1145,7 +1131,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 )
                               : const Icon(Icons.auto_awesome_rounded, size: 16),
                           label: Text(
-                            _generatingReview ? 'Generando…' : 'Generar ahora',
+                            _generatingReview ? s.dashboardGenerating : s.dashboardGenerateNow,
                             style: Theme.of(context).textTheme.labelMedium
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
@@ -1231,7 +1217,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             )
                           : const Icon(Icons.refresh_rounded, size: 16),
                       label: Text(
-                        _generatingReview ? 'Regenerando…' : 'Regenerar',
+                        _generatingReview ? s.dashboardRegenerating : s.dashboardRegenerate,
                         style: Theme.of(context).textTheme.labelMedium
                             ?.copyWith(fontWeight: FontWeight.w600),
                       ),
@@ -1247,11 +1233,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final s = S.of(context);
     return EmptyStateView(
       icon: Icons.bar_chart_rounded,
-      title: 'Sin datos todavía',
-      subtitle: 'Crea hábitos y completa check-ins para ver tus estadísticas aquí',
-      actionLabel: 'Crear primer hábito',
+      title: s.dashboardNoData,
+      subtitle: s.dashboardNoDataSubtitle,
+      actionLabel: s.dashboardCreateFirstHabit,
       onAction: () => context.go('/'),
       iconColor: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
     );
@@ -1276,6 +1263,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // hero card con progreso de hoy
   Widget _buildTodaySummary(BuildContext context) {
+    final s = S.of(context);
     final completed = _generalStats['completedToday'] ?? 0;
     final total = _generalStats['todayTotal'] ?? 0;
     final percentage = total == 0 ? 0.0 : completed / total;
@@ -1330,7 +1318,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    allDone ? '¡Día perfecto!' : 'Hoy',
+                    allDone ? s.dashboardPerfectDay : s.dashboardToday,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -1339,8 +1327,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                   const SizedBox(height: 4),
                   Text(
                     total == 0
-                        ? 'No tienes hábitos programados hoy'
-                        : '$completed de $total completados',
+                        ? s.dashboardNoHabitsToday
+                        : s.habitsCompletedOf(completed, total),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.white.withValues(alpha: 0.85),
                     ),
@@ -1356,6 +1344,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // fila de 3 stat cards
   Widget _buildStatCards(BuildContext context) {
+    final s = S.of(context);
     return IntrinsicHeight(
       child: Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1363,7 +1352,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _StatCard(
             icon: Icons.local_fire_department_rounded,
-            label: 'Mejor racha',
+            label: s.dashboardBestStreak,
             value: '${_generalStats['bestStreak'] ?? 0}',
             suffix: 'd',
             color: AppTheme.tertiary,
@@ -1374,7 +1363,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _StatCard(
             icon: Icons.check_circle_rounded,
-            label: 'Completados',
+            label: s.dashboardCompleted,
             value: '${_generalStats['totalCompletedAllTime'] ?? 0}',
             color: AppTheme.primary,
             bgColor: AppTheme.primaryContainer.withValues(alpha: 0.2),
@@ -1384,7 +1373,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         Expanded(
           child: _StatCard(
             icon: Icons.stars_rounded,
-            label: 'Días perfectos',
+            label: s.dashboardPerfectDays,
             value: '$_perfectDays',
             color: AppTheme.secondary,
             bgColor: AppTheme.secondaryContainer.withValues(alpha: 0.18),
@@ -1398,6 +1387,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   // grafica de barras semanal
   Widget _buildWeeklyChart(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return _SectionCard(
       child: Column(
@@ -1405,7 +1395,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           _SectionHeader(
             icon: Icons.trending_up_rounded,
-            label: 'Última semana',
+            label: s.dashboardLastWeek,
             color: scheme.primary,
             hasChevron: true,
           ),
@@ -1464,7 +1454,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           return Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              _dayLabel(_weeklyProgress[index].date),
+                              _dayLabel(context, _weeklyProgress[index].date),
                               style: TextStyle(
                                 color: _isToday(_weeklyProgress[index].date)
                                     ? scheme.primary
@@ -1538,6 +1528,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // distribucion por categorias con barras horizontales
   Widget _buildCategoryChart(BuildContext context) {
+    final s = S.of(context);
     final totalHabits = _categoryStats.fold<int>(0, (sum, c) => sum + c.count);
     final scheme = Theme.of(context).colorScheme;
 
@@ -1547,7 +1538,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           _SectionHeader(
             icon: Icons.pie_chart_rounded,
-            label: 'Por categoría',
+            label: s.dashboardByCategory,
             color: scheme.primary,
             hasChevron: true,
           ),
@@ -1617,13 +1608,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // top rachas activas
   Widget _buildTopStreaks(BuildContext context) {
+    final s = S.of(context);
     return _SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
             icon: Icons.local_fire_department_rounded,
-            label: 'Rachas activas',
+            label: s.dashboardActiveStreaks,
             color: AppTheme.tertiary,
             hasChevron: true,
           ),
@@ -1689,6 +1681,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // logros recientes
   Widget _buildAchievements(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
     final unlockedTypes = _achievements.map((a) => a.type).toSet();
     final total = AchievementCatalog.all.length;
@@ -1706,7 +1699,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Logros',
+                  s.dashboardAchievements,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
@@ -1733,7 +1726,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 16),
           if (recent.isEmpty)
             Text(
-              'Completa hábitos para desbloquear logros',
+              s.dashboardUnlockAchievements,
               style: Theme.of(context).textTheme.bodySmall,
             )
           else
@@ -1774,6 +1767,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // card compacto de maestría con mini-radar y nivel medio
   Widget _buildMasteryCard(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
     return _SectionCard(
       child: FutureBuilder<LevelsProfile>(
@@ -1789,7 +1783,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Perfil de Maestría',
+                      s.dashboardMasteryProfile,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -1822,7 +1816,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    'Completa hábitos para desbloquear tu perfil de maestría.',
+                    s.dashboardStartMastery,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                     ),
@@ -1857,9 +1851,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  String _dayLabel(DateTime date) {
-    if (_isToday(date)) return 'Hoy';
-    const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  String _dayLabel(BuildContext context, DateTime date) {
+    final s = S.of(context);
+    if (_isToday(date)) return s.weekdayTodayShort;
+    final days = [s.weekdayLShort, s.weekdayMShort, s.weekdayXShort, s.weekdayJShort, s.weekdayVShort, s.weekdaySShort, s.weekdayDShort];
     return days[date.weekday - 1];
   }
 

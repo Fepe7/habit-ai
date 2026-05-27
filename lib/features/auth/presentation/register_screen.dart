@@ -9,6 +9,7 @@ import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../social/data/user_directory_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 // Pantalla de registro — diseño Editorial Vitality
 class RegisterScreen extends StatefulWidget {
@@ -66,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (_usernameAvailable != true) {
-      setState(() => _errorMessage = 'Elige un nombre de usuario válido y disponible');
+      setState(() => _errorMessage = S.of(context)!.authUsernameRequiredFull);
       return;
     }
 
@@ -127,6 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final s = S.of(context)!;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -170,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Crear cuenta',
+                  s.authRegisterTitle,
                   style: textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
@@ -179,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
                 const SizedBox(height: 8),
                 Text(
-                  'Empieza a construir mejores hábitos',
+                  s.authRegisterTagline,
                   style: textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -193,16 +195,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: s.authEmail,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Introduce tu correo electrónico';
+                      return s.authEmailHint;
                     }
                     if (!value.contains('@')) {
-                      return 'Introduce un correo válido';
+                      return s.authEmailInvalid;
                     }
                     return null;
                   },
@@ -216,14 +218,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   autofillHints: const [AutofillHints.name],
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    hintText: 'Tu nombre real',
-                    prefixIcon: Icon(Icons.person_outline_rounded),
+                  decoration: InputDecoration(
+                    labelText: s.authName,
+                    hintText: s.authNameHint,
+                    prefixIcon: const Icon(Icons.person_outline_rounded),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Introduce tu nombre';
+                      return s.authNameRequired;
                     }
                     return null;
                   },
@@ -237,9 +239,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   autocorrect: false,
                   onChanged: (v) => _checkUsername(v.trim().toLowerCase()),
                   decoration: InputDecoration(
-                    labelText: 'Nombre de usuario',
+                    labelText: s.authUsername,
                     prefixText: '@',
-                    hintText: 'tunombre',
+                    hintText: s.authUsernameHint,
                     prefixIcon: const Icon(Icons.alternate_email_rounded),
                     suffixIcon: _checkingUsername
                         ? const Padding(
@@ -258,10 +260,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     color: colorScheme.error)
                                 : null,
                     helperText: _usernameAvailable == true
-                        ? '¡Disponible!'
+                        ? s.authUsernameAvailable
                         : _usernameAvailable == false
-                            ? 'Ya está en uso, prueba otro'
-                            : 'Te identifica en retos y amigos • 3-20 caracteres',
+                            ? s.authUsernameTaken
+                            : s.authUsernameHelp,
                     helperStyle: TextStyle(
                       color: _usernameAvailable == true
                           ? Colors.green
@@ -272,14 +274,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Elige un nombre de usuario';
+                      return s.authUsernameRequired;
                     }
                     if (!UserDirectoryRepository.isValidUsername(
                         value.trim())) {
-                      return 'Solo letras minúsculas, números y _ (3-20 caracteres)';
+                      return s.authUsernameFormat;
                     }
                     if (_usernameAvailable != true) {
-                      return 'Comprueba la disponibilidad del username';
+                      return s.authUsernameCheckFirst;
                     }
                     return null;
                   },
@@ -293,7 +295,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.newPassword],
                   decoration: InputDecoration(
-                    labelText: 'Contraseña',
+                    labelText: s.authPassword,
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -308,10 +310,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Introduce una contraseña';
+                      return s.authPasswordHint;
                     }
                     if (value.length < 6) {
-                      return 'Mínimo 6 caracteres';
+                      return s.authPasswordMin;
                     }
                     return null;
                   },
@@ -325,7 +327,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) => _handleRegister(),
                   decoration: InputDecoration(
-                    labelText: 'Confirmar contraseña',
+                    labelText: s.authPasswordConfirm,
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -340,7 +342,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value != _passwordController.text) {
-                      return 'Las contraseñas no coinciden';
+                      return s.authPasswordMismatch;
                     }
                     return null;
                   },
@@ -376,7 +378,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // botón registro con gradiente
                 GradientButton(
                   onPressed: _isLoading ? null : _handleRegister,
-                  label: 'Crear cuenta',
+                  label: s.authRegisterTitle,
                   loading: _isLoading,
                 ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
                 const SizedBox(height: 24),
@@ -393,7 +395,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
-                        'o',
+                        s.authOrSeparator,
                         style: textTheme.labelMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -426,9 +428,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         height: 1.5,
                       ),
                       children: [
-                        const TextSpan(text: 'Al crear tu cuenta aceptas la '),
+                        TextSpan(text: s.authPrivacyPrefix),
                         TextSpan(
-                          text: 'Política de Privacidad',
+                          text: s.authPrivacyPolicy,
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -439,9 +441,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   mode: LaunchMode.externalApplication,
                                 ),
                         ),
-                        const TextSpan(text: ' y los '),
+                        TextSpan(text: s.authPrivacyMiddle),
                         TextSpan(
-                          text: 'Términos de Uso',
+                          text: s.authTermsOfUse,
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -469,9 +471,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                       children: [
-                        const TextSpan(text: '¿Ya tienes cuenta? '),
+                        TextSpan(text: s.authHaveAccount),
                         TextSpan(
-                          text: 'Inicia sesión',
+                          text: s.authSignInLink,
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -520,7 +522,7 @@ class _GoogleButton extends StatelessWidget {
             const _GoogleLogo(),
             const SizedBox(width: 12),
             Text(
-              'Continuar con Google',
+              S.of(context)!.authContinueWithGoogle,
               style: textTheme.titleSmall?.copyWith(
                 color: scheme.onSurface,
                 fontWeight: FontWeight.w600,

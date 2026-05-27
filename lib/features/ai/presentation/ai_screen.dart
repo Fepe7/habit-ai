@@ -14,6 +14,7 @@ import '../../habits/domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../l10n/app_localizations.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
@@ -48,12 +49,6 @@ class _AIScreenState extends State<AIScreen>
   String? _lastUserMessage;
   String? _userName;
 
-  static const _suggestions = [
-    'Quiero hacer ejercicio y comer mejor',
-    'Necesito ser más productivo',
-    'Quiero leer más y dormir mejor',
-    'Mejorar mi salud mental',
-  ];
 
   @override
   void initState() {
@@ -72,6 +67,7 @@ class _AIScreenState extends State<AIScreen>
     );
 
     _messages.add(ChatMessage(
+      // TODO: i18n — no se puede usar S.of(context) en initState
       text: '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
           'y te generaré un plan personalizado.',
       isUser: false,
@@ -95,7 +91,7 @@ class _AIScreenState extends State<AIScreen>
       if (mounted) {
         AppSnackBar.showInfo(
           context,
-          'El asistente IA necesita conexión a internet',
+          S.of(context).aiOfflineError,
         );
       }
       return;
@@ -150,7 +146,7 @@ class _AIScreenState extends State<AIScreen>
     } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: 'No pude conectar con el asistente. Comprueba tu conexión.',
+          text: S.of(context).aiConnectionError,
           isUser: false,
           timestamp: DateTime.now(),
           isError: true,
@@ -204,12 +200,12 @@ class _AIScreenState extends State<AIScreen>
       if (mounted) {
         AppSnackBar.showSuccess(
           context,
-          '${plan.emoji ?? "✨"} "${plan.title}" — ${accepted.length} hábitos añadidos',
+          '${plan.emoji ?? "✨"} "${plan.title}" — ${S.of(context).aiHabitsAdded(accepted.length)}',
         );
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al guardar los hábitos');
+        AppSnackBar.showError(context, S.of(context).aiSaveError);
       }
       return;
     }
@@ -228,6 +224,13 @@ class _AIScreenState extends State<AIScreen>
   Widget build(BuildContext context) {
     super.build(context);
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    final suggestions = [
+      s.aiSuggestion1,
+      s.aiSuggestion2,
+      s.aiSuggestion3,
+      s.aiSuggestion4,
+    ];
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -247,13 +250,13 @@ class _AIScreenState extends State<AIScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Asistente IA',
+                          s.aiTitle,
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         Text(
-                          _userName != null ? 'Hola, $_userName' : 'Powered by Gemini',
+                          _userName != null ? 'Hola, $_userName' : s.aiSubtitle,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -280,7 +283,7 @@ class _AIScreenState extends State<AIScreen>
                             size: 14, color: scheme.primary),
                         const SizedBox(width: 6),
                         Text(
-                          'Gemini',
+                          s.aiGeminiLabel,
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: scheme.primary,
                             fontWeight: FontWeight.w600,
@@ -308,7 +311,7 @@ class _AIScreenState extends State<AIScreen>
                 itemBuilder: (context, index) {
                   if (_showSuggestions && index == _messages.length) {
                     return _SuggestionChips(
-                      suggestions: _suggestions,
+                      suggestions: suggestions,
                       onTap: _sendMessage,
                     );
                   }
@@ -376,6 +379,7 @@ class _InputBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final bottom = MediaQuery.of(context).padding.bottom;
+    final s = S.of(context);
 
     return ClipRect(
       child: BackdropFilter(
@@ -407,7 +411,7 @@ class _InputBar extends StatelessWidget {
                     minLines: 1,
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'Escribe tus metas...',
+                      hintText: s.aiInputHint,
                       hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
                       ),
@@ -545,7 +549,7 @@ class _TypingIndicator extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              'Pensando...',
+              S.of(context).aiThinking,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -581,7 +585,7 @@ class _CommunityBanner extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    "¿Sin ideas? Explora plantillas de la comunidad",
+                    S.of(context).aiExploreTemplates,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),

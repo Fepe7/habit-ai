@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../data/archivement_repository.dart';
 import '../domain/achivement_model.dart';
+import '../../../l10n/app_localizations.dart';
 
 // Pantalla con todos los logros (desbloqueados y bloqueados)
 class AchievementsScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Logros')),
+      appBar: AppBar(title: Text(S.of(context)!.achievementsTitle)),
       body: StreamBuilder<List<AchievementModel>>(
         stream: _achievementRepo.watchAchievements(),
         builder: (context, snapshot) {
@@ -81,7 +82,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'logros desbloqueados',
+                        S.of(context)!.achievementsUnlocked(unlockedCount),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: Colors.white.withValues(alpha: 0.8),
                             ),

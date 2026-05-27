@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
@@ -124,23 +125,28 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Usar escudo de racha'),
-        content: Text(
-          'Gastarás 1 escudo para proteger la racha de "${_habit!.title}" hoy.\n\n'
-          'Te quedan ${_userData?.shieldsCount ?? 0} escudos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.habitDetailShieldTitle),
+          content: Text(
+            s.habitDetailShieldContent(
+              _habit!.title,
+              _userData?.shieldsCount ?? 0,
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Usar escudo'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(s.habitDetailUseShieldButton),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) return;
@@ -150,10 +156,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
     if (ok) {
       HapticFeedback.lightImpact();
-      AppSnackBar.showSuccess(context, '🛡️ Escudo usado — racha protegida');
+      AppSnackBar.showSuccess(context, S.of(context).habitDetailShieldUsed);
       await _loadData();
     } else {
-      AppSnackBar.showInfo(context, 'No tienes escudos disponibles');
+      AppSnackBar.showInfo(context, S.of(context).habitDetailNoShields);
     }
   }
 
@@ -187,25 +193,24 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar hábito'),
-        content: Text(
-          '¿Seguro que quieres eliminar "${_habit!.title}"?\n\n'
-          'Se desactivará y no aparecerá en tu lista, '
-          'pero se conservará el historial.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.habitDetailDeleteTitle),
+          content: Text(s.habitDetailDeleteContent(_habit!.title)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
+              child: Text(s.habitDetailDelete),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) return;
@@ -232,6 +237,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         final reno = snapshot.data;
         if (reno == null) return const SizedBox.shrink();
 
+        final s = S.of(context);
         final scheme = Theme.of(context).colorScheme;
 
         return Padding(
@@ -272,7 +278,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Sugerencia de la IA',
+                            s.habitDetailAISuggestion,
                             style: Theme.of(context)
                                 .textTheme
                                 .labelMedium
@@ -343,7 +349,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                           shape: const StadiumBorder(),
                           minimumSize: const Size(0, 40),
                         ),
-                        child: const Text('Aplicar ajuste'),
+                        child: Text(s.habitDetailApplyAdjust),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -358,7 +364,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                         shape: const StadiumBorder(),
                         minimumSize: const Size(0, 40),
                       ),
-                      child: const Text('Ahora no'),
+                      child: Text(s.habitDetailLater),
                     ),
                   ],
                 ),
@@ -375,6 +381,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     if (_loading) {
@@ -393,8 +400,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
       return Scaffold(
         backgroundColor: scheme.surfaceContainerLow,
         appBar: AppBar(),
-        body: const ErrorStateView(
-          message: 'El hábito no existe o fue eliminado.',
+        body: ErrorStateView(
+          message: s.habitDetailNotFound,
           icon: Icons.help_outline_rounded,
         ),
       );
@@ -684,6 +691,7 @@ class _DescriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -702,7 +710,7 @@ class _DescriptionCard extends StatelessWidget {
               Icon(Icons.notes_rounded, size: 16, color: scheme.onSurfaceVariant),
               const SizedBox(width: 8),
               Text(
-                'Descripción',
+                s.habitDetailDescription,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -752,7 +760,7 @@ class _StreakCard extends StatelessWidget {
               iconColor: scheme.tertiary,
               glowColor: scheme.tertiaryContainer.withValues(alpha: 0.4),
               value: '${habit.currentStreak}',
-              label: 'Racha actual',
+              label: S.of(context).habitDetailCurrentStreak,
             ),
           ),
           Container(
@@ -767,7 +775,7 @@ class _StreakCard extends StatelessWidget {
               iconColor: scheme.tertiary,
               glowColor: scheme.tertiaryContainer.withValues(alpha: 0.3),
               value: '${habit.bestStreak}',
-              label: 'Mejor racha',
+              label: S.of(context).habitDetailBestStreak,
             ),
           ),
         ],
@@ -819,7 +827,7 @@ class _StreakColumn extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'días',
+          S.of(context).habitDetailDays,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: scheme.onSurfaceVariant,
           ),
@@ -858,6 +866,7 @@ class _CheckInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     if (isCompleted) {
@@ -883,7 +892,7 @@ class _CheckInButton extends StatelessWidget {
                   color: scheme.tertiary, size: 22),
               const SizedBox(width: 10),
               Text(
-                'Completado hoy',
+                s.habitDetailCompletedToday,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: scheme.tertiary,
                   fontWeight: FontWeight.w600,
@@ -918,7 +927,7 @@ class _CheckInButton extends StatelessWidget {
               Icon(Icons.shield_rounded, color: scheme.primary, size: 22),
               const SizedBox(width: 10),
               Text(
-                'Racha protegida hoy',
+                s.habitDetailShieldedToday,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: scheme.primary,
                   fontWeight: FontWeight.w600,
@@ -935,7 +944,7 @@ class _CheckInButton extends StatelessWidget {
       children: [
         GradientButton(
           onPressed: onToggle ?? () {},
-          label: 'Marcar como completado',
+          label: s.habitDetailMarkComplete,
           icon: Icons.radio_button_unchecked_rounded,
           gradient: AppTheme.heroGradient,
         ),
@@ -960,7 +969,7 @@ class _CheckInButton extends StatelessWidget {
                       size: 18, color: scheme.onSurfaceVariant),
                   const SizedBox(width: 8),
                   Text(
-                    'Usar escudo ($shieldsAvailable disponible${shieldsAvailable == 1 ? '' : 's'})',
+                    s.habitDetailUseShield(shieldsAvailable),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
@@ -991,6 +1000,7 @@ class _ActivityGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
     final now = DateTime.now();
 
@@ -1032,10 +1042,10 @@ class _ActivityGrid extends StatelessWidget {
           Wrap(
             spacing: 12,
             children: [
-              _LegendDot(color: scheme.tertiary, label: 'Completado'),
-              _LegendDot(color: scheme.primary, label: 'Escudo'),
+              _LegendDot(color: scheme.tertiary, label: s.habitDetailLogCompleted),
+              _LegendDot(color: scheme.primary, label: s.habitDetailLogShield),
               if (sickDates.isNotEmpty)
-                _LegendDot(color: scheme.secondary, label: 'Enfermedad'),
+                _LegendDot(color: scheme.secondary, label: s.habitDetailLogSick),
             ],
           ),
           const SizedBox(height: 14),
@@ -1052,13 +1062,13 @@ class _ActivityGrid extends StatelessWidget {
 
               String tooltip;
               if (done) {
-                tooltip = '${date.day}/${date.month} — Completado';
+                tooltip = '${date.day}/${date.month} — ${s.habitDetailLogCompleted}';
               } else if (shielded) {
-                tooltip = '${date.day}/${date.month} — Protegido por escudo';
+                tooltip = '${date.day}/${date.month} — ${s.habitDetailLogShield}';
               } else if (sick) {
-                tooltip = '${date.day}/${date.month} — Modo enfermedad';
+                tooltip = '${date.day}/${date.month} — ${s.habitDetailLogSickMode}';
               } else {
-                tooltip = '${date.day}/${date.month} — No completado';
+                tooltip = '${date.day}/${date.month} — ${s.habitDetailLogMissed}';
               }
 
               return Tooltip(
@@ -1155,13 +1165,20 @@ class _InfoCard extends StatelessWidget {
 
   const _InfoCard({required this.habit});
 
-  static const _dayNames = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final days =
-        habit.targetDays.map((d) => _dayNames[d - 1]).join(', ');
+    final dayNames = [
+      s.weekdayMonShort,
+      s.weekdayTueShort,
+      s.weekdayWedShort,
+      s.weekdayThuShort,
+      s.weekdayFriShort,
+      s.weekdaySatShort,
+      s.weekdaySunShort,
+    ];
+    final days = habit.targetDays.map((d) => dayNames[d - 1]).join(', ');
 
     return Container(
       decoration: BoxDecoration(
@@ -1175,7 +1192,7 @@ class _InfoCard extends StatelessWidget {
           _InfoRow(
             icon: Icons.repeat_rounded,
             label: 'Frecuencia',
-            value: habit.frequency == 'daily' ? 'Diario' : habit.frequency,
+            value: habit.frequency == 'daily' ? s.habitDetailFilterDaily : habit.frequency,
           ),
           Divider(
             height: 1,

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
 import '../router/main_shell.dart';
 import 'package:go_router/go_router.dart';
@@ -53,7 +54,7 @@ class _AppDrawerState extends State<AppDrawer> {
     if (review == null) {
       _goAndClose('/dashboard');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aún no hay revisión semanal')),
+        SnackBar(content: Text(S.of(context)!.drawerNoWeeklyReview)),
       );
       return;
     }
@@ -66,7 +67,7 @@ class _AppDrawerState extends State<AppDrawer> {
     if (proj == null) {
       _goAndClose('/dashboard');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Aún no hay proyección mensual')),
+        SnackBar(content: Text(S.of(context)!.drawerNoButterfly)),
       );
       return;
     }
@@ -80,17 +81,18 @@ class _AppDrawerState extends State<AppDrawer> {
     Navigator.of(context).pop();
     final habit = await CreateHabitSheet.show(context);
     if (habit == null || _habitRepo == null) return;
+    final s = S.of(context)!;
     try {
       await _habitRepo!.createHabit(habit);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Hábito creado')),
+        SnackBar(content: Text(s.drawerHabitCreated)),
       );
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Error al crear el hábito'),
+          content: Text(s.drawerHabitCreateError),
           backgroundColor: AppTheme.error,
         ),
       );
@@ -110,6 +112,7 @@ class _AppDrawerState extends State<AppDrawer> {
           stream: _userRepo?.watchUser(),
           builder: (context, snapshot) {
             final userData = snapshot.data;
+            final s = S.of(context)!;
             return ListView(
               padding: EdgeInsets.zero,
               children: [
@@ -118,63 +121,63 @@ class _AppDrawerState extends State<AppDrawer> {
                   userData: userData,
                   onTap: () => _goAndClose('/settings'),
                 ),
-                _SectionLabel(label: 'Tu progreso'),
+                _SectionLabel(label: s.drawerProgress),
                 _DrawerTile(
                   icon: Icons.emoji_events_rounded,
-                  title: 'Logros',
-                  subtitle: 'Lo que has desbloqueado',
+                  title: s.drawerAchievements,
+                  subtitle: s.drawerAchievementsSubtitle,
                   onTap: () => _goNamedAndClose('achievements'),
                 ),
                 _DrawerTile(
                   icon: Icons.bar_chart_rounded,
-                  title: 'Niveles',
-                  subtitle: 'Tu progreso por categoría',
+                  title: s.drawerLevels,
+                  subtitle: s.drawerLevelsSubtitle,
                   onTap: () => _goNamedAndClose('levels'),
                 ),
                 _DrawerTile(
                   icon: Icons.list_alt_rounded,
-                  title: 'Todos mis hábitos',
-                  subtitle: 'Activos y archivados',
+                  title: s.drawerAllHabits,
+                  subtitle: s.drawerAllHabitsSubtitle,
                   onTap: () => _goNamedAndClose('all-habits'),
                 ),
                 _DrawerTile(
                   icon: Icons.calendar_month_rounded,
-                  title: 'Revisión semanal',
-                  subtitle: 'Análisis de la IA',
+                  title: s.drawerWeeklyReview,
+                  subtitle: s.drawerWeeklyReviewSubtitle,
                   onTap: _openLatestWeeklyReview,
                 ),
                 _DrawerTile(
                   icon: Icons.auto_awesome_rounded,
-                  title: 'Efecto Mariposa',
-                  subtitle: 'Proyección a 3 años',
+                  title: s.drawerButterfly,
+                  subtitle: s.drawerButterflySubtitle,
                   onTap: _openLatestButterfly,
                 ),
                 const SizedBox(height: 8),
-                _SectionLabel(label: 'Acciones rápidas'),
+                _SectionLabel(label: s.drawerQuickActions),
                 _DrawerTile(
                   icon: Icons.add_circle_outline_rounded,
-                  title: 'Crear hábito',
-                  subtitle: 'Manual, sin IA',
+                  title: s.drawerCreateHabit,
+                  subtitle: s.drawerCreateHabitSubtitle,
                   onTap: _createHabit,
                 ),
                 _DrawerTile(
                   icon: Icons.chat_bubble_outline_rounded,
-                  title: 'Chat con la IA',
-                  subtitle: 'Genera un plan nuevo',
+                  title: s.drawerChatAI,
+                  subtitle: s.drawerChatAISubtitle,
                   onTap: () => _goAndClose('/ai'),
                 ),
                 const SizedBox(height: 8),
-                _SectionLabel(label: 'Preferencias'),
+                _SectionLabel(label: s.drawerPreferences),
                 _SickModeQuickTile(
                   userData: userData,
                   userRepo: _userRepo,
                 ),
                 const SizedBox(height: 8),
-                _SectionLabel(label: 'Cuenta'),
+                _SectionLabel(label: s.settingsTitle),
                 _DrawerTile(
                   icon: Icons.settings_outlined,
-                  title: 'Ajustes',
-                  subtitle: 'Tema, notificaciones, cuenta',
+                  title: s.drawerSettings,
+                  subtitle: s.drawerSettingsSubtitle,
                   onTap: () => _goAndClose('/settings'),
                 ),
                 const SizedBox(height: 24),
@@ -206,7 +209,7 @@ class DrawerMenuButton extends StatelessWidget {
         iconSize: 22,
         padding: EdgeInsets.zero,
         icon: Icon(Icons.menu_rounded, color: scheme.onSurfaceVariant),
-        tooltip: 'Menú',
+        tooltip: S.of(context)?.drawerMenu ?? 'Menú',
         onPressed: () => MainShell.scaffoldKey.currentState?.openDrawer(),
       ),
     );
@@ -356,7 +359,7 @@ class _DrawerHeader extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '$shields escudo${shields == 1 ? '' : 's'}',
+                                S.of(context)!.drawerShields(shields),
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelMedium
@@ -472,13 +475,13 @@ class _SickModeQuickTileState extends State<_SickModeQuickTile> {
     return until.isAfter(DateTime.now());
   }
 
-  String get _subtitle {
+  String _subtitle(BuildContext context) {
     if (_isActive) {
       final until = widget.userData!.sickModeUntil!;
       final diff = until.difference(DateTime.now()).inDays + 1;
-      return 'Activo — $diff día${diff == 1 ? '' : 's'}';
+      return 'Activo — ${S.of(context)!.daysLabel(diff)}';
     }
-    return 'Congela rachas si fallas';
+    return S.of(context)!.drawerStreakFreeze;
   }
 
   Future<void> _toggle() async {
@@ -503,21 +506,20 @@ class _SickModeQuickTileState extends State<_SickModeQuickTile> {
 
   Future<int?> _showDaysPicker(BuildContext context) {
     int selected = 1;
+    final s = S.of(context)!;
     return showDialog<int>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlg) => AlertDialog(
-          title: const Text('Modo enfermedad'),
+          title: Text(s.settingsSickModeDialogTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Tus rachas quedarán protegidas durante este período. Máximo 7 días.',
-              ),
+              Text(s.settingsSickModeDialogContent),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Días: '),
+                  Text('${s.days}: '),
                   Expanded(
                     child: Slider(
                       value: selected.toDouble(),
@@ -536,11 +538,11 @@ class _SickModeQuickTileState extends State<_SickModeQuickTile> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('Cancelar'),
+              child: Text(s.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, selected),
-              child: const Text('Activar'),
+              child: Text(s.activate),
             ),
           ],
         ),
@@ -567,12 +569,12 @@ class _SickModeQuickTileState extends State<_SickModeQuickTile> {
         ),
       ),
       title: Text(
-        'Modo enfermedad',
+        S.of(context)!.drawerSickMode,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.w500,
         ),
       ),
-      subtitle: Text(_subtitle, style: Theme.of(context).textTheme.bodySmall),
+      subtitle: Text(_subtitle(context), style: Theme.of(context).textTheme.bodySmall),
       trailing: _loading
           ? const SizedBox(
               width: 24,

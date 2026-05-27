@@ -6,6 +6,7 @@ import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/spark_check_logo.dart';
+import '../../../l10n/app_localizations.dart';
 
 // Pantalla de login — diseño Editorial Vitality
 class LoginScreen extends StatefulWidget {
@@ -81,6 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final s = S.of(context)!;
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -125,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
                 const SizedBox(height: 8),
                 Text(
-                  'Tus hábitos, potenciados con IA',
+                  s.authTagline,
                   style: textTheme.bodyLarge?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -139,16 +141,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: s.authEmail,
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Introduce tu correo electrónico';
+                      return s.authEmailHint;
                     }
                     if (!value.contains('@')) {
-                      return 'Introduce un correo válido';
+                      return s.authEmailInvalid;
                     }
                     return null;
                   },
@@ -163,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   autofillHints: const [AutofillHints.password],
                   onFieldSubmitted: (_) => _handleLogin(),
                   decoration: InputDecoration(
-                    labelText: 'Contraseña',
+                    labelText: s.authPassword,
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -178,10 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Introduce tu contraseña';
+                      return s.authPasswordHint;
                     }
                     if (value.length < 6) {
-                      return 'Mínimo 6 caracteres';
+                      return s.authPasswordMin;
                     }
                     return null;
                   },
@@ -217,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // botón login con gradiente
                 GradientButton(
                   onPressed: _isLoading ? null : _handleLogin,
-                  label: 'Iniciar sesión',
+                  label: s.authSignIn,
                   loading: _isLoading,
                 ).animate().fadeIn(delay: 550.ms, duration: 400.ms),
                 const SizedBox(height: 24),
@@ -234,7 +236,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
-                        'o',
+                        s.authOrSeparator,
                         style: textTheme.labelMedium?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -266,9 +268,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                       children: [
-                        const TextSpan(text: '¿No tienes cuenta? '),
+                        TextSpan(text: s.authNoAccount),
                         TextSpan(
-                          text: 'Regístrate',
+                          text: s.authRegisterLink,
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
@@ -317,7 +319,7 @@ class _GoogleButton extends StatelessWidget {
             const _GoogleLogo(),
             const SizedBox(width: 12),
             Text(
-              'Continuar con Google',
+              S.of(context)!.authContinueWithGoogle,
               style: textTheme.titleSmall?.copyWith(
                 color: scheme.onSurface,
                 fontWeight: FontWeight.w600,

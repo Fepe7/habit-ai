@@ -230,4 +230,1024 @@ class SEn extends S {
 
   @override
   String get languageEn => 'English';
+
+  @override
+  String get authLoginTitle => 'Sign in';
+
+  @override
+  String get authRegisterTitle => 'Create account';
+
+  @override
+  String get authTagline => 'Your habits, powered by AI';
+
+  @override
+  String get authRegisterTagline => 'Start building better habits';
+
+  @override
+  String get authEmail => 'Email';
+
+  @override
+  String get authEmailHint => 'Enter your email';
+
+  @override
+  String get authEmailInvalid => 'Enter a valid email';
+
+  @override
+  String get authPassword => 'Password';
+
+  @override
+  String get authPasswordHint => 'Enter your password';
+
+  @override
+  String get authPasswordMin => 'At least 6 characters';
+
+  @override
+  String get authPasswordConfirm => 'Confirm password';
+
+  @override
+  String get authPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get authName => 'Name';
+
+  @override
+  String get authNameHint => 'Your real name';
+
+  @override
+  String get authNameRequired => 'Enter your name';
+
+  @override
+  String get authUsername => 'Username';
+
+  @override
+  String get authUsernameHint => 'yourname';
+
+  @override
+  String get authUsernameAvailable => 'Available!';
+
+  @override
+  String get authUsernameTaken => 'Already taken, try another';
+
+  @override
+  String get authUsernameHelp =>
+      'Identifies you in challenges and friends • 3-20 characters';
+
+  @override
+  String get authUsernameRequired => 'Choose a username';
+
+  @override
+  String get authUsernameFormat =>
+      'Lowercase letters, numbers and _ only (3-20 characters)';
+
+  @override
+  String get authUsernameCheckFirst => 'Check username availability first';
+
+  @override
+  String get authUsernameRequiredFull =>
+      'Choose a valid and available username';
+
+  @override
+  String get authOrSeparator => 'or';
+
+  @override
+  String get authContinueWithGoogle => 'Continue with Google';
+
+  @override
+  String get authSignIn => 'Sign in';
+
+  @override
+  String get authNoAccount => 'Don\'t have an account? ';
+
+  @override
+  String get authRegisterLink => 'Sign up';
+
+  @override
+  String get authHaveAccount => 'Already have an account? ';
+
+  @override
+  String get authSignInLink => 'Sign in';
+
+  @override
+  String get authPrivacyPrefix => 'By creating your account you agree to the ';
+
+  @override
+  String get authPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get authPrivacyMiddle => ' and ';
+
+  @override
+  String get authTermsOfUse => 'Terms of Use';
+
+  @override
+  String get navHabits => 'Habits';
+
+  @override
+  String get navProgress => 'Progress';
+
+  @override
+  String get navAssistant => 'Assistant';
+
+  @override
+  String get navExplore => 'Explore';
+
+  @override
+  String get navProfile => 'Profile';
+
+  @override
+  String get navNewFollowRequest => 'New follow request';
+
+  @override
+  String navFollowRequestBody(String username) {
+    return '@$username wants to follow you';
+  }
+
+  @override
+  String get navFollowAccepted => 'Request accepted!';
+
+  @override
+  String navFollowAcceptedBody(String username) {
+    return '@$username accepted your request';
+  }
+
+  @override
+  String get drawerProgress => 'Your progress';
+
+  @override
+  String get drawerAchievements => 'Achievements';
+
+  @override
+  String get drawerAchievementsSubtitle => 'What you\'ve unlocked';
+
+  @override
+  String get drawerLevels => 'Levels';
+
+  @override
+  String get drawerLevelsSubtitle => 'Your progress by category';
+
+  @override
+  String get drawerAllHabits => 'All my habits';
+
+  @override
+  String get drawerAllHabitsSubtitle => 'Active and archived';
+
+  @override
+  String get drawerWeeklyReview => 'Weekly review';
+
+  @override
+  String get drawerWeeklyReviewSubtitle => 'AI analysis';
+
+  @override
+  String get drawerButterfly => 'Butterfly Effect';
+
+  @override
+  String get drawerButterflySubtitle => '3-year projection';
+
+  @override
+  String get drawerQuickActions => 'Quick actions';
+
+  @override
+  String get drawerCreateHabit => 'Create habit';
+
+  @override
+  String get drawerCreateHabitSubtitle => 'Manual, no AI';
+
+  @override
+  String get drawerChatAI => 'Chat with AI';
+
+  @override
+  String get drawerChatAISubtitle => 'Generate a new plan';
+
+  @override
+  String get drawerPreferences => 'Preferences';
+
+  @override
+  String get drawerSettings => 'Settings';
+
+  @override
+  String get drawerSettingsSubtitle => 'Theme, notifications, account';
+
+  @override
+  String get drawerMenu => 'Menu';
+
+  @override
+  String get drawerNoWeeklyReview => 'No weekly review yet';
+
+  @override
+  String get drawerNoButterfly => 'No monthly projection yet';
+
+  @override
+  String get drawerHabitCreated => 'Habit created';
+
+  @override
+  String get drawerHabitCreateError => 'Error creating habit';
+
+  @override
+  String drawerShields(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count shields',
+      one: '$count shield',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get drawerStreakFreeze => 'Freeze streaks if you miss';
+
+  @override
+  String get drawerSickMode => 'Sick mode';
+
+  @override
+  String get dashboardTitle => 'Progress';
+
+  @override
+  String dashboardGreeting(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String get dashboardWeekProgress => 'Your progress this week';
+
+  @override
+  String get dashboardWeeklyReviewNeedMore =>
+      'You need at least 3 check-ins this week to generate the review';
+
+  @override
+  String get dashboardButterflyNeedMore =>
+      'You need at least 10 check-ins this month to generate the projection';
+
+  @override
+  String get dashboardPatternsNeedMore =>
+      'You need at least 14 days of data and 3 active habits to detect patterns';
+
+  @override
+  String get dashboardSmartAdjust => 'Smart adjust';
+
+  @override
+  String get dashboardAIPersonalized => 'AI · Personalized';
+
+  @override
+  String get dashboardAdjustDescription =>
+      'Any habit not taking off? AI analyzes your patterns and suggests concrete changes.';
+
+  @override
+  String get dashboardAnalyzing => 'Analyzing…';
+
+  @override
+  String get dashboardRequestAdjust => 'Request adjust';
+
+  @override
+  String get dashboardSuggestedAdjusts => 'Suggested adjustments';
+
+  @override
+  String get dashboardSelectHabit => 'Select a habit';
+
+  @override
+  String get dashboardNoActiveHabits => 'No active habits';
+
+  @override
+  String dashboardStreakDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return 'Streak: $_temp0';
+  }
+
+  @override
+  String get dashboardAdjustGenerated =>
+      'Suggestion generated. Check it above.';
+
+  @override
+  String get dashboardAdjustNotNeeded =>
+      'This habit doesn\'t need adjusting yet — it fails less than 3 days in a row.';
+
+  @override
+  String get dashboardAdjustPending =>
+      'There\'s already a pending suggestion for this habit.';
+
+  @override
+  String dashboardAdjustError(String reason) {
+    return 'Could not generate the adjust ($reason).';
+  }
+
+  @override
+  String get dashboardPatternsTitle => 'AI Patterns';
+
+  @override
+  String get dashboardPatternsSubtitle =>
+      'Discover hidden correlations between your habits';
+
+  @override
+  String get dashboardDetectPatterns => 'Detect patterns';
+
+  @override
+  String get dashboardGenerating => 'Generating…';
+
+  @override
+  String get dashboardButterflyTitle => 'Butterfly Effect';
+
+  @override
+  String get dashboardButterflySubtitle =>
+      'Discover who you\'ll be in 3 years if you keep your habits';
+
+  @override
+  String get dashboardGenerateProjection => 'Generate projection';
+
+  @override
+  String get dashboardWeeklyReviewTitle => 'Weekly review';
+
+  @override
+  String get dashboardWeeklyReviewSubtitle =>
+      'Ask AI to analyze your week: streaks, wins and areas to improve';
+
+  @override
+  String get dashboardGenerateNow => 'Generate now';
+
+  @override
+  String get dashboardRegenerate => 'Regenerate';
+
+  @override
+  String get dashboardRegenerating => 'Regenerating…';
+
+  @override
+  String get dashboardNoData => 'No data yet';
+
+  @override
+  String get dashboardNoDataSubtitle =>
+      'Create habits and complete check-ins to see your stats here';
+
+  @override
+  String get dashboardCreateFirstHabit => 'Create first habit';
+
+  @override
+  String get dashboardPerfectDay => 'Perfect day!';
+
+  @override
+  String get dashboardToday => 'Today';
+
+  @override
+  String get dashboardNoHabitsToday => 'No habits scheduled for today';
+
+  @override
+  String get dashboardBestStreak => 'Best streak';
+
+  @override
+  String get dashboardCompleted => 'Completed';
+
+  @override
+  String get dashboardPerfectDays => 'Perfect days';
+
+  @override
+  String get dashboardLastWeek => 'Last week';
+
+  @override
+  String get dashboardByCategory => 'By category';
+
+  @override
+  String get dashboardActiveStreaks => 'Active streaks';
+
+  @override
+  String get dashboardAchievements => 'Achievements';
+
+  @override
+  String get dashboardUnlockAchievements =>
+      'Complete habits to unlock achievements';
+
+  @override
+  String get dashboardMasteryProfile => 'Mastery Profile';
+
+  @override
+  String get dashboardStartMastery =>
+      'Complete habits to unlock your mastery profile.';
+
+  @override
+  String get habitsTitle => 'My habits';
+
+  @override
+  String habitsGreeting(String name) {
+    return 'Hello, $name';
+  }
+
+  @override
+  String habitsDateFormat(String day, String date) {
+    return '$day, $date';
+  }
+
+  @override
+  String get habitsSelectHabits => 'Select habits';
+
+  @override
+  String habitsSelected(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count selected',
+      one: '1 selected',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get habitsMoveToGroup => 'Move to group';
+
+  @override
+  String get habitsDeleteSelected => 'Delete selected';
+
+  @override
+  String habitsDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count habits',
+      one: 'Delete 1 habit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get habitsDeleteSubtitle =>
+      'They will be deactivated but history will be preserved.';
+
+  @override
+  String habitsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits deleted',
+      one: '1 habit deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get habitsDeleteError => 'Error deleting habits';
+
+  @override
+  String get habitsDeleteSingleTitle => 'Delete habit';
+
+  @override
+  String habitsDeleteSingleContent(String title) {
+    return 'Are you sure you want to delete \"$title\"?\n\nIt will be deactivated but history will be preserved.';
+  }
+
+  @override
+  String habitsDeleteSingleSuccess(String title) {
+    return '\"$title\" deleted';
+  }
+
+  @override
+  String get habitsDeleteSingleError => 'Error deleting habit';
+
+  @override
+  String get habitsUpdated => 'Habit updated';
+
+  @override
+  String get habitsUpdateError => 'Error updating habit';
+
+  @override
+  String get habitsAdjusted => 'Habit adjusted ✓';
+
+  @override
+  String get habitsNoGroup => 'No group';
+
+  @override
+  String habitsMoved(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits moved',
+      one: '1 habit moved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get habitsMoveError => 'Error moving habits';
+
+  @override
+  String get habitsGroupCreateError => 'Error creating routine';
+
+  @override
+  String habitsDeleteGroupTitle(String title) {
+    return 'Delete \"$title\"';
+  }
+
+  @override
+  String get habitsDeleteGroupContent =>
+      'What do you want to do with this routine\'s habits?';
+
+  @override
+  String get habitsDeleteGroupOnly => 'Routine only';
+
+  @override
+  String get habitsDeleteGroupAndHabits => 'Routine and habits';
+
+  @override
+  String habitsGroupDeleted(String title) {
+    return 'Routine \"$title\" deleted';
+  }
+
+  @override
+  String get habitsGroupDeleteError => 'Error deleting routine';
+
+  @override
+  String get habitsDragToReorder => 'Drag to reorder';
+
+  @override
+  String get habitsDone => 'Done';
+
+  @override
+  String get habitsCreate => 'Create';
+
+  @override
+  String get habitsChainLabel => 'CHAIN';
+
+  @override
+  String habitsTotalCount(int count) {
+    return '·  $count habits';
+  }
+
+  @override
+  String get habitsProgressToday => 'Today\'s progress';
+
+  @override
+  String get habitsAllDone => 'All done!';
+
+  @override
+  String habitsCompletedOf(int completed, int total) {
+    return '$completed of $total habits completed';
+  }
+
+  @override
+  String get habitsEditGroup => 'Edit group';
+
+  @override
+  String get habitsTapToAdd => 'Tap to add habits';
+
+  @override
+  String get habitsLoadError =>
+      'Could not load your habits. Check your connection.';
+
+  @override
+  String get habitsFirstChain => 'First chain created!';
+
+  @override
+  String get habitsAtomicTitle => 'How the atomic habit works';
+
+  @override
+  String get habitsAtomicStep1 => 'Complete the anchor habit';
+
+  @override
+  String get habitsAtomicStep1Desc =>
+      'The first habit in the chain is highlighted when you finish it.';
+
+  @override
+  String get habitsAtomicStep2 => 'The next one lights up';
+
+  @override
+  String get habitsAtomicStep2Desc =>
+      'You\'ll see \"After X\" on the chained habit. That\'s your cue.';
+
+  @override
+  String get habitsAtomicStep3 => 'Complete the whole chain';
+
+  @override
+  String get habitsAtomicStep3Desc =>
+      'When you finish all of them you get a special celebration 🔥';
+
+  @override
+  String get habitsAtomicGotIt => 'Got it!';
+
+  @override
+  String get habitsXpBonus => '+5 XP · Atomic habit';
+
+  @override
+  String get habitDetailDescription => 'Description';
+
+  @override
+  String get habitDetailDays => 'days';
+
+  @override
+  String get habitDetailCurrentStreak => 'Current streak';
+
+  @override
+  String get habitDetailBestStreak => 'Best streak';
+
+  @override
+  String get habitDetailCompletedToday => 'Completed today';
+
+  @override
+  String get habitDetailShieldedToday => 'Streak protected today';
+
+  @override
+  String get habitDetailMarkComplete => 'Mark as completed';
+
+  @override
+  String habitDetailUseShield(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count available',
+      one: '1 available',
+    );
+    return 'Use shield ($_temp0)';
+  }
+
+  @override
+  String get habitDetailShieldTitle => 'Use streak shield';
+
+  @override
+  String habitDetailShieldContent(String title, int count) {
+    return 'You\'ll spend 1 shield to protect \"$title\"\'s streak today.\n\nYou have $count shields left.';
+  }
+
+  @override
+  String get habitDetailUseShieldButton => 'Use shield';
+
+  @override
+  String get habitDetailShieldUsed => '🛡️ Shield used — streak protected';
+
+  @override
+  String get habitDetailNoShields => 'No shields available';
+
+  @override
+  String get habitDetailDeleteTitle => 'Delete habit';
+
+  @override
+  String habitDetailDeleteContent(String title) {
+    return 'Are you sure you want to delete \"$title\"?\n\nIt will be deactivated and won\'t appear in your list, but history will be preserved.';
+  }
+
+  @override
+  String get habitDetailDelete => 'Delete';
+
+  @override
+  String get habitDetailAISuggestion => 'AI suggestion';
+
+  @override
+  String get habitDetailApplyAdjust => 'Apply adjustment';
+
+  @override
+  String get habitDetailLater => 'Not now';
+
+  @override
+  String get habitDetailNotFound => 'Habit not found or was deleted.';
+
+  @override
+  String get habitDetailLogCompleted => 'Completed';
+
+  @override
+  String get habitDetailLogShield => 'Shield';
+
+  @override
+  String get habitDetailLogSick => 'Sick';
+
+  @override
+  String get habitDetailLogSickMode => 'Sick mode';
+
+  @override
+  String get habitDetailLogMissed => 'Missed';
+
+  @override
+  String get habitDetailFilterAll => 'All';
+
+  @override
+  String get habitDetailFilterDaily => 'Daily';
+
+  @override
+  String get aiTitle => 'AI Assistant';
+
+  @override
+  String get aiSubtitle => 'Powered by Gemini';
+
+  @override
+  String get aiWelcome =>
+      'Hi! I\'m your habit assistant. Tell me your goals and I\'ll create a personalized plan for you.';
+
+  @override
+  String get aiOfflineError => 'AI assistant needs an internet connection';
+
+  @override
+  String get aiConnectionError =>
+      'Could not connect to the assistant. Check your connection.';
+
+  @override
+  String aiHabitsAdded(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits added',
+      one: '1 habit added',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get aiSaveError => 'Error saving habits';
+
+  @override
+  String get aiGeminiLabel => 'Gemini';
+
+  @override
+  String get aiInputHint => 'Write your goals...';
+
+  @override
+  String get aiThinking => 'Thinking...';
+
+  @override
+  String get aiExploreTemplates => 'No ideas? Explore community templates';
+
+  @override
+  String get aiSuggestion1 => 'I want to exercise and eat better';
+
+  @override
+  String get aiSuggestion2 => 'I need to be more productive';
+
+  @override
+  String get aiSuggestion3 => 'I want to read more and sleep better';
+
+  @override
+  String get aiSuggestion4 => 'Improve my mental health';
+
+  @override
+  String get categorySalud => 'Health';
+
+  @override
+  String get categoryProductividad => 'Productivity';
+
+  @override
+  String get categoryBienestar => 'Wellbeing';
+
+  @override
+  String get categorySocial => 'Social';
+
+  @override
+  String get categoryAprendizaje => 'Learning';
+
+  @override
+  String get categoryFinanzas => 'Finance';
+
+  @override
+  String get achievementsTitle => 'Achievements';
+
+  @override
+  String achievementsUnlocked(int count) {
+    return '$count achievements unlocked';
+  }
+
+  @override
+  String get levelsTitle => 'Mastery Profile';
+
+  @override
+  String get levelsMedium => 'Medium level';
+
+  @override
+  String levelsTotalXp(int xp) {
+    return '$xp XP total';
+  }
+
+  @override
+  String get levelsStronger => 'Stronger';
+
+  @override
+  String get levelsByCategory => 'By category';
+
+  @override
+  String get levelsRadar => 'Skills radar';
+
+  @override
+  String get levelsEmpty => 'Start creating habits';
+
+  @override
+  String get levelsEmptySubtitle =>
+      'Complete check-ins to level up in each category.';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileNoHabits => 'No active habits';
+
+  @override
+  String get profileMastery => 'Mastery';
+
+  @override
+  String get profileActiveHabits => 'Active habits';
+
+  @override
+  String get profileEdit => 'Edit';
+
+  @override
+  String get profileStreak => 'Streak';
+
+  @override
+  String get profileHabits => 'Habits';
+
+  @override
+  String get profileBestStreak => 'Best streak';
+
+  @override
+  String get profileLevel => 'Level';
+
+  @override
+  String get profileFollowers => 'followers';
+
+  @override
+  String get profileFollowing => 'following';
+
+  @override
+  String profileBestStreakShort(int days) {
+    return 'max ${days}d';
+  }
+
+  @override
+  String get exploreTitle => 'HabitAI';
+
+  @override
+  String get exploreSubtitle => 'Discover habits\nand creators';
+
+  @override
+  String get exploreSearchHint => 'Search people, templates…';
+
+  @override
+  String get exploreChallenges => 'Challenges';
+
+  @override
+  String get exploreSeeAll => 'See all';
+
+  @override
+  String get exploreSeeAllAlt => 'See all';
+
+  @override
+  String get exploreCreateChallenge => 'Create your first challenge';
+
+  @override
+  String get exploreChallengeSubtitle => 'Challenge a friend to a shared habit';
+
+  @override
+  String get exploreFeaturedTemplates => 'Featured templates';
+
+  @override
+  String get exploreNoTemplates => 'No templates published yet';
+
+  @override
+  String get exploreFeaturedCreators => 'Featured creators';
+
+  @override
+  String get exploreNoProfiles => 'No public profiles yet';
+
+  @override
+  String get explorePeople => 'People';
+
+  @override
+  String get exploreTemplates => 'Templates';
+
+  @override
+  String get exploreNoResults => 'No results';
+
+  @override
+  String get exploreNoResultsHint => 'Try a different search term.';
+
+  @override
+  String get explorePending => 'Pending acceptance';
+
+  @override
+  String get exploreFollowing => 'Following';
+
+  @override
+  String get exploreFollow => 'Follow';
+
+  @override
+  String get exploreRequest => 'Request';
+
+  @override
+  String get exploreRequested => 'Requested';
+
+  @override
+  String get exploreImport => 'Import';
+
+  @override
+  String exploreChallengeDays(int days) {
+    return '$days days';
+  }
+
+  @override
+  String exploreHabitCount(int count) {
+    return '$count habits';
+  }
+
+  @override
+  String exploreHabitCountShort(int count) {
+    return '$count hab.';
+  }
+
+  @override
+  String get snackbarRetry => 'Retry';
+
+  @override
+  String get weekdayMonday => 'Monday';
+
+  @override
+  String get weekdayTuesday => 'Tuesday';
+
+  @override
+  String get weekdayWednesday => 'Wednesday';
+
+  @override
+  String get weekdayThursday => 'Thursday';
+
+  @override
+  String get weekdayFriday => 'Friday';
+
+  @override
+  String get weekdaySaturday => 'Saturday';
+
+  @override
+  String get weekdaySunday => 'Sunday';
+
+  @override
+  String get weekdayMonShort => 'Mon';
+
+  @override
+  String get weekdayTueShort => 'Tue';
+
+  @override
+  String get weekdayWedShort => 'Wed';
+
+  @override
+  String get weekdayThuShort => 'Thu';
+
+  @override
+  String get weekdayFriShort => 'Fri';
+
+  @override
+  String get weekdaySatShort => 'Sat';
+
+  @override
+  String get weekdaySunShort => 'Sun';
+
+  @override
+  String get weekdayTodayShort => 'Today';
+
+  @override
+  String get weekdayLShort => 'M';
+
+  @override
+  String get weekdayMShort => 'T';
+
+  @override
+  String get weekdayXShort => 'W';
+
+  @override
+  String get weekdayJShort => 'T';
+
+  @override
+  String get weekdayVShort => 'F';
+
+  @override
+  String get weekdaySShort => 'S';
+
+  @override
+  String get weekdayDShort => 'S';
+
+  @override
+  String get monthJan => 'jan';
+
+  @override
+  String get monthFeb => 'feb';
+
+  @override
+  String get monthMar => 'mar';
+
+  @override
+  String get monthApr => 'apr';
+
+  @override
+  String get monthMay => 'may';
+
+  @override
+  String get monthJun => 'jun';
+
+  @override
+  String get monthJul => 'jul';
+
+  @override
+  String get monthAug => 'aug';
+
+  @override
+  String get monthSep => 'sep';
+
+  @override
+  String get monthOct => 'oct';
+
+  @override
+  String get monthNov => 'nov';
+
+  @override
+  String get monthDec => 'dec';
 }

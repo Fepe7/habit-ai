@@ -21,6 +21,7 @@ import '../../profile/domain/public_profile_model.dart';
 import '../../social/data/follow_repository.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/user_directory_entry.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Descubrir hábitos — reemplaza la antigua pantalla de búsqueda.
 /// Layout inspirado en el mockup Stitch "Discover Habits and Creators":
@@ -241,6 +242,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   Widget build(BuildContext context) {
     super.build(context);
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -270,7 +272,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'HabitAI',
+                    s.exploreTitle,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: scheme.primary,
@@ -292,7 +294,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
                 child: Text(
-                  'Descubre hábitos\ny creadores',
+                  s.exploreSubtitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         height: 1.1,
@@ -335,13 +337,14 @@ class _ExploreScreenState extends State<ExploreScreen>
   // ==================== RETOS COMPARTIDOS ====================
 
   Widget _buildChallengesSection(ColorScheme scheme) {
+    final s = S.of(context);
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            title: 'Retos',
-            action: 'Ver todos',
+            title: s.exploreChallenges,
+            action: s.exploreSeeAll,
             onAction: () => context.go('/challenges'),
           ),
           const SizedBox(height: 12),
@@ -385,7 +388,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Crea tu primer reto',
+                              s.exploreCreateChallenge,
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: scheme.onSurface,
@@ -393,7 +396,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Reta a un amigo a un hábito compartido',
+                              s.exploreChallengeSubtitle,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: scheme.onSurfaceVariant,
@@ -470,8 +473,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                           const SizedBox(height: 6),
                           Text(
                             c.isPending
-                                ? 'Pendiente de aceptar'
-                                : '${c.durationDays} días',
+                                ? s.explorePending
+                                : s.exploreChallengeDays(c.durationDays),
                             style: TextStyle(
                               fontSize: 12,
                               color: scheme.onSurfaceVariant,
@@ -498,13 +501,14 @@ class _ExploreScreenState extends State<ExploreScreen>
   // ==================== FEATURED TEMPLATES ====================
 
   Widget _buildFeaturedSection(ColorScheme scheme) {
+    final s = S.of(context);
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            title: 'Plantillas destacadas',
-            action: 'Ver todas',
+            title: s.exploreFeaturedTemplates,
+            action: s.exploreSeeAllAlt,
             onAction: () => context.goNamed('community-feed'),
           ),
           const SizedBox(height: 12),
@@ -516,7 +520,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           else if (_featured.isEmpty)
             _EmptyInline(
               icon: Icons.storefront_outlined,
-              text: 'Aún no hay plantillas publicadas',
+              text: s.exploreNoTemplates,
             )
           else
             SizedBox(
@@ -547,13 +551,14 @@ class _ExploreScreenState extends State<ExploreScreen>
   // ==================== TRENDING CREATORS ====================
 
   Widget _buildCreatorsSection(ColorScheme scheme) {
+    final s = S.of(context);
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            title: 'Creadores destacados',
-            action: 'Ver todos',
+            title: s.exploreFeaturedCreators,
+            action: s.exploreSeeAll,
             onAction: () => context.goNamed('public-profiles-feed'),
           ),
           const SizedBox(height: 12),
@@ -565,7 +570,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           else if (_creators.isEmpty)
             _EmptyInline(
               icon: Icons.people_outline_rounded,
-              text: 'Aún no hay perfiles públicos',
+              text: s.exploreNoProfiles,
             )
           else
             Padding(
@@ -612,6 +617,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   // ==================== SEARCH RESULTS ====================
 
   List<Widget> _buildSearchResults(ColorScheme scheme) {
+    final s = S.of(context);
     if (_searching) {
       return const [
         SliverToBoxAdapter(
@@ -628,8 +634,8 @@ class _ExploreScreenState extends State<ExploreScreen>
           hasScrollBody: false,
           child: EmptyStateView(
             icon: Icons.manage_search_rounded,
-            title: 'Sin resultados',
-            subtitle: 'Prueba con otro término de búsqueda.',
+            title: s.exploreNoResults,
+            subtitle: s.exploreNoResultsHint,
           ),
         ),
       ];
@@ -640,7 +646,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
             child: Text(
-              'Personas',
+              s.explorePeople,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
@@ -685,7 +691,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
             child: Text(
-              'Plantillas',
+              s.exploreTemplates,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w700,
@@ -721,10 +727,11 @@ class _SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        hintText: 'Buscar personas, plantillas…',
+        hintText: s.exploreSearchHint,
         prefixIcon: Icon(Icons.search_rounded, color: scheme.onSurfaceVariant),
         suffixIcon: controller.text.isEmpty
             ? null
@@ -813,6 +820,7 @@ class _FeaturedTemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final accent = _categoryAccent(template.category, scheme);
 
     return InkWell(
@@ -904,7 +912,7 @@ class _FeaturedTemplateCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${template.habitCount} hábitos',
+                      s.exploreHabitCount(template.habitCount),
                       style: TextStyle(
                         color: accent,
                         fontWeight: FontWeight.w700,
@@ -921,13 +929,13 @@ class _FeaturedTemplateCard extends StatelessWidget {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.download_rounded,
+                        children: [
+                          const Icon(Icons.download_rounded,
                               size: 14, color: Colors.white),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
-                            'Importar',
-                            style: TextStyle(
+                            s.exploreImport,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -965,6 +973,7 @@ class _CreatorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return InkWell(
       onTap: onTap,
@@ -1057,7 +1066,7 @@ class _CreatorCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
-                    '${profile.totalHabits} hab.',
+                    s.exploreHabitCountShort(profile.totalHabits),
                     style: TextStyle(
                       color: scheme.primary,
                       fontWeight: FontWeight.w700,
@@ -1084,7 +1093,7 @@ class _CreatorCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       child: Text(
-                        'Siguiendo',
+                        s.exploreFollowing,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -1100,9 +1109,9 @@ class _CreatorCard extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text(
-                        'Seguir',
-                        style: TextStyle(
+                      child: Text(
+                        s.exploreFollow,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -1166,6 +1175,7 @@ class _UserSearchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     Widget trailingButton;
     if (isFollowing) {
@@ -1178,8 +1188,8 @@ class _UserSearchTile extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: const Text('Siguiendo',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        child: Text(s.exploreFollowing,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       );
     } else if (isPending) {
       trailingButton = OutlinedButton(
@@ -1191,8 +1201,8 @@ class _UserSearchTile extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        child: const Text('Solicitado',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+        child: Text(s.exploreRequested,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
       );
     } else {
       trailingButton = FilledButton(
@@ -1205,7 +1215,7 @@ class _UserSearchTile extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: Text(
-          isPrivate ? 'Solicitar' : 'Seguir',
+          isPrivate ? s.exploreRequest : s.exploreFollow,
           style: const TextStyle(
               color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
         ),

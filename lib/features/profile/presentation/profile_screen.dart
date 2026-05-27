@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../auth/data/user_repository.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../auth/domain/user_model.dart';
 import 'widgets/avatar_picker_sheet.dart';
 import '../../habits/data/habit_repository.dart';
@@ -127,7 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Perfil',
+                                S.of(context)!.profileTitle,
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.w700,
                                     ),
@@ -184,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                             child: Center(
                               child: Text(
-                                'Sin hábitos activos',
+                                S.of(context)!.profileNoHabits,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: scheme.onSurfaceVariant,
                                     ),
@@ -219,7 +220,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Row(
             children: [
               Text(
-                'Maestría',
+                S.of(context)!.profileMastery,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -279,7 +280,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Row(
             children: [
               Text(
-                'Hábitos activos',
+                S.of(context)!.profileActiveHabits,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,

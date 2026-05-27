@@ -20,6 +20,7 @@ import '../../services/notification_service.dart';
 import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/ux/offline_banner.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Shell principal con glassmorphism bottom nav
 /// BackdropFilter + superficie translucida para que el scroll se vea detras
@@ -79,9 +80,10 @@ class _MainShellState extends State<MainShell> {
       }
       if (requests.length > _knownPendingCount && requests.isNotEmpty) {
         final newest = requests.first;
+        final s = S.of(context);
         NotificationService.instance.showSocialNotification(
-          title: 'Nueva solicitud de seguimiento',
-          body: '@${newest.fromUsername} quiere seguirte',
+          title: s?.navNewFollowRequest ?? 'Nueva solicitud de seguimiento',
+          body: s?.navFollowRequestBody(newest.fromUsername) ?? '@${newest.fromUsername} quiere seguirte',
         );
       }
       _knownPendingCount = requests.length;
@@ -95,9 +97,10 @@ class _MainShellState extends State<MainShell> {
       }
       if (accepted.length > _knownAcceptedCount && accepted.isNotEmpty) {
         final newest = accepted.first;
+        final s = S.of(context);
         NotificationService.instance.showSocialNotification(
-          title: '¡Solicitud aceptada!',
-          body: '@${newest.toUsername} aceptó tu solicitud',
+          title: s?.navFollowAccepted ?? '¡Solicitud aceptada!',
+          body: s?.navFollowAcceptedBody(newest.toUsername) ?? '@${newest.toUsername} aceptó tu solicitud',
         );
       }
       _knownAcceptedCount = accepted.length;
@@ -122,41 +125,45 @@ class _MainShellState extends State<MainShell> {
     await NotificationService.instance.rescheduleAll(habits);
   }
 
-  static const _tabs = [
-    _TabInfo(
-      path: '/',
-      icon: Icons.check_circle_outline_rounded,
-      activeIcon: Icons.check_circle_rounded,
-      label: 'Hábitos',
-    ),
-    _TabInfo(
-      path: '/dashboard',
-      icon: Icons.bar_chart_outlined,
-      activeIcon: Icons.bar_chart_rounded,
-      label: 'Progreso',
-    ),
-    _TabInfo(
-      path: '/ai',
-      icon: Icons.auto_awesome_outlined,
-      activeIcon: Icons.auto_awesome_rounded,
-      label: 'Asistente',
-    ),
-    _TabInfo(
-      path: '/explore',
-      icon: Icons.search_rounded,
-      activeIcon: Icons.search_rounded,
-      label: 'Explorar',
-    ),
-    _TabInfo(
-      path: '/profile',
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'Perfil',
-    ),
-  ];
+  List<_TabInfo> _buildTabs(BuildContext context) {
+    final s = S.of(context)!;
+    return [
+      _TabInfo(
+        path: '/',
+        icon: Icons.check_circle_outline_rounded,
+        activeIcon: Icons.check_circle_rounded,
+        label: s.navHabits,
+      ),
+      _TabInfo(
+        path: '/dashboard',
+        icon: Icons.bar_chart_outlined,
+        activeIcon: Icons.bar_chart_rounded,
+        label: s.navProgress,
+      ),
+      _TabInfo(
+        path: '/ai',
+        icon: Icons.auto_awesome_outlined,
+        activeIcon: Icons.auto_awesome_rounded,
+        label: s.navAssistant,
+      ),
+      _TabInfo(
+        path: '/explore',
+        icon: Icons.search_rounded,
+        activeIcon: Icons.search_rounded,
+        label: s.navExplore,
+      ),
+      _TabInfo(
+        path: '/profile',
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
+        label: s.navProfile,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final tabs = _buildTabs(context);
     final selected = _currentIndex(context);
     final scheme = Theme.of(context).colorScheme;
     final isWide = MediaQuery.of(context).size.width >= 600;
@@ -170,12 +177,12 @@ class _MainShellState extends State<MainShell> {
           children: [
             NavigationRail(
               selectedIndex: selected,
-              onDestinationSelected: (index) => context.go(_tabs[index].path),
+              onDestinationSelected: (index) => context.go(tabs[index].path),
               labelType: NavigationRailLabelType.all,
               backgroundColor: scheme.surfaceContainerLowest,
               indicatorColor: scheme.primaryContainer.withValues(alpha: 0.3),
-              destinations: List.generate(_tabs.length, (index) {
-                final tab = _tabs[index];
+              destinations: List.generate(tabs.length, (index) {
+                final tab = tabs[index];
                 // índice 4 = Perfil: mostrar badge con solicitudes pendientes
                 final icon = (index == 4 && _pendingBadgeCount > 0)
                     ? Badge(
@@ -246,7 +253,7 @@ class _MainShellState extends State<MainShell> {
                       // vibración ligera al cambiar de tab con swipe
                       // lightImpact usa VIRTUAL_KEY en Android, fiable en casi todos los dispositivos
                       HapticFeedback.lightImpact();
-                      context.go(_tabs[index].path);
+                      context.go(tabs[index].path);
                       Future.microtask(() => _isSwiping = false);
                     },
                     children: const [
@@ -269,10 +276,10 @@ class _MainShellState extends State<MainShell> {
             // tap en nav bar → salto instantáneo (sin animación de deslizamiento)
             _pageController.jumpToPage(index);
           } else {
-            context.go(_tabs[index].path);
+            context.go(tabs[index].path);
           }
         },
-        tabs: _tabs,
+        tabs: tabs,
         pendingCount: _pendingBadgeCount,
       ),
     );

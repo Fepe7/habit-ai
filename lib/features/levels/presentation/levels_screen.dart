@@ -10,6 +10,7 @@ import '../../../core/widgets/ux/skeletons.dart';
 import '../data/levels_repository.dart';
 import '../domain/level_model.dart';
 import 'widgets/category_level_card.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Pantalla de perfil de maestría: radar hexagonal + niveles por categoría
 class LevelsScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Perfil de Maestría'),
+        title: Text(S.of(context)!.levelsTitle),
         centerTitle: false,
       ),
       body: _levelsRepo == null
@@ -91,7 +92,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
           const SizedBox(height: 20),
 
           Text(
-            'Por categoría',
+            S.of(context)!.levelsByCategory,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: scheme.onSurface,
@@ -138,7 +139,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Nivel medio',
+                  S.of(context)!.levelsMedium,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.75),
                   ),
@@ -154,7 +155,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '${profile.totalXp} XP total',
+                  S.of(context)!.levelsTotalXp(profile.totalXp),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.8),
                   ),
@@ -167,7 +168,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'Más fuerte',
+                  S.of(context)!.levelsStronger,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -226,7 +227,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Radar de habilidades',
+            S.of(context)!.levelsRadar,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: scheme.onSurfaceVariant,
@@ -273,10 +274,11 @@ class _LevelsScreenState extends State<LevelsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return const EmptyStateView(
+    final s = S.of(context)!;
+    return EmptyStateView(
       icon: Icons.military_tech_rounded,
-      title: 'Empieza a crear hábitos',
-      subtitle: 'Completa check-ins para subir de nivel en cada categoría.',
+      title: s.levelsEmpty,
+      subtitle: s.levelsEmptySubtitle,
     );
   }
 

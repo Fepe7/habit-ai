@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// Helpers de SnackBar uniformes para toda la app
 class AppSnackBar {
@@ -30,7 +31,7 @@ class AppSnackBar {
       duration: const Duration(seconds: 4),
       action: onRetry != null
           ? SnackBarAction(
-              label: 'Reintentar',
+              label: S.of(context)!.snackbarRetry,
               textColor: Colors.white,
               onPressed: onRetry,
             )
