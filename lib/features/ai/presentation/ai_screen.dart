@@ -17,6 +17,7 @@ import '../../../core/widgets/ux/app_snackbar.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../profile/data/public_profile_repository.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
@@ -103,6 +104,7 @@ class _AIScreenState extends State<AIScreen>
     _scrollToBottom();
 
     try {
+      AnalyticsService.instance.logAIChat();
       final plan = await _aiRepo.generatePlan(msg);
 
       HabitPlanData? planData;

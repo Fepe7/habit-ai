@@ -28,6 +28,7 @@ import '../../features/challenges/presentation/challenge_detail_screen.dart';
 import '../../features/social/presentation/followers_screen.dart';
 import '../../features/habits/presentation/all_habits_screen.dart';
 import '../../features/settings/presentation/privacy_settings_screen.dart';
+import '../services/analytics_service.dart';
 import 'main_shell.dart';
 
 // transicion suave fade + slide para pantallas internas
@@ -59,6 +60,7 @@ CustomTransitionPage<void> _fadeSlideTransition({
 GoRouter createRouter(AuthRepository authRepository) {
   return GoRouter(
     initialLocation: '/',
+    observers: [AnalyticsService.instance.observer],
     // Cada vez que cambia el estado de auth, se vuelve a comprobar el redirect
     refreshListenable: GoRouterRefreshStream(authRepository.authStateChanges),
     redirect: (context, state) {

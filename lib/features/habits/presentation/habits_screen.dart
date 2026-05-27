@@ -27,6 +27,7 @@ import '../../../features/profile/data/public_profile_repository.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
@@ -259,6 +260,7 @@ class _HabitsScreenState extends State<HabitsScreen>
         final log = HabitLogModel(id: '', date: DateTime.now(), completed: true);
         await _habitRepo.addLog(habit.id, log);
         await _habitRepo.updateStreak(habit.id);
+        AnalyticsService.instance.logHabitCheckin(habit.id);
       } else {
         await _habitRepo.uncheckAndRecalculate(habit.id);
       }
@@ -457,6 +459,7 @@ class _HabitsScreenState extends State<HabitsScreen>
 
     try {
       await _habitRepo.createHabit(habit);
+      AnalyticsService.instance.logHabitCreated(habit.category);
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, 'Error al crear el hábito');
       return;

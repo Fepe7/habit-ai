@@ -17,6 +17,7 @@ import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/social/data/follow_repository.dart';
 import '../../features/social/domain/follow_request_model.dart';
 import '../../services/notification_service.dart';
+import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
 
 /// Shell principal con glassmorphism bottom nav
@@ -52,6 +53,7 @@ class _MainShellState extends State<MainShell> {
     _rescheduleNotifications();
     _ensureUserDirectory();
     _watchSocialNotifications();
+    AnalyticsService.instance.setUserId(FirebaseAuth.instance.currentUser?.uid);
   }
 
   @override

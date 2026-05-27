@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../data/habit_repository.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
@@ -97,6 +98,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
         );
         await _habitRepo.addLog(widget.habitId, log);
         await _habitRepo.updateStreak(widget.habitId);
+        AnalyticsService.instance.logHabitCheckin(widget.habitId);
       } else {
         await _habitRepo.uncheckAndRecalculate(widget.habitId);
       }

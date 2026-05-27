@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../social/data/user_directory_repository.dart';
@@ -90,6 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         displayName: name.isNotEmpty ? name : _emailController.text.split('@').first,
         photoUrl: FirebaseAuth.instance.currentUser?.photoURL,
       );
+      AnalyticsService.instance.logSignUp('email');
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();

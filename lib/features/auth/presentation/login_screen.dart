@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/spark_check_logo.dart';
@@ -43,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      AnalyticsService.instance.logLogin('email');
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -63,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final authRepository = AuthProvider.of(context);
       await authRepository.signInWithGoogle();
+      AnalyticsService.instance.logLogin('google');
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
