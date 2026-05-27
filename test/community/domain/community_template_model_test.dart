@@ -86,5 +86,11 @@ void main() {
       expect(copy.title, t.title);
       expect(copy.id, t.id);
     });
+
+    test('authorPhotoUrl', () {
+      final t = CommunityTemplateModel.fromJson(_fullJson(), 't1');
+      final copy = t.copyWith(authorPhotoUrl: 'https://new.url/photo.jpg');
+      expect(copy.authorPhotoUrl, 'https://new.url/photo.jpg');
+    });
   });
 }

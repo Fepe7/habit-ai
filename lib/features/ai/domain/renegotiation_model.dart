@@ -8,6 +8,8 @@ enum RenegotiationStrategy {
 
   static RenegotiationStrategy fromString(String value) {
     switch (value) {
+      case 'lower_intensity':
+        return RenegotiationStrategy.lowerIntensity;
       case 'change_time':
         return RenegotiationStrategy.changeTime;
       case 'split_micro':
@@ -16,6 +18,19 @@ enum RenegotiationStrategy {
         return RenegotiationStrategy.reduceFrequency;
       default:
         return RenegotiationStrategy.lowerIntensity;
+    }
+  }
+
+  String get snakeCase {
+    switch (this) {
+      case RenegotiationStrategy.lowerIntensity:
+        return 'lower_intensity';
+      case RenegotiationStrategy.changeTime:
+        return 'change_time';
+      case RenegotiationStrategy.splitMicro:
+        return 'split_micro';
+      case RenegotiationStrategy.reduceFrequency:
+        return 'reduce_frequency';
     }
   }
 
@@ -95,7 +110,7 @@ class RenegotiationModel {
       'generatedAt': Timestamp.fromDate(generatedAt),
       'missedDays': missedDays,
       'diagnosis': diagnosis,
-      'strategy': strategy.name,
+      'strategy': strategy.snakeCase,
       'suggestedTitle': suggestedTitle,
       'suggestedDescription': suggestedDescription,
       'suggestedReminderTime': suggestedReminderTime,

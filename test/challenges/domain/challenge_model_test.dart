@@ -41,6 +41,15 @@ void main() {
       expect(c.participantUids, ['u1', 'u2']);
     });
 
+    test('completedAt no null', () {
+      final completedAt = DateTime(2026, 6, 11);
+      final c = ChallengeModel.fromJson({
+        ..._fullJson(),
+        'completedAt': Timestamp.fromDate(completedAt),
+      }, 'c1');
+      expect(c.completedAt, completedAt);
+    });
+
     test('defaults', () {
       final c = ChallengeModel.fromJson({
         'habitTitle': 'X',
@@ -131,6 +140,26 @@ void main() {
       expect(copy.completedAt, now);
       expect(copy.habitTitle, c.habitTitle);
       expect(copy.id, c.id);
+    });
+
+    test('endDate y completedAt non-null', () {
+      final c = ChallengeModel.fromJson(_fullJson(), 'c1');
+      final newEnd = DateTime(2026, 7, 1);
+      final newCompleted = DateTime(2026, 6, 30);
+      final copy = c.copyWith(endDate: newEnd, completedAt: newCompleted);
+      expect(copy.endDate, newEnd);
+      expect(copy.completedAt, newCompleted);
+    });
+
+    test('sin completedAt → mantiene el original', () {
+      // cubre el branch null ?? this.completedAt
+      final completedAt = DateTime(2026, 6, 11);
+      final c = ChallengeModel.fromJson({
+        ..._fullJson(),
+        'completedAt': Timestamp.fromDate(completedAt),
+      }, 'c1');
+      final copy = c.copyWith(status: ChallengeStatus.abandoned);
+      expect(copy.completedAt, completedAt);
     });
   });
 }

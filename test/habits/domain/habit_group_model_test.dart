@@ -69,5 +69,17 @@ void main() {
       expect(copy.emoji, g.emoji);
       expect(copy.id, g.id);
     });
+
+    test('isActive', () {
+      final g = HabitGroupModel.fromJson(_fullJson(), 'g1');
+      final copy = g.copyWith(isActive: false);
+      expect(copy.isActive, false);
+    });
+
+    test('publishedTemplateId', () {
+      final g = HabitGroupModel.fromJson(_fullJson(), 'g1');
+      final copy = g.copyWith(publishedTemplateId: 'tmpl2');
+      expect(copy.publishedTemplateId, 'tmpl2');
+    });
   });
 }

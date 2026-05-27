@@ -102,5 +102,20 @@ void main() {
       expect(copy.uid, p.uid);
       expect(copy.days, p.days);
     });
+
+    test('updatedAt y days', () {
+      final p = ChallengeProgressModel(
+        uid: 'u1',
+        days: {1: DayStatus.pending},
+        completedCount: 0,
+        currentStreak: 0,
+        updatedAt: updatedAt,
+      );
+      final newDate = DateTime(2026, 5, 21);
+      final newDays = {1: DayStatus.completed, 2: DayStatus.missed};
+      final copy = p.copyWith(updatedAt: newDate, days: newDays);
+      expect(copy.updatedAt, newDate);
+      expect(copy.days, newDays);
+    });
   });
 }
