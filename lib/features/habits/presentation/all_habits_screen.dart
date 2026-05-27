@@ -8,6 +8,7 @@ import '../domain/habit_group_model.dart';
 import 'widgets/edit_habit_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
@@ -108,33 +109,31 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Hábito actualizado');
+        AppSnackBar.showSuccess(context, S.of(context).habitsUpdated);
       }
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al actualizar el hábito');
+        AppSnackBar.showError(context, S.of(context).habitsUpdateError);
       }
     }
   }
 
   Future<void> _hardDelete(HabitModel habit) async {
+    final s = S.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Borrar definitivamente'),
-        content: Text(
-          '¿Seguro que quieres borrar "${habit.title}" para siempre?\n\n'
-          'Esto borra el hábito y todos sus registros. No se puede deshacer.',
-        ),
+        title: Text(s.allHabitsHardDeleteTitle),
+        content: Text(s.allHabitsHardDeleteContent(habit.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Borrar definitivo'),
+            child: Text(s.allHabitsHardDeleteConfirm),
           ),
         ],
       ),
@@ -144,32 +143,32 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
     try {
       await _habitRepo.hardDeleteHabit(habit.id);
       if (mounted) {
-        AppSnackBar.showSuccess(context, '"${habit.title}" borrado permanentemente');
+        AppSnackBar.showSuccess(context, S.of(context).allHabitsHardDeleted(habit.title));
       }
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al borrar el hábito');
+        AppSnackBar.showError(context, S.of(context).allHabitsHardDeleteError);
       }
     }
   }
 
   Future<void> _bulkDeleteHabits() async {
+    final s = S.of(context);
     final count = _selectedHabitIds.length;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Borrar $count hábito${count == 1 ? '' : 's'}'),
-        content: const Text(
-            'Se borrarán definitivamente con todos sus registros. No se puede deshacer.'),
+        title: Text(s.allHabitsBulkDeleteTitle(count)),
+        content: Text(s.allHabitsBulkDeleteContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Borrar'),
+            child: Text(s.allHabitsDeleteButton),
           ),
         ],
       ),
@@ -182,36 +181,36 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         await _habitRepo.hardDeleteHabit(id);
       }
       if (mounted) {
-        AppSnackBar.showSuccess(context, '$count hábito${count == 1 ? '' : 's'} borrado${count == 1 ? '' : 's'}');
+        AppSnackBar.showSuccess(context, S.of(context).allHabitsBulkDeleted(count));
       }
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al borrar los hábitos');
+        AppSnackBar.showError(context, S.of(context).allHabitsBulkDeleteError);
       }
     }
   }
 
   Future<void> _bulkDeleteGroups() async {
+    final s = S.of(context);
     final count = _selectedGroupIds.length;
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Eliminar $count rutina${count == 1 ? '' : 's'}'),
-        content: const Text(
-            '¿Qué quieres hacer con los hábitos de las rutinas seleccionadas?'),
+        title: Text(s.allHabitsBulkDeleteGroupsTitle(count)),
+        content: Text(s.allHabitsBulkDeleteGroupsContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(null),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('group_only'),
-            child: const Text('Solo las rutinas'),
+            child: Text(s.allHabitsBulkDeleteGroupsOnly),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop('group_and_habits'),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Rutinas y hábitos'),
+            child: Text(s.allHabitsBulkDeleteGroupsAndHabits),
           ),
         ],
       ),
@@ -228,11 +227,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
         }
       }
       if (mounted) {
-        AppSnackBar.showSuccess(context, '$count rutina${count == 1 ? '' : 's'} eliminada${count == 1 ? '' : 's'}');
+        AppSnackBar.showSuccess(context, S.of(context).allHabitsGroupsDeleted(count));
       }
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al eliminar las rutinas');
+        AppSnackBar.showError(context, S.of(context).allHabitsGroupsDeleteError);
       }
     }
   }
@@ -389,6 +388,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
 
   Widget _buildHeader(BuildContext context, int total) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     if (_selectionMode) {
       final selCount = _showGroups
@@ -401,11 +401,11 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
             IconButton(
               icon: const Icon(Icons.close_rounded),
               onPressed: _exitSelection,
-              tooltip: 'Cancelar selección',
+              tooltip: s.allHabitsCancelSelection,
             ),
             Expanded(
               child: Text(
-                '$selCount seleccionado${selCount == 1 ? '' : 's'}',
+                s.habitsSelected(selCount),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -414,7 +414,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
             IconButton(
               icon: Icon(Icons.delete_outline_rounded,
                   color: selCount > 0 ? AppTheme.error : scheme.onSurfaceVariant),
-              tooltip: 'Eliminar seleccionados',
+              tooltip: s.habitsDeleteSelected,
               onPressed: selCount > 0
                   ? (_showGroups ? _bulkDeleteGroups : _bulkDeleteHabits)
                   : null,
@@ -436,14 +436,14 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Todos mis hábitos',
+                  s.drawerAllHabits,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         color: scheme.primary,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
                 Text(
-                  '$total en total',
+                  s.allHabitsTotal(total),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -457,12 +457,13 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
   }
 
   Widget _buildTabs(BuildContext context, ColorScheme scheme) {
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       child: Row(
         children: [
           _TabChip(
-            label: 'Activos',
+            label: s.allHabitsTabActive,
             selected: !_showGroups && _showActive,
             onTap: () => setState(() {
               _showGroups = false;
@@ -471,7 +472,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
           ),
           const SizedBox(width: 8),
           _TabChip(
-            label: 'Archivados',
+            label: s.allHabitsTabArchived,
             selected: !_showGroups && !_showActive,
             onTap: () => setState(() {
               _showGroups = false;
@@ -480,7 +481,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
           ),
           const SizedBox(width: 8),
           _TabChip(
-            label: 'Rutinas',
+            label: s.allHabitsTabRoutines,
             selected: _showGroups,
             onTap: () => setState(() => _showGroups = true),
           ),
@@ -536,10 +537,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return EmptyStateView(
       icon: isActive ? Icons.checklist_rounded : Icons.archive_outlined,
-      title: isActive ? 'No tienes hábitos creados' : 'No tienes hábitos archivados',
-      subtitle: isActive ? 'Crea hábitos desde la pantalla principal o con la IA.' : null,
+      title: isActive ? s.allHabitsEmptyActiveTitle : s.allHabitsEmptyArchivedTitle,
+      subtitle: isActive ? s.allHabitsEmptyActiveSubtitle : null,
     );
   }
 }
@@ -622,7 +624,7 @@ class _AllHabitsGroupSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${habits.length} hábito${habits.length == 1 ? '' : 's'}',
+                            S.of(context).exploreHabitCount(habits.length),
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -714,7 +716,7 @@ class _UngroupedAllSection extends StatelessWidget {
             child: Row(
               children: [
                 Text(
-                  'Mis hábitos',
+                  S.of(context).habitsTitle,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         fontSize: 18,
@@ -792,11 +794,19 @@ class _AllHabitTile extends StatelessWidget {
     this.onSelect,
   });
 
-  static const _dayLetters = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    final dayLetters = [
+      s.weekdayLShort,
+      s.weekdayMShort,
+      s.weekdayXShort,
+      s.weekdayJShort,
+      s.weekdayVShort,
+      s.weekdaySShort,
+      s.weekdayDShort,
+    ];
     final bgColor = AppTheme.categoryBg(habit.category);
     final fgColor = AppTheme.categoryFg(habit.category);
 
@@ -866,7 +876,7 @@ class _AllHabitTile extends StatelessWidget {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            _dayLetters[i],
+                            dayLetters[i],
                             style:
                                 Theme.of(context).textTheme.labelSmall?.copyWith(
                                       fontSize: 9,
@@ -898,13 +908,13 @@ class _AllHabitTile extends StatelessWidget {
                   if (v == 'delete') onDelete();
                 },
                 itemBuilder: (ctx) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Text('Editar'),
+                        const Icon(Icons.edit_outlined, size: 20),
+                        const SizedBox(width: 12),
+                        Text(s.commonEdit),
                       ],
                     ),
                   ),
@@ -912,11 +922,11 @@ class _AllHabitTile extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_forever_outlined,
+                        const Icon(Icons.delete_forever_outlined,
                             size: 20, color: AppTheme.error),
                         const SizedBox(width: 12),
-                        Text('Borrar definitivo',
-                            style: TextStyle(color: AppTheme.error)),
+                        Text(s.allHabitsHardDeleteConfirm,
+                            style: const TextStyle(color: AppTheme.error)),
                       ],
                     ),
                   ),
@@ -1005,8 +1015,8 @@ class _RoutineCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         group.habitCount == 0
-                            ? 'Sin hábitos aún'
-                            : '${group.habitCount} hábito${group.habitCount == 1 ? '' : 's'}',
+                            ? S.of(context).allHabitsNoHabitsYet
+                            : S.of(context).exploreHabitCount(group.habitCount),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -1034,10 +1044,11 @@ class _EmptyGroupsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const EmptyStateView(
+    final s = S.of(context);
+    return EmptyStateView(
       icon: Icons.folder_special_outlined,
-      title: 'No tienes rutinas creadas',
-      subtitle: 'Crea una rutina desde el "+" de la pantalla principal.',
+      title: s.allHabitsEmptyRoutinesTitle,
+      subtitle: s.allHabitsEmptyRoutinesSubtitle,
     );
   }
 }

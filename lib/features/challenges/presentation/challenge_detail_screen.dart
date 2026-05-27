@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
@@ -167,12 +168,12 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       );
 
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, '¡Reto aceptado! El hábito fue creado en tu lista');
+      AppSnackBar.showSuccess(context, S.of(context).challengeDetailAccepted);
       // recargar para mostrar progreso
       await _load();
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al aceptar el reto');
+        AppSnackBar.showError(context, S.of(context).challengeDetailAcceptError);
         setState(() => _accepting = false);
       }
     }
@@ -183,21 +184,24 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   Future<void> _declineChallenge() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rechazar reto'),
-        content: const Text('¿Seguro que quieres rechazar este reto?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Rechazar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.challengeDetailDeclineTitle),
+          content: Text(s.challengeDetailDeclineContent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(s.challengeDetailDeclineConfirm),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !mounted) return;
 
@@ -238,21 +242,24 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   Future<void> _abandon() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Abandonar reto'),
-        content: const Text('¿Seguro que quieres abandonar? No podrás retomarlo.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Abandonar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.challengeDetailAbandonTitle),
+          content: Text(s.challengeDetailAbandonContent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(s.challengeDetailAbandonConfirm),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !mounted) return;
 
@@ -301,12 +308,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     if (_challenge == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('Reto no encontrado')),
+        body: Center(child: Text(S.of(context).challengeDetailNotFound)),
       );
     }
 
     final challenge = _challenge!;
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final catBg = AppTheme.categoryBg(challenge.habitCategory);
     final catFg = AppTheme.categoryFg(challenge.habitCategory);
     final amInvited = challenge.invitedUid == _uid;
@@ -314,12 +322,12 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reto compartido'),
+        title: Text(s.challengeDetailTitle),
         actions: [
           if (challenge.isActive)
             IconButton(
               icon: const Icon(Icons.flag_rounded),
-              tooltip: 'Abandonar',
+              tooltip: s.challengeDetailAbandonTooltip,
               onPressed: _abandon,
             ),
         ],
@@ -358,7 +366,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                '${challenge.durationDays} días',
+                s.daysLabel(challenge.durationDays),
                 style: TextStyle(
                   fontSize: 13,
                   color: scheme.onSurfaceVariant,
@@ -395,7 +403,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
             // ── mi progreso ──
             _ProgressSection(
-              label: 'Tu progreso',
+              label: s.challengeDetailYourProgress,
               progress: _myProgress,
               durationDays: challenge.durationDays,
               color: const Color(0xFF38BDF8),
@@ -423,7 +431,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               ),
               const SizedBox(height: 8),
               _ProgressSection(
-                label: 'Compañero',
+                label: s.challengeDetailPartner,
                 progress: _partnerProgress,
                 durationDays: challenge.durationDays,
                 color: const Color(0xFF8B5CF6),
@@ -452,11 +460,11 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('¡Reto completado!',
-                            style: TextStyle(
+                        Text(s.challengeDetailCompletedTitle,
+                            style: const TextStyle(
                                 fontWeight: FontWeight.w700, fontSize: 16)),
                         Text(
-                          'Ambos habéis demostrado constancia',
+                          s.challengeDetailCompletedSubtitle,
                           style: TextStyle(
                               fontSize: 13, color: scheme.onSurfaceVariant),
                         ),
@@ -487,8 +495,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   const SizedBox(width: 12),
                   Text(
                     challenge.status == ChallengeStatus.declined
-                        ? 'Reto rechazado'
-                        : 'Reto abandonado',
+                        ? s.challengeDetailDeclinedState
+                        : s.challengeDetailAbandonedState,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -514,7 +522,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Esperando a que ${_partner?.displayName ?? 'tu compañero'} acepte el reto',
+                      s.challengeDetailWaitingPartner(_partner?.displayName ?? s.challengeDetailFallbackPartner),
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),
@@ -529,11 +537,12 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   // banner que muestra quién reta a quién
   Widget _buildChallengerBanner(ChallengeModel challenge, ColorScheme scheme) {
+    final s = S.of(context);
     final amCreator = challenge.creatorUid == _uid;
-    final otherName = _partner?.displayName ?? _partner?.username ?? 'Compañero';
+    final otherName = _partner?.displayName ?? _partner?.username ?? s.challengeDetailFallbackPartnerCap;
     final label = amCreator
-        ? 'Retaste a $otherName'
-        : '${_partner?.displayName ?? 'Alguien'} te ha retado';
+        ? s.challengeDetailYouChallenged(otherName)
+        : s.challengeDetailChallengedYou(_partner?.displayName ?? s.challengeDetailFallbackSomeone);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -577,6 +586,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   // panel de aceptar / rechazar (solo visible para el invitado en pending)
   Widget _buildAcceptDeclinePanel(ColorScheme scheme) {
+    final s = S.of(context);
     return Column(
       children: [
         Container(
@@ -590,13 +600,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               const Icon(Icons.handshake_rounded,
                   size: 40, color: Color(0xFF6366F1)),
               const SizedBox(height: 8),
-              const Text(
-                '¿Aceptas el reto?',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+              Text(
+                s.challengeDetailAcceptQuestion,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
               ),
               const SizedBox(height: 4),
               Text(
-                'Se creará automáticamente el hábito en tu lista y empezareis juntos',
+                s.challengeDetailAcceptHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                     fontSize: 13, color: scheme.onSurfaceVariant),
@@ -618,8 +628,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Rechazar',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(s.challengeDetailDeclineConfirm,
+                    style: const TextStyle(fontWeight: FontWeight.w600)),
               ),
             ),
             const SizedBox(width: 12),
@@ -627,7 +637,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               flex: 2,
               child: GradientButton(
                 onPressed: _accepting ? null : _acceptChallenge,
-                label: 'Aceptar reto',
+                label: s.challengeDetailAcceptCta,
                 loading: _accepting,
               ),
             ),
@@ -639,6 +649,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
   // botón de check-in del día
   Widget _buildCheckInButton(ColorScheme scheme) {
+    final s = S.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 24),
       child: GestureDetector(
@@ -678,8 +689,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
               const SizedBox(width: 12),
               Text(
                 _completedToday
-                    ? '¡Completado hoy!'
-                    : 'Marcar hoy como completado',
+                    ? s.challengeDetailCompletedToday
+                    : s.challengeDetailMarkToday,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
@@ -737,7 +748,7 @@ class _ProgressSection extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.w700)),
                 const Spacer(),
                 Text(
-                  '$completed / $durationDays días',
+                  S.of(context).challengeDetailProgressDays(completed, durationDays),
                   style: TextStyle(
                     fontSize: 13,
                     color: scheme.onSurfaceVariant,

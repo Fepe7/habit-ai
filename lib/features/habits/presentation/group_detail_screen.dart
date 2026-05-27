@@ -9,6 +9,7 @@ import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../features/profile/data/public_profile_repository.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
@@ -81,12 +82,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       await _groupRepo.incrementHabitCount(widget.groupId, 1);
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al añadir el hábito');
+        AppSnackBar.showError(context, S.of(context).groupDetailAddHabitError);
       }
       return;
     }
     if (mounted) {
-      AppSnackBar.showSuccess(context, 'Hábito añadido a la rutina');
+      AppSnackBar.showSuccess(context, S.of(context).groupDetailHabitAdded);
     }
     try {
       final unlocked = await _achievementChecker.checkAfterCreate();
@@ -104,7 +105,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (mounted) context.go('/group/$groupId');
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al crear la rutina');
+        AppSnackBar.showError(context, S.of(context).habitsGroupCreateError);
       }
     }
   }
@@ -119,11 +120,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         'emoji': result.emoji,
       });
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Grupo actualizado');
+        AppSnackBar.showSuccess(context, S.of(context).groupDetailGroupUpdated);
       }
     } catch (e) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al actualizar el grupo');
+        AppSnackBar.showError(context, S.of(context).groupDetailGroupUpdateError);
       }
     }
   }
@@ -132,7 +133,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Future<void> _publishTemplate(
       HabitGroupModel group, List<HabitModel> habits) async {
     if (habits.isEmpty) {
-      AppSnackBar.showInfo(context, 'El grupo no tiene hábitos, añade al menos uno.');
+      AppSnackBar.showInfo(context, S.of(context).groupDetailPublishNoHabits);
       return;
     }
 
@@ -143,7 +144,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (mounted) {
         AppSnackBar.showInfo(
           context,
-          'Activa tu perfil público en Ajustes antes de publicar.',
+          S.of(context).groupDetailPublishNeedPublic,
         );
       }
       return;
@@ -160,40 +161,40 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final descCtrl = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Publicar como plantilla'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Se publicarán ${habits.length} hábito${habits.length == 1 ? "" : "s"} '
-              'sin datos personales (sin rachas ni historial).',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descCtrl,
-              maxLength: 200,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Descripción (opcional)',
-                hintText: 'Explica para quién es este plan…',
-                border: OutlineInputBorder(),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.groupDetailPublishTitle),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(s.groupDetailPublishBody(habits.length)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descCtrl,
+                maxLength: 200,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: s.groupDetailPublishDescLabel,
+                  hintText: s.groupDetailPublishDescHint,
+                  border: const OutlineInputBorder(),
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(s.groupDetailPublishConfirm),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Publicar'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmed != true || !mounted) return;
@@ -210,17 +211,17 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Plantilla publicada en la comunidad'),
+          content: Text(S.of(context).groupDetailPublishSuccess),
           backgroundColor: AppTheme.success,
           action: SnackBarAction(
-            label: 'Ver',
+            label: S.of(context).groupDetailViewAction,
             onPressed: () => context.go('/community/$templateId'),
           ),
         ),
       );
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Error al publicar la plantilla');
+      AppSnackBar.showError(context, S.of(context).groupDetailPublishError);
     }
   }
 
@@ -228,25 +229,25 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       String templateId, HabitGroupModel group) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Retirar plantilla'),
-        content: const Text(
-          'La plantilla desaparecerá del marketplace. '
-          'Las copias importadas por otros usuarios no se verán afectadas.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style:
-                FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Retirar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.groupDetailUnpublishTitle),
+          content: Text(s.groupDetailUnpublishContent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style:
+                  FilledButton.styleFrom(backgroundColor: AppTheme.error),
+              child: Text(s.groupDetailUnpublishConfirm),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !mounted) return;
 
@@ -256,10 +257,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         sourceGroupId: widget.groupId,
       );
       if (!mounted) return;
-      AppSnackBar.showSuccess(context, 'Plantilla retirada del marketplace');
+      AppSnackBar.showSuccess(context, S.of(context).groupDetailUnpublishSuccess);
     } catch (e) {
       if (!mounted) return;
-      AppSnackBar.showError(context, 'Error al retirar la plantilla');
+      AppSnackBar.showError(context, S.of(context).groupDetailUnpublishError);
     }
   }
 
@@ -279,30 +280,28 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       if (updated.groupId != habit.groupId) {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
-      if (mounted) AppSnackBar.showSuccess(context, 'Hábito actualizado');
+      if (mounted) AppSnackBar.showSuccess(context, S.of(context).habitsUpdated);
     } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al actualizar el hábito');
+      if (mounted) AppSnackBar.showError(context, S.of(context).habitsUpdateError);
     }
   }
 
   Future<void> _deleteHabit(HabitModel habit) async {
+    final s = S.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar hábito'),
-        content: Text(
-          '¿Seguro que quieres eliminar "${habit.title}"?\n\n'
-          'Se desactivará pero se conservará el historial.',
-        ),
+        title: Text(s.habitsDeleteSingleTitle),
+        content: Text(s.habitsDeleteSingleContent(habit.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
+            child: Text(s.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Eliminar'),
+            child: Text(s.habitDetailDelete),
           ),
         ],
       ),
@@ -318,15 +317,16 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         await _groupRepo.incrementHabitCount(widget.groupId, -1);
       } catch (_) {}
 
-      if (mounted) AppSnackBar.showSuccess(context, '"${habit.title}" eliminado');
+      if (mounted) AppSnackBar.showSuccess(context, S.of(context).habitsDeleteSingleSuccess(habit.title));
     } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al eliminar el hábito');
+      if (mounted) AppSnackBar.showError(context, S.of(context).habitsDeleteSingleError);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return StreamBuilder<HabitGroupModel?>(
       stream: _groupStream,
@@ -340,13 +340,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 groupForHeader?.publishedTemplateId != null;
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Editar grupo'),
+                title: Text(s.groupDetailEditTitle),
                 actions: [
                   if (groupForHeader != null)
                     IconButton(
                       tooltip: isPublished
-                          ? 'Retirar del marketplace'
-                          : 'Publicar como plantilla',
+                          ? s.groupDetailUnpublishTooltip
+                          : s.groupDetailPublishTooltip,
                       icon: Icon(
                         isPublished
                             ? Icons.cloud_done_rounded
@@ -368,7 +368,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               floatingActionButton: Padding(
                 padding: const EdgeInsets.only(bottom: 100),
                 child: GradientFab(
-                  tooltip: 'Crear',
+                  tooltip: s.habitsCreate,
                   onTap: _handleFabTap,
                 ),
               ),
@@ -409,6 +409,7 @@ class _GroupBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return StreamBuilder<HabitGroupModel?>(
       stream: groupStream,
       builder: (context, groupSnap) {
@@ -419,7 +420,7 @@ class _GroupBody extends StatelessWidget {
         final group = groupSnap.data;
         if (group == null || !group.isActive) {
           return ErrorStateView(
-            message: 'Este grupo ya no existe.',
+            message: s.groupDetailNotFound,
             icon: Icons.folder_off_rounded,
             onRetry: () => context.go('/'),
           );
@@ -451,7 +452,7 @@ class _GroupBody extends StatelessWidget {
                             size: 18, color: colorScheme.primary),
                         const SizedBox(width: 8),
                         Text(
-                          'Hábitos del grupo',
+                          s.groupDetailHabitsHeader,
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w600,
@@ -480,12 +481,12 @@ class _GroupBody extends StatelessWidget {
                     ),
                   )
                 else if (habits.isEmpty)
-                  const SliverFillRemaining(
+                  SliverFillRemaining(
                     hasScrollBody: false,
                     child: EmptyStateView(
                       icon: Icons.inbox_rounded,
-                      title: 'Sin hábitos en este grupo',
-                      subtitle: 'Añade hábitos con el botón +',
+                      title: s.groupDetailEmptyTitle,
+                      subtitle: s.groupDetailEmptySubtitle,
                     ),
                   )
                 else
@@ -576,7 +577,7 @@ class _GroupHeader extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$habitCount ${habitCount == 1 ? "hábito" : "hábitos"}',
+                        S.of(context).exploreHabitCount(habitCount),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
@@ -611,11 +612,19 @@ class _GroupHabitTile extends StatelessWidget {
     required this.onDelete,
   });
 
-  static const _dayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    final dayLabels = [
+      s.weekdayLShort,
+      s.weekdayMShort,
+      s.weekdayXShort,
+      s.weekdayJShort,
+      s.weekdayVShort,
+      s.weekdaySShort,
+      s.weekdayDShort,
+    ];
     final catBg = AppTheme.categoryBg(habit.category);
     final catFg = AppTheme.categoryFg(habit.category);
     final catIcon = AppTheme.categoryIcon(habit.category);
@@ -689,7 +698,7 @@ class _GroupHabitTile extends StatelessWidget {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _dayLabels[i],
+                                dayLabels[i],
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
@@ -730,13 +739,13 @@ class _GroupHabitTile extends StatelessWidget {
                   if (value == 'delete') onDelete();
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 20),
-                        SizedBox(width: 12),
-                        Text('Editar'),
+                        const Icon(Icons.edit_outlined, size: 20),
+                        const SizedBox(width: 12),
+                        Text(s.commonEdit),
                       ],
                     ),
                   ),
@@ -744,9 +753,9 @@ class _GroupHabitTile extends StatelessWidget {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                        const Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
                         const SizedBox(width: 12),
-                        Text('Eliminar', style: TextStyle(color: AppTheme.error)),
+                        Text(s.habitDetailDelete, style: const TextStyle(color: AppTheme.error)),
                       ],
                     ),
                   ),
@@ -825,6 +834,7 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -851,7 +861,7 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
             const SizedBox(height: 20),
 
             Text(
-              'Editar grupo',
+              s.groupDetailEditTitle,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -861,21 +871,21 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
             // titulo
             TextField(
               controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Título del grupo',
-                hintText: 'Ej: Rutina de gimnasio',
+              decoration: InputDecoration(
+                labelText: s.groupDetailEditNameLabel,
+                hintText: s.groupDetailEditNameHint,
               ),
               textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 20),
 
             // emoji
-            Text('Emoji', style: Theme.of(context).textTheme.titleSmall),
+            Text(s.createGroupEmojiLabel, style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
             TextField(
               controller: _emojiCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Pega un emoji o déjalo vacío',
+              decoration: InputDecoration(
+                hintText: s.groupDetailEditEmojiHint,
               ),
               maxLength: 2,
               // refrescar la paleta para que el chip activo cambie
@@ -947,7 +957,7 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
             FilledButton.icon(
               onPressed: _save,
               icon: const Icon(Icons.save_rounded),
-              label: const Text('Guardar cambios'),
+              label: Text(s.editHabitSaveCta),
             ),
             const SizedBox(height: 8),
           ],

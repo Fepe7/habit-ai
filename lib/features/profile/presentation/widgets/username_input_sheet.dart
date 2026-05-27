@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../data/public_profile_repository.dart';
 
 enum _UsernameState { idle, checking, available, taken, invalid }
@@ -93,18 +94,18 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
 
   bool get _canConfirm => _state == _UsernameState.available;
 
-  String? get _helperText {
+  String? _helperText(S s) {
     switch (_state) {
       case _UsernameState.idle:
-        return 'Entre 3 y 20 caracteres: letras, números y _';
+        return s.usernameSheetHelperIdle;
       case _UsernameState.checking:
-        return 'Comprobando disponibilidad…';
+        return s.usernameSheetChecking;
       case _UsernameState.available:
-        return '¡Disponible!';
+        return s.authUsernameAvailable;
       case _UsernameState.taken:
-        return 'Ya está en uso, prueba otro';
+        return s.authUsernameTaken;
       case _UsernameState.invalid:
-        return 'Solo letras minúsculas, números y _ (3-20 caracteres)';
+        return s.authUsernameFormat;
     }
   }
 
@@ -123,6 +124,7 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final keyboard = MediaQuery.of(context).viewInsets.bottom;
     // La nav bar custom mide 72dp. useSafeArea no la esquiva, hay que hacerlo a mano.
     // Cuando el teclado está abierto ya empuja el sheet hacia arriba,
@@ -155,15 +157,15 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
 
           Text(
             widget.currentUsername == null
-                ? 'Elige tu nombre de usuario'
-                : 'Cambiar nombre de usuario',
+                ? s.usernameSheetTitleNew
+                : s.usernameSheetTitleChange,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Con este nombre aparecerás en el directorio de perfiles.',
+            s.usernameSheetSubtitle,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
@@ -182,8 +184,8 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
             },
             decoration: InputDecoration(
               prefixText: '@',
-              hintText: 'tunombre',
-              helperText: _helperText,
+              hintText: s.authUsernameHint,
+              helperText: _helperText(s),
               helperStyle: TextStyle(color: _helperColor(scheme)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -221,19 +223,19 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Datos visibles en tu perfil:',
+                  s.usernameSheetVisibleData,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 6),
-                _InfoRow(Icons.person_outline_rounded, 'Nombre y @username'),
-                _InfoRow(Icons.local_fire_department_rounded, 'Rachas actuales'),
-                _InfoRow(Icons.checklist_rounded, 'Hábitos activos (título y categoría)'),
-                _InfoRow(Icons.emoji_events_rounded, 'Nivel y logros'),
+                _InfoRow(Icons.person_outline_rounded, s.usernameSheetDataName),
+                _InfoRow(Icons.local_fire_department_rounded, s.usernameSheetDataStreaks),
+                _InfoRow(Icons.checklist_rounded, s.usernameSheetDataHabits),
+                _InfoRow(Icons.emoji_events_rounded, s.usernameSheetDataLevel),
                 const SizedBox(height: 4),
                 Text(
-                  'Nunca se comparten: email, notas, recordatorios.',
+                  s.usernameSheetPrivacy,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -249,7 +251,7 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(context, null),
-                  child: const Text('Cancelar'),
+                  child: Text(s.cancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -259,7 +261,7 @@ class _UsernameInputSheetState extends State<UsernameInputSheet> {
                   onPressed: _canConfirm
                       ? () => Navigator.pop(context, _controller.text.trim())
                       : null,
-                  child: const Text('Confirmar'),
+                  child: Text(s.usernameSheetConfirm),
                 ),
               ),
             ],

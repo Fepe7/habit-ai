@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/chat_message.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Tarjeta del plan generado por la IA con toggle por habito
 class PlanCard extends StatefulWidget {
@@ -96,7 +97,7 @@ class _PlanCardState extends State<PlanCard> {
                       widget.onSave();
                       setState(() => _saved = true);
                     },
-              label: _saved ? 'Hábitos guardados' : 'Añadir hábitos seleccionados',
+              label: _saved ? S.of(context).planCardSaved : S.of(context).planCardAddSelected,
               icon: _saved ? Icons.check_rounded : Icons.add_rounded,
               gradient: _saved ? null : AppTheme.heroGradient,
             ),
@@ -122,6 +123,7 @@ class _HabitTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final catBg = AppTheme.categoryBg(habit.category);
     final catFg = AppTheme.categoryFg(habit.category);
 
@@ -214,7 +216,7 @@ class _HabitTile extends StatelessWidget {
                         ),
                       _InfoChip(
                         icon: Icons.repeat_rounded,
-                        label: _frequencyLabel(habit.frequency),
+                        label: _frequencyLabel(habit.frequency, s),
                         scheme: scheme,
                       ),
                     ],
@@ -228,14 +230,14 @@ class _HabitTile extends StatelessWidget {
     );
   }
 
-  String _frequencyLabel(String frequency) {
+  String _frequencyLabel(String frequency, S s) {
     switch (frequency) {
       case 'daily':
-        return 'Diario';
+        return s.planCardFrequencyDaily;
       case 'weekly':
-        return 'Semanal';
+        return s.planCardFrequencyWeekly;
       default:
-        return 'Personalizado';
+        return s.planCardFrequencyCustom;
     }
   }
 }

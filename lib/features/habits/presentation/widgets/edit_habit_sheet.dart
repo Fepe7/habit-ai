@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/habit_group_repository.dart';
@@ -47,8 +48,6 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   // cadena: hábitos en la misma cadena que este (para mostrar contexto)
   List<HabitModel> _stackSiblings = [];
   bool _stackLoaded = false;
-
-  static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   @override
   void initState() {
@@ -168,6 +167,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return SingleChildScrollView(
@@ -190,7 +190,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 const SizedBox(height: 24),
 
                 Text(
-                  'Editar hábito',
+                  s.editHabitTitle,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -200,9 +200,9 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             // título
             TextField(
               controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Título',
-                hintText: 'Ej: Correr 30 minutos',
+              decoration: InputDecoration(
+                labelText: s.habitFieldTitle,
+                hintText: s.editHabitTitleHint,
               ),
               textCapitalization: TextCapitalization.sentences,
             ),
@@ -211,9 +211,9 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             // descripción
             TextField(
               controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Opcional',
+              decoration: InputDecoration(
+                labelText: s.habitFieldDescription,
+                hintText: s.habitFieldOptional,
               ),
               textCapitalization: TextCapitalization.sentences,
               minLines: 4,
@@ -222,7 +222,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             const SizedBox(height: 24),
 
             // sección categoría
-            _SheetLabel(label: 'Categoría'),
+            _SheetLabel(label: s.habitFieldCategory),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -278,7 +278,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             const SizedBox(height: 24),
 
             // sección días
-            _SheetLabel(label: 'Días de la semana'),
+            _SheetLabel(label: s.habitFieldWeekdays),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -309,7 +309,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                     ),
                     child: Center(
                       child: Text(
-                        _dayNames[i],
+                        _weekdayInitials(s)[i],
                         style: TextStyle(
                           color: selected
                               ? Colors.white
@@ -326,7 +326,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
             const SizedBox(height: 24),
 
             // recordatorio
-            _SheetLabel(label: 'Recordatorio'),
+            _SheetLabel(label: s.habitFieldReminder),
             const SizedBox(height: 12),
             _ReminderTile(
               reminderTime: _reminderTime,
@@ -337,7 +337,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
 
             // sección rutina (grupo)
             if (_groups.isNotEmpty) ...[
-              _SheetLabel(label: 'Rutina'),
+              _SheetLabel(label: s.editHabitRoutineLabel),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -345,7 +345,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 children: [
                   // opción "sin rutina"
                   _GroupChip(
-                    label: 'Sin rutina',
+                    label: s.editHabitNoRoutine,
                     emoji: null,
                     selected: _selectedGroupId == null,
                     onTap: () => setState(() => _selectedGroupId = null),
@@ -367,7 +367,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
 
             // sección cadena de hábitos
             if (_stackLoaded) ...[
-              _SheetLabel(label: 'Cadena de hábitos'),
+              _SheetLabel(label: s.editHabitChainLabel),
               const SizedBox(height: 12),
               if (_stackSiblings.isNotEmpty) ...[
                 // mostrar los hábitos de la cadena con indicador de posición
@@ -389,7 +389,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                               size: 14, color: scheme.primary),
                           const SizedBox(width: 6),
                           Text(
-                            '${_stackSiblings.length} hábitos encadenados',
+                            s.editHabitChainedCount(_stackSiblings.length),
                             style:
                                 Theme.of(context).textTheme.labelMedium?.copyWith(
                                       color: scheme.primary,
@@ -447,7 +447,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                               ),
                               if (isThis)
                                 Text(
-                                  '← este',
+                                  s.editHabitChainThis,
                                   style:
                                       Theme.of(context).textTheme.labelSmall?.copyWith(
                                             color: scheme.primary,
@@ -478,7 +478,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                                   size: 14, color: AppTheme.error),
                               const SizedBox(width: 6),
                               Text(
-                                'Quitar de la cadena',
+                                s.editHabitChainRemove,
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppTheme.error,
@@ -494,7 +494,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 ),
               ] else
                 Text(
-                  'Este hábito no pertenece a ninguna cadena. Puedes encadenarlo al crear hábitos nuevos.',
+                  s.editHabitNoChain,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),
@@ -505,7 +505,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
           // botón guardar debajo del recordatorio
           GradientButton(
             onPressed: _save,
-            label: 'Guardar cambios',
+            label: s.editHabitSaveCta,
             icon: Icons.save_rounded,
             gradient: AppTheme.heroGradient,
           ),
@@ -514,6 +514,17 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     );
   }
 }
+
+// iniciales de los días de la semana (lun→dom) localizadas
+List<String> _weekdayInitials(S s) => [
+      s.weekdayLShort,
+      s.weekdayMShort,
+      s.weekdayXShort,
+      s.weekdayJShort,
+      s.weekdayVShort,
+      s.weekdaySShort,
+      s.weekdayDShort,
+    ];
 
 // ==================== HELPERS ====================
 
@@ -628,7 +639,7 @@ class _ReminderTile extends StatelessWidget {
           child: Icon(Icons.schedule_rounded, size: 18, color: scheme.primary),
         ),
         title: Text(
-          hasReminder ? reminderTime! : 'Sin recordatorio',
+          hasReminder ? reminderTime! : S.of(context).habitNoReminder,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w500,
             color: hasReminder ? scheme.onSurface : scheme.onSurfaceVariant,

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/avatar_circle.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/challenge_model.dart';
 import '../../domain/challenge_participant_model.dart';
 
@@ -119,7 +120,7 @@ class ChallengeCard extends StatelessWidget {
                 ] else
                   Expanded(
                     child: Text(
-                      'Esperando aceptación...',
+                      S.of(context).challengeCardWaiting,
                       style: TextStyle(
                         fontSize: 13,
                         color: scheme.onSurfaceVariant,
@@ -132,7 +133,7 @@ class ChallengeCard extends StatelessWidget {
                     size: 14, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
-                  '${challenge.durationDays} días',
+                  S.of(context).daysLabel(challenge.durationDays),
                   style: TextStyle(
                     fontSize: 12,
                     color: scheme.onSurfaceVariant,
@@ -160,12 +161,13 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final (label, color) = switch (status) {
-      ChallengeStatus.pending => ('Pendiente', const Color(0xFFF59E0B)),
-      ChallengeStatus.active => ('Activo', const Color(0xFF10B981)),
-      ChallengeStatus.completed => ('Completado', const Color(0xFF38BDF8)),
-      ChallengeStatus.declined => ('Rechazado', const Color(0xFF64748B)),
-      ChallengeStatus.abandoned => ('Abandonado', const Color(0xFFEF4444)),
+      ChallengeStatus.pending => (s.challengeStatusPending, const Color(0xFFF59E0B)),
+      ChallengeStatus.active => (s.challengeStatusActive, const Color(0xFF10B981)),
+      ChallengeStatus.completed => (s.challengeStatusCompleted, const Color(0xFF38BDF8)),
+      ChallengeStatus.declined => (s.challengeStatusDeclined, const Color(0xFF64748B)),
+      ChallengeStatus.abandoned => (s.challengeStatusAbandoned, const Color(0xFFEF4444)),
     };
 
     return Container(

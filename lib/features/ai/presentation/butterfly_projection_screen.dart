@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../app.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/butterfly_projection_model.dart';
 
@@ -50,11 +51,8 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   }
 
   // Convierte "2026-04" en "Abril 2026"
-  String _formatMonthId(String monthId) {
-    const meses = [
-      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
-    ];
+  String _formatMonthId(String monthId, S s) {
+    final meses = _fullMonthNames(s);
     final parts = monthId.split('-');
     if (parts.length != 2) return monthId;
     final month = int.tryParse(parts[1]) ?? 1;
@@ -65,6 +63,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -77,7 +76,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
             const Text('🦋', style: TextStyle(fontSize: 20)),
             const SizedBox(width: 8),
             Text(
-              _formatMonthId(widget.monthId),
+              _formatMonthId(widget.monthId, s),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -97,8 +96,8 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   }
 
   Widget _buildError(BuildContext context) {
-    return const ErrorStateView(
-      message: 'No se encontró la proyección o puede que haya expirado.',
+    return ErrorStateView(
+      message: S.of(context).butterflyNotFound,
       icon: Icons.cloud_off_outlined,
     );
   }
@@ -163,6 +162,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
 
   Widget _buildStatsChips(BuildContext context, ButterflyStats stats) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final pct = (stats.completionRate * 100).round();
 
     return Wrap(
@@ -171,22 +171,22 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
       children: [
         _Chip(
           icon: Icons.check_circle_rounded,
-          label: '${stats.totalLogs} check-ins',
+          label: s.butterflyCheckins(stats.totalLogs),
           color: AppTheme.primary,
         ),
         _Chip(
           icon: Icons.calendar_today_rounded,
-          label: '${stats.activeHabits} hábitos',
+          label: s.exploreHabitCount(stats.activeHabits),
           color: AppTheme.secondary,
         ),
         _Chip(
           icon: Icons.local_fire_department_rounded,
-          label: '${stats.longestStreak}d racha',
+          label: s.butterflyStreakDays(stats.longestStreak),
           color: AppTheme.tertiary,
         ),
         _Chip(
           icon: Icons.percent_rounded,
-          label: '$pct% completitud',
+          label: s.butterflyCompletion(pct),
           color: scheme.primary,
         ),
       ],
@@ -284,7 +284,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
               const Text('⚡', style: TextStyle(fontSize: 18)),
               const SizedBox(width: 8),
               Text(
-                'Momentos clave',
+                S.of(context).butterflyKeyMoments,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
@@ -388,6 +388,22 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
     );
   }
 }
+
+// nombres completos de meses localizados (enero→diciembre)
+List<String> _fullMonthNames(S s) => [
+      s.monthFullJan,
+      s.monthFullFeb,
+      s.monthFullMar,
+      s.monthFullApr,
+      s.monthFullMay,
+      s.monthFullJun,
+      s.monthFullJul,
+      s.monthFullAug,
+      s.monthFullSep,
+      s.monthFullOct,
+      s.monthFullNov,
+      s.monthFullDec,
+    ];
 
 /// Chip de estadística compacto
 class _Chip extends StatelessWidget {

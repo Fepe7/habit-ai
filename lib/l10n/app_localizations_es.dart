@@ -1254,4 +1254,884 @@ class SEs extends S {
 
   @override
   String get monthDec => 'dic';
+
+  @override
+  String get habitFieldTitle => 'Título';
+
+  @override
+  String get habitFieldDescription => 'Descripción';
+
+  @override
+  String get habitFieldOptional => 'Opcional';
+
+  @override
+  String get habitFieldCategory => 'Categoría';
+
+  @override
+  String get habitFieldWeekdays => 'Días de la semana';
+
+  @override
+  String get habitFieldReminder => 'Recordatorio';
+
+  @override
+  String get habitNoReminder => 'Sin recordatorio';
+
+  @override
+  String get createHabitTitle => 'Nuevo hábito';
+
+  @override
+  String get createHabitTitleHint => 'Ej: Leer 20 minutos';
+
+  @override
+  String get createHabitGroupLabel => 'Grupo';
+
+  @override
+  String get createHabitGroupHint =>
+      'Agrupa este hábito con otros relacionados';
+
+  @override
+  String get createHabitNoGroup => 'Sin grupo';
+
+  @override
+  String get createHabitChainLabel => 'Encadenar después de...';
+
+  @override
+  String get createHabitChainHint =>
+      'Se mostrará como siguiente paso al completar el hábito ancla';
+
+  @override
+  String get createHabitChainNone => 'Ninguno';
+
+  @override
+  String get createHabitCta => 'Crear hábito';
+
+  @override
+  String get editHabitTitle => 'Editar hábito';
+
+  @override
+  String get editHabitTitleHint => 'Ej: Correr 30 minutos';
+
+  @override
+  String get editHabitRoutineLabel => 'Rutina';
+
+  @override
+  String get editHabitNoRoutine => 'Sin rutina';
+
+  @override
+  String get editHabitChainLabel => 'Cadena de hábitos';
+
+  @override
+  String editHabitChainedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hábitos encadenados',
+      one: '1 hábito encadenado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get editHabitChainThis => '← este';
+
+  @override
+  String get editHabitChainRemove => 'Quitar de la cadena';
+
+  @override
+  String get editHabitNoChain =>
+      'Este hábito no pertenece a ninguna cadena. Puedes encadenarlo al crear hábitos nuevos.';
+
+  @override
+  String get editHabitSaveCta => 'Guardar cambios';
+
+  @override
+  String get commonEdit => 'Editar';
+
+  @override
+  String habitCardAfter(String title) {
+    return 'Después de \"$title\"';
+  }
+
+  @override
+  String get habitCardNext => '¡Siguiente!';
+
+  @override
+  String get habitCardCoachLabel => '– COACH · PREGUNTA DEL DÍA';
+
+  @override
+  String get habitCardCoachApply => 'SÍ, HAZLO →';
+
+  @override
+  String get habitCardCoachDismiss => 'OTRA OPCIÓN';
+
+  @override
+  String get createChoiceHabitTitle => 'Nuevo hábito';
+
+  @override
+  String get createChoiceHabitSubtitle => 'Un hábito individual';
+
+  @override
+  String get createChoiceGroupTitle => 'Nueva rutina';
+
+  @override
+  String get createChoiceGroupSubtitle => 'Grupo de hábitos relacionados';
+
+  @override
+  String get createGroupTitle => 'Nueva rutina';
+
+  @override
+  String get createGroupNameLabel => 'Nombre de la rutina';
+
+  @override
+  String get createGroupNameHint => 'Ej: Rutina matutina';
+
+  @override
+  String get createGroupDescHint => 'Opcional — para qué sirve esta rutina';
+
+  @override
+  String get createGroupEmojiLabel => 'Emoji';
+
+  @override
+  String get createGroupEmojiHint => 'Pega un emoji o selecciona abajo';
+
+  @override
+  String get createGroupCta => 'Crear rutina';
+
+  @override
+  String get emptyHabitsTitle => '¡Empieza tu camino!';
+
+  @override
+  String get emptyHabitsSubtitle =>
+      'Cuéntale a la IA tus metas y te creará\nun plan de hábitos personalizado.';
+
+  @override
+  String get emptyHabitsAction => 'Crear mi plan con IA';
+
+  @override
+  String get stackCompleteTitle => '¡CADENA COMPLETA!';
+
+  @override
+  String stackCompleteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hábitos seguidos. ¡Imparable!',
+      one: '1 hábito seguido. ¡Imparable!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stackCompleteSubtitle => 'Así se construye un hábito atómico.';
+
+  @override
+  String allHabitsTotal(int count) {
+    return '$count en total';
+  }
+
+  @override
+  String get allHabitsCancelSelection => 'Cancelar selección';
+
+  @override
+  String get allHabitsTabActive => 'Activos';
+
+  @override
+  String get allHabitsTabArchived => 'Archivados';
+
+  @override
+  String get allHabitsTabRoutines => 'Rutinas';
+
+  @override
+  String get allHabitsEmptyActiveTitle => 'No tienes hábitos creados';
+
+  @override
+  String get allHabitsEmptyActiveSubtitle =>
+      'Crea hábitos desde la pantalla principal o con la IA.';
+
+  @override
+  String get allHabitsEmptyArchivedTitle => 'No tienes hábitos archivados';
+
+  @override
+  String get allHabitsEmptyRoutinesTitle => 'No tienes rutinas creadas';
+
+  @override
+  String get allHabitsEmptyRoutinesSubtitle =>
+      'Crea una rutina desde el \"+\" de la pantalla principal.';
+
+  @override
+  String get allHabitsNoHabitsYet => 'Sin hábitos aún';
+
+  @override
+  String get allHabitsHardDeleteTitle => 'Borrar definitivamente';
+
+  @override
+  String allHabitsHardDeleteContent(String title) {
+    return '¿Seguro que quieres borrar \"$title\" para siempre?\n\nEsto borra el hábito y todos sus registros. No se puede deshacer.';
+  }
+
+  @override
+  String get allHabitsHardDeleteConfirm => 'Borrar definitivo';
+
+  @override
+  String allHabitsHardDeleted(String title) {
+    return '\"$title\" borrado permanentemente';
+  }
+
+  @override
+  String get allHabitsHardDeleteError => 'Error al borrar el hábito';
+
+  @override
+  String allHabitsBulkDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Borrar $count hábitos',
+      one: 'Borrar 1 hábito',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteContent =>
+      'Se borrarán definitivamente con todos sus registros. No se puede deshacer.';
+
+  @override
+  String get allHabitsDeleteButton => 'Borrar';
+
+  @override
+  String allHabitsBulkDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hábitos borrados',
+      one: '1 hábito borrado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteError => 'Error al borrar los hábitos';
+
+  @override
+  String allHabitsBulkDeleteGroupsTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Eliminar $count rutinas',
+      one: 'Eliminar 1 rutina',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteGroupsContent =>
+      '¿Qué quieres hacer con los hábitos de las rutinas seleccionadas?';
+
+  @override
+  String get allHabitsBulkDeleteGroupsOnly => 'Solo las rutinas';
+
+  @override
+  String get allHabitsBulkDeleteGroupsAndHabits => 'Rutinas y hábitos';
+
+  @override
+  String allHabitsGroupsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count rutinas eliminadas',
+      one: '1 rutina eliminada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsGroupsDeleteError => 'Error al eliminar las rutinas';
+
+  @override
+  String get groupDetailEditTitle => 'Editar grupo';
+
+  @override
+  String get groupDetailAddHabitError => 'Error al añadir el hábito';
+
+  @override
+  String get groupDetailHabitAdded => 'Hábito añadido a la rutina';
+
+  @override
+  String get groupDetailGroupUpdated => 'Grupo actualizado';
+
+  @override
+  String get groupDetailGroupUpdateError => 'Error al actualizar el grupo';
+
+  @override
+  String get groupDetailPublishNoHabits =>
+      'El grupo no tiene hábitos, añade al menos uno.';
+
+  @override
+  String get groupDetailPublishNeedPublic =>
+      'Activa tu perfil público en Ajustes antes de publicar.';
+
+  @override
+  String get groupDetailPublishTitle => 'Publicar como plantilla';
+
+  @override
+  String groupDetailPublishBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Se publicarán $count hábitos sin datos personales (sin rachas ni historial).',
+      one:
+          'Se publicará 1 hábito sin datos personales (sin rachas ni historial).',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupDetailPublishDescLabel => 'Descripción (opcional)';
+
+  @override
+  String get groupDetailPublishDescHint => 'Explica para quién es este plan…';
+
+  @override
+  String get groupDetailPublishConfirm => 'Publicar';
+
+  @override
+  String get groupDetailPublishSuccess => 'Plantilla publicada en la comunidad';
+
+  @override
+  String get groupDetailViewAction => 'Ver';
+
+  @override
+  String get groupDetailPublishError => 'Error al publicar la plantilla';
+
+  @override
+  String get groupDetailUnpublishTitle => 'Retirar plantilla';
+
+  @override
+  String get groupDetailUnpublishContent =>
+      'La plantilla desaparecerá del marketplace. Las copias importadas por otros usuarios no se verán afectadas.';
+
+  @override
+  String get groupDetailUnpublishConfirm => 'Retirar';
+
+  @override
+  String get groupDetailUnpublishSuccess =>
+      'Plantilla retirada del marketplace';
+
+  @override
+  String get groupDetailUnpublishError => 'Error al retirar la plantilla';
+
+  @override
+  String get groupDetailUnpublishTooltip => 'Retirar del marketplace';
+
+  @override
+  String get groupDetailPublishTooltip => 'Publicar como plantilla';
+
+  @override
+  String get groupDetailNotFound => 'Este grupo ya no existe.';
+
+  @override
+  String get groupDetailHabitsHeader => 'Hábitos del grupo';
+
+  @override
+  String get groupDetailEmptyTitle => 'Sin hábitos en este grupo';
+
+  @override
+  String get groupDetailEmptySubtitle => 'Añade hábitos con el botón +';
+
+  @override
+  String get groupDetailEditNameLabel => 'Título del grupo';
+
+  @override
+  String get groupDetailEditNameHint => 'Ej: Rutina de gimnasio';
+
+  @override
+  String get groupDetailEditEmojiHint => 'Pega un emoji o déjalo vacío';
+
+  @override
+  String get commonApply => 'Aplicar';
+
+  @override
+  String get monthFullJan => 'Enero';
+
+  @override
+  String get monthFullFeb => 'Febrero';
+
+  @override
+  String get monthFullMar => 'Marzo';
+
+  @override
+  String get monthFullApr => 'Abril';
+
+  @override
+  String get monthFullMay => 'Mayo';
+
+  @override
+  String get monthFullJun => 'Junio';
+
+  @override
+  String get monthFullJul => 'Julio';
+
+  @override
+  String get monthFullAug => 'Agosto';
+
+  @override
+  String get monthFullSep => 'Septiembre';
+
+  @override
+  String get monthFullOct => 'Octubre';
+
+  @override
+  String get monthFullNov => 'Noviembre';
+
+  @override
+  String get monthFullDec => 'Diciembre';
+
+  @override
+  String get butterflyNotFound =>
+      'No se encontró la proyección o puede que haya expirado.';
+
+  @override
+  String butterflyCheckins(int count) {
+    return '$count check-ins';
+  }
+
+  @override
+  String butterflyStreakDays(int count) {
+    return '${count}d racha';
+  }
+
+  @override
+  String butterflyCompletion(int percent) {
+    return '$percent% completitud';
+  }
+
+  @override
+  String get butterflyKeyMoments => 'Momentos clave';
+
+  @override
+  String get patternInsightsNeedConnection =>
+      'Necesitas conexión para regenerar los patrones';
+
+  @override
+  String get patternInsightsNeedMore =>
+      'Necesitas al menos 14 días con datos y 3 hábitos activos.';
+
+  @override
+  String get patternInsightsUpdated => 'Patrones actualizados.';
+
+  @override
+  String patternInsightsEmptyTitle(String period) {
+    return 'Sin insights para $period';
+  }
+
+  @override
+  String get patternInsightsEmptySubtitle =>
+      'Genera los patrones desde el dashboard o espera a que el sistema los procese automáticamente.';
+
+  @override
+  String get patternInsightsRegenerate => 'Regenerar patrones';
+
+  @override
+  String get patternInsightsLimitedData => 'Datos limitados';
+
+  @override
+  String patternInsightsDetected(int count) {
+    return '$count patrones detectados';
+  }
+
+  @override
+  String get patternInsightsConfidenceHigh => 'Alta confianza';
+
+  @override
+  String get patternInsightsConfidenceMedium => 'Media';
+
+  @override
+  String get patternInsightsConfidenceLow => 'Baja';
+
+  @override
+  String get weeklyReviewNotFound => 'No se encontró esta revisión';
+
+  @override
+  String get weeklyReviewLoadError => 'Error al cargar la revisión';
+
+  @override
+  String get weeklyReviewHabitGone => 'Este hábito ya no existe';
+
+  @override
+  String get weeklyReviewWins => 'Lo que funcionó';
+
+  @override
+  String get weeklyReviewStruggles => 'Dónde fallaste';
+
+  @override
+  String weeklyReviewWeekLabel(String weekId) {
+    return 'Semana $weekId';
+  }
+
+  @override
+  String get weeklyReviewStatCheckins => 'Check-ins';
+
+  @override
+  String get weeklyReviewStatHabits => 'Hábitos';
+
+  @override
+  String get weeklyReviewStatAtRisk => 'En riesgo';
+
+  @override
+  String get weeklyReviewFocusTitle => 'Tu foco esta semana';
+
+  @override
+  String get weeklyReviewRecommendations => 'Recomendaciones';
+
+  @override
+  String get planCardSaved => 'Hábitos guardados';
+
+  @override
+  String get planCardAddSelected => 'Añadir hábitos seleccionados';
+
+  @override
+  String get planCardFrequencyDaily => 'Diario';
+
+  @override
+  String get planCardFrequencyWeekly => 'Semanal';
+
+  @override
+  String get planCardFrequencyCustom => 'Personalizado';
+
+  @override
+  String get challengesTitle => 'Mis retos';
+
+  @override
+  String get challengesNew => 'Nuevo reto';
+
+  @override
+  String get challengesEmptyTitle => 'Sin retos todavía';
+
+  @override
+  String get challengesEmptySubtitle =>
+      'Reta a un amigo a completar un hábito juntos durante varios días';
+
+  @override
+  String get challengesSectionPending => 'Pendientes';
+
+  @override
+  String get challengesSectionActive => 'Activos';
+
+  @override
+  String get challengesSectionFinished => 'Finalizados';
+
+  @override
+  String get challengeCardWaiting => 'Esperando aceptación...';
+
+  @override
+  String get challengeStatusPending => 'Pendiente';
+
+  @override
+  String get challengeStatusActive => 'Activo';
+
+  @override
+  String get challengeStatusCompleted => 'Completado';
+
+  @override
+  String get challengeStatusDeclined => 'Rechazado';
+
+  @override
+  String get challengeStatusAbandoned => 'Abandonado';
+
+  @override
+  String get challengeDetailTitle => 'Reto compartido';
+
+  @override
+  String get challengeDetailNotFound => 'Reto no encontrado';
+
+  @override
+  String get challengeDetailAccepted =>
+      '¡Reto aceptado! El hábito fue creado en tu lista';
+
+  @override
+  String get challengeDetailAcceptError => 'Error al aceptar el reto';
+
+  @override
+  String get challengeDetailDeclineTitle => 'Rechazar reto';
+
+  @override
+  String get challengeDetailDeclineContent =>
+      '¿Seguro que quieres rechazar este reto?';
+
+  @override
+  String get challengeDetailDeclineConfirm => 'Rechazar';
+
+  @override
+  String get challengeDetailAbandonTitle => 'Abandonar reto';
+
+  @override
+  String get challengeDetailAbandonContent =>
+      '¿Seguro que quieres abandonar? No podrás retomarlo.';
+
+  @override
+  String get challengeDetailAbandonConfirm => 'Abandonar';
+
+  @override
+  String get challengeDetailAbandonTooltip => 'Abandonar';
+
+  @override
+  String get challengeDetailYourProgress => 'Tu progreso';
+
+  @override
+  String get challengeDetailPartner => 'Compañero';
+
+  @override
+  String get challengeDetailCompletedTitle => '¡Reto completado!';
+
+  @override
+  String get challengeDetailCompletedSubtitle =>
+      'Ambos habéis demostrado constancia';
+
+  @override
+  String get challengeDetailDeclinedState => 'Reto rechazado';
+
+  @override
+  String get challengeDetailAbandonedState => 'Reto abandonado';
+
+  @override
+  String challengeDetailWaitingPartner(String name) {
+    return 'Esperando a que $name acepte el reto';
+  }
+
+  @override
+  String get challengeDetailFallbackPartner => 'tu compañero';
+
+  @override
+  String get challengeDetailFallbackPartnerCap => 'Compañero';
+
+  @override
+  String get challengeDetailFallbackSomeone => 'Alguien';
+
+  @override
+  String challengeDetailYouChallenged(String name) {
+    return 'Retaste a $name';
+  }
+
+  @override
+  String challengeDetailChallengedYou(String name) {
+    return '$name te ha retado';
+  }
+
+  @override
+  String get challengeDetailAcceptQuestion => '¿Aceptas el reto?';
+
+  @override
+  String get challengeDetailAcceptHint =>
+      'Se creará automáticamente el hábito en tu lista y empezareis juntos';
+
+  @override
+  String get challengeDetailAcceptCta => 'Aceptar reto';
+
+  @override
+  String get challengeDetailCompletedToday => '¡Completado hoy!';
+
+  @override
+  String get challengeDetailMarkToday => 'Marcar hoy como completado';
+
+  @override
+  String challengeDetailProgressDays(int completed, int total) {
+    return '$completed / $total días';
+  }
+
+  @override
+  String get createChallengeTitle => 'Crear reto';
+
+  @override
+  String createChallengeError(String error) {
+    return 'Error al crear reto: $error';
+  }
+
+  @override
+  String get createChallengeHabitName => 'Nombre del hábito';
+
+  @override
+  String get createChallengeHabitHint => 'Ej: Meditar 10 minutos';
+
+  @override
+  String get createChallengeDuration => 'Duración';
+
+  @override
+  String get createChallengePartnerLabel => 'Compañero de reto';
+
+  @override
+  String get createChallengeSearchUsername => 'Buscar por username';
+
+  @override
+  String get createChallengeFollowerChip => 'Seguidor';
+
+  @override
+  String get createChallengeSend => 'Enviar reto';
+
+  @override
+  String get communityTitle => 'Comunidad';
+
+  @override
+  String get communitySearchHint => 'Buscar plantillas…';
+
+  @override
+  String get communitySortPopular => 'Popular';
+
+  @override
+  String get communitySortRecent => 'Recientes';
+
+  @override
+  String get communityFilterAll => 'Todas';
+
+  @override
+  String get communityLoadMore => 'Cargar más';
+
+  @override
+  String get communityEndOfList => '— fin de la lista —';
+
+  @override
+  String get communityEmptyTitle => 'Todavía no hay plantillas';
+
+  @override
+  String get communityEmptySubtitle =>
+      'Sé el primero en publicar un plan de hábitos.';
+
+  @override
+  String get communityEmptyFilterTitle => 'Sin resultados para ese filtro';
+
+  @override
+  String get communityEmptyFilterSubtitle =>
+      'Prueba otra categoría o quita el filtro.';
+
+  @override
+  String get communityDetailNotFound => 'Plantilla no encontrada';
+
+  @override
+  String get communityDetailLoadError => 'Error al cargar la plantilla';
+
+  @override
+  String communityDetailImported(String emoji, String title) {
+    return '$emoji \"$title\" importado a tus hábitos';
+  }
+
+  @override
+  String get communityDetailImportError => 'Error al importar la plantilla';
+
+  @override
+  String get communityDetailReportTitle => 'Reportar plantilla';
+
+  @override
+  String get communityDetailReportContent =>
+      '¿Quieres reportar esta plantilla por contenido inapropiado? Será revisada por el equipo.';
+
+  @override
+  String get communityDetailReportConfirm => 'Reportar';
+
+  @override
+  String get communityDetailReportSent => 'Reporte enviado, gracias';
+
+  @override
+  String communityDetailImports(int count) {
+    return '$count imports';
+  }
+
+  @override
+  String communityDetailByAuthor(String name) {
+    return 'Por $name';
+  }
+
+  @override
+  String get communityDetailHabitsIncluded => 'Hábitos incluidos';
+
+  @override
+  String get communityDetailMyTemplate => 'Esta es tu plantilla';
+
+  @override
+  String get communityDetailImporting => 'Importando…';
+
+  @override
+  String get communityDetailImportCta => 'Importar a mis hábitos';
+
+  @override
+  String streakDaysShort(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String get categoryDetailTitle => 'Categorías';
+
+  @override
+  String get categoryDetailDistribution => 'Distribución';
+
+  @override
+  String categoryDetailWeeklyPct(int percent) {
+    return '$percent% semanal';
+  }
+
+  @override
+  String get streaksDetailTitle => 'Rachas';
+
+  @override
+  String get streaksDetailBestGlobal => 'Mejor racha global';
+
+  @override
+  String get streaksDetailOnStreak => 'En racha';
+
+  @override
+  String get streaksDetailNoStreak => 'Sin racha';
+
+  @override
+  String streaksDetailBestShort(int count) {
+    return 'mejor: ${count}d';
+  }
+
+  @override
+  String get weeklyDetailTitle => 'Progreso mensual';
+
+  @override
+  String get weeklyDetailDailyBreakdown => 'Desglose diario';
+
+  @override
+  String get weeklyDetailAverage => 'Media';
+
+  @override
+  String get weeklyDetailLast30Days => 'Últimos 30 días';
+
+  @override
+  String get usernameSheetTitleNew => 'Elige tu username';
+
+  @override
+  String get usernameSheetTitleChange => 'Cambiar username';
+
+  @override
+  String get usernameSheetSubtitle =>
+      'Tu username es único y público. Aparecerá en tu perfil y en los retos.';
+
+  @override
+  String get usernameSheetHelperIdle => 'Te identifica en la comunidad';
+
+  @override
+  String get usernameSheetChecking => 'Comprobando...';
+
+  @override
+  String get usernameSheetVisibleData => 'Datos visibles en tu perfil:';
+
+  @override
+  String get usernameSheetDataName => 'Nombre y @username';
+
+  @override
+  String get usernameSheetDataStreaks => 'Rachas actuales';
+
+  @override
+  String get usernameSheetDataHabits => 'Hábitos activos (título y categoría)';
+
+  @override
+  String get usernameSheetDataLevel => 'Nivel y logros';
+
+  @override
+  String get usernameSheetPrivacy =>
+      'Nunca se comparten: email, notas, recordatorios.';
+
+  @override
+  String get usernameSheetConfirm => 'Confirmar';
 }

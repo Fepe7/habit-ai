@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 
 // Detalle de categorias: grafico circular + lista con habitos y % por categoria
@@ -46,7 +47,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Categorias')),
+      appBar: AppBar(title: Text(S.of(context).categoryDetailTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -100,7 +101,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       child: Column(
         children: [
           Text(
-            'Distribucion',
+            S.of(context).categoryDetailDistribution,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -188,6 +189,7 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final pct = (stat.completionRate * 100).round();
 
     return Container(
@@ -221,7 +223,7 @@ class _CategoryCard extends StatelessWidget {
           subtitle: Row(
             children: [
               Text(
-                '${stat.habits.length} habitos',
+                s.exploreHabitCount(stat.habits.length),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ),
@@ -235,7 +237,7 @@ class _CategoryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  '$pct% semanal',
+                  s.categoryDetailWeeklyPct(pct),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: _completionColor(pct),
                         fontWeight: FontWeight.w600,
@@ -265,7 +267,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 trailing: habit.currentStreak > 0
                     ? Text(
-                        '${habit.currentStreak}d',
+                        s.streakDaysShort(habit.currentStreak),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: AppTheme.accent,
                               fontWeight: FontWeight.bold,

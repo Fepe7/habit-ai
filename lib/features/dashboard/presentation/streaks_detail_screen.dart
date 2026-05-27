@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
 
@@ -58,9 +59,10 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Rachas')),
+      appBar: AppBar(title: Text(s.streaksDetailTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -74,8 +76,8 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
                       Expanded(
                         child: _SummaryCard(
                           icon: Icons.local_fire_department_rounded,
-                          label: 'Mejor racha global',
-                          value: '${_bestOverall}d',
+                          label: s.streaksDetailBestGlobal,
+                          value: s.streakDaysShort(_bestOverall),
                           color: AppTheme.accent,
                         ),
                       ),
@@ -83,7 +85,7 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
                       Expanded(
                         child: _SummaryCard(
                           icon: Icons.whatshot_rounded,
-                          label: 'Rachas activas',
+                          label: s.dashboardActiveStreaks,
                           value: '$_activeStreaks',
                           color: AppTheme.error,
                         ),
@@ -97,7 +99,7 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
                   if (_habits.any((h) => h.currentStreak > 0)) ...[
                     _SectionHeader(
                       icon: Icons.local_fire_department_rounded,
-                      title: 'En racha',
+                      title: s.streaksDetailOnStreak,
                       color: AppTheme.accent,
                     ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
                     const SizedBox(height: 8),
@@ -119,7 +121,7 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
                   if (_habits.any((h) => h.currentStreak == 0)) ...[
                     _SectionHeader(
                       icon: Icons.pause_circle_outline_rounded,
-                      title: 'Sin racha',
+                      title: s.streaksDetailNoStreak,
                       color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                     ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
                     const SizedBox(height: 8),
@@ -228,6 +230,7 @@ class _StreakTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -303,7 +306,7 @@ class _StreakTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${habit.currentStreak}d',
+                    s.streakDaysShort(habit.currentStreak),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: inactive
@@ -317,7 +320,7 @@ class _StreakTile extends StatelessWidget {
               // mejor racha
               if (habit.bestStreak > 0)
                 Text(
-                  'mejor: ${habit.bestStreak}d',
+                  s.streaksDetailBestShort(habit.bestStreak),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant
                             .withValues(alpha: 0.5),

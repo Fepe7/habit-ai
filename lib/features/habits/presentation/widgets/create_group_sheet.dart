@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/habit_group_model.dart';
 
 // Bottom sheet para crear una rutina (grupo de habitos) manualmente
@@ -60,6 +61,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -98,7 +100,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
             const SizedBox(height: 10),
 
             Text(
-              'Nueva rutina',
+              s.createGroupTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -108,9 +110,9 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
             // nombre de la rutina
             TextField(
               controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nombre de la rutina',
-                hintText: 'Ej: Rutina matutina',
+              decoration: InputDecoration(
+                labelText: s.createGroupNameLabel,
+                hintText: s.createGroupNameHint,
               ),
               textCapitalization: TextCapitalization.sentences,
               autofocus: true,
@@ -120,9 +122,9 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
             // descripcion opcional
             TextField(
               controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Opcional — para qué sirve esta rutina',
+              decoration: InputDecoration(
+                labelText: s.habitFieldDescription,
+                hintText: s.createGroupDescHint,
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
@@ -131,7 +133,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
 
             // seccion emoji
             Text(
-              'Emoji',
+              s.createGroupEmojiLabel,
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -141,8 +143,8 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
             const SizedBox(height: 8),
             TextField(
               controller: _emojiCtrl,
-              decoration: const InputDecoration(
-                hintText: 'Pega un emoji o selecciona abajo',
+              decoration: InputDecoration(
+                hintText: s.createGroupEmojiHint,
               ),
               maxLength: 2,
               onChanged: (_) => setState(() {}),
@@ -211,7 +213,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
 
             GradientButton(
               onPressed: _save,
-              label: 'Crear rutina',
+              label: s.createGroupCta,
               icon: Icons.folder_special_rounded,
               gradient: AppTheme.heroGradient,
             ),

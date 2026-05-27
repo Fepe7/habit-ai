@@ -41,7 +41,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(S.of(context)!.levelsTitle),
+        title: Text( S.of(context).levelsTitle),
         centerTitle: false,
       ),
       body: _levelsRepo == null
@@ -92,7 +92,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
           const SizedBox(height: 20),
 
           Text(
-            S.of(context)!.levelsByCategory,
+             S.of(context).levelsByCategory,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: scheme.onSurface,
@@ -139,7 +139,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  S.of(context)!.levelsMedium,
+                   S.of(context).levelsMedium,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.75),
                   ),
@@ -155,7 +155,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  S.of(context)!.levelsTotalXp(profile.totalXp),
+                   S.of(context).levelsTotalXp(profile.totalXp),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.8),
                   ),
@@ -168,7 +168,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  S.of(context)!.levelsStronger,
+                   S.of(context).levelsStronger,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -227,7 +227,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            S.of(context)!.levelsRadar,
+             S.of(context).levelsRadar,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: scheme.onSurfaceVariant,

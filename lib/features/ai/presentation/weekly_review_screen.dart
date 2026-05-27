@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/weekly_review_model.dart';
 import '../../habits/data/habit_repository.dart';
@@ -54,14 +55,14 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         setState(() {
           _review = review;
           _loading = false;
-          _error = review == null ? 'No se encontró esta revisión' : null;
+          _error = review == null ? S.of(context).weeklyReviewNotFound : null;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Error al cargar la revisión';
+          _error = S.of(context).weeklyReviewLoadError;
         });
       }
     }
@@ -98,7 +99,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     if (!mounted) return;
 
     if (habit == null) {
-      AppSnackBar.showError(context, 'Este hábito ya no existe');
+      AppSnackBar.showError(context, S.of(context).weeklyReviewHabitGone);
       return;
     }
 
@@ -122,11 +123,11 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         'groupId': updated.groupId,
       });
       if (mounted) {
-        AppSnackBar.showSuccess(context, 'Hábito actualizado');
+        AppSnackBar.showSuccess(context, S.of(context).habitsUpdated);
       }
     } catch (_) {
       if (mounted) {
-        AppSnackBar.showError(context, 'Error al actualizar el hábito');
+        AppSnackBar.showError(context, S.of(context).habitsUpdateError);
       }
     }
   }
@@ -135,7 +136,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Revisión semanal'),
+        title: Text(S.of(context).dashboardWeeklyReviewTitle),
       ),
       body: _loading
           ? const Padding(
@@ -150,12 +151,13 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
 
   Widget _buildError(BuildContext context) {
     return ErrorStateView(
-      message: _error ?? 'Error al cargar la revisión',
+      message: _error ?? S.of(context).weeklyReviewLoadError,
       onRetry: _load,
     );
   }
 
   Widget _buildContent(BuildContext context, WeeklyReviewModel review) {
+    final s = S.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -175,7 +177,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
           if (review.wins.isNotEmpty) ...[
             _buildSection(
               context,
-              title: 'Lo que funcionó',
+              title: s.weeklyReviewWins,
               icon: Icons.thumb_up_rounded,
               color: AppTheme.success,
               items: review.wins,
@@ -189,7 +191,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
           if (review.struggles.isNotEmpty) ...[
             _buildSection(
               context,
-              title: 'Dónde fallaste',
+              title: s.weeklyReviewStruggles,
               icon: Icons.warning_amber_rounded,
               color: AppTheme.error,
               items: review.struggles,
@@ -215,8 +217,9 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   // Cabecera con el rango de fechas y stats de la semana
   Widget _buildHeader(BuildContext context, WeeklyReviewModel review) {
     final colorScheme = Theme.of(context).colorScheme;
-    final start = _formatDate(review.weekStart);
-    final end = _formatDate(review.weekEnd);
+    final s = S.of(context);
+    final start = _formatDate(review.weekStart, s);
+    final end = _formatDate(review.weekEnd, s);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -247,7 +250,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   color: colorScheme.primary, size: 24),
               const SizedBox(width: 8),
               Text(
-                'Semana ${review.weekId}',
+                s.weeklyReviewWeekLabel(review.weekId),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -267,14 +270,14 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
               _headerStat(
                 context,
                 value: '${review.stats.totalLogs}',
-                label: 'Check-ins',
+                label: s.weeklyReviewStatCheckins,
                 color: AppTheme.success,
               ),
               const SizedBox(width: 12),
               _headerStat(
                 context,
                 value: '${review.stats.totalHabits}',
-                label: 'Hábitos',
+                label: s.weeklyReviewStatHabits,
                 color: AppTheme.primary,
               ),
               if (review.stats.habitsAtRisk.isNotEmpty) ...[
@@ -282,7 +285,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                 _headerStat(
                   context,
                   value: '${review.stats.habitsAtRisk.length}',
-                  label: 'En riesgo',
+                  label: s.weeklyReviewStatAtRisk,
                   color: AppTheme.error,
                 ),
               ],
@@ -351,7 +354,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Tu foco esta semana',
+                  S.of(context).weeklyReviewFocusTitle,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.tertiary,
@@ -474,7 +477,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                   size: 20, color: colorScheme.primary),
               const SizedBox(width: 8),
               Text(
-                'Recomendaciones',
+                S.of(context).weeklyReviewRecommendations,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -523,7 +526,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                     child: FilledButton.tonalIcon(
                       onPressed: () => _applyRecommendation(rec),
                       icon: const Icon(Icons.edit_rounded, size: 16),
-                      label: const Text('Aplicar'),
+                      label: Text(S.of(context).commonApply),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(0, 36),
                         padding:
@@ -540,10 +543,20 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-      'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  String _formatDate(DateTime date, S s) {
+    final months = [
+      s.monthJan,
+      s.monthFeb,
+      s.monthMar,
+      s.monthApr,
+      s.monthMay,
+      s.monthJun,
+      s.monthJul,
+      s.monthAug,
+      s.monthSep,
+      s.monthOct,
+      s.monthNov,
+      s.monthDec,
     ];
     return '${date.day} ${months[date.month - 1]}';
   }

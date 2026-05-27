@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/habit_model.dart';
 import '../../../ai/domain/renegotiation_model.dart';
 
@@ -63,6 +64,7 @@ class HabitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final catBg = AppTheme.categoryBg(habit.category);
     final catFg = AppTheme.categoryFg(habit.category);
     final catIcon = AppTheme.categoryIcon(habit.category);
@@ -79,8 +81,8 @@ class HabitCard extends StatelessWidget {
 
     // chip de contexto: "🔗 Después de X" o "¡Siguiente!" según si hay título disponible
     final nudgeLabel = nudgeFromHabitTitle != null
-        ? 'Después de "${nudgeFromHabitTitle!.length > 18 ? '${nudgeFromHabitTitle!.substring(0, 16)}…' : nudgeFromHabitTitle}"'
-        : '¡Siguiente!';
+        ? s.habitCardAfter(nudgeFromHabitTitle!.length > 18 ? '${nudgeFromHabitTitle!.substring(0, 16)}…' : nudgeFromHabitTitle!)
+        : s.habitCardNext;
 
     final nextChip = isNextInStack && !isCompletedToday
         ? Container(
@@ -210,7 +212,7 @@ class HabitCard extends StatelessWidget {
                           if (habit.currentStreak > 0)
                             _MetaChip(
                               icon: Icons.local_fire_department_rounded,
-                              label: '${habit.currentStreak} días',
+                              label: s.daysLabel(habit.currentStreak),
                               iconColor: AppTheme.tertiaryContainer,
                               textColor: AppTheme.tertiary,
                               bgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
@@ -285,13 +287,13 @@ class HabitCard extends StatelessWidget {
                   },
                   itemBuilder: (ctx) => [
                     if (onEdit != null)
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit_outlined, size: 20),
-                            SizedBox(width: 12),
-                            Text('Editar'),
+                            const Icon(Icons.edit_outlined, size: 20),
+                            const SizedBox(width: 12),
+                            Text(s.commonEdit),
                           ],
                         ),
                       ),
@@ -300,9 +302,9 @@ class HabitCard extends StatelessWidget {
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                            const Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
                             const SizedBox(width: 12),
-                            Text('Eliminar', style: TextStyle(color: AppTheme.error)),
+                            Text(s.habitDetailDelete, style: const TextStyle(color: AppTheme.error)),
                           ],
                         ),
                       ),
@@ -445,6 +447,7 @@ class _CoachBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final now = TimeOfDay.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
@@ -460,7 +463,7 @@ class _CoachBanner extends StatelessWidget {
           Row(
             children: [
               Text(
-                '– COACH · PREGUNTA DEL DÍA',
+                s.habitCardCoachLabel,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
@@ -504,9 +507,9 @@ class _CoachBanner extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'SÍ, HAZLO →',
-                    style: TextStyle(
+                  child: Text(
+                    s.habitCardCoachApply,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
@@ -526,9 +529,9 @@ class _CoachBanner extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'OTRA OPCIÓN',
-                    style: TextStyle(
+                  child: Text(
+                    s.habitCardCoachDismiss,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,

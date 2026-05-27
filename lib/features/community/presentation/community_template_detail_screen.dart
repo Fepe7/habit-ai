@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
 import '../domain/template_habit_snapshot.dart';
@@ -45,7 +46,7 @@ class _CommunityTemplateDetailScreenState
     try {
       final template = await _repo.getTemplate(widget.templateId);
       if (template == null) {
-        if (mounted) setState(() => _error = 'Plantilla no encontrada');
+        if (mounted) setState(() => _error = S.of(context).communityDetailNotFound);
         return;
       }
 
@@ -63,7 +64,7 @@ class _CommunityTemplateDetailScreenState
         _loading = false;
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'Error al cargar la plantilla');
+      if (mounted) setState(() => _error = S.of(context).communityDetailLoadError);
     }
   }
 
@@ -81,7 +82,7 @@ class _CommunityTemplateDetailScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${_template!.emoji ?? "✨"} "${_template!.title}" importado a tus hábitos',
+            S.of(context).communityDetailImported(_template!.emoji ?? "✨", _template!.title),
           ),
           backgroundColor: AppTheme.success,
         ),
@@ -93,7 +94,7 @@ class _CommunityTemplateDetailScreenState
         setState(() => _importing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Error al importar la plantilla'),
+            content: Text(S.of(context).communityDetailImportError),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -104,35 +105,36 @@ class _CommunityTemplateDetailScreenState
   Future<void> _report() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Reportar plantilla'),
-        content: const Text(
-          '¿Quieres reportar esta plantilla por contenido inapropiado? '
-          'Será revisada por el equipo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Reportar'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        final s = S.of(ctx);
+        return AlertDialog(
+          title: Text(s.communityDetailReportTitle),
+          content: Text(s.communityDetailReportContent),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(s.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(s.communityDetailReportConfirm),
+            ),
+          ],
+        );
+      },
     );
     if (confirmed != true || !mounted) return;
     await _repo.reportTemplate(widget.templateId);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Reporte enviado, gracias')),
+      SnackBar(content: Text(S.of(context).communityDetailReportSent)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final bottomPad =
         MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 16;
 
@@ -176,14 +178,14 @@ class _CommunityTemplateDetailScreenState
                   onSelected: (v) {
                     if (v == 'report') _report();
                   },
-                  itemBuilder: (_) => const [
+                  itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'report',
                       child: Row(
                         children: [
-                          Icon(Icons.flag_outlined, size: 18),
-                          SizedBox(width: 8),
-                          Text('Reportar'),
+                          const Icon(Icons.flag_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Text(s.communityDetailReportConfirm),
                         ],
                       ),
                     ),
@@ -252,12 +254,12 @@ class _CommunityTemplateDetailScreenState
                                     children: [
                                       _StatChip(
                                         icon: Icons.checklist_rounded,
-                                        label: '${t.habitCount} hábitos',
+                                        label: s.exploreHabitCount(t.habitCount),
                                       ),
                                       const SizedBox(width: 6),
                                       _StatChip(
                                         icon: Icons.download_rounded,
-                                        label: '${t.importCount} imports',
+                                        label: s.communityDetailImports(t.importCount),
                                       ),
                                     ],
                                   ),
@@ -346,7 +348,7 @@ class _CommunityTemplateDetailScreenState
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Por $authorName',
+                          s.communityDetailByAuthor(authorName),
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -373,7 +375,7 @@ class _CommunityTemplateDetailScreenState
                           size: 18, color: scheme.primary),
                       const SizedBox(width: 8),
                       Text(
-                        'Hábitos incluidos',
+                        s.communityDetailHabitsIncluded,
                         style: Theme.of(context)
                             .textTheme
                             .titleSmall
@@ -409,7 +411,7 @@ class _CommunityTemplateDetailScreenState
                   ? OutlinedButton.icon(
                       onPressed: null,
                       icon: const Icon(Icons.check_circle_outline_rounded),
-                      label: const Text('Esta es tu plantilla'),
+                      label: Text(s.communityDetailMyTemplate),
                     )
                   : FilledButton.icon(
                       onPressed: _importing ? null : _import,
@@ -423,8 +425,8 @@ class _CommunityTemplateDetailScreenState
                             )
                           : const Icon(Icons.download_rounded),
                       label: Text(_importing
-                          ? 'Importando…'
-                          : 'Importar a mis hábitos'),
+                          ? s.communityDetailImporting
+                          : s.communityDetailImportCta),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),
                       ),
@@ -476,11 +478,19 @@ class _HabitPreviewTile extends StatelessWidget {
 
   const _HabitPreviewTile({required this.habit});
 
-  static const _dayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    final dayLabels = [
+      s.weekdayLShort,
+      s.weekdayMShort,
+      s.weekdayXShort,
+      s.weekdayJShort,
+      s.weekdayVShort,
+      s.weekdaySShort,
+      s.weekdayDShort,
+    ];
     final bgColor = AppTheme.categoryBg(habit.category);
     final fgColor = AppTheme.categoryFg(habit.category);
 
@@ -549,7 +559,7 @@ class _HabitPreviewTile extends StatelessWidget {
                               ),
                               alignment: Alignment.center,
                               child: Text(
-                                _dayLabels[i],
+                                dayLabels[i],
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,

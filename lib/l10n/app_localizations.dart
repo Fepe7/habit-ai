@@ -2256,6 +2256,1512 @@ abstract class S {
   /// In es, this message translates to:
   /// **'dic'**
   String get monthDec;
+
+  /// No description provided for @habitFieldTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Título'**
+  String get habitFieldTitle;
+
+  /// No description provided for @habitFieldDescription.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción'**
+  String get habitFieldDescription;
+
+  /// No description provided for @habitFieldOptional.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional'**
+  String get habitFieldOptional;
+
+  /// No description provided for @habitFieldCategory.
+  ///
+  /// In es, this message translates to:
+  /// **'Categoría'**
+  String get habitFieldCategory;
+
+  /// No description provided for @habitFieldWeekdays.
+  ///
+  /// In es, this message translates to:
+  /// **'Días de la semana'**
+  String get habitFieldWeekdays;
+
+  /// No description provided for @habitFieldReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'Recordatorio'**
+  String get habitFieldReminder;
+
+  /// No description provided for @habitNoReminder.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin recordatorio'**
+  String get habitNoReminder;
+
+  /// No description provided for @createHabitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo hábito'**
+  String get createHabitTitle;
+
+  /// No description provided for @createHabitTitleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Leer 20 minutos'**
+  String get createHabitTitleHint;
+
+  /// No description provided for @createHabitGroupLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Grupo'**
+  String get createHabitGroupLabel;
+
+  /// No description provided for @createHabitGroupHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Agrupa este hábito con otros relacionados'**
+  String get createHabitGroupHint;
+
+  /// No description provided for @createHabitNoGroup.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin grupo'**
+  String get createHabitNoGroup;
+
+  /// No description provided for @createHabitChainLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Encadenar después de...'**
+  String get createHabitChainLabel;
+
+  /// No description provided for @createHabitChainHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Se mostrará como siguiente paso al completar el hábito ancla'**
+  String get createHabitChainHint;
+
+  /// No description provided for @createHabitChainNone.
+  ///
+  /// In es, this message translates to:
+  /// **'Ninguno'**
+  String get createHabitChainNone;
+
+  /// No description provided for @createHabitCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear hábito'**
+  String get createHabitCta;
+
+  /// No description provided for @editHabitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar hábito'**
+  String get editHabitTitle;
+
+  /// No description provided for @editHabitTitleHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Correr 30 minutos'**
+  String get editHabitTitleHint;
+
+  /// No description provided for @editHabitRoutineLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Rutina'**
+  String get editHabitRoutineLabel;
+
+  /// No description provided for @editHabitNoRoutine.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin rutina'**
+  String get editHabitNoRoutine;
+
+  /// No description provided for @editHabitChainLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Cadena de hábitos'**
+  String get editHabitChainLabel;
+
+  /// No description provided for @editHabitChainedCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 hábito encadenado} other{{count} hábitos encadenados}}'**
+  String editHabitChainedCount(int count);
+
+  /// No description provided for @editHabitChainThis.
+  ///
+  /// In es, this message translates to:
+  /// **'← este'**
+  String get editHabitChainThis;
+
+  /// No description provided for @editHabitChainRemove.
+  ///
+  /// In es, this message translates to:
+  /// **'Quitar de la cadena'**
+  String get editHabitChainRemove;
+
+  /// No description provided for @editHabitNoChain.
+  ///
+  /// In es, this message translates to:
+  /// **'Este hábito no pertenece a ninguna cadena. Puedes encadenarlo al crear hábitos nuevos.'**
+  String get editHabitNoChain;
+
+  /// No description provided for @editHabitSaveCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar cambios'**
+  String get editHabitSaveCta;
+
+  /// No description provided for @commonEdit.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar'**
+  String get commonEdit;
+
+  /// No description provided for @habitCardAfter.
+  ///
+  /// In es, this message translates to:
+  /// **'Después de \"{title}\"'**
+  String habitCardAfter(String title);
+
+  /// No description provided for @habitCardNext.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Siguiente!'**
+  String get habitCardNext;
+
+  /// No description provided for @habitCardCoachLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'– COACH · PREGUNTA DEL DÍA'**
+  String get habitCardCoachLabel;
+
+  /// No description provided for @habitCardCoachApply.
+  ///
+  /// In es, this message translates to:
+  /// **'SÍ, HAZLO →'**
+  String get habitCardCoachApply;
+
+  /// No description provided for @habitCardCoachDismiss.
+  ///
+  /// In es, this message translates to:
+  /// **'OTRA OPCIÓN'**
+  String get habitCardCoachDismiss;
+
+  /// No description provided for @createChoiceHabitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo hábito'**
+  String get createChoiceHabitTitle;
+
+  /// No description provided for @createChoiceHabitSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Un hábito individual'**
+  String get createChoiceHabitSubtitle;
+
+  /// No description provided for @createChoiceGroupTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva rutina'**
+  String get createChoiceGroupTitle;
+
+  /// No description provided for @createChoiceGroupSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Grupo de hábitos relacionados'**
+  String get createChoiceGroupSubtitle;
+
+  /// No description provided for @createGroupTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva rutina'**
+  String get createGroupTitle;
+
+  /// No description provided for @createGroupNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de la rutina'**
+  String get createGroupNameLabel;
+
+  /// No description provided for @createGroupNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Rutina matutina'**
+  String get createGroupNameHint;
+
+  /// No description provided for @createGroupDescHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Opcional — para qué sirve esta rutina'**
+  String get createGroupDescHint;
+
+  /// No description provided for @createGroupEmojiLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Emoji'**
+  String get createGroupEmojiLabel;
+
+  /// No description provided for @createGroupEmojiHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega un emoji o selecciona abajo'**
+  String get createGroupEmojiHint;
+
+  /// No description provided for @createGroupCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear rutina'**
+  String get createGroupCta;
+
+  /// No description provided for @emptyHabitsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Empieza tu camino!'**
+  String get emptyHabitsTitle;
+
+  /// No description provided for @emptyHabitsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuéntale a la IA tus metas y te creará\nun plan de hábitos personalizado.'**
+  String get emptyHabitsSubtitle;
+
+  /// No description provided for @emptyHabitsAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear mi plan con IA'**
+  String get emptyHabitsAction;
+
+  /// No description provided for @stackCompleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡CADENA COMPLETA!'**
+  String get stackCompleteTitle;
+
+  /// No description provided for @stackCompleteCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 hábito seguido. ¡Imparable!} other{{count} hábitos seguidos. ¡Imparable!}}'**
+  String stackCompleteCount(int count);
+
+  /// No description provided for @stackCompleteSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Así se construye un hábito atómico.'**
+  String get stackCompleteSubtitle;
+
+  /// No description provided for @allHabitsTotal.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} en total'**
+  String allHabitsTotal(int count);
+
+  /// No description provided for @allHabitsCancelSelection.
+  ///
+  /// In es, this message translates to:
+  /// **'Cancelar selección'**
+  String get allHabitsCancelSelection;
+
+  /// No description provided for @allHabitsTabActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activos'**
+  String get allHabitsTabActive;
+
+  /// No description provided for @allHabitsTabArchived.
+  ///
+  /// In es, this message translates to:
+  /// **'Archivados'**
+  String get allHabitsTabArchived;
+
+  /// No description provided for @allHabitsTabRoutines.
+  ///
+  /// In es, this message translates to:
+  /// **'Rutinas'**
+  String get allHabitsTabRoutines;
+
+  /// No description provided for @allHabitsEmptyActiveTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes hábitos creados'**
+  String get allHabitsEmptyActiveTitle;
+
+  /// No description provided for @allHabitsEmptyActiveSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea hábitos desde la pantalla principal o con la IA.'**
+  String get allHabitsEmptyActiveSubtitle;
+
+  /// No description provided for @allHabitsEmptyArchivedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes hábitos archivados'**
+  String get allHabitsEmptyArchivedTitle;
+
+  /// No description provided for @allHabitsEmptyRoutinesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'No tienes rutinas creadas'**
+  String get allHabitsEmptyRoutinesTitle;
+
+  /// No description provided for @allHabitsEmptyRoutinesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crea una rutina desde el \"+\" de la pantalla principal.'**
+  String get allHabitsEmptyRoutinesSubtitle;
+
+  /// No description provided for @allHabitsNoHabitsYet.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin hábitos aún'**
+  String get allHabitsNoHabitsYet;
+
+  /// No description provided for @allHabitsHardDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar definitivamente'**
+  String get allHabitsHardDeleteTitle;
+
+  /// No description provided for @allHabitsHardDeleteContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres borrar \"{title}\" para siempre?\n\nEsto borra el hábito y todos sus registros. No se puede deshacer.'**
+  String allHabitsHardDeleteContent(String title);
+
+  /// No description provided for @allHabitsHardDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar definitivo'**
+  String get allHabitsHardDeleteConfirm;
+
+  /// No description provided for @allHabitsHardDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'\"{title}\" borrado permanentemente'**
+  String allHabitsHardDeleted(String title);
+
+  /// No description provided for @allHabitsHardDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al borrar el hábito'**
+  String get allHabitsHardDeleteError;
+
+  /// No description provided for @allHabitsBulkDeleteTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Borrar 1 hábito} other{Borrar {count} hábitos}}'**
+  String allHabitsBulkDeleteTitle(int count);
+
+  /// No description provided for @allHabitsBulkDeleteContent.
+  ///
+  /// In es, this message translates to:
+  /// **'Se borrarán definitivamente con todos sus registros. No se puede deshacer.'**
+  String get allHabitsBulkDeleteContent;
+
+  /// No description provided for @allHabitsDeleteButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Borrar'**
+  String get allHabitsDeleteButton;
+
+  /// No description provided for @allHabitsBulkDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 hábito borrado} other{{count} hábitos borrados}}'**
+  String allHabitsBulkDeleted(int count);
+
+  /// No description provided for @allHabitsBulkDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al borrar los hábitos'**
+  String get allHabitsBulkDeleteError;
+
+  /// No description provided for @allHabitsBulkDeleteGroupsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Eliminar 1 rutina} other{Eliminar {count} rutinas}}'**
+  String allHabitsBulkDeleteGroupsTitle(int count);
+
+  /// No description provided for @allHabitsBulkDeleteGroupsContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué quieres hacer con los hábitos de las rutinas seleccionadas?'**
+  String get allHabitsBulkDeleteGroupsContent;
+
+  /// No description provided for @allHabitsBulkDeleteGroupsOnly.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo las rutinas'**
+  String get allHabitsBulkDeleteGroupsOnly;
+
+  /// No description provided for @allHabitsBulkDeleteGroupsAndHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'Rutinas y hábitos'**
+  String get allHabitsBulkDeleteGroupsAndHabits;
+
+  /// No description provided for @allHabitsGroupsDeleted.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{1 rutina eliminada} other{{count} rutinas eliminadas}}'**
+  String allHabitsGroupsDeleted(int count);
+
+  /// No description provided for @allHabitsGroupsDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al eliminar las rutinas'**
+  String get allHabitsGroupsDeleteError;
+
+  /// No description provided for @groupDetailEditTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar grupo'**
+  String get groupDetailEditTitle;
+
+  /// No description provided for @groupDetailAddHabitError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al añadir el hábito'**
+  String get groupDetailAddHabitError;
+
+  /// No description provided for @groupDetailHabitAdded.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábito añadido a la rutina'**
+  String get groupDetailHabitAdded;
+
+  /// No description provided for @groupDetailGroupUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Grupo actualizado'**
+  String get groupDetailGroupUpdated;
+
+  /// No description provided for @groupDetailGroupUpdateError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al actualizar el grupo'**
+  String get groupDetailGroupUpdateError;
+
+  /// No description provided for @groupDetailPublishNoHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'El grupo no tiene hábitos, añade al menos uno.'**
+  String get groupDetailPublishNoHabits;
+
+  /// No description provided for @groupDetailPublishNeedPublic.
+  ///
+  /// In es, this message translates to:
+  /// **'Activa tu perfil público en Ajustes antes de publicar.'**
+  String get groupDetailPublishNeedPublic;
+
+  /// No description provided for @groupDetailPublishTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Publicar como plantilla'**
+  String get groupDetailPublishTitle;
+
+  /// No description provided for @groupDetailPublishBody.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{Se publicará 1 hábito sin datos personales (sin rachas ni historial).} other{Se publicarán {count} hábitos sin datos personales (sin rachas ni historial).}}'**
+  String groupDetailPublishBody(int count);
+
+  /// No description provided for @groupDetailPublishDescLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Descripción (opcional)'**
+  String get groupDetailPublishDescLabel;
+
+  /// No description provided for @groupDetailPublishDescHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Explica para quién es este plan…'**
+  String get groupDetailPublishDescHint;
+
+  /// No description provided for @groupDetailPublishConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Publicar'**
+  String get groupDetailPublishConfirm;
+
+  /// No description provided for @groupDetailPublishSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantilla publicada en la comunidad'**
+  String get groupDetailPublishSuccess;
+
+  /// No description provided for @groupDetailViewAction.
+  ///
+  /// In es, this message translates to:
+  /// **'Ver'**
+  String get groupDetailViewAction;
+
+  /// No description provided for @groupDetailPublishError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al publicar la plantilla'**
+  String get groupDetailPublishError;
+
+  /// No description provided for @groupDetailUnpublishTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Retirar plantilla'**
+  String get groupDetailUnpublishTitle;
+
+  /// No description provided for @groupDetailUnpublishContent.
+  ///
+  /// In es, this message translates to:
+  /// **'La plantilla desaparecerá del marketplace. Las copias importadas por otros usuarios no se verán afectadas.'**
+  String get groupDetailUnpublishContent;
+
+  /// No description provided for @groupDetailUnpublishConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Retirar'**
+  String get groupDetailUnpublishConfirm;
+
+  /// No description provided for @groupDetailUnpublishSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantilla retirada del marketplace'**
+  String get groupDetailUnpublishSuccess;
+
+  /// No description provided for @groupDetailUnpublishError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al retirar la plantilla'**
+  String get groupDetailUnpublishError;
+
+  /// No description provided for @groupDetailUnpublishTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Retirar del marketplace'**
+  String get groupDetailUnpublishTooltip;
+
+  /// No description provided for @groupDetailPublishTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Publicar como plantilla'**
+  String get groupDetailPublishTooltip;
+
+  /// No description provided for @groupDetailNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Este grupo ya no existe.'**
+  String get groupDetailNotFound;
+
+  /// No description provided for @groupDetailHabitsHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos del grupo'**
+  String get groupDetailHabitsHeader;
+
+  /// No description provided for @groupDetailEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin hábitos en este grupo'**
+  String get groupDetailEmptyTitle;
+
+  /// No description provided for @groupDetailEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade hábitos con el botón +'**
+  String get groupDetailEmptySubtitle;
+
+  /// No description provided for @groupDetailEditNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Título del grupo'**
+  String get groupDetailEditNameLabel;
+
+  /// No description provided for @groupDetailEditNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Rutina de gimnasio'**
+  String get groupDetailEditNameHint;
+
+  /// No description provided for @groupDetailEditEmojiHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pega un emoji o déjalo vacío'**
+  String get groupDetailEditEmojiHint;
+
+  /// No description provided for @commonApply.
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicar'**
+  String get commonApply;
+
+  /// No description provided for @monthFullJan.
+  ///
+  /// In es, this message translates to:
+  /// **'Enero'**
+  String get monthFullJan;
+
+  /// No description provided for @monthFullFeb.
+  ///
+  /// In es, this message translates to:
+  /// **'Febrero'**
+  String get monthFullFeb;
+
+  /// No description provided for @monthFullMar.
+  ///
+  /// In es, this message translates to:
+  /// **'Marzo'**
+  String get monthFullMar;
+
+  /// No description provided for @monthFullApr.
+  ///
+  /// In es, this message translates to:
+  /// **'Abril'**
+  String get monthFullApr;
+
+  /// No description provided for @monthFullMay.
+  ///
+  /// In es, this message translates to:
+  /// **'Mayo'**
+  String get monthFullMay;
+
+  /// No description provided for @monthFullJun.
+  ///
+  /// In es, this message translates to:
+  /// **'Junio'**
+  String get monthFullJun;
+
+  /// No description provided for @monthFullJul.
+  ///
+  /// In es, this message translates to:
+  /// **'Julio'**
+  String get monthFullJul;
+
+  /// No description provided for @monthFullAug.
+  ///
+  /// In es, this message translates to:
+  /// **'Agosto'**
+  String get monthFullAug;
+
+  /// No description provided for @monthFullSep.
+  ///
+  /// In es, this message translates to:
+  /// **'Septiembre'**
+  String get monthFullSep;
+
+  /// No description provided for @monthFullOct.
+  ///
+  /// In es, this message translates to:
+  /// **'Octubre'**
+  String get monthFullOct;
+
+  /// No description provided for @monthFullNov.
+  ///
+  /// In es, this message translates to:
+  /// **'Noviembre'**
+  String get monthFullNov;
+
+  /// No description provided for @monthFullDec.
+  ///
+  /// In es, this message translates to:
+  /// **'Diciembre'**
+  String get monthFullDec;
+
+  /// No description provided for @butterflyNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró la proyección o puede que haya expirado.'**
+  String get butterflyNotFound;
+
+  /// No description provided for @butterflyCheckins.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} check-ins'**
+  String butterflyCheckins(int count);
+
+  /// No description provided for @butterflyStreakDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{count}d racha'**
+  String butterflyStreakDays(int count);
+
+  /// No description provided for @butterflyCompletion.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent}% completitud'**
+  String butterflyCompletion(int percent);
+
+  /// No description provided for @butterflyKeyMoments.
+  ///
+  /// In es, this message translates to:
+  /// **'Momentos clave'**
+  String get butterflyKeyMoments;
+
+  /// No description provided for @patternInsightsNeedConnection.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas conexión para regenerar los patrones'**
+  String get patternInsightsNeedConnection;
+
+  /// No description provided for @patternInsightsNeedMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas al menos 14 días con datos y 3 hábitos activos.'**
+  String get patternInsightsNeedMore;
+
+  /// No description provided for @patternInsightsUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Patrones actualizados.'**
+  String get patternInsightsUpdated;
+
+  /// No description provided for @patternInsightsEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin insights para {period}'**
+  String patternInsightsEmptyTitle(String period);
+
+  /// No description provided for @patternInsightsEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Genera los patrones desde el dashboard o espera a que el sistema los procese automáticamente.'**
+  String get patternInsightsEmptySubtitle;
+
+  /// No description provided for @patternInsightsRegenerate.
+  ///
+  /// In es, this message translates to:
+  /// **'Regenerar patrones'**
+  String get patternInsightsRegenerate;
+
+  /// No description provided for @patternInsightsLimitedData.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos limitados'**
+  String get patternInsightsLimitedData;
+
+  /// No description provided for @patternInsightsDetected.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} patrones detectados'**
+  String patternInsightsDetected(int count);
+
+  /// No description provided for @patternInsightsConfidenceHigh.
+  ///
+  /// In es, this message translates to:
+  /// **'Alta confianza'**
+  String get patternInsightsConfidenceHigh;
+
+  /// No description provided for @patternInsightsConfidenceMedium.
+  ///
+  /// In es, this message translates to:
+  /// **'Media'**
+  String get patternInsightsConfidenceMedium;
+
+  /// No description provided for @patternInsightsConfidenceLow.
+  ///
+  /// In es, this message translates to:
+  /// **'Baja'**
+  String get patternInsightsConfidenceLow;
+
+  /// No description provided for @weeklyReviewNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'No se encontró esta revisión'**
+  String get weeklyReviewNotFound;
+
+  /// No description provided for @weeklyReviewLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar la revisión'**
+  String get weeklyReviewLoadError;
+
+  /// No description provided for @weeklyReviewHabitGone.
+  ///
+  /// In es, this message translates to:
+  /// **'Este hábito ya no existe'**
+  String get weeklyReviewHabitGone;
+
+  /// No description provided for @weeklyReviewWins.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que funcionó'**
+  String get weeklyReviewWins;
+
+  /// No description provided for @weeklyReviewStruggles.
+  ///
+  /// In es, this message translates to:
+  /// **'Dónde fallaste'**
+  String get weeklyReviewStruggles;
+
+  /// No description provided for @weeklyReviewWeekLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Semana {weekId}'**
+  String weeklyReviewWeekLabel(String weekId);
+
+  /// No description provided for @weeklyReviewStatCheckins.
+  ///
+  /// In es, this message translates to:
+  /// **'Check-ins'**
+  String get weeklyReviewStatCheckins;
+
+  /// No description provided for @weeklyReviewStatHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos'**
+  String get weeklyReviewStatHabits;
+
+  /// No description provided for @weeklyReviewStatAtRisk.
+  ///
+  /// In es, this message translates to:
+  /// **'En riesgo'**
+  String get weeklyReviewStatAtRisk;
+
+  /// No description provided for @weeklyReviewFocusTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu foco esta semana'**
+  String get weeklyReviewFocusTitle;
+
+  /// No description provided for @weeklyReviewRecommendations.
+  ///
+  /// In es, this message translates to:
+  /// **'Recomendaciones'**
+  String get weeklyReviewRecommendations;
+
+  /// No description provided for @planCardSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos guardados'**
+  String get planCardSaved;
+
+  /// No description provided for @planCardAddSelected.
+  ///
+  /// In es, this message translates to:
+  /// **'Añadir hábitos seleccionados'**
+  String get planCardAddSelected;
+
+  /// No description provided for @planCardFrequencyDaily.
+  ///
+  /// In es, this message translates to:
+  /// **'Diario'**
+  String get planCardFrequencyDaily;
+
+  /// No description provided for @planCardFrequencyWeekly.
+  ///
+  /// In es, this message translates to:
+  /// **'Semanal'**
+  String get planCardFrequencyWeekly;
+
+  /// No description provided for @planCardFrequencyCustom.
+  ///
+  /// In es, this message translates to:
+  /// **'Personalizado'**
+  String get planCardFrequencyCustom;
+
+  /// No description provided for @challengesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mis retos'**
+  String get challengesTitle;
+
+  /// No description provided for @challengesNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Nuevo reto'**
+  String get challengesNew;
+
+  /// No description provided for @challengesEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin retos todavía'**
+  String get challengesEmptyTitle;
+
+  /// No description provided for @challengesEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reta a un amigo a completar un hábito juntos durante varios días'**
+  String get challengesEmptySubtitle;
+
+  /// No description provided for @challengesSectionPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendientes'**
+  String get challengesSectionPending;
+
+  /// No description provided for @challengesSectionActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activos'**
+  String get challengesSectionActive;
+
+  /// No description provided for @challengesSectionFinished.
+  ///
+  /// In es, this message translates to:
+  /// **'Finalizados'**
+  String get challengesSectionFinished;
+
+  /// No description provided for @challengeCardWaiting.
+  ///
+  /// In es, this message translates to:
+  /// **'Esperando aceptación...'**
+  String get challengeCardWaiting;
+
+  /// No description provided for @challengeStatusPending.
+  ///
+  /// In es, this message translates to:
+  /// **'Pendiente'**
+  String get challengeStatusPending;
+
+  /// No description provided for @challengeStatusActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Activo'**
+  String get challengeStatusActive;
+
+  /// No description provided for @challengeStatusCompleted.
+  ///
+  /// In es, this message translates to:
+  /// **'Completado'**
+  String get challengeStatusCompleted;
+
+  /// No description provided for @challengeStatusDeclined.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazado'**
+  String get challengeStatusDeclined;
+
+  /// No description provided for @challengeStatusAbandoned.
+  ///
+  /// In es, this message translates to:
+  /// **'Abandonado'**
+  String get challengeStatusAbandoned;
+
+  /// No description provided for @challengeDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reto compartido'**
+  String get challengeDetailTitle;
+
+  /// No description provided for @challengeDetailNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Reto no encontrado'**
+  String get challengeDetailNotFound;
+
+  /// No description provided for @challengeDetailAccepted.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Reto aceptado! El hábito fue creado en tu lista'**
+  String get challengeDetailAccepted;
+
+  /// No description provided for @challengeDetailAcceptError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al aceptar el reto'**
+  String get challengeDetailAcceptError;
+
+  /// No description provided for @challengeDetailDeclineTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar reto'**
+  String get challengeDetailDeclineTitle;
+
+  /// No description provided for @challengeDetailDeclineContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres rechazar este reto?'**
+  String get challengeDetailDeclineContent;
+
+  /// No description provided for @challengeDetailDeclineConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Rechazar'**
+  String get challengeDetailDeclineConfirm;
+
+  /// No description provided for @challengeDetailAbandonTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Abandonar reto'**
+  String get challengeDetailAbandonTitle;
+
+  /// No description provided for @challengeDetailAbandonContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Seguro que quieres abandonar? No podrás retomarlo.'**
+  String get challengeDetailAbandonContent;
+
+  /// No description provided for @challengeDetailAbandonConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Abandonar'**
+  String get challengeDetailAbandonConfirm;
+
+  /// No description provided for @challengeDetailAbandonTooltip.
+  ///
+  /// In es, this message translates to:
+  /// **'Abandonar'**
+  String get challengeDetailAbandonTooltip;
+
+  /// No description provided for @challengeDetailYourProgress.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu progreso'**
+  String get challengeDetailYourProgress;
+
+  /// No description provided for @challengeDetailPartner.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañero'**
+  String get challengeDetailPartner;
+
+  /// No description provided for @challengeDetailCompletedTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Reto completado!'**
+  String get challengeDetailCompletedTitle;
+
+  /// No description provided for @challengeDetailCompletedSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ambos habéis demostrado constancia'**
+  String get challengeDetailCompletedSubtitle;
+
+  /// No description provided for @challengeDetailDeclinedState.
+  ///
+  /// In es, this message translates to:
+  /// **'Reto rechazado'**
+  String get challengeDetailDeclinedState;
+
+  /// No description provided for @challengeDetailAbandonedState.
+  ///
+  /// In es, this message translates to:
+  /// **'Reto abandonado'**
+  String get challengeDetailAbandonedState;
+
+  /// No description provided for @challengeDetailWaitingPartner.
+  ///
+  /// In es, this message translates to:
+  /// **'Esperando a que {name} acepte el reto'**
+  String challengeDetailWaitingPartner(String name);
+
+  /// No description provided for @challengeDetailFallbackPartner.
+  ///
+  /// In es, this message translates to:
+  /// **'tu compañero'**
+  String get challengeDetailFallbackPartner;
+
+  /// No description provided for @challengeDetailFallbackPartnerCap.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañero'**
+  String get challengeDetailFallbackPartnerCap;
+
+  /// No description provided for @challengeDetailFallbackSomeone.
+  ///
+  /// In es, this message translates to:
+  /// **'Alguien'**
+  String get challengeDetailFallbackSomeone;
+
+  /// No description provided for @challengeDetailYouChallenged.
+  ///
+  /// In es, this message translates to:
+  /// **'Retaste a {name}'**
+  String challengeDetailYouChallenged(String name);
+
+  /// No description provided for @challengeDetailChallengedYou.
+  ///
+  /// In es, this message translates to:
+  /// **'{name} te ha retado'**
+  String challengeDetailChallengedYou(String name);
+
+  /// No description provided for @challengeDetailAcceptQuestion.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Aceptas el reto?'**
+  String get challengeDetailAcceptQuestion;
+
+  /// No description provided for @challengeDetailAcceptHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Se creará automáticamente el hábito en tu lista y empezareis juntos'**
+  String get challengeDetailAcceptHint;
+
+  /// No description provided for @challengeDetailAcceptCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Aceptar reto'**
+  String get challengeDetailAcceptCta;
+
+  /// No description provided for @challengeDetailCompletedToday.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Completado hoy!'**
+  String get challengeDetailCompletedToday;
+
+  /// No description provided for @challengeDetailMarkToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Marcar hoy como completado'**
+  String get challengeDetailMarkToday;
+
+  /// No description provided for @challengeDetailProgressDays.
+  ///
+  /// In es, this message translates to:
+  /// **'{completed} / {total} días'**
+  String challengeDetailProgressDays(int completed, int total);
+
+  /// No description provided for @createChallengeTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear reto'**
+  String get createChallengeTitle;
+
+  /// No description provided for @createChallengeError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al crear reto: {error}'**
+  String createChallengeError(String error);
+
+  /// No description provided for @createChallengeHabitName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre del hábito'**
+  String get createChallengeHabitName;
+
+  /// No description provided for @createChallengeHabitHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Ej: Meditar 10 minutos'**
+  String get createChallengeHabitHint;
+
+  /// No description provided for @createChallengeDuration.
+  ///
+  /// In es, this message translates to:
+  /// **'Duración'**
+  String get createChallengeDuration;
+
+  /// No description provided for @createChallengePartnerLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañero de reto'**
+  String get createChallengePartnerLabel;
+
+  /// No description provided for @createChallengeSearchUsername.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar por username'**
+  String get createChallengeSearchUsername;
+
+  /// No description provided for @createChallengeFollowerChip.
+  ///
+  /// In es, this message translates to:
+  /// **'Seguidor'**
+  String get createChallengeFollowerChip;
+
+  /// No description provided for @createChallengeSend.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviar reto'**
+  String get createChallengeSend;
+
+  /// No description provided for @communityTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Comunidad'**
+  String get communityTitle;
+
+  /// No description provided for @communitySearchHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Buscar plantillas…'**
+  String get communitySearchHint;
+
+  /// No description provided for @communitySortPopular.
+  ///
+  /// In es, this message translates to:
+  /// **'Popular'**
+  String get communitySortPopular;
+
+  /// No description provided for @communitySortRecent.
+  ///
+  /// In es, this message translates to:
+  /// **'Recientes'**
+  String get communitySortRecent;
+
+  /// No description provided for @communityFilterAll.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas'**
+  String get communityFilterAll;
+
+  /// No description provided for @communityLoadMore.
+  ///
+  /// In es, this message translates to:
+  /// **'Cargar más'**
+  String get communityLoadMore;
+
+  /// No description provided for @communityEndOfList.
+  ///
+  /// In es, this message translates to:
+  /// **'— fin de la lista —'**
+  String get communityEndOfList;
+
+  /// No description provided for @communityEmptyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Todavía no hay plantillas'**
+  String get communityEmptyTitle;
+
+  /// No description provided for @communityEmptySubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sé el primero en publicar un plan de hábitos.'**
+  String get communityEmptySubtitle;
+
+  /// No description provided for @communityEmptyFilterTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin resultados para ese filtro'**
+  String get communityEmptyFilterTitle;
+
+  /// No description provided for @communityEmptyFilterSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Prueba otra categoría o quita el filtro.'**
+  String get communityEmptyFilterSubtitle;
+
+  /// No description provided for @communityDetailNotFound.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantilla no encontrada'**
+  String get communityDetailNotFound;
+
+  /// No description provided for @communityDetailLoadError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al cargar la plantilla'**
+  String get communityDetailLoadError;
+
+  /// No description provided for @communityDetailImported.
+  ///
+  /// In es, this message translates to:
+  /// **'{emoji} \"{title}\" importado a tus hábitos'**
+  String communityDetailImported(String emoji, String title);
+
+  /// No description provided for @communityDetailImportError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error al importar la plantilla'**
+  String get communityDetailImportError;
+
+  /// No description provided for @communityDetailReportTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reportar plantilla'**
+  String get communityDetailReportTitle;
+
+  /// No description provided for @communityDetailReportContent.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres reportar esta plantilla por contenido inapropiado? Será revisada por el equipo.'**
+  String get communityDetailReportContent;
+
+  /// No description provided for @communityDetailReportConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Reportar'**
+  String get communityDetailReportConfirm;
+
+  /// No description provided for @communityDetailReportSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Reporte enviado, gracias'**
+  String get communityDetailReportSent;
+
+  /// No description provided for @communityDetailImports.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} imports'**
+  String communityDetailImports(int count);
+
+  /// No description provided for @communityDetailByAuthor.
+  ///
+  /// In es, this message translates to:
+  /// **'Por {name}'**
+  String communityDetailByAuthor(String name);
+
+  /// No description provided for @communityDetailHabitsIncluded.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos incluidos'**
+  String get communityDetailHabitsIncluded;
+
+  /// No description provided for @communityDetailMyTemplate.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta es tu plantilla'**
+  String get communityDetailMyTemplate;
+
+  /// No description provided for @communityDetailImporting.
+  ///
+  /// In es, this message translates to:
+  /// **'Importando…'**
+  String get communityDetailImporting;
+
+  /// No description provided for @communityDetailImportCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Importar a mis hábitos'**
+  String get communityDetailImportCta;
+
+  /// No description provided for @streakDaysShort.
+  ///
+  /// In es, this message translates to:
+  /// **'{count}d'**
+  String streakDaysShort(int count);
+
+  /// No description provided for @categoryDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Categorías'**
+  String get categoryDetailTitle;
+
+  /// No description provided for @categoryDetailDistribution.
+  ///
+  /// In es, this message translates to:
+  /// **'Distribución'**
+  String get categoryDetailDistribution;
+
+  /// No description provided for @categoryDetailWeeklyPct.
+  ///
+  /// In es, this message translates to:
+  /// **'{percent}% semanal'**
+  String categoryDetailWeeklyPct(int percent);
+
+  /// No description provided for @streaksDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Rachas'**
+  String get streaksDetailTitle;
+
+  /// No description provided for @streaksDetailBestGlobal.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor racha global'**
+  String get streaksDetailBestGlobal;
+
+  /// No description provided for @streaksDetailOnStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'En racha'**
+  String get streaksDetailOnStreak;
+
+  /// No description provided for @streaksDetailNoStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin racha'**
+  String get streaksDetailNoStreak;
+
+  /// No description provided for @streaksDetailBestShort.
+  ///
+  /// In es, this message translates to:
+  /// **'mejor: {count}d'**
+  String streaksDetailBestShort(int count);
+
+  /// No description provided for @weeklyDetailTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Progreso mensual'**
+  String get weeklyDetailTitle;
+
+  /// No description provided for @weeklyDetailDailyBreakdown.
+  ///
+  /// In es, this message translates to:
+  /// **'Desglose diario'**
+  String get weeklyDetailDailyBreakdown;
+
+  /// No description provided for @weeklyDetailAverage.
+  ///
+  /// In es, this message translates to:
+  /// **'Media'**
+  String get weeklyDetailAverage;
+
+  /// No description provided for @weeklyDetailLast30Days.
+  ///
+  /// In es, this message translates to:
+  /// **'Últimos 30 días'**
+  String get weeklyDetailLast30Days;
+
+  /// No description provided for @usernameSheetTitleNew.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige tu username'**
+  String get usernameSheetTitleNew;
+
+  /// No description provided for @usernameSheetTitleChange.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar username'**
+  String get usernameSheetTitleChange;
+
+  /// No description provided for @usernameSheetSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu username es único y público. Aparecerá en tu perfil y en los retos.'**
+  String get usernameSheetSubtitle;
+
+  /// No description provided for @usernameSheetHelperIdle.
+  ///
+  /// In es, this message translates to:
+  /// **'Te identifica en la comunidad'**
+  String get usernameSheetHelperIdle;
+
+  /// No description provided for @usernameSheetChecking.
+  ///
+  /// In es, this message translates to:
+  /// **'Comprobando...'**
+  String get usernameSheetChecking;
+
+  /// No description provided for @usernameSheetVisibleData.
+  ///
+  /// In es, this message translates to:
+  /// **'Datos visibles en tu perfil:'**
+  String get usernameSheetVisibleData;
+
+  /// No description provided for @usernameSheetDataName.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre y @username'**
+  String get usernameSheetDataName;
+
+  /// No description provided for @usernameSheetDataStreaks.
+  ///
+  /// In es, this message translates to:
+  /// **'Rachas actuales'**
+  String get usernameSheetDataStreaks;
+
+  /// No description provided for @usernameSheetDataHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos activos (título y categoría)'**
+  String get usernameSheetDataHabits;
+
+  /// No description provided for @usernameSheetDataLevel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nivel y logros'**
+  String get usernameSheetDataLevel;
+
+  /// No description provided for @usernameSheetPrivacy.
+  ///
+  /// In es, this message translates to:
+  /// **'Nunca se comparten: email, notas, recordatorios.'**
+  String get usernameSheetPrivacy;
+
+  /// No description provided for @usernameSheetConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'Confirmar'**
+  String get usernameSheetConfirm;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

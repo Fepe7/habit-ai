@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/habit_group_repository.dart';
@@ -45,8 +46,6 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   HabitGroupModel? _selectedGroup;
   List<HabitGroupModel> _availableGroups = [];
   bool _groupsLoaded = false;
-
-  static const _dayNames = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
 
   @override
   void initState() {
@@ -145,6 +144,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -184,7 +184,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             const SizedBox(height: 10),
 
             Text(
-              'Nuevo hábito',
+              s.createHabitTitle,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
@@ -194,9 +194,9 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             // título
             TextField(
               controller: _titleCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Título',
-                hintText: 'Ej: Leer 20 minutos',
+              decoration: InputDecoration(
+                labelText: s.habitFieldTitle,
+                hintText: s.createHabitTitleHint,
               ),
               textCapitalization: TextCapitalization.sentences,
               autofocus: true,
@@ -206,9 +206,9 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             // descripción
             TextField(
               controller: _descCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Descripción',
-                hintText: 'Opcional',
+              decoration: InputDecoration(
+                labelText: s.habitFieldDescription,
+                hintText: s.habitFieldOptional,
               ),
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
@@ -216,7 +216,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             const SizedBox(height: 24),
 
             // sección categoría
-            _SheetLabel(label: 'Categoría'),
+            _SheetLabel(label: s.habitFieldCategory),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -274,7 +274,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             const SizedBox(height: 24),
 
             // sección días
-            _SheetLabel(label: 'Días de la semana'),
+            _SheetLabel(label: s.habitFieldWeekdays),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -305,7 +305,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
                     ),
                     child: Center(
                       child: Text(
-                        _dayNames[i],
+                        _weekdayInitials(s)[i],
                         style: TextStyle(
                           color: selected
                               ? Colors.white
@@ -322,7 +322,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             const SizedBox(height: 24),
 
             // recordatorio
-            _SheetLabel(label: 'Recordatorio'),
+            _SheetLabel(label: s.habitFieldReminder),
             const SizedBox(height: 12),
             _ReminderTile(
               reminderTime: _reminderTime,
@@ -333,7 +333,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
 
             // sección grupos
             if (!_groupsLoaded) ...[
-              _SheetLabel(label: 'Grupo'),
+              _SheetLabel(label: s.createHabitGroupLabel),
               const SizedBox(height: 12),
               const Center(
                 child: SizedBox(
@@ -344,10 +344,10 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               ),
               const SizedBox(height: 28),
             ] else if (_availableGroups.isNotEmpty) ...[
-              _SheetLabel(label: 'Grupo'),
+              _SheetLabel(label: s.createHabitGroupLabel),
               const SizedBox(height: 6),
               Text(
-                'Agrupa este hábito con otros relacionados',
+                s.createHabitGroupHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -358,7 +358,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
                 runSpacing: 8,
                 children: [
                   _StackChip(
-                    label: 'Sin grupo',
+                    label: s.createHabitNoGroup,
                     icon: Icons.folder_off_rounded,
                     selected: _selectedGroup == null,
                     onTap: () => setState(() => _selectedGroup = null),
@@ -378,7 +378,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
 
             // sección encadenamiento
             if (!_habitsLoaded) ...[
-              _SheetLabel(label: 'Encadenar después de...'),
+              _SheetLabel(label: s.createHabitChainLabel),
               const SizedBox(height: 12),
               const Center(
                 child: SizedBox(
@@ -389,10 +389,10 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               ),
               const SizedBox(height: 28),
             ] else if (_availableHabits.isNotEmpty) ...[
-              _SheetLabel(label: 'Encadenar después de...'),
+              _SheetLabel(label: s.createHabitChainLabel),
               const SizedBox(height: 6),
               Text(
-                'Se mostrará como siguiente paso al completar el hábito ancla',
+                s.createHabitChainHint,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -404,7 +404,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
                 children: [
                   // chip "Ninguno" (quitar ancla)
                   _StackChip(
-                    label: 'Ninguno',
+                    label: s.createHabitChainNone,
                     icon: Icons.link_off_rounded,
                     selected: _stackAnchor == null,
                     onTap: () => setState(() => _stackAnchor = null),
@@ -426,7 +426,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
             // CTA
             GradientButton(
               onPressed: _save,
-              label: 'Crear hábito',
+              label: s.createHabitCta,
               icon: Icons.add_rounded,
               gradient: AppTheme.heroGradient,
             ),
@@ -437,6 +437,17 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
     );
   }
 }
+
+// iniciales de los días de la semana (lun→dom) localizadas
+List<String> _weekdayInitials(S s) => [
+      s.weekdayLShort,
+      s.weekdayMShort,
+      s.weekdayXShort,
+      s.weekdayJShort,
+      s.weekdayVShort,
+      s.weekdaySShort,
+      s.weekdayDShort,
+    ];
 
 // ==================== HELPERS COMPARTIDOS ====================
 
@@ -549,7 +560,7 @@ class _ReminderTile extends StatelessWidget {
           child: Icon(Icons.schedule_rounded, size: 18, color: scheme.primary),
         ),
         title: Text(
-          hasReminder ? reminderTime! : 'Sin recordatorio',
+          hasReminder ? reminderTime! : S.of(context).habitNoReminder,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             fontWeight: FontWeight.w500,
             color: hasReminder ? scheme.onSurface : scheme.onSurfaceVariant,

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
 import 'widgets/community_template_card.dart';
@@ -130,6 +131,7 @@ class _CommunityTemplatesFeedScreenState
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final filtered = _filtered;
 
     return Scaffold(
@@ -144,7 +146,7 @@ class _CommunityTemplatesFeedScreenState
             snap: true,
             centerTitle: false,
             leading: const DrawerMenuButton(),
-            title: const Text('Comunidad'),
+            title: Text(s.communityTitle),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(108),
               child: Column(
@@ -154,7 +156,7 @@ class _CommunityTemplatesFeedScreenState
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                     child: SearchBar(
                       controller: _searchController,
-                      hintText: 'Buscar plantillas…',
+                      hintText: s.communitySearchHint,
                       leading: const Icon(Icons.search_rounded),
                       trailing: [
                         if (_searchQuery.isNotEmpty)
@@ -177,14 +179,14 @@ class _CommunityTemplatesFeedScreenState
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       children: [
                         _SortChip(
-                          label: 'Popular',
+                          label: s.communitySortPopular,
                           icon: Icons.trending_up_rounded,
                           selected: _sort == TemplateSort.popular,
                           onTap: () => _applySort(TemplateSort.popular),
                         ),
                         const SizedBox(width: 8),
                         _SortChip(
-                          label: 'Recientes',
+                          label: s.communitySortRecent,
                           icon: Icons.schedule_rounded,
                           selected: _sort == TemplateSort.recent,
                           onTap: () => _applySort(TemplateSort.recent),
@@ -200,7 +202,7 @@ class _CommunityTemplatesFeedScreenState
                         const SizedBox(width: 8),
                         // chips de categoria
                         _SortChip(
-                          label: 'Todas',
+                          label: s.communityFilterAll,
                           selected: _categoryFilter == null,
                           onTap: () => _applyCategory(null),
                         ),
@@ -257,10 +259,10 @@ class _CommunityTemplatesFeedScreenState
                       : _hasMore
                           ? TextButton(
                               onPressed: _loadPage,
-                              child: const Text('Cargar más'),
+                              child: Text(s.communityLoadMore),
                             )
                           : Text(
-                              '— fin de la lista —',
+                              s.communityEndOfList,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -320,12 +322,13 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return EmptyStateView(
       icon: Icons.storefront_outlined,
-      title: hasFilter ? 'Sin resultados para ese filtro' : 'Todavía no hay plantillas',
+      title: hasFilter ? s.communityEmptyFilterTitle : s.communityEmptyTitle,
       subtitle: hasFilter
-          ? 'Prueba otra categoría o quita el filtro.'
-          : 'Sé el primero en publicar un plan de hábitos.',
+          ? s.communityEmptyFilterSubtitle
+          : s.communityEmptySubtitle,
     );
   }
 }

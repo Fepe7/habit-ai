@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/chat_message.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Burbuja de mensaje del chat
 /// Usuario: primaryContainer con radio pill asimetrico
@@ -87,7 +88,7 @@ class ChatBubble extends StatelessWidget {
                         Icon(Icons.refresh_rounded, size: 14, color: scheme.primary),
                         const SizedBox(width: 4),
                         Text(
-                          'Reintentar',
+                          S.of(context).snackbarRetry,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: scheme.primary,
                             fontWeight: FontWeight.w600,

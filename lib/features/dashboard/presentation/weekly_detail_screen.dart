@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 
 // Vista detallada del progreso: ultimos 30 dias con grafica y desglose diario
@@ -58,8 +59,9 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Progreso mensual')),
+      appBar: AppBar(title: Text(s.weeklyDetailTitle)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -85,7 +87,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
 
                   // desglose diario
                   Text(
-                    'Desglose diario',
+                    s.weeklyDetailDailyBreakdown,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
@@ -113,12 +115,13 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
   }
 
   Widget _buildSummaryRow(BuildContext context) {
+    final s = S.of(context);
     return Row(
       children: [
         Expanded(
           child: _MiniStat(
             icon: Icons.stars_rounded,
-            label: 'Dias perfectos',
+            label: s.dashboardPerfectDays,
             value: '$_perfectDays',
             color: AppTheme.secondary,
           ),
@@ -127,7 +130,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
         Expanded(
           child: _MiniStat(
             icon: Icons.trending_up_rounded,
-            label: 'Media',
+            label: s.weeklyDetailAverage,
             value: '${(_avgCompletion * 100).round()}%',
             color: AppTheme.primary,
           ),
@@ -136,7 +139,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
         Expanded(
           child: _MiniStat(
             icon: Icons.check_circle_rounded,
-            label: 'Check-ins',
+            label: s.weeklyReviewStatCheckins,
             value: '$_totalCompleted',
             color: AppTheme.success,
           ),
@@ -147,6 +150,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
 
   Widget _buildChart(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 20, 16, 12),
@@ -167,7 +171,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 16),
             child: Text(
-              'Ultimos 30 dias',
+              s.weeklyDetailLast30Days,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colorScheme.onSurfaceVariant,
@@ -349,6 +353,7 @@ class _DayTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final isPerfect = progress.completed == progress.total;
     final pct = progress.percentage;
     final date = progress.date;
@@ -357,8 +362,16 @@ class _DayTile extends StatelessWidget {
         date.month == now.month &&
         date.day == now.day;
 
-    const dayNames = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
-    final dayName = isToday ? 'Hoy' : dayNames[date.weekday - 1];
+    final dayNames = [
+      s.weekdayMonShort,
+      s.weekdayTueShort,
+      s.weekdayWedShort,
+      s.weekdayThuShort,
+      s.weekdayFriShort,
+      s.weekdaySatShort,
+      s.weekdaySunShort,
+    ];
+    final dayName = isToday ? s.weekdayTodayShort : dayNames[date.weekday - 1];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),

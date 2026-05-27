@@ -1250,4 +1250,880 @@ class SEn extends S {
 
   @override
   String get monthDec => 'dec';
+
+  @override
+  String get habitFieldTitle => 'Title';
+
+  @override
+  String get habitFieldDescription => 'Description';
+
+  @override
+  String get habitFieldOptional => 'Optional';
+
+  @override
+  String get habitFieldCategory => 'Category';
+
+  @override
+  String get habitFieldWeekdays => 'Days of the week';
+
+  @override
+  String get habitFieldReminder => 'Reminder';
+
+  @override
+  String get habitNoReminder => 'No reminder';
+
+  @override
+  String get createHabitTitle => 'New habit';
+
+  @override
+  String get createHabitTitleHint => 'E.g. Read 20 minutes';
+
+  @override
+  String get createHabitGroupLabel => 'Group';
+
+  @override
+  String get createHabitGroupHint => 'Group this habit with related ones';
+
+  @override
+  String get createHabitNoGroup => 'No group';
+
+  @override
+  String get createHabitChainLabel => 'Chain after...';
+
+  @override
+  String get createHabitChainHint =>
+      'It will show as the next step when you complete the anchor habit';
+
+  @override
+  String get createHabitChainNone => 'None';
+
+  @override
+  String get createHabitCta => 'Create habit';
+
+  @override
+  String get editHabitTitle => 'Edit habit';
+
+  @override
+  String get editHabitTitleHint => 'E.g. Run 30 minutes';
+
+  @override
+  String get editHabitRoutineLabel => 'Routine';
+
+  @override
+  String get editHabitNoRoutine => 'No routine';
+
+  @override
+  String get editHabitChainLabel => 'Habit chain';
+
+  @override
+  String editHabitChainedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chained habits',
+      one: '1 chained habit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get editHabitChainThis => '← this one';
+
+  @override
+  String get editHabitChainRemove => 'Remove from chain';
+
+  @override
+  String get editHabitNoChain =>
+      'This habit isn\'t part of any chain. You can chain it when creating new habits.';
+
+  @override
+  String get editHabitSaveCta => 'Save changes';
+
+  @override
+  String get commonEdit => 'Edit';
+
+  @override
+  String habitCardAfter(String title) {
+    return 'After \"$title\"';
+  }
+
+  @override
+  String get habitCardNext => 'Next!';
+
+  @override
+  String get habitCardCoachLabel => '– COACH · QUESTION OF THE DAY';
+
+  @override
+  String get habitCardCoachApply => 'YES, DO IT →';
+
+  @override
+  String get habitCardCoachDismiss => 'ANOTHER OPTION';
+
+  @override
+  String get createChoiceHabitTitle => 'New habit';
+
+  @override
+  String get createChoiceHabitSubtitle => 'A single habit';
+
+  @override
+  String get createChoiceGroupTitle => 'New routine';
+
+  @override
+  String get createChoiceGroupSubtitle => 'Group of related habits';
+
+  @override
+  String get createGroupTitle => 'New routine';
+
+  @override
+  String get createGroupNameLabel => 'Routine name';
+
+  @override
+  String get createGroupNameHint => 'E.g. Morning routine';
+
+  @override
+  String get createGroupDescHint => 'Optional — what this routine is for';
+
+  @override
+  String get createGroupEmojiLabel => 'Emoji';
+
+  @override
+  String get createGroupEmojiHint => 'Paste an emoji or pick one below';
+
+  @override
+  String get createGroupCta => 'Create routine';
+
+  @override
+  String get emptyHabitsTitle => 'Start your journey!';
+
+  @override
+  String get emptyHabitsSubtitle =>
+      'Tell the AI your goals and it will create\na personalized habit plan for you.';
+
+  @override
+  String get emptyHabitsAction => 'Create my AI plan';
+
+  @override
+  String get stackCompleteTitle => 'CHAIN COMPLETE!';
+
+  @override
+  String stackCompleteCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits in a row. Unstoppable!',
+      one: '1 habit in a row. Unstoppable!',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get stackCompleteSubtitle => 'That\'s how an atomic habit is built.';
+
+  @override
+  String allHabitsTotal(int count) {
+    return '$count total';
+  }
+
+  @override
+  String get allHabitsCancelSelection => 'Cancel selection';
+
+  @override
+  String get allHabitsTabActive => 'Active';
+
+  @override
+  String get allHabitsTabArchived => 'Archived';
+
+  @override
+  String get allHabitsTabRoutines => 'Routines';
+
+  @override
+  String get allHabitsEmptyActiveTitle => 'You have no habits yet';
+
+  @override
+  String get allHabitsEmptyActiveSubtitle =>
+      'Create habits from the main screen or with the AI.';
+
+  @override
+  String get allHabitsEmptyArchivedTitle => 'You have no archived habits';
+
+  @override
+  String get allHabitsEmptyRoutinesTitle => 'You have no routines yet';
+
+  @override
+  String get allHabitsEmptyRoutinesSubtitle =>
+      'Create a routine from the \"+\" on the main screen.';
+
+  @override
+  String get allHabitsNoHabitsYet => 'No habits yet';
+
+  @override
+  String get allHabitsHardDeleteTitle => 'Delete permanently';
+
+  @override
+  String allHabitsHardDeleteContent(String title) {
+    return 'Are you sure you want to delete \"$title\" forever?\n\nThis deletes the habit and all its records. It cannot be undone.';
+  }
+
+  @override
+  String get allHabitsHardDeleteConfirm => 'Delete forever';
+
+  @override
+  String allHabitsHardDeleted(String title) {
+    return '\"$title\" deleted permanently';
+  }
+
+  @override
+  String get allHabitsHardDeleteError => 'Error deleting the habit';
+
+  @override
+  String allHabitsBulkDeleteTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count habits',
+      one: 'Delete 1 habit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteContent =>
+      'They will be deleted permanently with all their records. It cannot be undone.';
+
+  @override
+  String get allHabitsDeleteButton => 'Delete';
+
+  @override
+  String allHabitsBulkDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits deleted',
+      one: '1 habit deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteError => 'Error deleting the habits';
+
+  @override
+  String allHabitsBulkDeleteGroupsTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count routines',
+      one: 'Delete 1 routine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsBulkDeleteGroupsContent =>
+      'What do you want to do with the habits in the selected routines?';
+
+  @override
+  String get allHabitsBulkDeleteGroupsOnly => 'Routines only';
+
+  @override
+  String get allHabitsBulkDeleteGroupsAndHabits => 'Routines and habits';
+
+  @override
+  String allHabitsGroupsDeleted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count routines deleted',
+      one: '1 routine deleted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get allHabitsGroupsDeleteError => 'Error deleting the routines';
+
+  @override
+  String get groupDetailEditTitle => 'Edit group';
+
+  @override
+  String get groupDetailAddHabitError => 'Error adding the habit';
+
+  @override
+  String get groupDetailHabitAdded => 'Habit added to the routine';
+
+  @override
+  String get groupDetailGroupUpdated => 'Group updated';
+
+  @override
+  String get groupDetailGroupUpdateError => 'Error updating the group';
+
+  @override
+  String get groupDetailPublishNoHabits =>
+      'The group has no habits, add at least one.';
+
+  @override
+  String get groupDetailPublishNeedPublic =>
+      'Enable your public profile in Settings before publishing.';
+
+  @override
+  String get groupDetailPublishTitle => 'Publish as template';
+
+  @override
+  String groupDetailPublishBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '$count habits will be published without personal data (no streaks or history).',
+      one:
+          '1 habit will be published without personal data (no streaks or history).',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupDetailPublishDescLabel => 'Description (optional)';
+
+  @override
+  String get groupDetailPublishDescHint => 'Explain who this plan is for…';
+
+  @override
+  String get groupDetailPublishConfirm => 'Publish';
+
+  @override
+  String get groupDetailPublishSuccess => 'Template published to the community';
+
+  @override
+  String get groupDetailViewAction => 'View';
+
+  @override
+  String get groupDetailPublishError => 'Error publishing the template';
+
+  @override
+  String get groupDetailUnpublishTitle => 'Withdraw template';
+
+  @override
+  String get groupDetailUnpublishContent =>
+      'The template will disappear from the marketplace. Copies imported by other users won\'t be affected.';
+
+  @override
+  String get groupDetailUnpublishConfirm => 'Withdraw';
+
+  @override
+  String get groupDetailUnpublishSuccess =>
+      'Template withdrawn from the marketplace';
+
+  @override
+  String get groupDetailUnpublishError => 'Error withdrawing the template';
+
+  @override
+  String get groupDetailUnpublishTooltip => 'Withdraw from marketplace';
+
+  @override
+  String get groupDetailPublishTooltip => 'Publish as template';
+
+  @override
+  String get groupDetailNotFound => 'This group no longer exists.';
+
+  @override
+  String get groupDetailHabitsHeader => 'Group habits';
+
+  @override
+  String get groupDetailEmptyTitle => 'No habits in this group';
+
+  @override
+  String get groupDetailEmptySubtitle => 'Add habits with the + button';
+
+  @override
+  String get groupDetailEditNameLabel => 'Group title';
+
+  @override
+  String get groupDetailEditNameHint => 'E.g. Gym routine';
+
+  @override
+  String get groupDetailEditEmojiHint => 'Paste an emoji or leave it empty';
+
+  @override
+  String get commonApply => 'Apply';
+
+  @override
+  String get monthFullJan => 'January';
+
+  @override
+  String get monthFullFeb => 'February';
+
+  @override
+  String get monthFullMar => 'March';
+
+  @override
+  String get monthFullApr => 'April';
+
+  @override
+  String get monthFullMay => 'May';
+
+  @override
+  String get monthFullJun => 'June';
+
+  @override
+  String get monthFullJul => 'July';
+
+  @override
+  String get monthFullAug => 'August';
+
+  @override
+  String get monthFullSep => 'September';
+
+  @override
+  String get monthFullOct => 'October';
+
+  @override
+  String get monthFullNov => 'November';
+
+  @override
+  String get monthFullDec => 'December';
+
+  @override
+  String get butterflyNotFound =>
+      'Projection not found or it may have expired.';
+
+  @override
+  String butterflyCheckins(int count) {
+    return '$count check-ins';
+  }
+
+  @override
+  String butterflyStreakDays(int count) {
+    return '${count}d streak';
+  }
+
+  @override
+  String butterflyCompletion(int percent) {
+    return '$percent% completion';
+  }
+
+  @override
+  String get butterflyKeyMoments => 'Key moments';
+
+  @override
+  String get patternInsightsNeedConnection =>
+      'You need a connection to regenerate the patterns';
+
+  @override
+  String get patternInsightsNeedMore =>
+      'You need at least 14 days of data and 3 active habits.';
+
+  @override
+  String get patternInsightsUpdated => 'Patterns updated.';
+
+  @override
+  String patternInsightsEmptyTitle(String period) {
+    return 'No insights for $period';
+  }
+
+  @override
+  String get patternInsightsEmptySubtitle =>
+      'Generate the patterns from the dashboard or wait for the system to process them automatically.';
+
+  @override
+  String get patternInsightsRegenerate => 'Regenerate patterns';
+
+  @override
+  String get patternInsightsLimitedData => 'Limited data';
+
+  @override
+  String patternInsightsDetected(int count) {
+    return '$count patterns detected';
+  }
+
+  @override
+  String get patternInsightsConfidenceHigh => 'High confidence';
+
+  @override
+  String get patternInsightsConfidenceMedium => 'Medium';
+
+  @override
+  String get patternInsightsConfidenceLow => 'Low';
+
+  @override
+  String get weeklyReviewNotFound => 'This review was not found';
+
+  @override
+  String get weeklyReviewLoadError => 'Error loading the review';
+
+  @override
+  String get weeklyReviewHabitGone => 'This habit no longer exists';
+
+  @override
+  String get weeklyReviewWins => 'What worked';
+
+  @override
+  String get weeklyReviewStruggles => 'Where you struggled';
+
+  @override
+  String weeklyReviewWeekLabel(String weekId) {
+    return 'Week $weekId';
+  }
+
+  @override
+  String get weeklyReviewStatCheckins => 'Check-ins';
+
+  @override
+  String get weeklyReviewStatHabits => 'Habits';
+
+  @override
+  String get weeklyReviewStatAtRisk => 'At risk';
+
+  @override
+  String get weeklyReviewFocusTitle => 'Your focus this week';
+
+  @override
+  String get weeklyReviewRecommendations => 'Recommendations';
+
+  @override
+  String get planCardSaved => 'Habits saved';
+
+  @override
+  String get planCardAddSelected => 'Add selected habits';
+
+  @override
+  String get planCardFrequencyDaily => 'Daily';
+
+  @override
+  String get planCardFrequencyWeekly => 'Weekly';
+
+  @override
+  String get planCardFrequencyCustom => 'Custom';
+
+  @override
+  String get challengesTitle => 'My challenges';
+
+  @override
+  String get challengesNew => 'New challenge';
+
+  @override
+  String get challengesEmptyTitle => 'No challenges yet';
+
+  @override
+  String get challengesEmptySubtitle =>
+      'Challenge a friend to complete a habit together for several days';
+
+  @override
+  String get challengesSectionPending => 'Pending';
+
+  @override
+  String get challengesSectionActive => 'Active';
+
+  @override
+  String get challengesSectionFinished => 'Finished';
+
+  @override
+  String get challengeCardWaiting => 'Waiting for acceptance...';
+
+  @override
+  String get challengeStatusPending => 'Pending';
+
+  @override
+  String get challengeStatusActive => 'Active';
+
+  @override
+  String get challengeStatusCompleted => 'Completed';
+
+  @override
+  String get challengeStatusDeclined => 'Declined';
+
+  @override
+  String get challengeStatusAbandoned => 'Abandoned';
+
+  @override
+  String get challengeDetailTitle => 'Shared challenge';
+
+  @override
+  String get challengeDetailNotFound => 'Challenge not found';
+
+  @override
+  String get challengeDetailAccepted =>
+      'Challenge accepted! The habit was created in your list';
+
+  @override
+  String get challengeDetailAcceptError => 'Error accepting the challenge';
+
+  @override
+  String get challengeDetailDeclineTitle => 'Decline challenge';
+
+  @override
+  String get challengeDetailDeclineContent =>
+      'Are you sure you want to decline this challenge?';
+
+  @override
+  String get challengeDetailDeclineConfirm => 'Decline';
+
+  @override
+  String get challengeDetailAbandonTitle => 'Abandon challenge';
+
+  @override
+  String get challengeDetailAbandonContent =>
+      'Are you sure you want to abandon it? You won\'t be able to resume it.';
+
+  @override
+  String get challengeDetailAbandonConfirm => 'Abandon';
+
+  @override
+  String get challengeDetailAbandonTooltip => 'Abandon';
+
+  @override
+  String get challengeDetailYourProgress => 'Your progress';
+
+  @override
+  String get challengeDetailPartner => 'Partner';
+
+  @override
+  String get challengeDetailCompletedTitle => 'Challenge completed!';
+
+  @override
+  String get challengeDetailCompletedSubtitle => 'You both showed consistency';
+
+  @override
+  String get challengeDetailDeclinedState => 'Challenge declined';
+
+  @override
+  String get challengeDetailAbandonedState => 'Challenge abandoned';
+
+  @override
+  String challengeDetailWaitingPartner(String name) {
+    return 'Waiting for $name to accept the challenge';
+  }
+
+  @override
+  String get challengeDetailFallbackPartner => 'your partner';
+
+  @override
+  String get challengeDetailFallbackPartnerCap => 'Partner';
+
+  @override
+  String get challengeDetailFallbackSomeone => 'Someone';
+
+  @override
+  String challengeDetailYouChallenged(String name) {
+    return 'You challenged $name';
+  }
+
+  @override
+  String challengeDetailChallengedYou(String name) {
+    return '$name has challenged you';
+  }
+
+  @override
+  String get challengeDetailAcceptQuestion => 'Do you accept the challenge?';
+
+  @override
+  String get challengeDetailAcceptHint =>
+      'The habit will be created automatically in your list and you\'ll start together';
+
+  @override
+  String get challengeDetailAcceptCta => 'Accept challenge';
+
+  @override
+  String get challengeDetailCompletedToday => 'Completed today!';
+
+  @override
+  String get challengeDetailMarkToday => 'Mark today as completed';
+
+  @override
+  String challengeDetailProgressDays(int completed, int total) {
+    return '$completed / $total days';
+  }
+
+  @override
+  String get createChallengeTitle => 'Create challenge';
+
+  @override
+  String createChallengeError(String error) {
+    return 'Error creating challenge: $error';
+  }
+
+  @override
+  String get createChallengeHabitName => 'Habit name';
+
+  @override
+  String get createChallengeHabitHint => 'E.g. Meditate 10 minutes';
+
+  @override
+  String get createChallengeDuration => 'Duration';
+
+  @override
+  String get createChallengePartnerLabel => 'Challenge partner';
+
+  @override
+  String get createChallengeSearchUsername => 'Search by username';
+
+  @override
+  String get createChallengeFollowerChip => 'Follower';
+
+  @override
+  String get createChallengeSend => 'Send challenge';
+
+  @override
+  String get communityTitle => 'Community';
+
+  @override
+  String get communitySearchHint => 'Search templates…';
+
+  @override
+  String get communitySortPopular => 'Popular';
+
+  @override
+  String get communitySortRecent => 'Recent';
+
+  @override
+  String get communityFilterAll => 'All';
+
+  @override
+  String get communityLoadMore => 'Load more';
+
+  @override
+  String get communityEndOfList => '— end of list —';
+
+  @override
+  String get communityEmptyTitle => 'No templates yet';
+
+  @override
+  String get communityEmptySubtitle => 'Be the first to publish a habit plan.';
+
+  @override
+  String get communityEmptyFilterTitle => 'No results for that filter';
+
+  @override
+  String get communityEmptyFilterSubtitle =>
+      'Try another category or clear the filter.';
+
+  @override
+  String get communityDetailNotFound => 'Template not found';
+
+  @override
+  String get communityDetailLoadError => 'Error loading the template';
+
+  @override
+  String communityDetailImported(String emoji, String title) {
+    return '$emoji \"$title\" imported to your habits';
+  }
+
+  @override
+  String get communityDetailImportError => 'Error importing the template';
+
+  @override
+  String get communityDetailReportTitle => 'Report template';
+
+  @override
+  String get communityDetailReportContent =>
+      'Do you want to report this template for inappropriate content? It will be reviewed by the team.';
+
+  @override
+  String get communityDetailReportConfirm => 'Report';
+
+  @override
+  String get communityDetailReportSent => 'Report sent, thanks';
+
+  @override
+  String communityDetailImports(int count) {
+    return '$count imports';
+  }
+
+  @override
+  String communityDetailByAuthor(String name) {
+    return 'By $name';
+  }
+
+  @override
+  String get communityDetailHabitsIncluded => 'Included habits';
+
+  @override
+  String get communityDetailMyTemplate => 'This is your template';
+
+  @override
+  String get communityDetailImporting => 'Importing…';
+
+  @override
+  String get communityDetailImportCta => 'Import to my habits';
+
+  @override
+  String streakDaysShort(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String get categoryDetailTitle => 'Categories';
+
+  @override
+  String get categoryDetailDistribution => 'Distribution';
+
+  @override
+  String categoryDetailWeeklyPct(int percent) {
+    return '$percent% weekly';
+  }
+
+  @override
+  String get streaksDetailTitle => 'Streaks';
+
+  @override
+  String get streaksDetailBestGlobal => 'Best overall streak';
+
+  @override
+  String get streaksDetailOnStreak => 'On a streak';
+
+  @override
+  String get streaksDetailNoStreak => 'No streak';
+
+  @override
+  String streaksDetailBestShort(int count) {
+    return 'best: ${count}d';
+  }
+
+  @override
+  String get weeklyDetailTitle => 'Monthly progress';
+
+  @override
+  String get weeklyDetailDailyBreakdown => 'Daily breakdown';
+
+  @override
+  String get weeklyDetailAverage => 'Average';
+
+  @override
+  String get weeklyDetailLast30Days => 'Last 30 days';
+
+  @override
+  String get usernameSheetTitleNew => 'Choose your username';
+
+  @override
+  String get usernameSheetTitleChange => 'Change username';
+
+  @override
+  String get usernameSheetSubtitle =>
+      'Your username is unique and public. It will appear on your profile and in challenges.';
+
+  @override
+  String get usernameSheetHelperIdle => 'Identifies you in the community';
+
+  @override
+  String get usernameSheetChecking => 'Checking...';
+
+  @override
+  String get usernameSheetVisibleData => 'Visible data on your profile:';
+
+  @override
+  String get usernameSheetDataName => 'Name and @username';
+
+  @override
+  String get usernameSheetDataStreaks => 'Current streaks';
+
+  @override
+  String get usernameSheetDataHabits => 'Active habits (title and category)';
+
+  @override
+  String get usernameSheetDataLevel => 'Level and achievements';
+
+  @override
+  String get usernameSheetPrivacy => 'Never shared: email, notes, reminders.';
+
+  @override
+  String get usernameSheetConfirm => 'Confirm';
 }

@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../social/data/follow_repository.dart';
 import '../../../social/data/user_directory_repository.dart';
 import '../../../social/domain/privacy_level.dart';
@@ -162,7 +163,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al crear reto: $e')),
+          SnackBar(content: Text(S.of(context).createChallengeError('$e'))),
         );
         setState(() => _saving = false);
       }
@@ -172,6 +173,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -198,7 +200,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Crear reto',
+              s.createChallengeTitle,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -210,8 +212,8 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
               controller: _titleCtrl,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                labelText: 'Nombre del hábito',
-                hintText: 'Ej: Meditar 10 minutos',
+                labelText: s.createChallengeHabitName,
+                hintText: s.createChallengeHabitHint,
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
@@ -228,7 +230,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
               textCapitalization: TextCapitalization.sentences,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'Descripción (opcional)',
+                labelText: s.groupDetailPublishDescLabel,
                 filled: true,
                 fillColor: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 border: OutlineInputBorder(
@@ -240,7 +242,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
             const SizedBox(height: 16),
 
             // categoría
-            Text('Categoría',
+            Text(s.habitFieldCategory,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: scheme.onSurfaceVariant)),
@@ -270,7 +272,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
             const SizedBox(height: 16),
 
             // duración
-            Text('Duración',
+            Text(s.createChallengeDuration,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: scheme.onSurfaceVariant)),
@@ -280,7 +282,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
               children: _durations.map((d) {
                 final selected = d == _durationDays;
                 return ChoiceChip(
-                  label: Text('$d días'),
+                  label: Text(s.daysLabel(d)),
                   selected: selected,
                   onSelected: (_) => setState(() => _durationDays = d),
                   selectedColor: scheme.primaryContainer,
@@ -296,7 +298,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
             const SizedBox(height: 16),
 
             // buscar compañero
-            Text('Compañero de reto',
+            Text(s.createChallengePartnerLabel,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: scheme.onSurfaceVariant)),
@@ -312,7 +314,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
               TextField(
                 controller: _usernameCtrl,
                 decoration: InputDecoration(
-                  labelText: 'Buscar por username',
+                  labelText: s.createChallengeSearchUsername,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _searching
                       ? const Padding(
@@ -361,7 +363,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
                         subtitle: Text('@${entry.username}'),
                         trailing: isFriend
                             ? Chip(
-                                label: const Text('Seguidor'),
+                                label: Text(s.createChallengeFollowerChip),
                                 labelStyle: TextStyle(
                                   fontSize: 11,
                                   color: scheme.primary,
@@ -395,7 +397,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
                         !_saving)
                     ? _send
                     : null,
-                label: 'Enviar reto',
+                label: s.createChallengeSend,
                 loading: _saving,
               ),
             ),
@@ -447,7 +449,7 @@ class _SelectedUserTile extends StatelessWidget {
                     if (isFriend) ...[
                       const SizedBox(width: 6),
                       Chip(
-                        label: const Text('Seguidor'),
+                        label: Text(S.of(context).createChallengeFollowerChip),
                         labelStyle: TextStyle(
                           fontSize: 10,
                           color: scheme.primary,

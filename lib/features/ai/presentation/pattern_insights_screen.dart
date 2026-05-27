@@ -5,6 +5,7 @@ import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/pattern_insight_model.dart';
 
@@ -39,7 +40,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   Future<void> _regenerate() async {
     if (!ConnectivityService.instance.isOnline.value) {
       if (mounted) {
-        AppSnackBar.showInfo(context, 'Necesitas conexión para regenerar los patrones');
+        AppSnackBar.showInfo(context, S.of(context).patternInsightsNeedConnection);
       }
       return;
     }
@@ -50,11 +51,11 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
       if (periodId == null) {
         AppSnackBar.showInfo(
           context,
-          'Necesitas al menos 14 días con datos y 3 hábitos activos.',
+          S.of(context).patternInsightsNeedMore,
         );
       } else {
         setState(() => _refreshKey++);
-        AppSnackBar.showSuccess(context, 'Patrones actualizados.');
+        AppSnackBar.showSuccess(context, S.of(context).patternInsightsUpdated);
       }
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, e.toString());
@@ -64,12 +65,23 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   }
 
   // Formatea "2026-05" → "Mayo 2026"
-  String _formatPeriod(String periodId) {
+  String _formatPeriod(String periodId, S s) {
     final parts = periodId.split('-');
     if (parts.length < 2) return periodId;
-    const months = [
-      '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+    final months = [
+      '',
+      s.monthFullJan,
+      s.monthFullFeb,
+      s.monthFullMar,
+      s.monthFullApr,
+      s.monthFullMay,
+      s.monthFullJun,
+      s.monthFullJul,
+      s.monthFullAug,
+      s.monthFullSep,
+      s.monthFullOct,
+      s.monthFullNov,
+      s.monthFullDec,
     ];
     final month = int.tryParse(parts[1]) ?? 0;
     return '${months[month]} ${parts[0]}';
@@ -78,6 +90,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -103,12 +116,12 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Patrones IA',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                Text(
+                  s.dashboardPatternsTitle,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  _formatPeriod(widget.periodId),
+                  _formatPeriod(widget.periodId, s),
                   style: TextStyle(
                     fontSize: 12,
                     color: scheme.onSurfaceVariant,
@@ -138,6 +151,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   }
 
   Widget _buildEmpty(BuildContext context) {
+    final s = S.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -155,13 +169,13 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Sin insights para ${_formatPeriod(widget.periodId)}',
+              s.patternInsightsEmptyTitle(_formatPeriod(widget.periodId, s)),
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'Genera los patrones desde el dashboard o espera a que el sistema los procese automáticamente.',
+              s.patternInsightsEmptySubtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
@@ -214,7 +228,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
                   )
                 : const Icon(Icons.refresh_rounded, size: 16),
             label: Text(
-              _regenerating ? 'Regenerando…' : 'Regenerar patrones',
+              _regenerating ? S.of(context).dashboardRegenerating : S.of(context).patternInsightsRegenerate,
               style: Theme.of(context).textTheme.labelMedium
                   ?.copyWith(fontWeight: FontWeight.w600),
             ),
@@ -232,6 +246,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
 
   Widget _buildSummaryCard(BuildContext context, PatternInsightModel model) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -258,7 +273,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${model.stats.analyzedDays} días',
+                  s.daysLabel(model.stats.analyzedDays),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: _accent,
                     fontWeight: FontWeight.w700,
@@ -273,7 +288,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${model.stats.totalLogs} check-ins',
+                  s.butterflyCheckins(model.stats.totalLogs),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
@@ -288,9 +303,9 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
                     color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Datos limitados',
-                    style: TextStyle(
+                  child: Text(
+                    s.patternInsightsLimitedData,
+                    style: const TextStyle(
                       fontSize: 10,
                       color: Color(0xFFF59E0B),
                       fontWeight: FontWeight.w600,
@@ -309,7 +324,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${model.insights.length} patrones detectados',
+            s.patternInsightsDetected(model.insights.length),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: _accent,
               fontWeight: FontWeight.w600,
@@ -322,6 +337,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
 
   Widget _buildInsightCard(BuildContext context, PatternInsight insight) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final typeColor = insight.type.color;
 
     return Container(
@@ -372,10 +388,10 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
               const SizedBox(width: 5),
               Text(
                 insight.confidence == 'high'
-                    ? 'Alta confianza'
+                    ? s.patternInsightsConfidenceHigh
                     : insight.confidence == 'medium'
-                        ? 'Media'
-                        : 'Baja',
+                        ? s.patternInsightsConfidenceMedium
+                        : s.patternInsightsConfidenceLow,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/challenge_repository.dart';
 import '../domain/challenge_model.dart';
 import '../domain/challenge_participant_model.dart';
@@ -46,15 +47,16 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis retos'),
+        title: Text(s.challengesTitle),
         centerTitle: true,
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 100),
         child: GradientFab(
-          tooltip: 'Nuevo reto',
+          tooltip: s.challengesNew,
           onTap: () async {
             final created = await CreateChallengeSheet.show(context);
             if (created == true && mounted) setState(() {});
@@ -72,9 +74,8 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
           if (challenges.isEmpty) {
             return EmptyStateView(
               icon: Icons.handshake_rounded,
-              title: 'Sin retos todavía',
-              subtitle:
-                  'Reta a un amigo a completar un hábito juntos durante varios días',
+              title: s.challengesEmptyTitle,
+              subtitle: s.challengesEmptySubtitle,
             );
           }
 
@@ -94,15 +95,15 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
             padding: const EdgeInsets.only(top: 8, bottom: 100),
             children: [
               if (pending.isNotEmpty) ...[
-                _SectionHeader(title: 'Pendientes', count: pending.length),
+                _SectionHeader(title: s.challengesSectionPending, count: pending.length),
                 ...pending.map((c) => _buildCard(c)),
               ],
               if (active.isNotEmpty) ...[
-                _SectionHeader(title: 'Activos', count: active.length),
+                _SectionHeader(title: s.challengesSectionActive, count: active.length),
                 ...active.map((c) => _buildCard(c)),
               ],
               if (finished.isNotEmpty) ...[
-                _SectionHeader(title: 'Finalizados', count: finished.length),
+                _SectionHeader(title: s.challengesSectionFinished, count: finished.length),
                 ...finished.map((c) => _buildCard(c)),
               ],
             ],

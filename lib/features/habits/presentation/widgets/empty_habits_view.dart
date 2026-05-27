@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/ux/empty_state_view.dart';
+import '../../../../l10n/app_localizations.dart';
 
 // Wrapper de compatibilidad — delega en EmptyStateView genérico
 class EmptyHabitsView extends StatelessWidget {
@@ -9,11 +10,12 @@ class EmptyHabitsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return EmptyStateView(
       icon: Icons.auto_awesome,
-      title: '¡Empieza tu camino!',
-      subtitle: 'Cuéntale a la IA tus metas y te creará\nun plan de hábitos personalizado.',
-      actionLabel: 'Crear mi plan con IA',
+      title: s.emptyHabitsTitle,
+      subtitle: s.emptyHabitsSubtitle,
+      actionLabel: s.emptyHabitsAction,
       onAction: onCreatePlan,
     );
   }

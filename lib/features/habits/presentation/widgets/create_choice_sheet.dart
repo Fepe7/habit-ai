@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../l10n/app_localizations.dart';
 
 // Opciones al pulsar el FAB "+"
 enum CreateChoice { habit, group }
@@ -20,6 +21,7 @@ class _CreateChoiceContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
 
     return SafeArea(
       child: Padding(
@@ -52,15 +54,15 @@ class _CreateChoiceContent extends StatelessWidget {
             const SizedBox(height: 6),
             _ChoiceTile(
               icon: Icons.add_circle_outline_rounded,
-              title: 'Nuevo hábito',
-              subtitle: 'Un hábito individual',
+              title: s.createChoiceHabitTitle,
+              subtitle: s.createChoiceHabitSubtitle,
               onTap: () => Navigator.of(context).pop(CreateChoice.habit),
             ),
             const SizedBox(height: 8),
             _ChoiceTile(
               icon: Icons.folder_special_rounded,
-              title: 'Nueva rutina',
-              subtitle: 'Grupo de hábitos relacionados',
+              title: s.createChoiceGroupTitle,
+              subtitle: s.createChoiceGroupSubtitle,
               onTap: () => Navigator.of(context).pop(CreateChoice.group),
             ),
             const SizedBox(height: 8),

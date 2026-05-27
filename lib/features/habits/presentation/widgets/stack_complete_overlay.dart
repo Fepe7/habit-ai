@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// Overlay celebratorio que aparece al completar toda una cadena de hábitos.
 /// Sigue el mismo patrón que AchievementOverlay.
@@ -35,6 +36,7 @@ class _StackCompleteBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
       left: 20,
@@ -94,7 +96,7 @@ class _StackCompleteBanner extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '¡CADENA COMPLETA!',
+                        s.stackCompleteTitle,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.85),
                           fontWeight: FontWeight.w700,
@@ -103,14 +105,14 @@ class _StackCompleteBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '$habitCount hábitos seguidos. ¡Imparable!',
+                        s.stackCompleteCount(habitCount),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       Text(
-                        'Así se construye un hábito atómico.',
+                        s.stackCompleteSubtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.white.withValues(alpha: 0.8),
                         ),
