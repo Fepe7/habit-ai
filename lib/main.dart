@@ -6,6 +6,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'core/theme/theme_provider.dart';
+import 'core/services/connectivity_service.dart';
 import 'services/notification_service.dart';
 import 'app.dart';
 
@@ -30,6 +31,7 @@ void main() async {
     );
 
     await NotificationService.instance.init();
+    await ConnectivityService.instance.init();
 
     runApp(const ThemeScope(child: HabitAIApp()));
   }, (error, stack) {

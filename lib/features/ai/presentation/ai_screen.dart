@@ -18,6 +18,7 @@ import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../profile/data/public_profile_repository.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
@@ -88,6 +89,17 @@ class _AIScreenState extends State<AIScreen>
   Future<void> _sendMessage([String? text]) async {
     final msg = text ?? _controller.text.trim();
     if (msg.isEmpty || _isLoading) return;
+
+    // el asistente IA necesita red (las llamadas van a Cloud Functions)
+    if (!ConnectivityService.instance.isOnline.value) {
+      if (mounted) {
+        AppSnackBar.showInfo(
+          context,
+          'El asistente IA necesita conexión a internet',
+        );
+      }
+      return;
+    }
 
     _controller.clear();
     _lastUserMessage = msg;

@@ -19,6 +19,7 @@ import '../../features/social/domain/follow_request_model.dart';
 import '../../services/notification_service.dart';
 import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/ux/offline_banner.dart';
 
 /// Shell principal con glassmorphism bottom nav
 /// BackdropFilter + superficie translucida para que el scroll se vea detras
@@ -200,7 +201,14 @@ class _MainShellState extends State<MainShell> {
               width: 1,
               color: scheme.outlineVariant.withValues(alpha: 0.15),
             ),
-            Expanded(child: widget.child),
+            Expanded(
+              child: Column(
+                children: [
+                  const OfflineBanner(),
+                  Expanded(child: widget.child),
+                ],
+              ),
+            ),
           ],
         ),
       );
@@ -225,27 +233,34 @@ class _MainShellState extends State<MainShell> {
       key: MainShell.scaffoldKey,
       extendBody: true,
       drawer: const AppDrawer(),
-      body: isMainRoute
-          ? PageView(
-              controller: _pageController,
-              physics: const _QuickSwipePhysics(),
-              onPageChanged: (index) {
-                _isSwiping = true;
-                // vibración ligera al cambiar de tab con swipe
-                // lightImpact usa VIRTUAL_KEY en Android, fiable en casi todos los dispositivos
-                HapticFeedback.lightImpact();
-                context.go(_tabs[index].path);
-                Future.microtask(() => _isSwiping = false);
-              },
-              children: const [
-                HabitsScreen(),
-                DashboardScreen(),
-                AIScreen(),
-                ExploreScreen(),
-                ProfileScreen(),
-              ],
-            )
-          : widget.child,
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(
+            child: isMainRoute
+                ? PageView(
+                    controller: _pageController,
+                    physics: const _QuickSwipePhysics(),
+                    onPageChanged: (index) {
+                      _isSwiping = true;
+                      // vibración ligera al cambiar de tab con swipe
+                      // lightImpact usa VIRTUAL_KEY en Android, fiable en casi todos los dispositivos
+                      HapticFeedback.lightImpact();
+                      context.go(_tabs[index].path);
+                      Future.microtask(() => _isSwiping = false);
+                    },
+                    children: const [
+                      HabitsScreen(),
+                      DashboardScreen(),
+                      AIScreen(),
+                      ExploreScreen(),
+                      ProfileScreen(),
+                    ],
+                  )
+                : widget.child,
+          ),
+        ],
+      ),
       bottomNavigationBar: _GlassNavBar(
         selectedIndex: selected,
         scheme: scheme,

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../data/ai_repository.dart';
 import '../domain/pattern_insight_model.dart';
@@ -36,6 +37,12 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   }
 
   Future<void> _regenerate() async {
+    if (!ConnectivityService.instance.isOnline.value) {
+      if (mounted) {
+        AppSnackBar.showInfo(context, 'Necesitas conexión para regenerar los patrones');
+      }
+      return;
+    }
     setState(() => _regenerating = true);
     try {
       final periodId = await _aiRepo.generatePatternInsights();
