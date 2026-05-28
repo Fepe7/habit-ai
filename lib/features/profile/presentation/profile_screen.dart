@@ -16,6 +16,7 @@ import '../../habits/domain/habit_model.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
 import '../../levels/presentation/widgets/category_level_card.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../social/data/follow_repository.dart';
 
 /// Pantalla de perfil del usuario logueado.
@@ -699,7 +700,7 @@ class _CategorySection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                AppTheme.categoryLabel(category).toUpperCase(),
+                CategoryL10n.label(category, S.of(context)!).toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w800,

@@ -1031,6 +1031,130 @@ class SEn extends S {
       'Complete check-ins to level up in each category.';
 
   @override
+  String levelNvl(int n) {
+    return 'Lvl $n';
+  }
+
+  @override
+  String get levelNvlShort => 'Lvl';
+
+  @override
+  String get levelMaxShort => 'Max.';
+
+  @override
+  String get levelXpAccum => 'Accumulated XP';
+
+  @override
+  String get levelHowToEarnXp => 'How to earn XP';
+
+  @override
+  String get levelXpTipCheckin => '+10 XP for each completed check-in';
+
+  @override
+  String get levelXpTipStreak => '+5 XP per active streak day (max. +50)';
+
+  @override
+  String get levelXpTipAchievement => '+50 XP for each unlocked achievement';
+
+  @override
+  String levelXpToNext(int xp, String title) {
+    return '$xp XP until $title';
+  }
+
+  @override
+  String get levelMaxReached => 'Maximum level reached!';
+
+  @override
+  String get levelSalud1 => 'Novice';
+
+  @override
+  String get levelSalud2 => 'Athlete';
+
+  @override
+  String get levelSalud3 => 'Warrior';
+
+  @override
+  String get levelSalud4 => 'Champion';
+
+  @override
+  String get levelSalud5 => 'Titan';
+
+  @override
+  String get levelProductividad1 => 'Apprentice';
+
+  @override
+  String get levelProductividad2 => 'Organized';
+
+  @override
+  String get levelProductividad3 => 'Strategist';
+
+  @override
+  String get levelProductividad4 => 'Executor';
+
+  @override
+  String get levelProductividad5 => 'Master';
+
+  @override
+  String get levelBienestar1 => 'Restless';
+
+  @override
+  String get levelBienestar2 => 'Serene';
+
+  @override
+  String get levelBienestar3 => 'Balanced';
+
+  @override
+  String get levelBienestar4 => 'Zen';
+
+  @override
+  String get levelBienestar5 => 'Enlightened';
+
+  @override
+  String get levelSocial1 => 'Shy';
+
+  @override
+  String get levelSocial2 => 'Friendly';
+
+  @override
+  String get levelSocial3 => 'Connector';
+
+  @override
+  String get levelSocial4 => 'Leader';
+
+  @override
+  String get levelSocial5 => 'Ambassador';
+
+  @override
+  String get levelAprendizaje1 => 'Curious';
+
+  @override
+  String get levelAprendizaje2 => 'Student';
+
+  @override
+  String get levelAprendizaje3 => 'Scholar';
+
+  @override
+  String get levelAprendizaje4 => 'Wise';
+
+  @override
+  String get levelAprendizaje5 => 'Master';
+
+  @override
+  String get levelFinanzas1 => 'Saver';
+
+  @override
+  String get levelFinanzas2 => 'Prudent';
+
+  @override
+  String get levelFinanzas3 => 'Investor';
+
+  @override
+  String get levelFinanzas4 => 'Magnate';
+
+  @override
+  String get levelFinanzas5 => 'Patron';
+
+  @override
   String get profileTitle => 'Profile';
 
   @override

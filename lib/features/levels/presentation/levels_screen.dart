@@ -11,6 +11,7 @@ import '../data/levels_repository.dart';
 import '../domain/level_model.dart';
 import 'widgets/category_level_card.dart';
 import '../../../l10n/app_localizations.dart';
+import 'category_l10n.dart';
 
 /// Pantalla de perfil de maestría: radar hexagonal + niveles por categoría
 class LevelsScreen extends StatefulWidget {
@@ -189,7 +190,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        top.titleCurrent,
+                        CategoryL10n.levelTitle(top.category, top.level, S.of(context)),
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -200,7 +201,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  AppTheme.categoryLabel(top.category),
+                  CategoryL10n.label(top.category, S.of(context)),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.white.withValues(alpha: 0.65),
                   ),
@@ -258,7 +259,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${AppTheme.categoryLabel(cat)} ${level != null ? 'Nvl ${level.level}' : '-'}',
+                    '${CategoryL10n.label(cat, S.of(context))} ${level != null ? S.of(context).levelNvl(level.level) : '-'}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontSize: 10,
@@ -340,7 +341,7 @@ class _HexRadarChart extends StatelessWidget {
         getTitle: (index, angle) {
           final cat = AppTheme.categories[index];
           return RadarChartTitle(
-            text: AppTheme.categoryLabel(cat),
+            text: CategoryL10n.label(cat, S.of(context)),
             angle: 0,
           );
         },

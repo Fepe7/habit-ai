@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/level_model.dart';
+import '../category_l10n.dart';
 
 /// Card de nivel de maestría para una categoría, reutilizable en
 /// LevelsScreen y ProfileScreen.
@@ -19,6 +21,7 @@ class CategoryLevelCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fgColor = AppTheme.categoryFg(level.category);
     final bgColor = AppTheme.categoryBg(level.category);
+    final l10n = S.of(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -49,7 +52,7 @@ class CategoryLevelCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        AppTheme.categoryLabel(level.category),
+                        CategoryL10n.label(level.category, l10n),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -62,7 +65,7 @@ class CategoryLevelCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          'Nvl ${level.level}',
+                          l10n.levelNvl(level.level),
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: fgColor,
                                 fontWeight: FontWeight.w700,
@@ -73,7 +76,7 @@ class CategoryLevelCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    level.titleCurrent,
+                    CategoryL10n.levelTitle(level.category, level.level, l10n),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: fgColor,
                           fontWeight: FontWeight.w500,
@@ -95,7 +98,7 @@ class CategoryLevelCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        level.level < 5 ? '${level.xpToNext} XP' : 'Máx.',
+                        level.level < 5 ? '${level.xpToNext} XP' : l10n.levelMaxShort,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                               fontSize: 10,
@@ -130,6 +133,11 @@ class CategoryDetailSheet extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fgColor = AppTheme.categoryFg(level.category);
     final bgColor = AppTheme.categoryBg(level.category);
+    final l10n = S.of(context);
+    final titleCurrent = CategoryL10n.levelTitle(level.category, level.level, l10n);
+    final titleNext = level.level < 5
+        ? CategoryL10n.levelTitle(level.category, level.level + 1, l10n)
+        : null;
 
     return Container(
       decoration: BoxDecoration(
@@ -167,14 +175,14 @@ class CategoryDetailSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppTheme.categoryLabel(level.category),
+                    CategoryL10n.label(level.category, l10n),
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   Text(
-                    level.titleCurrent,
+                    titleCurrent,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: fgColor,
                           fontWeight: FontWeight.w600,
@@ -186,7 +194,7 @@ class CategoryDetailSheet extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    'Nvl',
+                    l10n.levelNvlShort,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -209,7 +217,7 @@ class CategoryDetailSheet extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'XP acumulado',
+                l10n.levelXpAccum,
                 style: Theme.of(context)
                     .textTheme
                     .bodyMedium
@@ -230,14 +238,14 @@ class CategoryDetailSheet extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  level.titleCurrent,
+                  titleCurrent,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: fgColor,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
                 Text(
-                  level.titleNext ?? '',
+                  titleNext ?? '',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -259,7 +267,7 @@ class CategoryDetailSheet extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                'Faltan ${level.xpToNext} XP para ${level.titleNext}',
+                l10n.levelXpToNext(level.xpToNext, titleNext ?? ''),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontSize: 11,
@@ -278,7 +286,7 @@ class CategoryDetailSheet extends StatelessWidget {
                   Icon(Icons.emoji_events_rounded, color: fgColor, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    '¡Nivel máximo alcanzado!',
+                    l10n.levelMaxReached,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: fgColor,
                           fontWeight: FontWeight.w600,
@@ -289,7 +297,7 @@ class CategoryDetailSheet extends StatelessWidget {
             ),
           const SizedBox(height: 20),
           Text(
-            'Cómo ganar XP',
+            l10n.levelHowToEarnXp,
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
@@ -298,19 +306,19 @@ class CategoryDetailSheet extends StatelessWidget {
           const SizedBox(height: 10),
           _XpTip(
             icon: Icons.check_circle_outline_rounded,
-            text: '+10 XP por cada check-in completado',
+            text: l10n.levelXpTipCheckin,
             color: fgColor,
           ),
           const SizedBox(height: 6),
           _XpTip(
             icon: Icons.local_fire_department_rounded,
-            text: '+5 XP por día de racha activa (máx. +50)',
+            text: l10n.levelXpTipStreak,
             color: fgColor,
           ),
           const SizedBox(height: 6),
           _XpTip(
             icon: Icons.emoji_events_rounded,
-            text: '+50 XP por cada logro desbloqueado',
+            text: l10n.levelXpTipAchievement,
             color: fgColor,
           ),
         ],

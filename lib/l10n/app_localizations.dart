@@ -1831,6 +1831,246 @@ abstract class S {
   /// **'Completa check-ins para subir de nivel en cada categoría.'**
   String get levelsEmptySubtitle;
 
+  /// No description provided for @levelNvl.
+  ///
+  /// In es, this message translates to:
+  /// **'Nvl {n}'**
+  String levelNvl(int n);
+
+  /// No description provided for @levelNvlShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Nvl'**
+  String get levelNvlShort;
+
+  /// No description provided for @levelMaxShort.
+  ///
+  /// In es, this message translates to:
+  /// **'Máx.'**
+  String get levelMaxShort;
+
+  /// No description provided for @levelXpAccum.
+  ///
+  /// In es, this message translates to:
+  /// **'XP acumulado'**
+  String get levelXpAccum;
+
+  /// No description provided for @levelHowToEarnXp.
+  ///
+  /// In es, this message translates to:
+  /// **'Cómo ganar XP'**
+  String get levelHowToEarnXp;
+
+  /// No description provided for @levelXpTipCheckin.
+  ///
+  /// In es, this message translates to:
+  /// **'+10 XP por cada check-in completado'**
+  String get levelXpTipCheckin;
+
+  /// No description provided for @levelXpTipStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'+5 XP por día de racha activa (máx. +50)'**
+  String get levelXpTipStreak;
+
+  /// No description provided for @levelXpTipAchievement.
+  ///
+  /// In es, this message translates to:
+  /// **'+50 XP por cada logro desbloqueado'**
+  String get levelXpTipAchievement;
+
+  /// No description provided for @levelXpToNext.
+  ///
+  /// In es, this message translates to:
+  /// **'Faltan {xp} XP para {title}'**
+  String levelXpToNext(int xp, String title);
+
+  /// No description provided for @levelMaxReached.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Nivel máximo alcanzado!'**
+  String get levelMaxReached;
+
+  /// No description provided for @levelSalud1.
+  ///
+  /// In es, this message translates to:
+  /// **'Novato'**
+  String get levelSalud1;
+
+  /// No description provided for @levelSalud2.
+  ///
+  /// In es, this message translates to:
+  /// **'Atleta'**
+  String get levelSalud2;
+
+  /// No description provided for @levelSalud3.
+  ///
+  /// In es, this message translates to:
+  /// **'Guerrero'**
+  String get levelSalud3;
+
+  /// No description provided for @levelSalud4.
+  ///
+  /// In es, this message translates to:
+  /// **'Campeón'**
+  String get levelSalud4;
+
+  /// No description provided for @levelSalud5.
+  ///
+  /// In es, this message translates to:
+  /// **'Titán'**
+  String get levelSalud5;
+
+  /// No description provided for @levelProductividad1.
+  ///
+  /// In es, this message translates to:
+  /// **'Aprendiz'**
+  String get levelProductividad1;
+
+  /// No description provided for @levelProductividad2.
+  ///
+  /// In es, this message translates to:
+  /// **'Organizado'**
+  String get levelProductividad2;
+
+  /// No description provided for @levelProductividad3.
+  ///
+  /// In es, this message translates to:
+  /// **'Estratega'**
+  String get levelProductividad3;
+
+  /// No description provided for @levelProductividad4.
+  ///
+  /// In es, this message translates to:
+  /// **'Ejecutor'**
+  String get levelProductividad4;
+
+  /// No description provided for @levelProductividad5.
+  ///
+  /// In es, this message translates to:
+  /// **'Maestro'**
+  String get levelProductividad5;
+
+  /// No description provided for @levelBienestar1.
+  ///
+  /// In es, this message translates to:
+  /// **'Inquieto'**
+  String get levelBienestar1;
+
+  /// No description provided for @levelBienestar2.
+  ///
+  /// In es, this message translates to:
+  /// **'Sereno'**
+  String get levelBienestar2;
+
+  /// No description provided for @levelBienestar3.
+  ///
+  /// In es, this message translates to:
+  /// **'Equilibrado'**
+  String get levelBienestar3;
+
+  /// No description provided for @levelBienestar4.
+  ///
+  /// In es, this message translates to:
+  /// **'Zen'**
+  String get levelBienestar4;
+
+  /// No description provided for @levelBienestar5.
+  ///
+  /// In es, this message translates to:
+  /// **'Iluminado'**
+  String get levelBienestar5;
+
+  /// No description provided for @levelSocial1.
+  ///
+  /// In es, this message translates to:
+  /// **'Tímido'**
+  String get levelSocial1;
+
+  /// No description provided for @levelSocial2.
+  ///
+  /// In es, this message translates to:
+  /// **'Amigable'**
+  String get levelSocial2;
+
+  /// No description provided for @levelSocial3.
+  ///
+  /// In es, this message translates to:
+  /// **'Conector'**
+  String get levelSocial3;
+
+  /// No description provided for @levelSocial4.
+  ///
+  /// In es, this message translates to:
+  /// **'Líder'**
+  String get levelSocial4;
+
+  /// No description provided for @levelSocial5.
+  ///
+  /// In es, this message translates to:
+  /// **'Embajador'**
+  String get levelSocial5;
+
+  /// No description provided for @levelAprendizaje1.
+  ///
+  /// In es, this message translates to:
+  /// **'Curioso'**
+  String get levelAprendizaje1;
+
+  /// No description provided for @levelAprendizaje2.
+  ///
+  /// In es, this message translates to:
+  /// **'Estudiante'**
+  String get levelAprendizaje2;
+
+  /// No description provided for @levelAprendizaje3.
+  ///
+  /// In es, this message translates to:
+  /// **'Erudito'**
+  String get levelAprendizaje3;
+
+  /// No description provided for @levelAprendizaje4.
+  ///
+  /// In es, this message translates to:
+  /// **'Sabio'**
+  String get levelAprendizaje4;
+
+  /// No description provided for @levelAprendizaje5.
+  ///
+  /// In es, this message translates to:
+  /// **'Maestro'**
+  String get levelAprendizaje5;
+
+  /// No description provided for @levelFinanzas1.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahorrador'**
+  String get levelFinanzas1;
+
+  /// No description provided for @levelFinanzas2.
+  ///
+  /// In es, this message translates to:
+  /// **'Prudente'**
+  String get levelFinanzas2;
+
+  /// No description provided for @levelFinanzas3.
+  ///
+  /// In es, this message translates to:
+  /// **'Inversor'**
+  String get levelFinanzas3;
+
+  /// No description provided for @levelFinanzas4.
+  ///
+  /// In es, this message translates to:
+  /// **'Magnate'**
+  String get levelFinanzas4;
+
+  /// No description provided for @levelFinanzas5.
+  ///
+  /// In es, this message translates to:
+  /// **'Mecenas'**
+  String get levelFinanzas5;
+
   /// No description provided for @profileTitle.
   ///
   /// In es, this message translates to:
