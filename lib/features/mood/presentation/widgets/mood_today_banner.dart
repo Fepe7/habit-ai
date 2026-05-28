@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/services/feedback_service.dart';
+import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../data/mood_repository.dart';
@@ -42,6 +44,30 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
     if (mounted) setState(() => _streak = streak);
   }
 
+  // Registro rápido de un toque: ánimo de la franja actual, sin abrir el sheet
+  Future<void> _quickLog(int rating) async {
+    final repo = _repo;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (repo == null || uid == null) return;
+
+    final now = DateTime.now();
+    final entry = MoodEntryModel(
+      id: '',
+      rating: rating,
+      labels: const [],
+      timeBlock: MoodEntryModel.timeBlockFromHour(now.hour),
+      timestamp: now,
+      habitsCompletedSnapshot:
+          widget.completedHabits.map((h) => h.id).toList(),
+    );
+
+    await FeedbackService.instance.moodSelected();
+    await repo.createEntry(entry);
+    if (!mounted) return;
+    _loadStreak(uid);
+    AppSnackBar.showSuccess(context, S.of(context).moodLoggedToday);
+  }
+
   @override
   Widget build(BuildContext context) {
     final repo = _repo;
@@ -50,7 +76,22 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
     return StreamBuilder<List<MoodEntryModel>>(
       stream: repo.watchTodayEntries(),
       builder: (context, snap) {
-        final state = _resolveState(snap);
+        // solo cuenta el registro de la franja horaria actual: si ya registró
+        // por la mañana, por la tarde vuelve a invitar (nueva franja)
+        final block = MoodEntryModel.timeBlockFromHour(DateTime.now().hour);
+        MoodEntryModel? blockEntry;
+        for (final e in (snap.data ?? const <MoodEntryModel>[])) {
+          if (e.timeBlock == block) blockEntry = e;
+        }
+
+        final _CardState state;
+        if (snap.connectionState == ConnectionState.waiting) {
+          state = _CardState.loading;
+        } else if (blockEntry != null) {
+          state = _CardState.logged;
+        } else {
+          state = _CardState.notLogged;
+        }
 
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 350),
@@ -72,10 +113,11 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
             _CardState.notLogged => _EntryCard(
                 key: const ValueKey('not-logged'),
                 completedHabits: widget.completedHabits,
+                onQuickLog: _quickLog,
               ),
             _CardState.logged => _LoggedCard(
                 key: const ValueKey('logged'),
-                rating: snap.data?.last.rating ?? 3,
+                rating: blockEntry!.rating,
                 streak: _streak,
                 completedHabits: widget.completedHabits,
               ),
@@ -84,34 +126,32 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
       },
     );
   }
-
-  _CardState _resolveState(AsyncSnapshot<List<MoodEntryModel>> snap) {
-    if (snap.connectionState == ConnectionState.waiting) {
-      return _CardState.loading;
-    }
-    if (snap.data?.isNotEmpty == true) return _CardState.logged;
-    return _CardState.notLogged;
-  }
 }
 
 // --- estado: sin registro — tarjeta cálida tipo diario ---
 
 class _EntryCard extends StatelessWidget {
   final List<HabitModel> completedHabits;
+  final ValueChanged<int> onQuickLog;
 
-  const _EntryCard({super.key, required this.completedHabits});
+  const _EntryCard({
+    super.key,
+    required this.completedHabits,
+    required this.onQuickLog,
+  });
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
 
     return GestureDetector(
+      // tocar la tarjeta abre el sheet completo (nota + etiquetas)
       onTap: () => MoodEntrySheet.show(
         context,
         completedHabits: completedHabits,
       ),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
         decoration: BoxDecoration(
           // crema cálida — contraste deliberado con la paleta azul de la app
           gradient: const LinearGradient(
@@ -125,51 +165,60 @@ class _EntryCard extends StatelessWidget {
             width: 1,
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _timeEmoji(DateTime.now().hour),
-              style: const TextStyle(fontSize: 26),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _greeting(s),
-                    style: const TextStyle(
-                      color: Color(0xFF78350F),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
+            Row(
+              children: [
+                Text(
+                  _timeEmoji(DateTime.now().hour),
+                  style: const TextStyle(fontSize: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _greeting(s),
+                        style: const TextStyle(
+                          color: Color(0xFF78350F),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        s.moodHowAreYou,
+                        style: const TextStyle(
+                          color: Color(0xFFA16207),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    s.moodHowAreYou,
-                    style: const TextStyle(
-                      color: Color(0xFFA16207),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Icon(
+                  Icons.tune_rounded,
+                  size: 18,
+                  color: Color(0xFFB45309),
+                ),
+              ],
             ),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFDDB0),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                size: 16,
-                color: Color(0xFF92400E),
-              ),
+            const SizedBox(height: 12),
+            // registro rápido: un toque = ánimo de esta franja, sin abrir nada
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(5, (i) {
+                final rating = i + 1;
+                return _QuickEmoji(
+                  emoji: MoodTheme.emojiFor(rating),
+                  onTap: () => onQuickLog(rating),
+                );
+              }),
             ),
           ],
         ),
@@ -289,5 +338,31 @@ class _LoggedCard extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, duration: 300.ms);
+  }
+}
+
+// Emoji tappable para el registro rápido de un toque
+class _QuickEmoji extends StatelessWidget {
+  final String emoji;
+  final VoidCallback onTap;
+
+  const _QuickEmoji({required this.emoji, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: const Color(0xFFFFDDB0),
+        highlightColor: const Color(0xFFFFEACB),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(emoji, style: const TextStyle(fontSize: 28)),
+        ),
+      ),
+    );
   }
 }
