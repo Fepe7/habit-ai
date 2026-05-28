@@ -500,7 +500,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: 'HabitAI',
+      applicationName: S.of(context).appTitle,
       applicationVersion: '1.0.0',
       applicationLegalese: 'Trabajo Final de Grado — 2º DAM\nAndrei Felipe Staicu',
     );

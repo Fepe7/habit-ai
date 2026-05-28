@@ -118,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 28),
 
                 Text(
-                  'HabitAI',
+                  s.appTitle,
                   style: textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.5,

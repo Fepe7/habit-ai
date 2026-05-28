@@ -1150,6 +1150,11 @@ class SEn extends S {
   }
 
   @override
+  String exploreByAuthor(String username) {
+    return 'By @$username';
+  }
+
+  @override
   String get snackbarRetry => 'Retry';
 
   @override

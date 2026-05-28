@@ -492,13 +492,13 @@ class _ProfileHeader extends StatelessWidget {
             children: [
               _FollowCounter(
                 value: followersCount,
-                label: 'seguidores',
+                label: S.of(context)!.profileFollowers,
                 onTap: () => context.push('/followers?tab=0'),
               ),
               const SizedBox(width: 28),
               _FollowCounter(
                 value: followingCount,
-                label: 'siguiendo',
+                label: S.of(context)!.profileFollowing,
                 onTap: () => context.push('/followers?tab=1'),
               ),
             ],
@@ -787,7 +787,7 @@ class _ProfileHabitCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'máx ${habit.bestStreak}d',
+                  S.of(context)!.profileBestStreakShort(habit.bestStreak),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),

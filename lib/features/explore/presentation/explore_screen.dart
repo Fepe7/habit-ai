@@ -899,7 +899,7 @@ class _FeaturedTemplateCard extends StatelessWidget {
                     Text(
                       template.description.isNotEmpty
                           ? template.description
-                          : 'Por @${template.authorUsername}',
+                          : s.exploreByAuthor(template.authorUsername),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),

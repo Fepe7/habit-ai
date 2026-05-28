@@ -803,6 +803,11 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
+  "exploreByAuthor": "Por @{username}",
+  "@exploreByAuthor": {
+    "placeholders": { "username": { "type": "String" } }
+  },
+
   "snackbarRetry": "Reintentar",
   "@snackbarRetry": {},
 

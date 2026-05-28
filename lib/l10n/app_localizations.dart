@@ -2053,6 +2053,12 @@ abstract class S {
   /// **'{count} hab.'**
   String exploreHabitCountShort(int count);
 
+  /// No description provided for @exploreByAuthor.
+  ///
+  /// In es, this message translates to:
+  /// **'Por @{username}'**
+  String exploreByAuthor(String username);
+
   /// No description provided for @snackbarRetry.
   ///
   /// In es, this message translates to:

@@ -802,7 +802,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Patrones IA',
+                        s.dashboardPatternsTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -878,7 +878,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             )
                           : const Icon(Icons.refresh_rounded, size: 16),
                       label: Text(
-                        _generatingPatterns ? 'Regenerando…' : 'Regenerar',
+                        _generatingPatterns ? s.dashboardRegenerating : s.dashboardRegenerate,
                         style: Theme.of(context)
                             .textTheme
                             .labelMedium
@@ -998,7 +998,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Efecto Mariposa',
+                        s.dashboardButterflyTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -1177,7 +1177,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Revisión semanal',
+                        s.dashboardWeeklyReviewTitle,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),

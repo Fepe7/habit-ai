@@ -342,6 +342,8 @@
   "exploreHabitCount": "{count} habits",
   "exploreHabitCountShort": "{count} hab.",
 
+  "exploreByAuthor": "By @{username}",
+
   "snackbarRetry": "Retry",
 
   "weekdayMonday": "Monday",

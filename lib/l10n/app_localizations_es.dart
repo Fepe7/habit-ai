@@ -1154,6 +1154,11 @@ class SEs extends S {
   }
 
   @override
+  String exploreByAuthor(String username) {
+    return 'Por @$username';
+  }
+
+  @override
   String get snackbarRetry => 'Reintentar';
 
   @override
