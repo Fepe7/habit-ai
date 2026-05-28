@@ -4957,6 +4957,42 @@ abstract class S {
   /// **'días completado'**
   String get moodCorrelationDaysCompleted;
 
+  /// No description provided for @moodConfidenceLow.
+  ///
+  /// In es, this message translates to:
+  /// **'Poca fiabilidad'**
+  String get moodConfidenceLow;
+
+  /// No description provided for @moodConfidenceMedium.
+  ///
+  /// In es, this message translates to:
+  /// **'Fiabilidad media'**
+  String get moodConfidenceMedium;
+
+  /// No description provided for @moodConfidenceHigh.
+  ///
+  /// In es, this message translates to:
+  /// **'Alta fiabilidad'**
+  String get moodConfidenceHigh;
+
+  /// No description provided for @moodStreakBoost.
+  ///
+  /// In es, this message translates to:
+  /// **'Con 5+ días seguidos: {diff}'**
+  String moodStreakBoost(String diff);
+
+  /// No description provided for @moodInsightsDelayedHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Efecto al día siguiente'**
+  String get moodInsightsDelayedHeader;
+
+  /// No description provided for @moodDelayedBoost.
+  ///
+  /// In es, this message translates to:
+  /// **'Hacer {habitName} hoy mejora tu ánimo de mañana en {diff}'**
+  String moodDelayedBoost(String habitName, String diff);
+
   /// No description provided for @moodCorrelationBoost.
   ///
   /// In es, this message translates to:

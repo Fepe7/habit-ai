@@ -2767,6 +2767,28 @@ class SEn extends S {
   String get moodCorrelationDaysCompleted => 'days completed';
 
   @override
+  String get moodConfidenceLow => 'Low confidence';
+
+  @override
+  String get moodConfidenceMedium => 'Medium confidence';
+
+  @override
+  String get moodConfidenceHigh => 'High confidence';
+
+  @override
+  String moodStreakBoost(String diff) {
+    return 'On 5+ day streaks: $diff';
+  }
+
+  @override
+  String get moodInsightsDelayedHeader => 'Next-day effect';
+
+  @override
+  String moodDelayedBoost(String habitName, String diff) {
+    return 'Doing $habitName today boosts tomorrow\'s mood by $diff';
+  }
+
+  @override
   String moodCorrelationBoost(String emoji, String diff, String habitName) {
     return 'Your mood $emoji rises $diff on days you do $habitName';
   }

@@ -2779,6 +2779,28 @@ class SEs extends S {
   String get moodCorrelationDaysCompleted => 'días completado';
 
   @override
+  String get moodConfidenceLow => 'Poca fiabilidad';
+
+  @override
+  String get moodConfidenceMedium => 'Fiabilidad media';
+
+  @override
+  String get moodConfidenceHigh => 'Alta fiabilidad';
+
+  @override
+  String moodStreakBoost(String diff) {
+    return 'Con 5+ días seguidos: $diff';
+  }
+
+  @override
+  String get moodInsightsDelayedHeader => 'Efecto al día siguiente';
+
+  @override
+  String moodDelayedBoost(String habitName, String diff) {
+    return 'Hacer $habitName hoy mejora tu ánimo de mañana en $diff';
+  }
+
+  @override
   String moodCorrelationBoost(String emoji, String diff, String habitName) {
     return 'Tu ánimo $emoji sube $diff los días que haces $habitName';
   }

@@ -877,6 +877,23 @@
   "moodInsightsAllCategories": "All",
   "moodCorrelationDaysCompleted": "days completed",
   "@moodCorrelationDaysCompleted": {},
+  "moodConfidenceLow": "Low confidence",
+  "moodConfidenceMedium": "Medium confidence",
+  "moodConfidenceHigh": "High confidence",
+  "moodStreakBoost": "On 5+ day streaks: {diff}",
+  "@moodStreakBoost": {
+    "placeholders": {
+      "diff": { "type": "String" }
+    }
+  },
+  "moodInsightsDelayedHeader": "Next-day effect",
+  "moodDelayedBoost": "Doing {habitName} today boosts tomorrow's mood by {diff}",
+  "@moodDelayedBoost": {
+    "placeholders": {
+      "habitName": { "type": "String" },
+      "diff": { "type": "String" }
+    }
+  },
   "moodCorrelationBoost": "Your mood {emoji} rises {diff} on days you do {habitName}",
   "@moodCorrelationBoost": {
     "placeholders": {

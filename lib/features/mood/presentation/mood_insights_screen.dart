@@ -108,6 +108,12 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
                   .toList();
           final positive = allCorrelations.where((c) => c.diff > 0).toList();
           final negative = allCorrelations.where((c) => c.diff < 0).toList();
+          final delayed = (_categoryFilter == null
+                  ? data.positiveDelayedCorrelations
+                  : data.positiveDelayedCorrelations
+                      .where((c) => c.habit.category == _categoryFilter))
+              .take(3)
+              .toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
@@ -176,6 +182,22 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
                       correlation: e.value,
                       isPositive: false,
                     )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: 60 * e.key), duration: 300.ms)
+                        .slideX(begin: 0.05);
+                  }),
+                ],
+
+                if (delayed.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _SectionHeader(
+                    icon: Icons.schedule_rounded,
+                    label: s.moodInsightsDelayedHeader,
+                    color: AppTheme.secondary,
+                  ),
+                  const SizedBox(height: 8),
+                  ...delayed.asMap().entries.map((e) {
+                    return _DelayedTile(correlation: e.value)
                         .animate()
                         .fadeIn(delay: Duration(milliseconds: 60 * e.key), duration: 300.ms)
                         .slideX(begin: 0.05);
@@ -291,12 +313,30 @@ class _CorrelationTile extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  '${c.daysCompleted} ${s.moodCorrelationDaysCompleted}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      '${c.daysCompleted} ${s.moodCorrelationDaysCompleted}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    _ConfidenceBadge(level: c.confidence),
+                  ],
                 ),
+                // efecto racha: la constancia mejora aún más el ánimo
+                if (isPositive && c.hasStreakBoost) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '🔥 ${s.moodStreakBoost(c.streakDiffLabel!)}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: AppTheme.tertiaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -309,6 +349,110 @@ class _CorrelationTile extends StatelessWidget {
                 ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Tile de correlación con retardo: efecto del hábito de hoy sobre el ánimo de mañana
+class _DelayedTile extends StatelessWidget {
+  final HabitMoodCorrelation correlation;
+  const _DelayedTile({required this.correlation});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final c = correlation;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppTheme.secondary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Text('🌙', style: TextStyle(fontSize: 22)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  c.habit.title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  s.moodDelayedBoost(c.habit.title, c.diffLabel),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            c.diffLabel,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppTheme.secondary,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Chip que indica la fiabilidad de la correlación según el volumen de datos
+class _ConfidenceBadge extends StatelessWidget {
+  final MoodConfidence level;
+  const _ConfidenceBadge({required this.level});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final (color, label) = switch (level) {
+      MoodConfidence.high => (AppTheme.success, s.moodConfidenceHigh),
+      MoodConfidence.medium =>
+        (AppTheme.tertiaryContainer, s.moodConfidenceMedium),
+      MoodConfidence.low => (
+          Theme.of(context).colorScheme.onSurfaceVariant,
+          s.moodConfidenceLow,
+        ),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

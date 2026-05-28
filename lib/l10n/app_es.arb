@@ -1910,6 +1910,27 @@
   "@moodInsightsAllCategories": {},
   "moodCorrelationDaysCompleted": "días completado",
   "@moodCorrelationDaysCompleted": {},
+  "moodConfidenceLow": "Poca fiabilidad",
+  "@moodConfidenceLow": {},
+  "moodConfidenceMedium": "Fiabilidad media",
+  "@moodConfidenceMedium": {},
+  "moodConfidenceHigh": "Alta fiabilidad",
+  "@moodConfidenceHigh": {},
+  "moodStreakBoost": "Con 5+ días seguidos: {diff}",
+  "@moodStreakBoost": {
+    "placeholders": {
+      "diff": { "type": "String" }
+    }
+  },
+  "moodInsightsDelayedHeader": "Efecto al día siguiente",
+  "@moodInsightsDelayedHeader": {},
+  "moodDelayedBoost": "Hacer {habitName} hoy mejora tu ánimo de mañana en {diff}",
+  "@moodDelayedBoost": {
+    "placeholders": {
+      "habitName": { "type": "String" },
+      "diff": { "type": "String" }
+    }
+  },
   "moodCorrelationBoost": "Tu ánimo {emoji} sube {diff} los días que haces {habitName}",
   "@moodCorrelationBoost": {
     "placeholders": {

@@ -300,8 +300,12 @@ class StatsRepository {
       final completedDays = habitCompletedByDay[habit.id] ?? {};
       if (completedDays.length < 2) continue; // necesita mínimo 2 días
 
+      // días que forman parte de una racha de 5+ días consecutivos
+      final streakDays = _streakDays(completedDays, days, minRun: 5);
+
       final moodWith = <double>[];
       final moodWithout = <double>[];
+      final moodInStreak = <double>[];
 
       for (int i = 0; i < days; i++) {
         final moodList = moodByDay[i];
@@ -309,6 +313,7 @@ class StatsRepository {
         final avg = moodList.reduce((a, b) => a + b) / moodList.length;
         if (completedDays.contains(i)) {
           moodWith.add(avg);
+          if (streakDays.contains(i)) moodInStreak.add(avg);
         } else {
           moodWithout.add(avg);
         }
@@ -319,6 +324,10 @@ class StatsRepository {
       final avgWith = moodWith.reduce((a, b) => a + b) / moodWith.length;
       final avgWithout =
           moodWithout.reduce((a, b) => a + b) / moodWithout.length;
+      // solo fiable con 2+ días de ánimo dentro de la racha
+      final avgInStreak = moodInStreak.length >= 2
+          ? moodInStreak.reduce((a, b) => a + b) / moodInStreak.length
+          : null;
 
       correlations.add(HabitMoodCorrelation(
         habit: habit,
@@ -326,16 +335,77 @@ class StatsRepository {
         moodWithoutHabit: avgWithout,
         diff: avgWith - avgWithout,
         daysCompleted: completedDays.length,
+        moodInStreak: avgInStreak,
       ));
     }
 
     // ordena por diferencia descendente
     correlations.sort((a, b) => b.diff.compareTo(a.diff));
 
+    // correlación con retardo: ¿completar el hábito hoy mejora el ánimo de mañana?
+    final delayed = <HabitMoodCorrelation>[];
+    for (final habit in habits) {
+      final completedDays = habitCompletedByDay[habit.id] ?? {};
+      if (completedDays.length < 2) continue;
+
+      final nextWith = <double>[];
+      final nextWithout = <double>[];
+      for (int i = 0; i < days - 1; i++) {
+        final nextMood = moodByDay[i + 1];
+        if (nextMood == null) continue;
+        final avg = nextMood.reduce((a, b) => a + b) / nextMood.length;
+        if (completedDays.contains(i)) {
+          nextWith.add(avg);
+        } else {
+          nextWithout.add(avg);
+        }
+      }
+
+      if (nextWith.length < 2 || nextWithout.isEmpty) continue;
+
+      final avgWith = nextWith.reduce((a, b) => a + b) / nextWith.length;
+      final avgWithout =
+          nextWithout.reduce((a, b) => a + b) / nextWithout.length;
+
+      delayed.add(HabitMoodCorrelation(
+        habit: habit,
+        moodWithHabit: avgWith,
+        moodWithoutHabit: avgWithout,
+        diff: avgWith - avgWithout,
+        daysCompleted: completedDays.length,
+      ));
+    }
+    delayed.sort((a, b) => b.diff.compareTo(a.diff));
+
     return MoodCorrelationData(
       days: dayPoints,
       habitCorrelations: correlations,
+      delayedCorrelations: delayed,
     );
+  }
+
+  // devuelve los índices de día que pertenecen a una racha de minRun+ días seguidos
+  Set<int> _streakDays(Set<int> completed, int totalDays, {int minRun = 5}) {
+    final result = <int>{};
+    int run = 0;
+    for (int d = 0; d < totalDays; d++) {
+      if (completed.contains(d)) {
+        run++;
+      } else {
+        if (run >= minRun) {
+          for (int k = d - run; k < d; k++) {
+            result.add(k);
+          }
+        }
+        run = 0;
+      }
+    }
+    if (run >= minRun) {
+      for (int k = totalDays - run; k < totalDays; k++) {
+        result.add(k);
+      }
+    }
+    return result;
   }
 
   // helpers
@@ -402,10 +472,13 @@ class CategoryDetailStat {
 class MoodCorrelationData {
   final List<DayCorrelation> days;
   final List<HabitMoodCorrelation> habitCorrelations;
+  // correlación con retardo: efecto del hábito de hoy sobre el ánimo de mañana
+  final List<HabitMoodCorrelation> delayedCorrelations;
 
   const MoodCorrelationData({
     required this.days,
     required this.habitCorrelations,
+    this.delayedCorrelations = const [],
   });
 
   List<HabitMoodCorrelation> get positiveCorrelations =>
@@ -413,6 +486,10 @@ class MoodCorrelationData {
 
   List<HabitMoodCorrelation> get negativeCorrelations =>
       habitCorrelations.where((c) => c.diff < 0).toList();
+
+  // solo retardos positivos relevantes (mejoran el ánimo del día siguiente)
+  List<HabitMoodCorrelation> get positiveDelayedCorrelations =>
+      delayedCorrelations.where((c) => c.diff > 0.2).toList();
 
   bool get hasEnoughData =>
       days.where((d) => d.moodAvg != null).length >= 3 &&
@@ -437,6 +514,8 @@ class HabitMoodCorrelation {
   final double moodWithoutHabit;
   final double diff; // positivo = hábito mejora el ánimo
   final int daysCompleted;
+  // ánimo medio en días completados dentro de una racha de 5+ días seguidos
+  final double? moodInStreak;
 
   const HabitMoodCorrelation({
     required this.habit,
@@ -444,10 +523,38 @@ class HabitMoodCorrelation {
     required this.moodWithoutHabit,
     required this.diff,
     required this.daysCompleted,
+    this.moodInStreak,
   });
 
   String get diffLabel {
     final sign = diff >= 0 ? '+' : '';
     return '$sign${diff.toStringAsFixed(1)}';
   }
+
+  // diferencia de ánimo en racha vs días sin el hábito (null si no hay racha)
+  double? get streakDiff =>
+      moodInStreak == null ? null : moodInStreak! - moodWithoutHabit;
+
+  String? get streakDiffLabel {
+    final d = streakDiff;
+    if (d == null) return null;
+    final sign = d >= 0 ? '+' : '';
+    return '$sign${d.toStringAsFixed(1)}';
+  }
+
+  // hay efecto racha relevante si la racha mejora el ánimo más que los días sueltos
+  bool get hasStreakBoost {
+    final sd = streakDiff;
+    return sd != null && sd > diff + 0.1;
+  }
+
+  // confianza según cuántos días se completó el hábito en el período
+  MoodConfidence get confidence {
+    if (daysCompleted >= 15) return MoodConfidence.high;
+    if (daysCompleted >= 5) return MoodConfidence.medium;
+    return MoodConfidence.low;
+  }
 }
+
+// nivel de fiabilidad de una correlación según el volumen de datos
+enum MoodConfidence { low, medium, high }
