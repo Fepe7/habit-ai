@@ -131,11 +131,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                           padding: EdgeInsets.fromLTRB(20, 0, 20, context.bottomNavInset),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
-                              // hero de ánimo — primera posición, mismo nivel que el coach de IA
-                              const MoodHeroCard(),
-
-                              const SizedBox(height: 14),
-
                               _buildTodaySummary(context)
                                   .animate()
                                   .fadeIn(duration: 400.ms)
@@ -147,6 +142,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   .animate()
                                   .fadeIn(delay: 100.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
+
+                              const SizedBox(height: 14),
+
+                              const MoodHeroCard(),
 
                               const SizedBox(height: 14),
 
