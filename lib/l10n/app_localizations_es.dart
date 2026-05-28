@@ -2778,6 +2778,17 @@ class SEs extends S {
   }
 
   @override
+  String moodCorrelationDrop(String habitName, String diff) {
+    return 'Los días sin $habitName, tu ánimo baja $diff';
+  }
+
+  @override
+  String get moodInsightsPositiveHeader => 'Te hacen bien';
+
+  @override
+  String get moodInsightsNegativeHeader => 'Mejor no faltar';
+
+  @override
   String get weeklyReviewMoodInsights => 'Análisis emocional';
 
   @override

@@ -95,9 +95,7 @@ class _MoodCorrelationCardState extends State<MoodCorrelationCard> {
                 else ...[
                   MoodCombinedChart(data: snap.data!),
                   const SizedBox(height: 16),
-                  _TopCorrelations(
-                    correlations: snap.data!.habitCorrelations.take(3).toList(),
-                  ),
+                  _TopCorrelations(data: snap.data!),
                 ],
               ],
             ),
@@ -169,7 +167,26 @@ class MoodCombinedChart extends StatelessWidget {
               final i = v.toInt();
               if (i < 0 || i >= days.length) return const SizedBox.shrink();
               final isToday = i == days.length - 1;
-              final scheme2 = scheme;
+
+              // 30 días: solo cada ~5 días + hoy, formato d/M
+              if (days.length > 7) {
+                if (!isToday && i % 5 != 0) return const SizedBox.shrink();
+                final d = days[i].date;
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '${d.day}/${d.month}',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: isToday
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                    ),
+                  ),
+                );
+              }
+
               return Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
@@ -177,8 +194,8 @@ class MoodCombinedChart extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     color: isToday
-                        ? scheme2.primary
-                        : scheme2.onSurfaceVariant.withValues(alpha: 0.5),
+                        ? scheme.primary
+                        : scheme.onSurfaceVariant.withValues(alpha: 0.5),
                     fontWeight:
                         isToday ? FontWeight.w700 : FontWeight.w400,
                   ),
@@ -266,14 +283,21 @@ class _MoodLineOverlay extends StatelessWidget {
           ),
         ],
         lineTouchData: const LineTouchData(enabled: false),
-        titlesData: const FlTitlesData(
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        titlesData: FlTitlesData(
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           rightTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 28,
+              reservedSize: 24,
+              interval: 0.5,
+              getTitlesWidget: (v, meta) {
+                if (v == 0) return const Text('😞', style: TextStyle(fontSize: 12));
+                if (v == 0.5) return const Text('😐', style: TextStyle(fontSize: 12));
+                if (v == 1.0) return const Text('😄', style: TextStyle(fontSize: 12));
+                return const SizedBox.shrink();
+              },
             ),
           ),
         ),
@@ -286,46 +310,69 @@ class _MoodLineOverlay extends StatelessWidget {
 }
 
 class _TopCorrelations extends StatelessWidget {
-  final List<HabitMoodCorrelation> correlations;
-  const _TopCorrelations({required this.correlations});
+  final MoodCorrelationData data;
+  const _TopCorrelations({required this.data});
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final positive = data.positiveCorrelations.take(3).toList();
+    final negative = data.negativeCorrelations.take(2).toList();
 
     return Column(
-      children: correlations.map((c) {
-        final emoji = c.diff >= 0 ? '🙂' : '😕';
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 16)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  s.moodCorrelationBoost(
-                    emoji,
-                    c.diffLabel,
-                    c.habit.title,
-                  ),
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${c.daysCompleted} ${s.moodCorrelationDaysCompleted}',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...positive.map((c) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Text('🙂', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.moodCorrelationBoost('🙂', c.diffLabel, c.habit.title),
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${c.daysCompleted} ${s.moodCorrelationDaysCompleted}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      }).toList(),
+            )),
+        if (negative.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          ...negative.map((c) {
+            final absDiff = c.diff.abs().toStringAsFixed(1);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  const Text('⚠️', style: TextStyle(fontSize: 16)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      s.moodCorrelationDrop(c.habit.title, absDiff),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ],
     );
   }
 }

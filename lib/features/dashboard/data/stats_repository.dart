@@ -408,6 +408,12 @@ class MoodCorrelationData {
     required this.habitCorrelations,
   });
 
+  List<HabitMoodCorrelation> get positiveCorrelations =>
+      habitCorrelations.where((c) => c.diff > 0).toList();
+
+  List<HabitMoodCorrelation> get negativeCorrelations =>
+      habitCorrelations.where((c) => c.diff < 0).toList();
+
   bool get hasEnoughData =>
       days.where((d) => d.moodAvg != null).length >= 3 &&
       habitCorrelations.isNotEmpty;

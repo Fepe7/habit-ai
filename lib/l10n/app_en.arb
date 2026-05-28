@@ -883,6 +883,17 @@
       "habitName": { "type": "String" }
     }
   },
+  "moodCorrelationDrop": "On days without {habitName}, your mood drops {diff}",
+  "@moodCorrelationDrop": {
+    "placeholders": {
+      "habitName": { "type": "String" },
+      "diff": { "type": "String" }
+    }
+  },
+  "moodInsightsPositiveHeader": "Good for you",
+  "@moodInsightsPositiveHeader": {},
+  "moodInsightsNegativeHeader": "Don't skip these",
+  "@moodInsightsNegativeHeader": {},
   "weeklyReviewMoodInsights": "Emotional analysis",
 
   "moodBannerMorning": "Good morning! How did you wake up?",

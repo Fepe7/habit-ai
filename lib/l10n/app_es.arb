@@ -1914,6 +1914,17 @@
       "habitName": { "type": "String" }
     }
   },
+  "moodCorrelationDrop": "Los días sin {habitName}, tu ánimo baja {diff}",
+  "@moodCorrelationDrop": {
+    "placeholders": {
+      "habitName": { "type": "String" },
+      "diff": { "type": "String" }
+    }
+  },
+  "moodInsightsPositiveHeader": "Te hacen bien",
+  "@moodInsightsPositiveHeader": {},
+  "moodInsightsNegativeHeader": "Mejor no faltar",
+  "@moodInsightsNegativeHeader": {},
   "weeklyReviewMoodInsights": "Análisis emocional",
   "@weeklyReviewMoodInsights": {},
 

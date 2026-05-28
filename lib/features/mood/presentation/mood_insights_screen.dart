@@ -101,23 +101,23 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
               .toList()
             ..sort();
 
-          final filtered = _categoryFilter == null
+          final allCorrelations = _categoryFilter == null
               ? data.habitCorrelations
               : data.habitCorrelations
                   .where((c) => c.habit.category == _categoryFilter)
                   .toList();
+          final positive = allCorrelations.where((c) => c.diff > 0).toList();
+          final negative = allCorrelations.where((c) => c.diff < 0).toList();
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // gráfica combinada (más grande)
                 _LargeChart(data: data).animate().fadeIn(duration: 400.ms),
 
                 const SizedBox(height: 24),
 
-                // filtro por categoría
                 if (categories.length > 1) ...[
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -145,15 +145,42 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
                   const SizedBox(height: 20),
                 ],
 
-                // lista completa de correlaciones
-                ...filtered.asMap().entries.map((e) {
-                  final i = e.key;
-                  final c = e.value;
-                  return _CorrelationTile(correlation: c)
-                      .animate()
-                      .fadeIn(delay: Duration(milliseconds: 60 * i), duration: 300.ms)
-                      .slideX(begin: 0.05);
-                }),
+                if (positive.isNotEmpty) ...[
+                  _SectionHeader(
+                    icon: Icons.trending_up_rounded,
+                    label: s.moodInsightsPositiveHeader,
+                    color: AppTheme.success,
+                  ),
+                  const SizedBox(height: 8),
+                  ...positive.asMap().entries.map((e) {
+                    return _CorrelationTile(
+                      correlation: e.value,
+                      isPositive: true,
+                    )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: 60 * e.key), duration: 300.ms)
+                        .slideX(begin: 0.05);
+                  }),
+                ],
+
+                if (negative.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  _SectionHeader(
+                    icon: Icons.info_outline_rounded,
+                    label: s.moodInsightsNegativeHeader,
+                    color: AppTheme.tertiaryContainer,
+                  ),
+                  const SizedBox(height: 8),
+                  ...negative.asMap().entries.map((e) {
+                    return _CorrelationTile(
+                      correlation: e.value,
+                      isPositive: false,
+                    )
+                        .animate()
+                        .fadeIn(delay: Duration(milliseconds: 60 * e.key), duration: 300.ms)
+                        .slideX(begin: 0.05);
+                  }),
+                ],
               ],
             ),
           );
@@ -182,17 +209,46 @@ class _LargeChart extends StatelessWidget {
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _SectionHeader({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
 class _CorrelationTile extends StatelessWidget {
   final HabitMoodCorrelation correlation;
-  const _CorrelationTile({required this.correlation});
+  final bool isPositive;
+  const _CorrelationTile({required this.correlation, required this.isPositive});
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
     final c = correlation;
-    final positive = c.diff >= 0;
-    final color = positive ? AppTheme.success : AppTheme.error;
+    final color = isPositive ? AppTheme.success : AppTheme.tertiaryContainer;
+    final emoji = isPositive ? '🙂' : '⚠️';
+    final absDiff = c.diff.abs().toStringAsFixed(1);
+    final description = isPositive
+        ? s.moodCorrelationBoost(emoji, c.diffLabel, c.habit.title)
+        : s.moodCorrelationDrop(c.habit.title, absDiff);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -212,10 +268,7 @@ class _CorrelationTile extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Text(
-                positive ? '🙂' : '😕',
-                style: const TextStyle(fontSize: 22),
-              ),
+              child: Text(emoji, style: const TextStyle(fontSize: 22)),
             ),
           ),
           const SizedBox(width: 12),
@@ -231,11 +284,7 @@ class _CorrelationTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  s.moodCorrelationBoost(
-                    positive ? '🙂' : '😕',
-                    c.diffLabel,
-                    c.habit.title,
-                  ),
+                  description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -253,7 +302,7 @@ class _CorrelationTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            c.diffLabel,
+            isPositive ? c.diffLabel : '-$absDiff',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: color,
                   fontWeight: FontWeight.w700,

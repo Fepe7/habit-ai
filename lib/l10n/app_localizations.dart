@@ -4951,6 +4951,24 @@ abstract class S {
   /// **'Tu ánimo {emoji} sube {diff} los días que haces {habitName}'**
   String moodCorrelationBoost(String emoji, String diff, String habitName);
 
+  /// No description provided for @moodCorrelationDrop.
+  ///
+  /// In es, this message translates to:
+  /// **'Los días sin {habitName}, tu ánimo baja {diff}'**
+  String moodCorrelationDrop(String habitName, String diff);
+
+  /// No description provided for @moodInsightsPositiveHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Te hacen bien'**
+  String get moodInsightsPositiveHeader;
+
+  /// No description provided for @moodInsightsNegativeHeader.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejor no faltar'**
+  String get moodInsightsNegativeHeader;
+
   /// No description provided for @weeklyReviewMoodInsights.
   ///
   /// In es, this message translates to:

@@ -2766,6 +2766,17 @@ class SEn extends S {
   }
 
   @override
+  String moodCorrelationDrop(String habitName, String diff) {
+    return 'On days without $habitName, your mood drops $diff';
+  }
+
+  @override
+  String get moodInsightsPositiveHeader => 'Good for you';
+
+  @override
+  String get moodInsightsNegativeHeader => 'Don\'t skip these';
+
+  @override
   String get weeklyReviewMoodInsights => 'Emotional analysis';
 
   @override
