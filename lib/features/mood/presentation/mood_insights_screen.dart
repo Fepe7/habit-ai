@@ -116,7 +116,8 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
               .toList();
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+            padding: EdgeInsets.fromLTRB(
+                20, 0, 20, 32 + MediaQuery.paddingOf(context).bottom),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -314,7 +315,10 @@ class _CorrelationTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       '${c.daysCompleted} ${s.moodCorrelationDaysCompleted}',
@@ -322,7 +326,6 @@ class _CorrelationTile extends StatelessWidget {
                             color: scheme.onSurfaceVariant,
                           ),
                     ),
-                    const SizedBox(width: 8),
                     _ConfidenceBadge(level: c.confidence),
                   ],
                 ),

@@ -146,6 +146,9 @@ class MoodCombinedChart extends StatelessWidget {
         enabled: true,
         touchTooltipData: BarTouchTooltipData(
           getTooltipColor: (_) => scheme.inverseSurface,
+          fitInsideHorizontally: true,
+          fitInsideVertically: true,
+          tooltipMargin: 4,
           tooltipPadding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           getTooltipItem: (group, groupIndex, rod, rodIndex) {
