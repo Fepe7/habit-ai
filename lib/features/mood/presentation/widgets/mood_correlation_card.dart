@@ -139,8 +139,19 @@ class MoodCombinedChart extends StatelessWidget {
       titlesData: FlTitlesData(
         topTitles:
             const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(
+          sideTitles: SideTitles(
+            showTitles: true,
+            reservedSize: 24,
+            interval: 0.5,
+            getTitlesWidget: (v, meta) {
+              if (v == 0) return const Text('😞', style: TextStyle(fontSize: 12));
+              if (v == 0.5) return const Text('😐', style: TextStyle(fontSize: 12));
+              if (v == 1.0) return const Text('😄', style: TextStyle(fontSize: 12));
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
         leftTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
@@ -261,6 +272,8 @@ class _MoodLineOverlay extends StatelessWidget {
 
     return LineChart(
       LineChartData(
+        minX: -0.5,
+        maxX: days.length - 0.5,
         minY: 0,
         maxY: 1,
         lineBarsData: [
@@ -285,19 +298,25 @@ class _MoodLineOverlay extends StatelessWidget {
         lineTouchData: const LineTouchData(enabled: false),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 22,
+              getTitlesWidget: (v, meta) => const SizedBox.shrink(),
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 28,
+              getTitlesWidget: (v, meta) => const SizedBox.shrink(),
+            ),
+          ),
           rightTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 24,
-              interval: 0.5,
-              getTitlesWidget: (v, meta) {
-                if (v == 0) return const Text('😞', style: TextStyle(fontSize: 12));
-                if (v == 0.5) return const Text('😐', style: TextStyle(fontSize: 12));
-                if (v == 1.0) return const Text('😄', style: TextStyle(fontSize: 12));
-                return const SizedBox.shrink();
-              },
+              getTitlesWidget: (v, meta) => const SizedBox.shrink(),
             ),
           ),
         ),
