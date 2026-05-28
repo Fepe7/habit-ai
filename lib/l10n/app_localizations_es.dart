@@ -2764,6 +2764,12 @@ class SEs extends S {
   String get moodCorrelationDays30 => '30 días';
 
   @override
+  String get moodChartLegendHabits => '% hábitos';
+
+  @override
+  String get moodChartLegendMood => 'ánimo';
+
+  @override
   String get moodInsightsTitle => 'Insights de ánimo';
 
   @override

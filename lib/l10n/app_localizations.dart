@@ -4927,6 +4927,18 @@ abstract class S {
   /// **'30 días'**
   String get moodCorrelationDays30;
 
+  /// No description provided for @moodChartLegendHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'% hábitos'**
+  String get moodChartLegendHabits;
+
+  /// No description provided for @moodChartLegendMood.
+  ///
+  /// In es, this message translates to:
+  /// **'ánimo'**
+  String get moodChartLegendMood;
+
   /// No description provided for @moodInsightsTitle.
   ///
   /// In es, this message translates to:

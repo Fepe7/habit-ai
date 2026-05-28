@@ -871,6 +871,8 @@
   "moodCorrelationNotEnoughData": "Log your mood for a few days to see how your habits affect it.",
   "moodCorrelationDays7": "7 days",
   "moodCorrelationDays30": "30 days",
+  "moodChartLegendHabits": "% habits",
+  "moodChartLegendMood": "mood",
   "moodInsightsTitle": "Mood insights",
   "moodInsightsAllCategories": "All",
   "moodCorrelationDaysCompleted": "days completed",

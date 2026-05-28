@@ -2752,6 +2752,12 @@ class SEn extends S {
   String get moodCorrelationDays30 => '30 days';
 
   @override
+  String get moodChartLegendHabits => '% habits';
+
+  @override
+  String get moodChartLegendMood => 'mood';
+
+  @override
   String get moodInsightsTitle => 'Mood insights';
 
   @override

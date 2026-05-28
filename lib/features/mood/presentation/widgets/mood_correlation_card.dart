@@ -115,26 +115,71 @@ class MoodCombinedChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: Stack(
-        children: [
-          // barras de hábitos
-          BarChart(_buildBarData(context)),
-          // línea de ánimo superpuesta
-          _MoodLineOverlay(data: data),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: height,
+          child: Stack(
+            children: [
+              // barras de hábitos (capturan el toque para el tooltip)
+              BarChart(_buildBarData(context)),
+              // línea de ánimo superpuesta — deja pasar el toque a las barras
+              IgnorePointer(child: _MoodLineOverlay(data: data)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        const _ChartLegend(),
+      ],
     );
   }
 
   BarChartData _buildBarData(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
     final days = data.days;
 
     return BarChartData(
       maxY: 1.0,
-      barTouchData: BarTouchData(enabled: false),
+      barTouchData: BarTouchData(
+        enabled: true,
+        touchTooltipData: BarTouchTooltipData(
+          getTooltipColor: (_) => scheme.inverseSurface,
+          tooltipPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+            final i = group.x;
+            if (i < 0 || i >= days.length) return null;
+            final day = days[i];
+            final d = day.date;
+            final pct = (day.habitCompletionPct * 100).round();
+            final mood = day.moodAvg;
+            final moodText = mood == null
+                ? '—'
+                : '${mood.toStringAsFixed(1)} ${_moodEmoji(mood)}';
+            return BarTooltipItem(
+              '${d.day}/${d.month}\n',
+              TextStyle(
+                color: scheme.onInverseSurface,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              children: [
+                TextSpan(
+                  text: '$pct% ${s.moodChartLegendHabits}\n'
+                      '${s.moodChartLegendMood} $moodText',
+                  style: TextStyle(
+                    color: scheme.onInverseSurface.withValues(alpha: 0.85),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
       alignment: BarChartAlignment.spaceAround,
       titlesData: FlTitlesData(
         topTitles:
@@ -247,6 +292,55 @@ class MoodCombinedChart extends StatelessWidget {
     const short = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
     return short[d.weekday - 1];
   }
+
+  // Emoji según el ánimo medio del día (1-5)
+  String _moodEmoji(double avg) {
+    const emojis = ['😞', '😕', '😐', '🙂', '😄'];
+    return emojis[(avg.round().clamp(1, 5)) - 1];
+  }
+}
+
+// Leyenda: explica qué son las barras (% hábitos) y la línea (ánimo)
+class _ChartLegend extends StatelessWidget {
+  const _ChartLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: scheme.onSurfaceVariant,
+        );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // barra = % hábitos completados
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: scheme.primary.withValues(alpha: 0.25),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(s.moodChartLegendHabits, style: labelStyle),
+        const SizedBox(width: 16),
+        // línea = ánimo
+        Container(
+          width: 14,
+          height: 3,
+          decoration: BoxDecoration(
+            color: AppTheme.success,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(s.moodChartLegendMood, style: labelStyle),
+      ],
+    );
+  }
 }
 
 // Línea de ánimo superpuesta sobre el BarChart
@@ -258,10 +352,13 @@ class _MoodLineOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final days = data.days;
 
+    // en vista 30d suavizamos con media móvil para ver tendencias, no ruido diario
+    final smooth = days.length > 7;
+
     // spots solo donde hay datos
     final spots = <FlSpot>[];
     for (int i = 0; i < days.length; i++) {
-      final avg = days[i].moodAvg;
+      final avg = smooth ? _movingAverage(days, i) : days[i].moodAvg;
       if (avg != null) {
         // normaliza 1-5 → 0-1 para coincidir con la escala del BarChart
         spots.add(FlSpot(i.toDouble(), (avg - 1) / 4));
@@ -325,6 +422,23 @@ class _MoodLineOverlay extends StatelessWidget {
         backgroundColor: Colors.transparent,
       ),
     );
+  }
+
+  // Media móvil centrada (ventana ±2 = 5 días) sobre los días con registro.
+  // Solo devuelve valor si el día central tiene dato, para no inventar puntos.
+  double? _movingAverage(List<DayCorrelation> days, int index) {
+    if (days[index].moodAvg == null) return null;
+    double sum = 0;
+    int count = 0;
+    for (int j = index - 2; j <= index + 2; j++) {
+      if (j < 0 || j >= days.length) continue;
+      final v = days[j].moodAvg;
+      if (v != null) {
+        sum += v;
+        count++;
+      }
+    }
+    return count == 0 ? null : sum / count;
   }
 }
 
