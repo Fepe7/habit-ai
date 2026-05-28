@@ -4729,48 +4729,232 @@ abstract class S {
   /// **'Completa un reto compartido'**
   String get achievementChallengeDesc;
 
-  // ==================== MOOD TRACKER ====================
-
+  /// No description provided for @moodTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi ánimo'**
   String get moodTitle;
+
+  /// No description provided for @moodHowAreYou.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo te sientes?'**
   String get moodHowAreYou;
+
+  /// No description provided for @moodSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar ánimo'**
   String get moodSave;
+
+  /// No description provided for @moodNotePlaceholder.
+  ///
+  /// In es, this message translates to:
+  /// **'Añade una nota (opcional)'**
   String get moodNotePlaceholder;
+
+  /// No description provided for @moodTimeBlockLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Momento del día'**
   String get moodTimeBlockLabel;
+
+  /// No description provided for @moodTimeBlockMorning.
+  ///
+  /// In es, this message translates to:
+  /// **'Mañana'**
   String get moodTimeBlockMorning;
+
+  /// No description provided for @moodTimeBlockMidday.
+  ///
+  /// In es, this message translates to:
+  /// **'Mediodía'**
   String get moodTimeBlockMidday;
+
+  /// No description provided for @moodTimeBlockAfternoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Tarde'**
   String get moodTimeBlockAfternoon;
+
+  /// No description provided for @moodTimeBlockNight.
+  ///
+  /// In es, this message translates to:
+  /// **'Noche'**
   String get moodTimeBlockNight;
+
+  /// No description provided for @moodHabitsToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos completados hoy'**
   String get moodHabitsToday;
+
+  /// No description provided for @moodEmptyState.
+  ///
+  /// In es, this message translates to:
+  /// **'Aún no hay registros de ánimo'**
   String get moodEmptyState;
+
+  /// No description provided for @moodEmptyStateCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Registra tu primer ánimo'**
   String get moodEmptyStateCta;
+
+  /// No description provided for @moodWeekChart.
+  ///
+  /// In es, this message translates to:
+  /// **'Ánimo últimos 7 días'**
   String get moodWeekChart;
+
+  /// No description provided for @moodLabelAnxiety.
+  ///
+  /// In es, this message translates to:
+  /// **'Ansiedad'**
   String get moodLabelAnxiety;
+
+  /// No description provided for @moodLabelTiredness.
+  ///
+  /// In es, this message translates to:
+  /// **'Cansancio'**
   String get moodLabelTiredness;
+
+  /// No description provided for @moodLabelMotivation.
+  ///
+  /// In es, this message translates to:
+  /// **'Motivación'**
   String get moodLabelMotivation;
+
+  /// No description provided for @moodLabelCalm.
+  ///
+  /// In es, this message translates to:
+  /// **'Calma'**
   String get moodLabelCalm;
+
+  /// No description provided for @moodLabelStress.
+  ///
+  /// In es, this message translates to:
+  /// **'Estrés'**
   String get moodLabelStress;
+
+  /// No description provided for @moodLabelSadness.
+  ///
+  /// In es, this message translates to:
+  /// **'Tristeza'**
   String get moodLabelSadness;
+
+  /// No description provided for @moodLabelEnergy.
+  ///
+  /// In es, this message translates to:
+  /// **'Energía'**
   String get moodLabelEnergy;
+
+  /// No description provided for @moodLabelAnger.
+  ///
+  /// In es, this message translates to:
+  /// **'Enfado'**
   String get moodLabelAnger;
+
+  /// No description provided for @moodLabelGratitude.
+  ///
+  /// In es, this message translates to:
+  /// **'Gratitud'**
   String get moodLabelGratitude;
+
+  /// No description provided for @moodLabelFocus.
+  ///
+  /// In es, this message translates to:
+  /// **'Concentración'**
   String get moodLabelFocus;
 
+  /// No description provided for @moodCalendarTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Calendario de ánimo'**
   String get moodCalendarTitle;
+
+  /// No description provided for @moodCalendarLegend.
+  ///
+  /// In es, this message translates to:
+  /// **'Leyenda'**
   String get moodCalendarLegend;
+
+  /// No description provided for @moodDeleteEntry.
+  ///
+  /// In es, this message translates to:
+  /// **'Eliminar registro'**
   String get moodDeleteEntry;
+
+  /// No description provided for @moodNoEntriesDay.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin registros este día'**
   String get moodNoEntriesDay;
+
+  /// No description provided for @drawerMoodCalendar.
+  ///
+  /// In es, this message translates to:
+  /// **'Mi ánimo'**
   String get drawerMoodCalendar;
+
+  /// No description provided for @drawerMoodCalendarSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Historial mensual de estado de ánimo'**
   String get drawerMoodCalendarSubtitle;
 
+  /// No description provided for @moodCorrelationTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Ánimo y hábitos'**
   String get moodCorrelationTitle;
+
+  /// No description provided for @moodCorrelationNotEnoughData.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas más registros para ver correlaciones'**
   String get moodCorrelationNotEnoughData;
+
+  /// No description provided for @moodCorrelationDays7.
+  ///
+  /// In es, this message translates to:
+  /// **'7 días'**
   String get moodCorrelationDays7;
+
+  /// No description provided for @moodCorrelationDays30.
+  ///
+  /// In es, this message translates to:
+  /// **'30 días'**
   String get moodCorrelationDays30;
+
+  /// No description provided for @moodInsightsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Insights de ánimo'**
   String get moodInsightsTitle;
+
+  /// No description provided for @moodInsightsAllCategories.
+  ///
+  /// In es, this message translates to:
+  /// **'Todas las categorías'**
   String get moodInsightsAllCategories;
+
+  /// No description provided for @moodCorrelationDaysCompleted.
+  ///
+  /// In es, this message translates to:
+  /// **'días completado'**
   String get moodCorrelationDaysCompleted;
+
+  /// No description provided for @moodCorrelationBoost.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu ánimo {emoji} sube {diff} los días que haces {habitName}'**
   String moodCorrelationBoost(String emoji, String diff, String habitName);
 
+  /// No description provided for @weeklyReviewMoodInsights.
+  ///
+  /// In es, this message translates to:
+  /// **'Análisis emocional'**
   String get weeklyReviewMoodInsights;
 }
 

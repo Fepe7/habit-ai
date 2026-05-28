@@ -2747,7 +2747,8 @@ class SEs extends S {
   String get drawerMoodCalendar => 'Mi ánimo';
 
   @override
-  String get drawerMoodCalendarSubtitle => 'Historial mensual de estado de ánimo';
+  String get drawerMoodCalendarSubtitle =>
+      'Historial mensual de estado de ánimo';
 
   @override
   String get moodCorrelationTitle => 'Ánimo y hábitos';
@@ -2772,8 +2773,9 @@ class SEs extends S {
   String get moodCorrelationDaysCompleted => 'días completado';
 
   @override
-  String moodCorrelationBoost(String emoji, String diff, String habitName) =>
-      'Tu ánimo $emoji sube $diff los días que haces $habitName';
+  String moodCorrelationBoost(String emoji, String diff, String habitName) {
+    return 'Tu ánimo $emoji sube $diff los días que haces $habitName';
+  }
 
   @override
   String get weeklyReviewMoodInsights => 'Análisis emocional';
