@@ -59,13 +59,13 @@ class _MoodDayDetailSheetState extends State<MoodDayDetailSheet> {
 
     try {
       await MoodRepository(uid: uid).deleteEntry(entry.id);
-      widget.onDeleted?.call();
       if (!mounted) return;
       setState(() => _entries.removeWhere((e) => e.id == entry.id));
+      widget.onDeleted?.call();
       if (_entries.isEmpty) navigator.pop();
-    } catch (_) {
+    } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text(s.moodDeleteError)),
+        SnackBar(content: Text('${s.moodDeleteError}: $e')),
       );
     }
   }
