@@ -19,10 +19,16 @@ const _kSurface2 = Color(0xFF252A38);
 // sheet de registro de ánimo — pantalla única, superficie dark con zona de color emocional
 class MoodEntryWizard extends StatefulWidget {
   final List<HabitModel> completedHabits;
+  /// si se pasa, el sheet abre en modo edición pre-cargado con estos valores
+  final MoodEntryModel? initialEntry;
+  /// bloque horario pre-seleccionado (solo en modo creación)
+  final String? preselectedTimeBlock;
 
   const MoodEntryWizard({
     super.key,
     this.completedHabits = const [],
+    this.initialEntry,
+    this.preselectedTimeBlock,
   });
 
   @override
@@ -38,10 +44,22 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
   bool _saving = false;
   bool _saved = false;
 
+  bool get _isEditing => widget.initialEntry != null;
+
   @override
   void initState() {
     super.initState();
-    _timeBlock = MoodEntryModel.timeBlockFromHour(DateTime.now().hour);
+    final initial = widget.initialEntry;
+    if (initial != null) {
+      _rating = initial.rating;
+      _labels = List.from(initial.labels);
+      _noteCtrl.text = initial.note ?? '';
+      _noteExpanded = initial.note?.isNotEmpty == true;
+      _timeBlock = initial.timeBlock;
+    } else {
+      _timeBlock = widget.preselectedTimeBlock ??
+          MoodEntryModel.timeBlockFromHour(DateTime.now().hour);
+    }
   }
 
   @override
@@ -64,24 +82,37 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
     if (uid == null) return;
 
     setState(() => _saving = true);
+    final note = _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim();
     try {
-      final entry = MoodEntryModel(
-        id: '',
-        rating: _rating!,
-        labels: _labels,
-        note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-        timeBlock: _timeBlock,
-        timestamp: DateTime.now(),
-        habitsCompletedSnapshot:
-            widget.completedHabits.map((h) => h.id).toList(),
-      );
       final repo = MoodRepository(uid: uid);
-      await repo.createEntry(entry);
+      if (_isEditing) {
+        final updated = widget.initialEntry!.copyWith(
+          rating: _rating!,
+          labels: _labels,
+          note: note,
+          clearNote: note == null,
+          timeBlock: _timeBlock,
+          timestamp: DateTime.now(),
+        );
+        await repo.updateEntry(updated);
+      } else {
+        final entry = MoodEntryModel(
+          id: '',
+          rating: _rating!,
+          labels: _labels,
+          note: note,
+          timeBlock: _timeBlock,
+          timestamp: DateTime.now(),
+          habitsCompletedSnapshot:
+              widget.completedHabits.map((h) => h.id).toList(),
+        );
+        await repo.createEntry(entry);
+      }
       await FeedbackService.instance.habitCompleted();
       final streak = await repo.getMoodStreak();
       if (mounted) {
         setState(() => _saved = true);
-        if (streak > 1) {
+        if (!_isEditing && streak > 1) {
           AppSnackBar.showSuccess(
             context,
             '🔥 ${S.of(context).moodStreakDays(streak)}',
@@ -103,6 +134,7 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
   }
 
   String _greeting(S s) {
+    if (_isEditing) return s.moodHowAreYou;
     final h = DateTime.now().hour;
     if (h >= 5 && h < 14) return s.moodBannerMorning;
     if (h >= 14 && h < 21) return s.moodBannerAfternoon;
@@ -194,6 +226,11 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _DarkTimeBlockRow(
+                      selected: _timeBlock,
+                      onChanged: (tb) => setState(() => _timeBlock = tb),
+                    ),
+                    const SizedBox(height: 20),
                     _DarkLabelsSection(
                       labels: _labels,
                       rating: _rating,
@@ -472,6 +509,83 @@ class _DarkPill extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// --- selector de franja horaria (dark) ---
+
+class _DarkTimeBlockRow extends StatelessWidget {
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  const _DarkTimeBlockRow({
+    required this.selected,
+    required this.onChanged,
+  });
+
+  static const _blocks = [
+    ('morning', '🌅'),
+    ('midday', '☀️'),
+    ('afternoon', '🌇'),
+    ('night', '🌙'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    final labels = [
+      s.moodTimeBlockMorning,
+      s.moodTimeBlockMidday,
+      s.moodTimeBlockAfternoon,
+      s.moodTimeBlockNight,
+    ];
+
+    return Row(
+      children: List.generate(_blocks.length, (i) {
+        final (key, emoji) = _blocks[i];
+        final isSelected = selected == key;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: i > 0 ? 8 : 0),
+            child: GestureDetector(
+              onTap: () => onChanged(key),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.14)
+                      : _kSurface2,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? Colors.white.withValues(alpha: 0.22)
+                        : Colors.transparent,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(
+                      labels[i].substring(0, 3).toUpperCase(),
+                      style: TextStyle(
+                        color: isSelected ? _kOnSheet : _kOnSheetDim,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

@@ -79,6 +79,11 @@ class MoodRepository {
     return doc.id;
   }
 
+  // Actualizar registro existente
+  Future<void> updateEntry(MoodEntryModel entry) async {
+    await _moodRef.doc(entry.id).update(entry.toJson());
+  }
+
   // Borrar registro
   Future<void> deleteEntry(String entryId) async {
     await _moodRef.doc(entryId).delete();

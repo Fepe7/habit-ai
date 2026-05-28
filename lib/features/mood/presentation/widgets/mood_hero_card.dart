@@ -7,9 +7,10 @@ import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
 import '../mood_theme.dart';
+import 'mood_day_detail_sheet.dart';
 import 'mood_entry_sheet.dart';
 
-// hero card de ánimo para el dashboard — entry point + vista semanal en un bloque
+// hero card de ánimo — 4 slots del día + strip semanal tappable
 class MoodHeroCard extends StatefulWidget {
   const MoodHeroCard({super.key});
 
@@ -38,10 +39,8 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
   Future<List<_DayPoint>> _loadWeek(String uid) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // anclar al lunes de la semana actual (weekday: 1=lun … 7=dom)
     final monday = today.subtract(Duration(days: today.weekday - 1));
     final end = monday.add(const Duration(days: 7));
-
     final entries =
         await MoodRepository(uid: uid).getEntriesForRange(monday, end);
 
@@ -56,7 +55,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
           ? null
           : dayEntries.map((e) => e.rating).reduce((a, b) => a + b) /
               dayEntries.length;
-      return _DayPoint(date: date, avg: avg);
+      return _DayPoint(date: date, avg: avg, entries: dayEntries);
     });
   }
 
@@ -87,7 +86,6 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 18, 14, 0),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text('💭', style: TextStyle(fontSize: 18)),
                 const SizedBox(width: 8),
@@ -99,6 +97,24 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                         ),
                   ),
                 ),
+                if (_streak > 1)
+                  Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '🔥 $_streak',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF92400E),
+                      ),
+                    ),
+                  ),
                 GestureDetector(
                   onTap: () => context.goNamed('mood-insights'),
                   child: Padding(
@@ -125,38 +141,32 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // zona de hoy
+          // 4 slots del día
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: StreamBuilder<List<MoodEntryModel>>(
               stream: repo.watchTodayEntries(),
               builder: (context, snap) {
-                final logged = snap.data?.isNotEmpty == true;
-                final rating = snap.data?.last.rating;
-
-                if (logged && rating != null) {
-                  return _LoggedZone(
-                    rating: rating,
-                    streak: _streak,
-                    brightness: brightness,
-                  );
-                }
-                return _EntryZone(repo: repo);
+                final entries = snap.data ?? const [];
+                return _TodaySlotsRow(
+                  todayEntries: entries,
+                  brightness: brightness,
+                );
               },
             ),
           ),
 
           const SizedBox(height: 18),
 
-          // separador + etiqueta semana
+          // separador semana
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
                 Text(
-                  _weekLabel(s),
+                  s.moodWeekChart.toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                         fontWeight: FontWeight.w600,
@@ -176,18 +186,22 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
           const SizedBox(height: 12),
 
-          // strip semanal
+          // strip semanal tappable
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
             child: FutureBuilder<List<_DayPoint>>(
               future: _weekFuture,
               builder: (context, snap) {
-                if (!snap.hasData) {
-                  return const SizedBox(height: 72);
-                }
+                if (!snap.hasData) return const SizedBox(height: 72);
                 return _WeekStrip(
                   days: snap.data!,
                   brightness: brightness,
+                  onReload: () {
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                    if (uid != null) {
+                      setState(() => _weekFuture = _loadWeek(uid));
+                    }
+                  },
                 );
               },
             ),
@@ -196,183 +210,134 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.04);
   }
-
-  String _weekLabel(S s) {
-    // reutiliza la cadena existente de "Ánimo esta semana"
-    return s.moodWeekChart.toUpperCase();
-  }
 }
 
-// --- zona de hoy: sin registrar ---
+// --- 4 slots del día ---
 
-class _EntryZone extends StatelessWidget {
-  final MoodRepository repo;
-
-  const _EntryZone({required this.repo});
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-
-    return GestureDetector(
-      onTap: () => MoodEntrySheet.show(context),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFFF7ED), Color(0xFFFFF0DC)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFDDB0), width: 1),
-        ),
-        child: Row(
-          children: [
-            Text(
-              _timeEmoji(DateTime.now().hour),
-              style: const TextStyle(fontSize: 28),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _greeting(s),
-                    style: const TextStyle(
-                      color: Color(0xFF78350F),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    s.moodHowAreYou,
-                    style: const TextStyle(
-                      color: Color(0xFFA16207),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 34,
-              height: 34,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFDDB0),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                size: 16,
-                color: Color(0xFF92400E),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _greeting(S s) {
-    final h = DateTime.now().hour;
-    if (h >= 5 && h < 14) return s.moodBannerMorning;
-    if (h >= 14 && h < 21) return s.moodBannerAfternoon;
-    return s.moodBannerNight;
-  }
-
-  String _timeEmoji(int hour) {
-    if (hour >= 5 && hour < 12) return '🌅';
-    if (hour >= 12 && hour < 15) return '☀️';
-    if (hour >= 15 && hour < 21) return '🌇';
-    return '🌙';
-  }
-}
-
-// --- zona de hoy: ya registrado ---
-
-class _LoggedZone extends StatelessWidget {
-  final int rating;
-  final int streak;
+class _TodaySlotsRow extends StatelessWidget {
+  final List<MoodEntryModel> todayEntries;
   final Brightness brightness;
 
-  const _LoggedZone({
-    required this.rating,
-    required this.streak,
+  static const _blocks = [
+    ('morning', '🌅'),
+    ('midday', '☀️'),
+    ('afternoon', '🌇'),
+    ('night', '🌙'),
+  ];
+
+  const _TodaySlotsRow({
+    required this.todayEntries,
     required this.brightness,
   });
 
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    final bg = MoodTheme.ratingBg(rating, brightness);
-    final accent = MoodTheme.ratingAccent(rating, brightness);
-    final emoji = MoodTheme.emojiFor(rating);
+    final labels = [
+      s.moodTimeBlockMorning,
+      s.moodTimeBlockMidday,
+      s.moodTimeBlockAfternoon,
+      s.moodTimeBlockNight,
+    ];
+
+    return Row(
+      children: List.generate(_blocks.length, (i) {
+        final (blockKey, blockEmoji) = _blocks[i];
+        // última entrada de este bloque si hay varias
+        final entry = todayEntries
+            .where((e) => e.timeBlock == blockKey)
+            .fold<MoodEntryModel?>(null, (_, e) => e);
+
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: i > 0 ? 8 : 0),
+            child: _SlotPill(
+              blockKey: blockKey,
+              blockEmoji: blockEmoji,
+              label: labels[i],
+              entry: entry,
+              brightness: brightness,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _SlotPill extends StatelessWidget {
+  final String blockKey;
+  final String blockEmoji;
+  final String label;
+  final MoodEntryModel? entry;
+  final Brightness brightness;
+
+  const _SlotPill({
+    required this.blockKey,
+    required this.blockEmoji,
+    required this.label,
+    required this.entry,
+    required this.brightness,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final logged = entry != null;
+    final bg = logged
+        ? MoodTheme.ratingBg(entry!.rating, brightness).withValues(alpha: 0.45)
+        : scheme.surfaceContainerLow;
+    final accent = logged
+        ? MoodTheme.ratingAccent(entry!.rating, brightness)
+        : scheme.onSurfaceVariant;
 
     return GestureDetector(
-      onTap: () => MoodEntrySheet.show(context),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      onTap: () => MoodEntrySheet.show(
+        context,
+        initialEntry: logged ? entry : null,
+        preselectedTimeBlock: logged ? null : blockKey,
+      ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        height: 82,
         decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.35),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.2),
-            width: 1,
-          ),
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: logged
+              ? Border.all(
+                  color: accent.withValues(alpha: 0.25),
+                  width: 1,
+                )
+              : null,
         ),
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28))
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
-                  begin: const Offset(1, 1),
-                  end: const Offset(1.08, 1.08),
-                  duration: 2200.ms,
-                  curve: Curves.easeInOut,
-                ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        s.moodLoggedToday,
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(Icons.check_circle_rounded,
-                          size: 14, color: accent),
-                    ],
-                  ),
-                  if (streak > 1) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      '🔥 ${s.moodStreakDays(streak)}',
-                      style: TextStyle(
-                        color: accent.withValues(alpha: 0.8),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
+            // emoji principal
+            Text(
+              logged ? MoodTheme.emojiFor(entry!.rating) : blockEmoji,
+              style: TextStyle(fontSize: logged ? 22 : 18),
+            ),
+            const SizedBox(height: 4),
+            // indicador
+            if (logged)
+              Icon(Icons.check_rounded, size: 12, color: accent)
+            else
+              Icon(Icons.add_rounded,
+                  size: 14, color: scheme.onSurfaceVariant.withValues(alpha: 0.4)),
+            const SizedBox(height: 4),
+            // etiqueta
+            Text(
+              label.substring(0, label.length > 3 ? 3 : label.length).toUpperCase(),
+              style: TextStyle(
+                color: logged
+                    ? accent
+                    : scheme.onSurfaceVariant.withValues(alpha: 0.55),
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
               ),
             ),
-            Icon(Icons.add_rounded,
-                size: 18, color: accent.withValues(alpha: 0.55)),
           ],
         ),
       ),
@@ -380,13 +345,18 @@ class _LoggedZone extends StatelessWidget {
   }
 }
 
-// --- strip de 7 días ---
+// --- strip semanal tappable ---
 
 class _WeekStrip extends StatelessWidget {
   final List<_DayPoint> days;
   final Brightness brightness;
+  final VoidCallback onReload;
 
-  const _WeekStrip({required this.days, required this.brightness});
+  const _WeekStrip({
+    required this.days,
+    required this.brightness,
+    required this.onReload,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -396,10 +366,11 @@ class _WeekStrip extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(days.length, (i) {
         final day = days[i];
-        final today = DateTime.now();
-        final isToday = day.date.year == today.year &&
-            day.date.month == today.month &&
-            day.date.day == today.day;
+        final now = DateTime.now();
+        final isToday = day.date.year == now.year &&
+            day.date.month == now.month &&
+            day.date.day == now.day;
+        final isFuture = day.date.isAfter(DateTime(now.year, now.month, now.day));
         final rating = day.avg?.round().clamp(1, 5);
 
         final bg = rating != null
@@ -409,51 +380,83 @@ class _WeekStrip extends StatelessWidget {
             ? MoodTheme.ratingAccent(rating, brightness)
             : scheme.outlineVariant;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // círculo del día
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: isToday ? 42 : 36,
-              height: isToday ? 42 : 36,
-              decoration: BoxDecoration(
-                color: bg.withValues(alpha: isToday ? 0.6 : 0.4),
-                shape: BoxShape.circle,
-                border: isToday
-                    ? Border.all(color: accent.withValues(alpha: 0.6), width: 1.5)
-                    : null,
+        return GestureDetector(
+          onTap: isFuture
+              ? null
+              : () async {
+                  final uid = FirebaseAuth.instance.currentUser?.uid;
+                  if (uid == null) return;
+                  // si ya tenemos las entries en el punto, usarlas directamente
+                  final entries = day.entries.isNotEmpty
+                      ? day.entries
+                      : await MoodRepository(uid: uid).getEntriesForRange(
+                          day.date,
+                          day.date.add(const Duration(days: 1)),
+                        );
+                  if (context.mounted) {
+                    await MoodDayDetailSheet.show(
+                      context,
+                      date: day.date,
+                      entries: entries,
+                      onDeleted: onReload,
+                    );
+                  }
+                },
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: isToday ? 42 : 36,
+                height: isToday ? 42 : 36,
+                decoration: BoxDecoration(
+                  color: isFuture
+                      ? Colors.transparent
+                      : bg.withValues(alpha: isToday ? 0.6 : 0.4),
+                  shape: BoxShape.circle,
+                  border: isToday
+                      ? Border.all(
+                          color: accent.withValues(alpha: 0.6), width: 1.5)
+                      : isFuture
+                          ? Border.all(
+                              color: scheme.outlineVariant
+                                  .withValues(alpha: 0.25),
+                              width: 1,
+                            )
+                          : null,
+                ),
+                child: Center(
+                  child: isFuture
+                      ? null
+                      : rating != null
+                          ? Text(
+                              MoodTheme.emojiFor(rating),
+                              style: TextStyle(fontSize: isToday ? 20 : 17),
+                            )
+                          : Container(
+                              width: isToday ? 8 : 6,
+                              height: isToday ? 8 : 6,
+                              decoration: BoxDecoration(
+                                color: scheme.outlineVariant
+                                    .withValues(alpha: 0.5),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                ),
               ),
-              child: Center(
-                child: rating != null
-                    ? Text(
-                        MoodTheme.emojiFor(rating),
-                        style: TextStyle(fontSize: isToday ? 20 : 17),
-                      )
-                    : Container(
-                        width: isToday ? 8 : 7,
-                        height: isToday ? 8 : 7,
-                        decoration: BoxDecoration(
-                          color: scheme.outlineVariant
-                              .withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+              const SizedBox(height: 6),
+              Text(
+                _dayLabel(context, day.date.weekday),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                  color: isToday
+                      ? scheme.primary
+                      : scheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            // etiqueta del día
-            Text(
-              _dayLabel(context, day.date.weekday),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                color: isToday
-                    ? scheme.primary
-                    : scheme.onSurfaceVariant.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       }),
     );
@@ -462,21 +465,21 @@ class _WeekStrip extends StatelessWidget {
   String _dayLabel(BuildContext context, int weekday) {
     final s = S.of(context);
     final full = [
-      s.weekdayMonday,
-      s.weekdayTuesday,
-      s.weekdayWednesday,
-      s.weekdayThursday,
-      s.weekdayFriday,
-      s.weekdaySaturday,
-      s.weekdaySunday,
+      s.weekdayMonday, s.weekdayTuesday, s.weekdayWednesday,
+      s.weekdayThursday, s.weekdayFriday, s.weekdaySaturday, s.weekdaySunday,
     ];
-    final idx = (weekday - 1).clamp(0, 6);
-    return full[idx].substring(0, 1).toUpperCase();
+    return full[(weekday - 1).clamp(0, 6)].substring(0, 1).toUpperCase();
   }
 }
 
 class _DayPoint {
   final DateTime date;
   final double? avg;
-  const _DayPoint({required this.date, required this.avg});
+  final List<MoodEntryModel> entries;
+
+  const _DayPoint({
+    required this.date,
+    required this.avg,
+    required this.entries,
+  });
 }
