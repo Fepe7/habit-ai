@@ -272,7 +272,8 @@ class _DarkCircle extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _base = 60.0;
+  // tamaño fijo — el círculo no crece para evitar overflow horizontal
+  static const _size = 56.0;
 
   @override
   Widget build(BuildContext context) {
@@ -283,29 +284,29 @@ class _DarkCircle extends StatelessWidget {
         opacity: dimmed ? 0.28 : 1.0,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutBack,
-          width: selected ? _base * 1.27 : _base,
-          height: selected ? _base * 1.27 : _base,
+          curve: Curves.easeOutCubic,
+          width: _size,
+          height: _size,
           decoration: BoxDecoration(
             color: selected
-                ? Colors.white.withValues(alpha: 0.2)
+                ? Colors.white.withValues(alpha: 0.22)
                 : Colors.white.withValues(alpha: 0.08),
             shape: BoxShape.circle,
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: accent.withValues(alpha: 0.5),
-                      blurRadius: 22,
-                      spreadRadius: 2,
+                      color: accent.withValues(alpha: 0.55),
+                      blurRadius: 24,
+                      spreadRadius: 3,
                     ),
                   ]
                 : [],
           ),
           child: Center(
             child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 220),
               style: TextStyle(
-                fontSize: selected ? _base * 0.52 : _base * 0.44,
+                fontSize: selected ? _size * 0.57 : _size * 0.46,
               ),
               child: Text(emoji),
             ),

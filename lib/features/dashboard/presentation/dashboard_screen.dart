@@ -24,9 +24,7 @@ import '../../ai/domain/pattern_insight_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
-import '../../mood/presentation/widgets/mood_entry_sheet.dart';
-import '../../mood/presentation/widgets/mood_today_banner.dart';
-import '../../mood/presentation/widgets/mood_week_chart.dart';
+import '../../mood/presentation/widgets/mood_hero_card.dart';
 import '../../mood/presentation/widgets/mood_correlation_card.dart';
 
 /// Dashboard con gráficas de progreso y estadísticas — Editorial Vitality
@@ -133,6 +131,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                           padding: EdgeInsets.fromLTRB(20, 0, 20, context.bottomNavInset),
                           sliver: SliverList(
                             delegate: SliverChildListDelegate([
+                              // hero de ánimo — primera posición, mismo nivel que el coach de IA
+                              const MoodHeroCard(),
+
+                              const SizedBox(height: 14),
+
                               _buildTodaySummary(context)
                                   .animate()
                                   .fadeIn(duration: 400.ms)
@@ -192,19 +195,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   .animate()
                                   .fadeIn(delay: 200.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
-
-                              const SizedBox(height: 14),
-
-                              const MoodTodayBanner()
-                                  .animate()
-                                  .fadeIn(delay: 195.ms, duration: 400.ms)
-                                  .slideY(begin: 0.05),
-
-                              const SizedBox(height: 14),
-
-                              MoodWeekChart(
-                                onAddPressed: () => MoodEntrySheet.show(context),
-                              ),
 
                               const SizedBox(height: 14),
 
