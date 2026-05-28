@@ -2871,6 +2871,9 @@ class SEs extends S {
       'No se pudo guardar el ánimo. Inténtalo de nuevo.';
 
   @override
+  String get moodDeleteError => 'No se pudo eliminar el registro';
+
+  @override
   String get moodDeleteConfirm => '¿Eliminar este registro de ánimo?';
 
   @override

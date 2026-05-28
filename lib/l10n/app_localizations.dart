@@ -5119,6 +5119,12 @@ abstract class S {
   /// **'No se pudo guardar el ánimo. Inténtalo de nuevo.'**
   String get moodSaveError;
 
+  /// No description provided for @moodDeleteError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo eliminar el registro'**
+  String get moodDeleteError;
+
   /// No description provided for @moodDeleteConfirm.
   ///
   /// In es, this message translates to:

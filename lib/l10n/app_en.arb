@@ -936,6 +936,7 @@
   "moodNext": "Next",
   "moodAnythingOnMind": "Anything on your mind?",
   "moodSaveError": "Couldn't save your mood. Try again.",
+  "moodDeleteError": "Couldn't delete the entry",
   "moodDeleteConfirm": "Delete this mood entry?",
   "moodLabelsPositive": "Feeling good",
   "moodLabelsNegative": "Feeling tough"

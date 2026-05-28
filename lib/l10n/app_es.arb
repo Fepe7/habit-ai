@@ -1989,6 +1989,8 @@
   "@moodAnythingOnMind": {},
   "moodSaveError": "No se pudo guardar el ánimo. Inténtalo de nuevo.",
   "@moodSaveError": {},
+  "moodDeleteError": "No se pudo eliminar el registro",
+  "@moodDeleteError": {},
   "moodDeleteConfirm": "¿Eliminar este registro de ánimo?",
   "@moodDeleteConfirm": {},
   "moodLabelsPositive": "Lo que sientes bien",

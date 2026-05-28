@@ -1,13 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
-import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
 
 // Bottom sheet con los registros de ánimo de un día concreto
-class MoodDayDetailSheet extends StatelessWidget {
+class MoodDayDetailSheet extends StatefulWidget {
   final DateTime date;
   final List<MoodEntryModel> entries;
   final VoidCallback? onDeleted;
@@ -36,6 +35,39 @@ class MoodDayDetailSheet extends StatelessWidget {
         onDeleted: onDeleted,
       ),
     );
+  }
+
+  @override
+  State<MoodDayDetailSheet> createState() => _MoodDayDetailSheetState();
+}
+
+class _MoodDayDetailSheetState extends State<MoodDayDetailSheet> {
+  // lista mutable propia: se actualiza en vivo al borrar
+  late final List<MoodEntryModel> _entries = List.of(widget.entries);
+
+  DateTime get date => widget.date;
+
+  // borra de Firestore, actualiza la lista en vivo y cierra si queda vacía
+  Future<void> _deleteEntry(MoodEntryModel entry) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    // capturar antes del await para no usar context cruzando gaps async
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.of(context);
+    final s = S.of(context);
+
+    try {
+      await MoodRepository(uid: uid).deleteEntry(entry.id);
+      widget.onDeleted?.call();
+      if (!mounted) return;
+      setState(() => _entries.removeWhere((e) => e.id == entry.id));
+      if (_entries.isEmpty) navigator.pop();
+    } catch (_) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(s.moodDeleteError)),
+      );
+    }
   }
 
   String _formatDate(BuildContext context, DateTime d) {
@@ -79,7 +111,7 @@ class MoodDayDetailSheet extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 16),
-          if (entries.isEmpty)
+          if (_entries.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Text(
@@ -93,25 +125,11 @@ class MoodDayDetailSheet extends StatelessWidget {
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: entries.length,
+              itemCount: _entries.length,
               separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, i) => _EntryTile(
-                entry: entries[i],
-                onDelete: () async {
-                  final uid = FirebaseAuth.instance.currentUser?.uid;
-                  if (uid == null) return;
-                  try {
-                    await MoodRepository(uid: uid).deleteEntry(entries[i].id);
-                    onDeleted?.call();
-                    if (context.mounted) {
-                      Navigator.of(context, rootNavigator: true).pop();
-                    }
-                  } catch (_) {
-                    if (context.mounted) {
-                      AppSnackBar.showError(context, '');
-                    }
-                  }
-                },
+                entry: _entries[i],
+                onDelete: () => _deleteEntry(_entries[i]),
               ),
             ),
           const SizedBox(height: 8),

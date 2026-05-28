@@ -2858,6 +2858,9 @@ class SEn extends S {
   String get moodSaveError => 'Couldn\'t save your mood. Try again.';
 
   @override
+  String get moodDeleteError => 'Couldn\'t delete the entry';
+
+  @override
   String get moodDeleteConfirm => 'Delete this mood entry?';
 
   @override
