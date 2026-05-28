@@ -77,8 +77,13 @@ class _MoodEntrySheetState extends State<MoodEntrySheet> {
       await MoodRepository(uid: uid).createEntry(entry);
       await FeedbackService.instance.habitCompleted();
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
-    } catch (_) {
-      if (mounted) setState(() => _saving = false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
