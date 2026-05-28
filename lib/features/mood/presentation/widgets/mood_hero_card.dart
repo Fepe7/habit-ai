@@ -2,7 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
@@ -62,6 +64,29 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
   Future<void> _loadStreak(String uid) async {
     final streak = await MoodRepository(uid: uid).getMoodStreak();
     if (mounted) setState(() => _streak = streak);
+  }
+
+  // Registro rápido de un toque para la franja actual, sin abrir el sheet
+  Future<void> _quickLog(int rating) async {
+    final repo = _repo;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (repo == null || uid == null) return;
+
+    final now = DateTime.now();
+    final entry = MoodEntryModel(
+      id: '',
+      rating: rating,
+      labels: const [],
+      timeBlock: MoodEntryModel.timeBlockFromHour(now.hour),
+      timestamp: now,
+    );
+
+    await FeedbackService.instance.moodSelected();
+    await repo.createEntry(entry);
+    if (!mounted) return;
+    _loadStreak(uid);
+    setState(() => _weekFuture = _loadWeek(uid));
+    AppSnackBar.showSuccess(context, S.of(context).moodLoggedToday);
   }
 
   @override
@@ -143,16 +168,37 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
           const SizedBox(height: 14),
 
-          // 4 slots del día
+          // 4 slots del día + registro rápido de la franja actual
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: StreamBuilder<List<MoodEntryModel>>(
               stream: repo.watchTodayEntries(),
               builder: (context, snap) {
                 final entries = snap.data ?? const [];
-                return _TodaySlotsRow(
-                  todayEntries: entries,
-                  brightness: brightness,
+                // ¿falta el registro de la franja actual?
+                final block =
+                    MoodEntryModel.timeBlockFromHour(DateTime.now().hour);
+                final blockLogged =
+                    entries.any((e) => e.timeBlock == block);
+
+                return Column(
+                  children: [
+                    // fila de acción rápida: solo si esta franja está pendiente
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                      child: blockLogged
+                          ? const SizedBox(width: double.infinity)
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 14),
+                              child: _QuickMoodRow(onQuickLog: _quickLog),
+                            ),
+                    ),
+                    _TodaySlotsRow(
+                      todayEntries: entries,
+                      brightness: brightness,
+                    ),
+                  ],
                 );
               },
             ),
@@ -261,6 +307,63 @@ class _TodaySlotsRow extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+// Fila de registro rápido: prompt + 5 emojis tappables para la franja actual
+class _QuickMoodRow extends StatelessWidget {
+  final ValueChanged<int> onQuickLog;
+
+  const _QuickMoodRow({required this.onQuickLog});
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        // crema cálida, mismo tono que los demás acentos de ánimo
+        color: const Color(0xFFFFF7ED),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFFE3BF), width: 1),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              s.moodHowAreYou,
+              style: const TextStyle(
+                color: Color(0xFF92400E),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          ...List.generate(5, (i) {
+            final rating = i + 1;
+            return Material(
+              color: Colors.transparent,
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () => onQuickLog(rating),
+                splashColor: const Color(0xFFFFDDB0),
+                highlightColor: const Color(0xFFFFEACB),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text(
+                    MoodTheme.emojiFor(rating),
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 }
