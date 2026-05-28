@@ -24,6 +24,9 @@ import '../../ai/domain/pattern_insight_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../levels/data/levels_repository.dart';
 import '../../levels/domain/level_model.dart';
+import '../../mood/presentation/widgets/mood_entry_sheet.dart';
+import '../../mood/presentation/widgets/mood_week_chart.dart';
+import '../../mood/presentation/widgets/mood_correlation_card.dart';
 
 /// Dashboard con gráficas de progreso y estadísticas — Editorial Vitality
 class DashboardScreen extends StatefulWidget {
@@ -189,6 +192,16 @@ class _DashboardScreenState extends State<DashboardScreen>
                                   .fadeIn(delay: 200.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
+                              const SizedBox(height: 14),
+
+                              MoodWeekChart(
+                                onAddPressed: () => MoodEntrySheet.show(context),
+                              ),
+
+                              const SizedBox(height: 14),
+
+                              const MoodCorrelationCard(),
+
                               if (_categoryStats.isNotEmpty) ...[
                                 const SizedBox(height: 14),
                                 GestureDetector(
@@ -262,6 +275,22 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () => MoodEntrySheet.show(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              child: Center(
+                child: Text('😊', style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Container(
             width: 40,
             height: 40,

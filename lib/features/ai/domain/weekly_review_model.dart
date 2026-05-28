@@ -11,6 +11,7 @@ class WeeklyReviewModel {
   final List<String> struggles;
   final List<ReviewRecommendation> recommendations;
   final String focus;
+  final String? moodInsights;
 
   const WeeklyReviewModel({
     required this.weekId,
@@ -22,6 +23,7 @@ class WeeklyReviewModel {
     required this.struggles,
     required this.recommendations,
     required this.focus,
+    this.moodInsights,
   });
 
   factory WeeklyReviewModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class WeeklyReviewModel {
               ReviewRecommendation.fromJson(Map<String, dynamic>.from(r as Map)))
           .toList(),
       focus: json['focus'] as String? ?? '',
+      moodInsights: json['moodInsights'] as String?,
     );
   }
 }

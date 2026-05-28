@@ -2650,4 +2650,120 @@ class SEn extends S {
 
   @override
   String get achievementChallengeDesc => 'Complete a shared challenge';
+
+  @override
+  String get moodTitle => 'My mood';
+
+  @override
+  String get moodHowAreYou => 'How are you feeling?';
+
+  @override
+  String get moodSave => 'Save mood';
+
+  @override
+  String get moodNotePlaceholder => 'Add a note (optional)';
+
+  @override
+  String get moodTimeBlockLabel => 'Time of day';
+
+  @override
+  String get moodTimeBlockMorning => 'Morning';
+
+  @override
+  String get moodTimeBlockMidday => 'Midday';
+
+  @override
+  String get moodTimeBlockAfternoon => 'Afternoon';
+
+  @override
+  String get moodTimeBlockNight => 'Night';
+
+  @override
+  String get moodHabitsToday => 'Habits completed today';
+
+  @override
+  String get moodEmptyState => 'No mood entries yet';
+
+  @override
+  String get moodEmptyStateCta => 'Log your first mood';
+
+  @override
+  String get moodWeekChart => 'Mood last 7 days';
+
+  @override
+  String get moodLabelAnxiety => 'Anxiety';
+
+  @override
+  String get moodLabelTiredness => 'Tiredness';
+
+  @override
+  String get moodLabelMotivation => 'Motivation';
+
+  @override
+  String get moodLabelCalm => 'Calm';
+
+  @override
+  String get moodLabelStress => 'Stress';
+
+  @override
+  String get moodLabelSadness => 'Sadness';
+
+  @override
+  String get moodLabelEnergy => 'Energy';
+
+  @override
+  String get moodLabelAnger => 'Anger';
+
+  @override
+  String get moodLabelGratitude => 'Gratitude';
+
+  @override
+  String get moodLabelFocus => 'Focus';
+
+  @override
+  String get moodCalendarTitle => 'Mood calendar';
+
+  @override
+  String get moodCalendarLegend => 'Legend';
+
+  @override
+  String get moodDeleteEntry => 'Delete entry';
+
+  @override
+  String get moodNoEntriesDay => 'No entries this day';
+
+  @override
+  String get drawerMoodCalendar => 'My mood';
+
+  @override
+  String get drawerMoodCalendarSubtitle => 'Monthly mood history';
+
+  @override
+  String get moodCorrelationTitle => 'Mood & habits';
+
+  @override
+  String get moodCorrelationNotEnoughData =>
+      'You need more entries to see correlations';
+
+  @override
+  String get moodCorrelationDays7 => '7 days';
+
+  @override
+  String get moodCorrelationDays30 => '30 days';
+
+  @override
+  String get moodInsightsTitle => 'Mood insights';
+
+  @override
+  String get moodInsightsAllCategories => 'All categories';
+
+  @override
+  String get moodCorrelationDaysCompleted => 'days completed';
+
+  @override
+  String moodCorrelationBoost(String emoji, String diff, String habitName) =>
+      'Your mood $emoji rises $diff on days you do $habitName';
+
+  @override
+  String get weeklyReviewMoodInsights => 'Emotional analysis';
 }

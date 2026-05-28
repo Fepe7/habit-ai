@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../mood/data/mood_repository.dart';
 
 // Agrega estadisticas de habitos para el dashboard
 class StatsRepository {
@@ -224,6 +225,119 @@ class StatsRepository {
     return habits;
   }
 
+  // cruza registros de ánimo con logs de hábitos para detectar correlaciones
+  Future<MoodCorrelationData> getMoodHabitCorrelation({int days = 7}) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(Duration(days: days - 1));
+    final end = today.add(const Duration(days: 1));
+
+    final habits = await _getActiveHabits();
+    final moodEntries = await MoodRepository(uid: _uid)
+        .getEntriesForRange(start, end);
+
+    // mood medio por día (índice 0 = start, ... n-1 = today)
+    final moodByDay = <int, List<double>>{};
+    for (final e in moodEntries) {
+      final d = DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day);
+      final idx = d.difference(start).inDays;
+      if (idx >= 0 && idx < days) {
+        moodByDay.putIfAbsent(idx, () => []).add(e.rating.toDouble());
+      }
+    }
+
+    // porcentaje de hábitos completados por día
+    final completionByDay = <int, double>{};
+    final habitCompletedByDay = <String, Set<int>>{};
+
+    for (final habit in habits) {
+      final logs = await _habitRepo.getLogsByDateRange(
+        habitId: habit.id,
+        startDate: start,
+        endDate: end,
+      );
+      for (final log in logs) {
+        if (!log.completed) continue;
+        final d = DateTime(log.date.year, log.date.month, log.date.day);
+        final idx = d.difference(start).inDays;
+        if (idx >= 0 && idx < days) {
+          habitCompletedByDay.putIfAbsent(habit.id, () => {}).add(idx);
+        }
+      }
+    }
+
+    // agrega % hábitos completados por día
+    for (int i = 0; i < days; i++) {
+      if (habits.isEmpty) { completionByDay[i] = 0; continue; }
+      final date = start.add(Duration(days: i));
+      final scheduled = habits
+          .where((h) => h.targetDays.contains(date.weekday))
+          .toList();
+      if (scheduled.isEmpty) { completionByDay[i] = 0; continue; }
+      int done = 0;
+      for (final h in scheduled) {
+        if (habitCompletedByDay[h.id]?.contains(i) == true) done++;
+      }
+      completionByDay[i] = done / scheduled.length;
+    }
+
+    // datos del gráfico por día
+    final dayPoints = List.generate(days, (i) {
+      final moodList = moodByDay[i];
+      final moodAvg = moodList == null
+          ? null
+          : moodList.reduce((a, b) => a + b) / moodList.length;
+      return DayCorrelation(
+        date: start.add(Duration(days: i)),
+        habitCompletionPct: completionByDay[i] ?? 0,
+        moodAvg: moodAvg,
+      );
+    });
+
+    // correlación por hábito: días con vs sin
+    final correlations = <HabitMoodCorrelation>[];
+    for (final habit in habits) {
+      final completedDays = habitCompletedByDay[habit.id] ?? {};
+      if (completedDays.length < 2) continue; // necesita mínimo 2 días
+
+      final moodWith = <double>[];
+      final moodWithout = <double>[];
+
+      for (int i = 0; i < days; i++) {
+        final moodList = moodByDay[i];
+        if (moodList == null) continue;
+        final avg = moodList.reduce((a, b) => a + b) / moodList.length;
+        if (completedDays.contains(i)) {
+          moodWith.add(avg);
+        } else {
+          moodWithout.add(avg);
+        }
+      }
+
+      if (moodWith.length < 2 || moodWithout.isEmpty) continue;
+
+      final avgWith = moodWith.reduce((a, b) => a + b) / moodWith.length;
+      final avgWithout =
+          moodWithout.reduce((a, b) => a + b) / moodWithout.length;
+
+      correlations.add(HabitMoodCorrelation(
+        habit: habit,
+        moodWithHabit: avgWith,
+        moodWithoutHabit: avgWithout,
+        diff: avgWith - avgWithout,
+        daysCompleted: completedDays.length,
+      ));
+    }
+
+    // ordena por diferencia descendente
+    correlations.sort((a, b) => b.diff.compareTo(a.diff));
+
+    return MoodCorrelationData(
+      days: dayPoints,
+      habitCorrelations: correlations,
+    );
+  }
+
   // helpers
   Future<List<HabitModel>> _getActiveHabits() async {
     final snapshot = await _firestore
@@ -282,4 +396,52 @@ class CategoryDetailStat {
     required this.totalCompleted,
     required this.totalScheduled,
   });
+}
+
+// datos de correlación ánimo-hábitos para el período analizado
+class MoodCorrelationData {
+  final List<DayCorrelation> days;
+  final List<HabitMoodCorrelation> habitCorrelations;
+
+  const MoodCorrelationData({
+    required this.days,
+    required this.habitCorrelations,
+  });
+
+  bool get hasEnoughData =>
+      days.where((d) => d.moodAvg != null).length >= 3 &&
+      habitCorrelations.isNotEmpty;
+}
+
+class DayCorrelation {
+  final DateTime date;
+  final double habitCompletionPct; // 0.0-1.0
+  final double? moodAvg; // null = sin registros
+
+  const DayCorrelation({
+    required this.date,
+    required this.habitCompletionPct,
+    required this.moodAvg,
+  });
+}
+
+class HabitMoodCorrelation {
+  final HabitModel habit;
+  final double moodWithHabit;
+  final double moodWithoutHabit;
+  final double diff; // positivo = hábito mejora el ánimo
+  final int daysCompleted;
+
+  const HabitMoodCorrelation({
+    required this.habit,
+    required this.moodWithHabit,
+    required this.moodWithoutHabit,
+    required this.diff,
+    required this.daysCompleted,
+  });
+
+  String get diffLabel {
+    final sign = diff >= 0 ? '+' : '';
+    return '$sign${diff.toStringAsFixed(1)}';
+  }
 }

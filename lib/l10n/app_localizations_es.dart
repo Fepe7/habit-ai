@@ -2661,4 +2661,120 @@ class SEs extends S {
 
   @override
   String get achievementChallengeDesc => 'Completa un reto compartido';
+
+  @override
+  String get moodTitle => 'Mi ánimo';
+
+  @override
+  String get moodHowAreYou => '¿Cómo te sientes?';
+
+  @override
+  String get moodSave => 'Guardar ánimo';
+
+  @override
+  String get moodNotePlaceholder => 'Añade una nota (opcional)';
+
+  @override
+  String get moodTimeBlockLabel => 'Momento del día';
+
+  @override
+  String get moodTimeBlockMorning => 'Mañana';
+
+  @override
+  String get moodTimeBlockMidday => 'Mediodía';
+
+  @override
+  String get moodTimeBlockAfternoon => 'Tarde';
+
+  @override
+  String get moodTimeBlockNight => 'Noche';
+
+  @override
+  String get moodHabitsToday => 'Hábitos completados hoy';
+
+  @override
+  String get moodEmptyState => 'Aún no hay registros de ánimo';
+
+  @override
+  String get moodEmptyStateCta => 'Registra tu primer ánimo';
+
+  @override
+  String get moodWeekChart => 'Ánimo últimos 7 días';
+
+  @override
+  String get moodLabelAnxiety => 'Ansiedad';
+
+  @override
+  String get moodLabelTiredness => 'Cansancio';
+
+  @override
+  String get moodLabelMotivation => 'Motivación';
+
+  @override
+  String get moodLabelCalm => 'Calma';
+
+  @override
+  String get moodLabelStress => 'Estrés';
+
+  @override
+  String get moodLabelSadness => 'Tristeza';
+
+  @override
+  String get moodLabelEnergy => 'Energía';
+
+  @override
+  String get moodLabelAnger => 'Enfado';
+
+  @override
+  String get moodLabelGratitude => 'Gratitud';
+
+  @override
+  String get moodLabelFocus => 'Concentración';
+
+  @override
+  String get moodCalendarTitle => 'Calendario de ánimo';
+
+  @override
+  String get moodCalendarLegend => 'Leyenda';
+
+  @override
+  String get moodDeleteEntry => 'Eliminar registro';
+
+  @override
+  String get moodNoEntriesDay => 'Sin registros este día';
+
+  @override
+  String get drawerMoodCalendar => 'Mi ánimo';
+
+  @override
+  String get drawerMoodCalendarSubtitle => 'Historial mensual de estado de ánimo';
+
+  @override
+  String get moodCorrelationTitle => 'Ánimo y hábitos';
+
+  @override
+  String get moodCorrelationNotEnoughData =>
+      'Necesitas más registros para ver correlaciones';
+
+  @override
+  String get moodCorrelationDays7 => '7 días';
+
+  @override
+  String get moodCorrelationDays30 => '30 días';
+
+  @override
+  String get moodInsightsTitle => 'Insights de ánimo';
+
+  @override
+  String get moodInsightsAllCategories => 'Todas las categorías';
+
+  @override
+  String get moodCorrelationDaysCompleted => 'días completado';
+
+  @override
+  String moodCorrelationBoost(String emoji, String diff, String habitName) =>
+      'Tu ánimo $emoji sube $diff los días que haces $habitName';
+
+  @override
+  String get weeklyReviewMoodInsights => 'Análisis emocional';
 }

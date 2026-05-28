@@ -62,7 +62,8 @@ RESPONSE FORMAT (JSON):
       "reason": "why this adjustment will help"
     }
   ],
-  "focus": "Main tip for next week in 1-2 sentences"
+  "focus": "Main tip for next week in 1-2 sentences",
+  "moodInsights": "If mood data exists: analysis of emotional patterns and habit correlations in 1-2 sentences. null if no mood data."
 }
 `;
 

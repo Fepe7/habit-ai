@@ -207,8 +207,61 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                 .animate()
                 .fadeIn(delay: 400.ms, duration: 400.ms)
                 .slideY(begin: 0.05),
+            const SizedBox(height: 20),
+          ],
+
+          if (review.moodInsights != null &&
+              review.moodInsights!.isNotEmpty) ...[
+            _buildMoodInsightsCard(context, review.moodInsights!)
+                .animate()
+                .fadeIn(delay: 500.ms, duration: 400.ms)
+                .slideY(begin: 0.05),
             const SizedBox(height: 24),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoodInsightsCard(BuildContext context, String insights) {
+    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('😊', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(
+                s.weeklyReviewMoodInsights,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF10B981),
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            insights,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface,
+                  height: 1.5,
+                ),
+          ),
         ],
       ),
     );

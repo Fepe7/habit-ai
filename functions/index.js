@@ -217,7 +217,87 @@ async function buildWeeklyContext(uid, start, end) {
     totalLogs += completed;
   }
 
-  return { habits: habitStats, totalLogs };
+  // Lee registros de ánimo de la semana (opcional — si no hay, moodData = null)
+  let moodData = null;
+  try {
+    const moodSnapshot = await db
+      .collection("users")
+      .doc(uid)
+      .collection("mood_entries")
+      .where("timestamp", ">=", admin.firestore.Timestamp.fromDate(start))
+      .where("timestamp", "<=", admin.firestore.Timestamp.fromDate(end))
+      .get();
+
+    if (!moodSnapshot.empty) {
+      const moodEntries = moodSnapshot.docs.map((d) => d.data());
+      const totalRating = moodEntries.reduce((acc, e) => acc + (e.rating || 0), 0);
+      const avgRating = totalRating / moodEntries.length;
+
+      // etiquetas más frecuentes
+      const labelCount = {};
+      for (const e of moodEntries) {
+        for (const label of (e.labels || [])) {
+          labelCount[label] = (labelCount[label] || 0) + 1;
+        }
+      }
+      const topLabels = Object.entries(labelCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([l]) => l);
+
+      // media por día de la semana
+      const dayNames = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+      const byDay = {};
+      for (const e of moodEntries) {
+        const d = e.timestamp.toDate();
+        const dayIdx = d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=lun
+        if (!byDay[dayIdx]) byDay[dayIdx] = [];
+        byDay[dayIdx].push(e.rating || 3);
+      }
+      const dailyPattern = Object.entries(byDay)
+        .map(([idx, ratings]) => {
+          const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+          return `${dayNames[parseInt(idx)]}=${avg.toFixed(1)}`;
+        })
+        .join(", ");
+
+      // correlación sencilla: hábitos con snapshot vs media general
+      const correlations = [];
+      for (const habit of habitStats) {
+        const withHabit = moodEntries.filter((e) =>
+          (e.habitsCompletedSnapshot || []).includes(habit.id)
+        );
+        const withoutHabit = moodEntries.filter(
+          (e) => !(e.habitsCompletedSnapshot || []).includes(habit.id)
+        );
+        if (withHabit.length >= 2 && withoutHabit.length >= 1) {
+          const avgWith =
+            withHabit.reduce((a, e) => a + (e.rating || 3), 0) / withHabit.length;
+          const avgWithout =
+            withoutHabit.reduce((a, e) => a + (e.rating || 3), 0) / withoutHabit.length;
+          const diff = avgWith - avgWithout;
+          if (Math.abs(diff) >= 0.3) {
+            correlations.push(
+              `"${habit.title}" → ánimo ${avgWith.toFixed(1)} con vs ${avgWithout.toFixed(1)} sin (${diff >= 0 ? "+" : ""}${diff.toFixed(1)})`
+            );
+          }
+        }
+      }
+
+      moodData = {
+        count: moodEntries.length,
+        avgRating: Math.round(avgRating * 10) / 10,
+        topLabels,
+        dailyPattern,
+        correlations: correlations.slice(0, 3),
+      };
+    }
+  } catch (err) {
+    // no bloquear la revisión si falla la lectura de mood
+    console.warn("No se pudieron leer mood_entries:", err.message);
+  }
+
+  return { habits: habitStats, totalLogs, moodData };
 }
 
 // Lógica compartida: genera la revisión de una semana para un usuario.
@@ -246,7 +326,21 @@ ${context.habits
   )
   .join("\n")}
 
-Total de check-ins de la semana: ${context.totalLogs}`;
+Total de check-ins de la semana: ${context.totalLogs}${
+    context.moodData
+      ? `
+
+Datos de ánimo de la semana:
+- Registros: ${context.moodData.count}
+- Media: ${context.moodData.avgRating}/5
+- Sentimientos frecuentes: ${context.moodData.topLabels.join(", ") || "ninguno"}
+- Patrón diario: ${context.moodData.dailyPattern || "sin datos"}${
+          context.moodData.correlations.length > 0
+            ? `\n- Correlaciones hábito-ánimo:\n${context.moodData.correlations.map((c) => `  · ${c}`).join("\n")}`
+            : ""
+        }`
+      : ""
+  }`;
 
   const apiKey = geminiApiKey.value();
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -290,6 +384,7 @@ Total de check-ins de la semana: ${context.totalLogs}`;
     struggles: parsed.struggles || [],
     recommendations: parsed.recommendations || [],
     focus: parsed.focus || "",
+    moodInsights: parsed.moodInsights || null,
   };
 
   await admin

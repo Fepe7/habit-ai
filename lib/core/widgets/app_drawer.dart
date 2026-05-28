@@ -135,6 +135,12 @@ class _AppDrawerState extends State<AppDrawer> {
                   onTap: () => _goNamedAndClose('levels'),
                 ),
                 _DrawerTile(
+                  icon: Icons.mood_rounded,
+                  title: s.drawerMoodCalendar,
+                  subtitle: s.drawerMoodCalendarSubtitle,
+                  onTap: () => _goNamedAndClose('mood-calendar'),
+                ),
+                _DrawerTile(
                   icon: Icons.list_alt_rounded,
                   title: s.drawerAllHabits,
                   subtitle: s.drawerAllHabitsSubtitle,

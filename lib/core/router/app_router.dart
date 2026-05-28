@@ -28,6 +28,8 @@ import '../../features/challenges/presentation/challenge_detail_screen.dart';
 import '../../features/social/presentation/followers_screen.dart';
 import '../../features/habits/presentation/all_habits_screen.dart';
 import '../../features/settings/presentation/privacy_settings_screen.dart';
+import '../../features/mood/presentation/mood_calendar_screen.dart';
+import '../../features/mood/presentation/mood_insights_screen.dart';
 import '../services/analytics_service.dart';
 import 'main_shell.dart';
 
@@ -194,6 +196,22 @@ GoRouter createRouter(AuthRepository authRepository) {
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
                   child: const LevelsScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'mood-calendar',
+                name: 'mood-calendar',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const MoodCalendarScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'mood-insights',
+                name: 'mood-insights',
+                pageBuilder: (context, state) => _fadeSlideTransition(
+                  state: state,
+                  child: const MoodInsightsScreen(),
                 ),
               ),
             ],

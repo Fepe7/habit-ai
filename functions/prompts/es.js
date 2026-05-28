@@ -62,7 +62,8 @@ FORMATO DE RESPUESTA (JSON):
       "reason": "por qué este ajuste ayudará"
     }
   ],
-  "focus": "Consejo principal para la próxima semana en 1-2 frases"
+  "focus": "Consejo principal para la próxima semana en 1-2 frases",
+  "moodInsights": "Si hay datos de ánimo: análisis de patrones emocionales y correlaciones con hábitos en 1-2 frases. null si no hay datos de ánimo."
 }
 `;
 

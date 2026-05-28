@@ -37,6 +37,7 @@ import '../../ai/domain/renegotiation_model.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../challenges/data/challenge_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../mood/presentation/widgets/mood_entry_sheet.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -1256,6 +1257,28 @@ class _HabitsScreenState extends State<HabitsScreen>
                     ),
                   ),
               ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          // botón de ánimo — abre mood entry sheet con hábitos ya completados hoy
+          GestureDetector(
+            onTap: () {
+              final completed = _currentTodayHabits
+                  .where((h) => _completedToday[h.id] == true)
+                  .toList();
+              MoodEntrySheet.show(context, completedHabits: completed);
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLowest,
+                shape: BoxShape.circle,
+                boxShadow: AppTheme.ambientShadow(),
+              ),
+              child: Center(
+                child: Text('😊', style: Theme.of(context).textTheme.titleMedium),
+              ),
             ),
           ),
           const SizedBox(width: 8),

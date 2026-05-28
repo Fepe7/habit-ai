@@ -4728,6 +4728,50 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Completa un reto compartido'**
   String get achievementChallengeDesc;
+
+  // ==================== MOOD TRACKER ====================
+
+  String get moodTitle;
+  String get moodHowAreYou;
+  String get moodSave;
+  String get moodNotePlaceholder;
+  String get moodTimeBlockLabel;
+  String get moodTimeBlockMorning;
+  String get moodTimeBlockMidday;
+  String get moodTimeBlockAfternoon;
+  String get moodTimeBlockNight;
+  String get moodHabitsToday;
+  String get moodEmptyState;
+  String get moodEmptyStateCta;
+  String get moodWeekChart;
+  String get moodLabelAnxiety;
+  String get moodLabelTiredness;
+  String get moodLabelMotivation;
+  String get moodLabelCalm;
+  String get moodLabelStress;
+  String get moodLabelSadness;
+  String get moodLabelEnergy;
+  String get moodLabelAnger;
+  String get moodLabelGratitude;
+  String get moodLabelFocus;
+
+  String get moodCalendarTitle;
+  String get moodCalendarLegend;
+  String get moodDeleteEntry;
+  String get moodNoEntriesDay;
+  String get drawerMoodCalendar;
+  String get drawerMoodCalendarSubtitle;
+
+  String get moodCorrelationTitle;
+  String get moodCorrelationNotEnoughData;
+  String get moodCorrelationDays7;
+  String get moodCorrelationDays30;
+  String get moodInsightsTitle;
+  String get moodInsightsAllCategories;
+  String get moodCorrelationDaysCompleted;
+  String moodCorrelationBoost(String emoji, String diff, String habitName);
+
+  String get weeklyReviewMoodInsights;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

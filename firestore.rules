@@ -71,6 +71,11 @@ service cloud.firestore {
       match /habit_groups/{groupId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Registros de estado de ánimo — solo el propietario, nunca públicos
+      match /mood_entries/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Perfiles públicos — lectura abierta, escritura solo del propio usuario
