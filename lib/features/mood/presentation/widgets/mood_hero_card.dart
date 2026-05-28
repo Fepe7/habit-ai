@@ -71,7 +71,9 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     _loadStreak(uid);
-    setState(() => _weekFuture = _loadWeek(uid));
+    setState(() {
+      _weekFuture = _loadWeek(uid);
+    });
   }
 
   // Registro rápido de un toque para la franja actual, sin abrir el sheet
@@ -253,7 +255,9 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                   onReload: () {
                     final uid = FirebaseAuth.instance.currentUser?.uid;
                     if (uid != null) {
-                      setState(() => _weekFuture = _loadWeek(uid));
+                      setState(() {
+                        _weekFuture = _loadWeek(uid);
+                      });
                     }
                   },
                 );
