@@ -83,4 +83,30 @@ class MoodRepository {
   Future<void> deleteEntry(String entryId) async {
     await _moodRef.doc(entryId).delete();
   }
+
+  // días consecutivos con al menos una entrada (hacia atrás desde hoy)
+  Future<int> getMoodStreak() async {
+    final now = DateTime.now();
+    final start = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 60));
+    final end = DateTime(now.year, now.month, now.day)
+        .add(const Duration(days: 1));
+
+    final entries = await getEntriesForRange(start, end);
+    if (entries.isEmpty) return 0;
+
+    final daysWithEntries = <int>{};
+    for (final e in entries) {
+      final d = DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day);
+      daysWithEntries.add(d.millisecondsSinceEpoch);
+    }
+
+    int streak = 0;
+    var day = DateTime(now.year, now.month, now.day);
+    while (daysWithEntries.contains(day.millisecondsSinceEpoch)) {
+      streak++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return streak;
+  }
 }

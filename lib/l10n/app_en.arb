@@ -883,5 +883,26 @@
       "habitName": { "type": "String" }
     }
   },
-  "weeklyReviewMoodInsights": "Emotional analysis"
+  "weeklyReviewMoodInsights": "Emotional analysis",
+
+  "moodBannerMorning": "Good morning! How did you wake up?",
+  "moodBannerAfternoon": "How's your afternoon going?",
+  "moodBannerNight": "How was your day?",
+  "moodRating1": "Awful",
+  "moodRating2": "Not great",
+  "moodRating3": "Okay",
+  "moodRating4": "Good",
+  "moodRating5": "Amazing",
+  "moodLoggedToday": "Logged",
+  "moodStreakDays": "{count} day streak",
+  "@moodStreakDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "moodQuickSave": "Quick save",
+  "moodTellMore": "Want to add details?",
+  "moodSkip": "Skip",
+  "moodNext": "Next",
+  "moodAnythingOnMind": "Anything on your mind?"
 }

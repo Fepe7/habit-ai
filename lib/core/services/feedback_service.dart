@@ -16,6 +16,16 @@ class FeedbackService {
     }
   }
 
+  // haptic ligero al seleccionar un emoji de ánimo
+  Future<void> moodSelected() async {
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(duration: 40);
+    } else {
+      await HapticFeedback.mediumImpact();
+    }
+  }
+
   /// Vibración corta para des-completar un hábito.
   Future<void> habitUncompleted() async {
     final hasVibrator = await Vibration.hasVibrator() ?? false;

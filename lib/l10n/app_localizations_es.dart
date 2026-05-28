@@ -2779,4 +2779,51 @@ class SEs extends S {
 
   @override
   String get weeklyReviewMoodInsights => 'Análisis emocional';
+
+  @override
+  String get moodBannerMorning => '¡Buenos días! ¿Cómo has dormido?';
+
+  @override
+  String get moodBannerAfternoon => '¿Qué tal va la tarde?';
+
+  @override
+  String get moodBannerNight => '¿Cómo ha ido el día?';
+
+  @override
+  String get moodRating1 => 'Fatal';
+
+  @override
+  String get moodRating2 => 'Regular';
+
+  @override
+  String get moodRating3 => 'Normal';
+
+  @override
+  String get moodRating4 => 'Bien';
+
+  @override
+  String get moodRating5 => 'Genial';
+
+  @override
+  String get moodLoggedToday => 'Registrado';
+
+  @override
+  String moodStreakDays(int count) {
+    return 'Racha de $count días';
+  }
+
+  @override
+  String get moodQuickSave => 'Guardar rápido';
+
+  @override
+  String get moodTellMore => '¿Quieres añadir detalles?';
+
+  @override
+  String get moodSkip => 'Saltar';
+
+  @override
+  String get moodNext => 'Siguiente';
+
+  @override
+  String get moodAnythingOnMind => '¿Algo que quieras anotar?';
 }

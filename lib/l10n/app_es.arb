@@ -1915,5 +1915,40 @@
     }
   },
   "weeklyReviewMoodInsights": "Análisis emocional",
-  "@weeklyReviewMoodInsights": {}
+  "@weeklyReviewMoodInsights": {},
+
+  "moodBannerMorning": "¡Buenos días! ¿Cómo has dormido?",
+  "@moodBannerMorning": {},
+  "moodBannerAfternoon": "¿Qué tal va la tarde?",
+  "@moodBannerAfternoon": {},
+  "moodBannerNight": "¿Cómo ha ido el día?",
+  "@moodBannerNight": {},
+  "moodRating1": "Fatal",
+  "@moodRating1": {},
+  "moodRating2": "Regular",
+  "@moodRating2": {},
+  "moodRating3": "Normal",
+  "@moodRating3": {},
+  "moodRating4": "Bien",
+  "@moodRating4": {},
+  "moodRating5": "Genial",
+  "@moodRating5": {},
+  "moodLoggedToday": "Registrado",
+  "@moodLoggedToday": {},
+  "moodStreakDays": "Racha de {count} días",
+  "@moodStreakDays": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "moodQuickSave": "Guardar rápido",
+  "@moodQuickSave": {},
+  "moodTellMore": "¿Quieres añadir detalles?",
+  "@moodTellMore": {},
+  "moodSkip": "Saltar",
+  "@moodSkip": {},
+  "moodNext": "Siguiente",
+  "@moodNext": {},
+  "moodAnythingOnMind": "¿Algo que quieras anotar?",
+  "@moodAnythingOnMind": {}
 }

@@ -2767,4 +2767,51 @@ class SEn extends S {
 
   @override
   String get weeklyReviewMoodInsights => 'Emotional analysis';
+
+  @override
+  String get moodBannerMorning => 'Good morning! How did you wake up?';
+
+  @override
+  String get moodBannerAfternoon => 'How\'s your afternoon going?';
+
+  @override
+  String get moodBannerNight => 'How was your day?';
+
+  @override
+  String get moodRating1 => 'Awful';
+
+  @override
+  String get moodRating2 => 'Not great';
+
+  @override
+  String get moodRating3 => 'Okay';
+
+  @override
+  String get moodRating4 => 'Good';
+
+  @override
+  String get moodRating5 => 'Amazing';
+
+  @override
+  String get moodLoggedToday => 'Logged';
+
+  @override
+  String moodStreakDays(int count) {
+    return '$count day streak';
+  }
+
+  @override
+  String get moodQuickSave => 'Quick save';
+
+  @override
+  String get moodTellMore => 'Want to add details?';
+
+  @override
+  String get moodSkip => 'Skip';
+
+  @override
+  String get moodNext => 'Next';
+
+  @override
+  String get moodAnythingOnMind => 'Anything on your mind?';
 }

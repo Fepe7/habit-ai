@@ -4956,6 +4956,96 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Análisis emocional'**
   String get weeklyReviewMoodInsights;
+
+  /// No description provided for @moodBannerMorning.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Buenos días! ¿Cómo has dormido?'**
+  String get moodBannerMorning;
+
+  /// No description provided for @moodBannerAfternoon.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué tal va la tarde?'**
+  String get moodBannerAfternoon;
+
+  /// No description provided for @moodBannerNight.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo ha ido el día?'**
+  String get moodBannerNight;
+
+  /// No description provided for @moodRating1.
+  ///
+  /// In es, this message translates to:
+  /// **'Fatal'**
+  String get moodRating1;
+
+  /// No description provided for @moodRating2.
+  ///
+  /// In es, this message translates to:
+  /// **'Regular'**
+  String get moodRating2;
+
+  /// No description provided for @moodRating3.
+  ///
+  /// In es, this message translates to:
+  /// **'Normal'**
+  String get moodRating3;
+
+  /// No description provided for @moodRating4.
+  ///
+  /// In es, this message translates to:
+  /// **'Bien'**
+  String get moodRating4;
+
+  /// No description provided for @moodRating5.
+  ///
+  /// In es, this message translates to:
+  /// **'Genial'**
+  String get moodRating5;
+
+  /// No description provided for @moodLoggedToday.
+  ///
+  /// In es, this message translates to:
+  /// **'Registrado'**
+  String get moodLoggedToday;
+
+  /// No description provided for @moodStreakDays.
+  ///
+  /// In es, this message translates to:
+  /// **'Racha de {count} días'**
+  String moodStreakDays(int count);
+
+  /// No description provided for @moodQuickSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar rápido'**
+  String get moodQuickSave;
+
+  /// No description provided for @moodTellMore.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Quieres añadir detalles?'**
+  String get moodTellMore;
+
+  /// No description provided for @moodSkip.
+  ///
+  /// In es, this message translates to:
+  /// **'Saltar'**
+  String get moodSkip;
+
+  /// No description provided for @moodNext.
+  ///
+  /// In es, this message translates to:
+  /// **'Siguiente'**
+  String get moodNext;
+
+  /// No description provided for @moodAnythingOnMind.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Algo que quieras anotar?'**
+  String get moodAnythingOnMind;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
