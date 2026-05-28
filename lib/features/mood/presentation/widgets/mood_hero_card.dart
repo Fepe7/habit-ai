@@ -66,6 +66,14 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
     if (mounted) setState(() => _streak = streak);
   }
 
+  // recarga strip semanal + racha tras registrar/editar en el sheet
+  void _reloadDerived() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    _loadStreak(uid);
+    setState(() => _weekFuture = _loadWeek(uid));
+  }
+
   // Registro rápido de un toque para la franja actual, sin abrir el sheet
   Future<void> _quickLog(int rating) async {
     final repo = _repo;
@@ -84,8 +92,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
     await FeedbackService.instance.moodSelected();
     await repo.createEntry(entry);
     if (!mounted) return;
-    _loadStreak(uid);
-    setState(() => _weekFuture = _loadWeek(uid));
+    _reloadDerived();
     AppSnackBar.showSuccess(context, S.of(context).moodLoggedToday);
   }
 
@@ -197,6 +204,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
                     _TodaySlotsRow(
                       todayEntries: entries,
                       brightness: brightness,
+                      onReload: _reloadDerived,
                     ),
                   ],
                 );
@@ -263,6 +271,7 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 class _TodaySlotsRow extends StatelessWidget {
   final List<MoodEntryModel> todayEntries;
   final Brightness brightness;
+  final VoidCallback onReload;
 
   static const _blocks = [
     ('morning', '🌅'),
@@ -274,6 +283,7 @@ class _TodaySlotsRow extends StatelessWidget {
   const _TodaySlotsRow({
     required this.todayEntries,
     required this.brightness,
+    required this.onReload,
   });
 
   @override
@@ -303,6 +313,7 @@ class _TodaySlotsRow extends StatelessWidget {
               label: labels[i],
               entry: entry,
               brightness: brightness,
+              onReload: onReload,
             ),
           ),
         );
@@ -374,6 +385,7 @@ class _SlotPill extends StatelessWidget {
   final String label;
   final MoodEntryModel? entry;
   final Brightness brightness;
+  final VoidCallback onReload;
 
   const _SlotPill({
     required this.blockKey,
@@ -381,6 +393,7 @@ class _SlotPill extends StatelessWidget {
     required this.label,
     required this.entry,
     required this.brightness,
+    required this.onReload,
   });
 
   @override
@@ -395,11 +408,14 @@ class _SlotPill extends StatelessWidget {
         : scheme.onSurfaceVariant;
 
     return GestureDetector(
-      onTap: () => MoodEntrySheet.show(
-        context,
-        initialEntry: logged ? entry : null,
-        preselectedTimeBlock: logged ? null : blockKey,
-      ),
+      onTap: () async {
+        await MoodEntrySheet.show(
+          context,
+          initialEntry: logged ? entry : null,
+          preselectedTimeBlock: logged ? null : blockKey,
+        );
+        onReload();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         height: 82,
