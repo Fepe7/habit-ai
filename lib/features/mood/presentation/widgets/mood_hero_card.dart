@@ -37,19 +37,20 @@ class _MoodHeroCardState extends State<MoodHeroCard> {
 
   Future<List<_DayPoint>> _loadWeek(String uid) async {
     final now = DateTime.now();
-    final start =
-        DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-    final end =
-        DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    final today = DateTime(now.year, now.month, now.day);
+    // anclar al lunes de la semana actual (weekday: 1=lun … 7=dom)
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final end = monday.add(const Duration(days: 7));
+
     final entries =
-        await MoodRepository(uid: uid).getEntriesForRange(start, end);
+        await MoodRepository(uid: uid).getEntriesForRange(monday, end);
 
     return List.generate(7, (i) {
-      final date = start.add(Duration(days: i));
+      final date = monday.add(Duration(days: i));
       final dayEntries = entries.where((e) {
         final d = DateTime(
             e.timestamp.year, e.timestamp.month, e.timestamp.day);
-        return d == DateTime(date.year, date.month, date.day);
+        return d == date;
       }).toList();
       final avg = dayEntries.isEmpty
           ? null
@@ -395,7 +396,10 @@ class _WeekStrip extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(days.length, (i) {
         final day = days[i];
-        final isToday = i == days.length - 1;
+        final today = DateTime.now();
+        final isToday = day.date.year == today.year &&
+            day.date.month == today.month &&
+            day.date.day == today.day;
         final rating = day.avg?.round().clamp(1, 5);
 
         final bg = rating != null
