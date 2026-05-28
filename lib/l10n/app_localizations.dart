@@ -5046,6 +5046,30 @@ abstract class S {
   /// In es, this message translates to:
   /// **'¿Algo que quieras anotar?'**
   String get moodAnythingOnMind;
+
+  /// No description provided for @moodSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el ánimo. Inténtalo de nuevo.'**
+  String get moodSaveError;
+
+  /// No description provided for @moodDeleteConfirm.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Eliminar este registro de ánimo?'**
+  String get moodDeleteConfirm;
+
+  /// No description provided for @moodLabelsPositive.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que sientes bien'**
+  String get moodLabelsPositive;
+
+  /// No description provided for @moodLabelsNegative.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo que pesa hoy'**
+  String get moodLabelsNegative;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

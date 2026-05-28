@@ -63,36 +63,48 @@ class MoodTheme {
   }
 
   static List<MoodLabelDef> labels(S s) => [
+        // negativas
         MoodLabelDef('anxiety', s.moodLabelAnxiety, '😰',
             const Color(0xFFFEE2E2), const Color(0xFFDC2626),
-            darkBg: const Color(0xFF450A0A), darkFg: const Color(0xFFFCA5A5)),
+            darkBg: const Color(0xFF450A0A), darkFg: const Color(0xFFFCA5A5),
+            isPositive: false),
         MoodLabelDef('tiredness', s.moodLabelTiredness, '😴',
             const Color(0xFFE0E7FF), const Color(0xFF6366F1),
-            darkBg: const Color(0xFF1E1B4B), darkFg: const Color(0xFFA5B4FC)),
-        MoodLabelDef('motivation', s.moodLabelMotivation, '🔥',
-            const Color(0xFFFFEDD5), const Color(0xFFEA580C),
-            darkBg: const Color(0xFF431407), darkFg: const Color(0xFFFDBA74)),
-        MoodLabelDef('calm', s.moodLabelCalm, '🧘',
-            const Color(0xFFD1FAE5), const Color(0xFF059669),
-            darkBg: const Color(0xFF064E3B), darkFg: const Color(0xFF6EE7B7)),
+            darkBg: const Color(0xFF1E1B4B), darkFg: const Color(0xFFA5B4FC),
+            isPositive: false),
         MoodLabelDef('stress', s.moodLabelStress, '😤',
             const Color(0xFFFCE7F3), const Color(0xFFDB2777),
-            darkBg: const Color(0xFF500724), darkFg: const Color(0xFFF9A8D4)),
+            darkBg: const Color(0xFF500724), darkFg: const Color(0xFFF9A8D4),
+            isPositive: false),
         MoodLabelDef('sadness', s.moodLabelSadness, '😢',
             const Color(0xFFDBEAFE), const Color(0xFF2563EB),
-            darkBg: const Color(0xFF1E3A5F), darkFg: const Color(0xFF93C5FD)),
-        MoodLabelDef('energy', s.moodLabelEnergy, '⚡',
-            const Color(0xFFFEF9C3), const Color(0xFFCA8A04),
-            darkBg: const Color(0xFF422006), darkFg: const Color(0xFFFDE047)),
+            darkBg: const Color(0xFF1E3A5F), darkFg: const Color(0xFF93C5FD),
+            isPositive: false),
         MoodLabelDef('anger', s.moodLabelAnger, '💢',
             const Color(0xFFFEE2E2), const Color(0xFFB91C1C),
-            darkBg: const Color(0xFF450A0A), darkFg: const Color(0xFFFCA5A5)),
+            darkBg: const Color(0xFF450A0A), darkFg: const Color(0xFFFCA5A5),
+            isPositive: false),
+        // positivas
+        MoodLabelDef('motivation', s.moodLabelMotivation, '🔥',
+            const Color(0xFFFFEDD5), const Color(0xFFEA580C),
+            darkBg: const Color(0xFF431407), darkFg: const Color(0xFFFDBA74),
+            isPositive: true),
+        MoodLabelDef('calm', s.moodLabelCalm, '🧘',
+            const Color(0xFFD1FAE5), const Color(0xFF059669),
+            darkBg: const Color(0xFF064E3B), darkFg: const Color(0xFF6EE7B7),
+            isPositive: true),
+        MoodLabelDef('energy', s.moodLabelEnergy, '⚡',
+            const Color(0xFFFEF9C3), const Color(0xFFCA8A04),
+            darkBg: const Color(0xFF422006), darkFg: const Color(0xFFFDE047),
+            isPositive: true),
         MoodLabelDef('gratitude', s.moodLabelGratitude, '🙏',
             const Color(0xFFECFDF5), const Color(0xFF047857),
-            darkBg: const Color(0xFF022C22), darkFg: const Color(0xFF6EE7B7)),
+            darkBg: const Color(0xFF022C22), darkFg: const Color(0xFF6EE7B7),
+            isPositive: true),
         MoodLabelDef('focus', s.moodLabelFocus, '🎯',
             const Color(0xFFEDE9FE), const Color(0xFF7C3AED),
-            darkBg: const Color(0xFF2E1065), darkFg: const Color(0xFFA78BFA)),
+            darkBg: const Color(0xFF2E1065), darkFg: const Color(0xFFA78BFA),
+            isPositive: true),
       ];
 }
 
@@ -104,6 +116,7 @@ class MoodLabelDef {
   final Color lightFg;
   final Color darkBg;
   final Color darkFg;
+  final bool isPositive;
 
   const MoodLabelDef(
     this.key,
@@ -113,6 +126,7 @@ class MoodLabelDef {
     this.lightFg, {
     required this.darkBg,
     required this.darkFg,
+    required this.isPositive,
   });
 
   Color bg(Brightness b) => b == Brightness.light ? lightBg : darkBg;

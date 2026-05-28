@@ -904,5 +904,9 @@
   "moodTellMore": "Want to add details?",
   "moodSkip": "Skip",
   "moodNext": "Next",
-  "moodAnythingOnMind": "Anything on your mind?"
+  "moodAnythingOnMind": "Anything on your mind?",
+  "moodSaveError": "Couldn't save your mood. Try again.",
+  "moodDeleteConfirm": "Delete this mood entry?",
+  "moodLabelsPositive": "Feeling good",
+  "moodLabelsNegative": "Feeling tough"
 }

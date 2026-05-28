@@ -2814,4 +2814,16 @@ class SEn extends S {
 
   @override
   String get moodAnythingOnMind => 'Anything on your mind?';
+
+  @override
+  String get moodSaveError => 'Couldn\'t save your mood. Try again.';
+
+  @override
+  String get moodDeleteConfirm => 'Delete this mood entry?';
+
+  @override
+  String get moodLabelsPositive => 'Feeling good';
+
+  @override
+  String get moodLabelsNegative => 'Feeling tough';
 }

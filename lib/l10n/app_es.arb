@@ -1950,5 +1950,13 @@
   "moodNext": "Siguiente",
   "@moodNext": {},
   "moodAnythingOnMind": "¿Algo que quieras anotar?",
-  "@moodAnythingOnMind": {}
+  "@moodAnythingOnMind": {},
+  "moodSaveError": "No se pudo guardar el ánimo. Inténtalo de nuevo.",
+  "@moodSaveError": {},
+  "moodDeleteConfirm": "¿Eliminar este registro de ánimo?",
+  "@moodDeleteConfirm": {},
+  "moodLabelsPositive": "Lo que sientes bien",
+  "@moodLabelsPositive": {},
+  "moodLabelsNegative": "Lo que pesa hoy",
+  "@moodLabelsNegative": {}
 }

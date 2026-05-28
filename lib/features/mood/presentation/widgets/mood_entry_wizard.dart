@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../data/mood_repository.dart';
@@ -34,6 +37,8 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
   late String _timeBlock;
   bool _saving = false;
   bool _saved = false;
+  // timer cancelable para el auto-avance al paso 2
+  Timer? _autoAdvanceTimer;
 
   @override
   void initState() {
@@ -43,6 +48,7 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
 
   @override
   void dispose() {
+    _autoAdvanceTimer?.cancel();
     _pageCtrl.dispose();
     _noteCtrl.dispose();
     super.dispose();
@@ -58,18 +64,21 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
 
   void _onEmojiSelected(int rating) {
     setState(() => _rating = rating);
-    Future.delayed(const Duration(milliseconds: 500), () {
+    // cancela cualquier timer previo antes de arrancar uno nuevo
+    _autoAdvanceTimer?.cancel();
+    _autoAdvanceTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted && _currentPage == 0) _goToPage(1);
     });
   }
 
   Future<void> _quickSave() async {
+    _autoAdvanceTimer?.cancel(); // evita race: cancelar antes de guardar
     if (_rating == null) return;
     await _save();
   }
 
   Future<void> _save() async {
-    if (_rating == null) return;
+    if (_rating == null || _saving) return;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
@@ -93,22 +102,22 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
         setState(() => _saved = true);
         if (streak > 1) {
           final s = S.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('🔥 ${s.moodStreakDays(streak)}'),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
+          AppSnackBar.showSuccess(
+            context,
+            '🔥 ${s.moodStreakDays(streak)}',
           );
         }
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) Navigator.of(context, rootNavigator: true).pop();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+        // mensaje localizado con opción de reintentar — sin texto de excepción raw
+        AppSnackBar.showError(
+          context,
+          S.of(context).moodSaveError,
+          onRetry: _save,
         );
       }
     }
@@ -128,6 +137,8 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     final scheme = Theme.of(context).colorScheme;
+    // altura máxima: 52% del alto de pantalla, mínimo 180 — evita overflow en pantallas pequeñas
+    final maxHeight = MediaQuery.of(context).size.height * 0.52;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
@@ -169,9 +180,12 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
             ),
             const SizedBox(height: 20),
 
-            // contenido paginado
-            SizedBox(
-              height: _pageHeight,
+            // contenido paginado con altura dinámica
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: 180,
+                maxHeight: maxHeight,
+              ),
               child: PageView(
                 controller: _pageCtrl,
                 physics: const ClampingScrollPhysics(),
@@ -187,12 +201,6 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
         ),
       ),
     );
-  }
-
-  double get _pageHeight {
-    if (_currentPage == 2) return 280;
-    if (_currentPage == 1) return 300;
-    return 220;
   }
 
   // paso 1: selección de emoji
@@ -238,7 +246,7 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // time block chip pequeño
+          // time block en Wrap para evitar overflow en pantallas estrechas
           _TimeBlockRow(
             selected: _timeBlock,
             onChanged: (tb) => setState(() => _timeBlock = tb),
@@ -248,6 +256,7 @@ class _MoodEntryWizardState extends State<MoodEntryWizard> {
           MoodLabelChips(
             selectedLabels: _labels,
             onLabelsChanged: (l) => setState(() => _labels = l),
+            rating: _rating,
           ),
           const SizedBox(height: 20),
 
@@ -400,7 +409,7 @@ class _SaveButton extends StatelessWidget {
   }
 }
 
-// fila compacta para selección de time block
+// fila de time block en Wrap para evitar overflow en pantallas estrechas
 class _TimeBlockRow extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onChanged;
@@ -421,39 +430,38 @@ class _TimeBlockRow extends StatelessWidget {
       ('night', s.moodTimeBlockNight, '🌙'),
     ];
 
-    return Row(
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
       children: blocks.map((b) {
         final isSelected = selected == b.$1;
-        return Padding(
-          padding: const EdgeInsets.only(right: 6),
-          child: GestureDetector(
-            onTap: () => onChanged(b.$1),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? scheme.primaryContainer
-                    : scheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(b.$3, style: const TextStyle(fontSize: 12)),
-                  const SizedBox(width: 4),
-                  Text(
-                    b.$2,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected
-                              ? scheme.onPrimaryContainer
-                              : scheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
+        return GestureDetector(
+          onTap: () => onChanged(b.$1),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(b.$3, style: const TextStyle(fontSize: 12)),
+                const SizedBox(width: 4),
+                Text(
+                  b.$2,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected
+                            ? scheme.onPrimaryContainer
+                            : scheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
             ),
           ),
         );

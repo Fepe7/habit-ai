@@ -205,7 +205,28 @@ class _EntryTile extends StatelessWidget {
             icon: Icon(Icons.delete_outline_rounded,
                 size: 20, color: scheme.error),
             tooltip: s.moodDeleteEntry,
-            onPressed: onDelete,
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(s.moodDeleteConfirm),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(s.cancel),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: TextButton.styleFrom(
+                        foregroundColor: scheme.error,
+                      ),
+                      child: Text(s.moodDeleteEntry),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) onDelete();
+            },
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
           ),

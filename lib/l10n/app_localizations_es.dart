@@ -2826,4 +2826,17 @@ class SEs extends S {
 
   @override
   String get moodAnythingOnMind => '¿Algo que quieras anotar?';
+
+  @override
+  String get moodSaveError =>
+      'No se pudo guardar el ánimo. Inténtalo de nuevo.';
+
+  @override
+  String get moodDeleteConfirm => '¿Eliminar este registro de ánimo?';
+
+  @override
+  String get moodLabelsPositive => 'Lo que sientes bien';
+
+  @override
+  String get moodLabelsNegative => 'Lo que pesa hoy';
 }

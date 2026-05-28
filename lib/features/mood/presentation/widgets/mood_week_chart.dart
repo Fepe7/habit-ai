@@ -7,6 +7,7 @@ import '../../../../core/widgets/ux/skeletons.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
+import '../mood_theme.dart';
 import 'mood_entry_sheet.dart';
 
 // Gráfica de líneas con el ánimo medio de los últimos 7 días
@@ -108,6 +109,7 @@ class _MoodWeekChartState extends State<MoodWeekChart> {
 
   LineChartData _buildChartData(BuildContext context, _WeekData data) {
     final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
     final primary = AppTheme.primary;
     final success = AppTheme.success;
 
@@ -141,11 +143,16 @@ class _MoodWeekChartState extends State<MoodWeekChart> {
           getDotPainter: (spot, percent, barData, index) {
             final dayIndex = spot.x.toInt();
             final touched = _touchedIndex == dayIndex;
+            // cada dot usa el color de MoodTheme para su rating
+            final avg = data.days[dayIndex].avg;
+            final dotColor = avg != null
+                ? MoodTheme.ratingAccent(avg.round().clamp(1, 5), brightness)
+                : primary;
             return FlDotCirclePainter(
               radius: touched ? 6 : 4,
               color: Colors.white,
-              strokeWidth: 2,
-              strokeColor: touched ? success : primary,
+              strokeWidth: 2.5,
+              strokeColor: dotColor,
             );
           },
         ),
