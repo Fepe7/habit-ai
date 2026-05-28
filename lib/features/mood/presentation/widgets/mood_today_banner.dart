@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../../core/services/feedback_service.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../data/mood_repository.dart';
@@ -9,9 +8,9 @@ import '../../domain/mood_entry_model.dart';
 import '../mood_theme.dart';
 import 'mood_entry_sheet.dart';
 
-enum _BannerState { loading, notLogged, logged }
+enum _CardState { loading, notLogged, logged }
 
-// banner de ánimo diario con 3 estados: loading / no registrado / registrado
+// tarjeta de ánimo para el dashboard — entry point al sheet de registro
 class MoodTodayBanner extends StatefulWidget {
   final List<HabitModel> completedHabits;
 
@@ -26,8 +25,6 @@ class MoodTodayBanner extends StatefulWidget {
 
 class _MoodTodayBannerState extends State<MoodTodayBanner> {
   MoodRepository? _repo;
-  bool _saving = false;
-  int? _savedRating; // rating guardado localmente para transición inmediata
   int _streak = 0;
 
   @override
@@ -45,41 +42,6 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
     if (mounted) setState(() => _streak = streak);
   }
 
-  Future<void> _quickSave(int rating) async {
-    final repo = _repo;
-    if (repo == null || _saving) return;
-    setState(() {
-      _saving = true;
-      _savedRating = rating;
-    });
-    try {
-      final entry = MoodEntryModel(
-        id: '',
-        rating: rating,
-        labels: const [],
-        timeBlock: MoodEntryModel.timeBlockFromHour(DateTime.now().hour),
-        timestamp: DateTime.now(),
-        habitsCompletedSnapshot:
-            widget.completedHabits.map((h) => h.id).toList(),
-      );
-      await repo.createEntry(entry);
-      await FeedbackService.instance.habitCompleted();
-      if (mounted) {
-        setState(() => _saving = false);
-        // recalcular racha tras guardar
-        final uid = FirebaseAuth.instance.currentUser?.uid;
-        if (uid != null) _loadStreak(uid);
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _saving = false;
-          _savedRating = null;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final repo = _repo;
@@ -90,164 +52,132 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
       builder: (context, snap) {
         final state = _resolveState(snap);
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 350),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, anim) => FadeTransition(
-              opacity: anim,
-              child: SlideTransition(
-                position:
-                    Tween(begin: const Offset(0, 0.1), end: Offset.zero)
-                        .animate(anim),
-                child: child,
-              ),
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 350),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: SlideTransition(
+              position: Tween(
+                begin: const Offset(0, 0.08),
+                end: Offset.zero,
+              ).animate(anim),
+              child: child,
             ),
-            child: switch (state) {
-              _BannerState.loading => const SizedBox.shrink(key: ValueKey('loading')),
-              _BannerState.notLogged => _NotLoggedBanner(
-                  key: const ValueKey('not-logged'),
-                  saving: _saving,
-                  completedHabits: widget.completedHabits,
-                  onRatingTap: _quickSave,
-                ),
-              _BannerState.logged => _LoggedBanner(
-                  key: const ValueKey('logged'),
-                  rating: _savedRating ?? (snap.data?.last.rating ?? 3),
-                  streak: _streak,
-                  completedHabits: widget.completedHabits,
-                ),
-            },
           ),
+          child: switch (state) {
+            _CardState.loading =>
+              const SizedBox.shrink(key: ValueKey('loading')),
+            _CardState.notLogged => _EntryCard(
+                key: const ValueKey('not-logged'),
+                completedHabits: widget.completedHabits,
+              ),
+            _CardState.logged => _LoggedCard(
+                key: const ValueKey('logged'),
+                rating: snap.data?.last.rating ?? 3,
+                streak: _streak,
+                completedHabits: widget.completedHabits,
+              ),
+          },
         );
       },
     );
   }
 
-  _BannerState _resolveState(AsyncSnapshot<List<MoodEntryModel>> snap) {
-    if (snap.connectionState == ConnectionState.waiting && _savedRating == null) {
-      return _BannerState.loading;
+  _CardState _resolveState(AsyncSnapshot<List<MoodEntryModel>> snap) {
+    if (snap.connectionState == ConnectionState.waiting) {
+      return _CardState.loading;
     }
-    if (_savedRating != null || (snap.data?.isNotEmpty == true)) {
-      return _BannerState.logged;
-    }
-    return _BannerState.notLogged;
+    if (snap.data?.isNotEmpty == true) return _CardState.logged;
+    return _CardState.notLogged;
   }
 }
 
-// ---------- estado: no registrado ----------
+// --- estado: sin registro — tarjeta cálida tipo diario ---
 
-class _NotLoggedBanner extends StatelessWidget {
-  final bool saving;
+class _EntryCard extends StatelessWidget {
   final List<HabitModel> completedHabits;
-  final void Function(int) onRatingTap;
 
-  const _NotLoggedBanner({
-    super.key,
-    required this.saving,
-    required this.completedHabits,
-    required this.onRatingTap,
-  });
+  const _EntryCard({super.key, required this.completedHabits});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    final brightness = Theme.of(context).brightness;
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            scheme.primaryContainer.withValues(alpha: 0.45),
-            scheme.primaryContainer.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: scheme.primary.withValues(alpha: 0.15),
-          width: 1,
-        ),
+    return GestureDetector(
+      onTap: () => MoodEntrySheet.show(
+        context,
+        completedHabits: completedHabits,
       ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: scheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.favorite_rounded,
-                    color: scheme.primary, size: 14),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  _greeting(s),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-              ),
-            ],
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(18, 16, 16, 16),
+        decoration: BoxDecoration(
+          // crema cálida — contraste deliberado con la paleta azul de la app
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF7ED), Color(0xFFFFF0DC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(height: 14),
-
-          if (saving)
-            const Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2.5),
-              ),
-            )
-          else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(5, (i) {
-                final rating = i + 1;
-                final bg = MoodTheme.ratingBg(rating, brightness);
-                final accent = MoodTheme.ratingAccent(rating, brightness);
-                return _EmojiButton(
-                  emoji: MoodTheme.emojis[i],
-                  bg: bg,
-                  accent: accent,
-                  onTap: () => onRatingTap(rating),
-                );
-              }),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFFFDDB0),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(
+              _timeEmoji(DateTime.now().hour),
+              style: const TextStyle(fontSize: 26),
             ),
-
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () => MoodEntrySheet.show(
-              context,
-              completedHabits: completedHabits,
-            ),
-            child: Text(
-              s.moodTellMore,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    decoration: TextDecoration.underline,
-                    decorationColor: scheme.primary,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _greeting(s),
+                    style: const TextStyle(
+                      color: Color(0xFF78350F),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    s.moodHowAreYou,
+                    style: const TextStyle(
+                      color: Color(0xFFA16207),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Container(
+              width: 34,
+              height: 34,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFFDDB0),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                size: 16,
+                color: Color(0xFF92400E),
+              ),
+            ),
+          ],
+        ),
       ),
     )
         .animate()
         .fadeIn(duration: 300.ms)
-        .slideY(begin: -0.1, duration: 300.ms, curve: Curves.easeOutCubic)
-        .shimmer(duration: 800.ms, delay: 100.ms, color: Colors.white10);
+        .slideY(begin: -0.08, duration: 300.ms, curve: Curves.easeOutCubic);
   }
 
   String _greeting(S s) {
@@ -256,92 +186,23 @@ class _NotLoggedBanner extends StatelessWidget {
     if (h >= 14 && h < 21) return s.moodBannerAfternoon;
     return s.moodBannerNight;
   }
-}
 
-class _EmojiButton extends StatefulWidget {
-  final String emoji;
-  final Color bg;
-  final Color accent;
-  final VoidCallback onTap;
-
-  const _EmojiButton({
-    required this.emoji,
-    required this.bg,
-    required this.accent,
-    required this.onTap,
-  });
-
-  @override
-  State<_EmojiButton> createState() => _EmojiButtonState();
-}
-
-class _EmojiButtonState extends State<_EmojiButton>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-    );
-    _scale = Tween<double>(begin: 1.0, end: 0.8).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleTap() async {
-    FeedbackService.instance.moodSelected();
-    await _ctrl.forward();
-    await _ctrl.reverse();
-    widget.onTap();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _handleTap,
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          width: 54,
-          height: 54,
-          decoration: BoxDecoration(
-            color: widget.bg.withValues(alpha: 0.5),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: widget.accent.withValues(alpha: 0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(widget.emoji, style: const TextStyle(fontSize: 26)),
-          ),
-        ),
-      ),
-    );
+  String _timeEmoji(int hour) {
+    if (hour >= 5 && hour < 12) return '🌅';
+    if (hour >= 12 && hour < 15) return '☀️';
+    if (hour >= 15 && hour < 21) return '🌇';
+    return '🌙';
   }
 }
 
-// ---------- estado: registrado ----------
+// --- estado: ya registrado ---
 
-class _LoggedBanner extends StatelessWidget {
+class _LoggedCard extends StatelessWidget {
   final int rating;
   final int streak;
   final List<HabitModel> completedHabits;
 
-  const _LoggedBanner({
+  const _LoggedCard({
     super.key,
     required this.rating,
     required this.streak,
@@ -362,23 +223,23 @@ class _LoggedBanner extends StatelessWidget {
         completedHabits: completedHabits,
       ),
       child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.45),
-          borderRadius: BorderRadius.circular(24),
+          color: bg.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: accent.withValues(alpha: 0.25),
+            color: accent.withValues(alpha: 0.22),
             width: 1,
           ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 28))
+            Text(emoji, style: const TextStyle(fontSize: 26))
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .scale(
                   begin: const Offset(1, 1),
                   end: const Offset(1.07, 1.07),
-                  duration: 1800.ms,
+                  duration: 2000.ms,
                   curve: Curves.easeInOut,
                 ),
             const SizedBox(width: 12),
@@ -391,34 +252,42 @@ class _LoggedBanner extends StatelessWidget {
                     children: [
                       Text(
                         s.moodLoggedToday,
-                        style:
-                            Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: accent,
-                                ),
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(width: 6),
-                      Icon(Icons.check_circle_rounded,
-                          size: 16, color: accent),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 14,
+                        color: accent,
+                      ),
                     ],
                   ),
                   if (streak > 1) ...[
                     const SizedBox(height: 2),
                     Text(
                       '🔥 ${s.moodStreakDays(streak)}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: accent.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600,
-                          ),
+                      style: TextStyle(
+                        color: accent.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
-            Icon(Icons.add_rounded, size: 20, color: accent.withValues(alpha: 0.6)),
+            Icon(
+              Icons.add_rounded,
+              size: 18,
+              color: accent.withValues(alpha: 0.6),
+            ),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, duration: 300.ms);
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, duration: 300.ms);
   }
 }

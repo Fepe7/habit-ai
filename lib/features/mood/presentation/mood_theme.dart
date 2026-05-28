@@ -51,6 +51,29 @@ class MoodTheme {
     return brightness == Brightness.light ? _lightAccents[i] : _darkAccents[i];
   }
 
+  // colores del sheet dark (independiente del tema de la app)
+  static const _sheetZoneBgs = [
+    Color(0xFF5C2A18), // 1 — terracota
+    Color(0xFF4D3A10), // 2 — ámbar
+    Color(0xFF1A3A2A), // 3 — sage
+    Color(0xFF0F3535), // 4 — teal
+    Color(0xFF3D3008), // 5 — dorado
+  ];
+
+  static const _sheetZoneAccents = [
+    Color(0xFFD4754A), // 1
+    Color(0xFFD4A03A), // 2
+    Color(0xFF5DAA78), // 3
+    Color(0xFF45AEAD), // 4
+    Color(0xFFE8BA4A), // 5
+  ];
+
+  static Color sheetZoneBg(int rating) =>
+      _sheetZoneBgs[(rating - 1).clamp(0, 4)];
+
+  static Color sheetZoneAccent(int rating) =>
+      _sheetZoneAccents[(rating - 1).clamp(0, 4)];
+
   static String ratingLabel(int rating, S s) {
     return switch (rating) {
       1 => s.moodRating1,

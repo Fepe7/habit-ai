@@ -37,7 +37,6 @@ import '../../ai/domain/renegotiation_model.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../challenges/data/challenge_repository.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../mood/presentation/widgets/mood_today_banner.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
 class HabitsScreen extends StatefulWidget {
@@ -888,15 +887,6 @@ class _HabitsScreenState extends State<HabitsScreen>
                     slivers: [
                       // header editorial asimetrico
                       SliverToBoxAdapter(child: _buildHeader(context)),
-
-                      // banner de ánimo — solo si no hay registro hoy
-                      SliverToBoxAdapter(
-                        child: MoodTodayBanner(
-                          completedHabits: _currentTodayHabits
-                              .where((h) => _completedToday[h.id] == true)
-                              .toList(),
-                        ),
-                      ),
 
                       // hero de progreso diario
                       SliverToBoxAdapter(

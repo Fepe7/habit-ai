@@ -16,13 +16,14 @@ class MoodEntrySheet extends StatelessWidget {
     BuildContext context, {
     List<HabitModel> completedHabits = const [],
   }) {
+    final height = MediaQuery.of(context).size.height * 0.75;
     return showAppBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
+      builder: (_) => SizedBox(
+        height: height,
+        child: MoodEntrySheet(completedHabits: completedHabits),
       ),
-      builder: (_) => MoodEntrySheet(completedHabits: completedHabits),
     );
   }
 
