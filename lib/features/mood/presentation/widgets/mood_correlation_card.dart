@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/ux/skeletons.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../dashboard/data/stats_repository.dart';
+import '../../domain/mood_math.dart';
 
 // Card del dashboard con gráfica combinada ánimo + hábitos y top correlaciones
 class MoodCorrelationCard extends StatefulWidget {
@@ -428,21 +429,9 @@ class _MoodLineOverlay extends StatelessWidget {
   }
 
   // Media móvil centrada (ventana ±2 = 5 días) sobre los días con registro.
-  // Solo devuelve valor si el día central tiene dato, para no inventar puntos.
-  double? _movingAverage(List<DayCorrelation> days, int index) {
-    if (days[index].moodAvg == null) return null;
-    double sum = 0;
-    int count = 0;
-    for (int j = index - 2; j <= index + 2; j++) {
-      if (j < 0 || j >= days.length) continue;
-      final v = days[j].moodAvg;
-      if (v != null) {
-        sum += v;
-        count++;
-      }
-    }
-    return count == 0 ? null : sum / count;
-  }
+  // Delega en la función pura para mantener la lógica testeable.
+  double? _movingAverage(List<DayCorrelation> days, int index) =>
+      centeredMovingAverage(days.map((d) => d.moodAvg).toList(), index);
 }
 
 class _TopCorrelations extends StatelessWidget {

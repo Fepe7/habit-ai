@@ -201,6 +201,7 @@ class AuthRepository {
       'pattern_insights',
       'renegotiations',
       'shield_grants',
+      'mood_entries',
       'followers',
       'following',
     ];

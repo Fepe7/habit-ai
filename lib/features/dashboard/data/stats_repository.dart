@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../mood/data/mood_repository.dart';
+import '../../mood/domain/mood_math.dart';
 
 // Agrega estadisticas de habitos para el dashboard
 class StatsRepository {
@@ -526,10 +527,7 @@ class HabitMoodCorrelation {
     this.moodInStreak,
   });
 
-  String get diffLabel {
-    final sign = diff >= 0 ? '+' : '';
-    return '$sign${diff.toStringAsFixed(1)}';
-  }
+  String get diffLabel => moodDiffLabel(diff);
 
   // diferencia de ánimo en racha vs días sin el hábito (null si no hay racha)
   double? get streakDiff =>
@@ -537,9 +535,7 @@ class HabitMoodCorrelation {
 
   String? get streakDiffLabel {
     final d = streakDiff;
-    if (d == null) return null;
-    final sign = d >= 0 ? '+' : '';
-    return '$sign${d.toStringAsFixed(1)}';
+    return d == null ? null : moodDiffLabel(d);
   }
 
   // hay efecto racha relevante si la racha mejora el ánimo más que los días sueltos
@@ -549,11 +545,11 @@ class HabitMoodCorrelation {
   }
 
   // confianza según cuántos días se completó el hábito en el período
-  MoodConfidence get confidence {
-    if (daysCompleted >= 15) return MoodConfidence.high;
-    if (daysCompleted >= 5) return MoodConfidence.medium;
-    return MoodConfidence.low;
-  }
+  MoodConfidence get confidence => switch (moodConfidenceLevel(daysCompleted)) {
+        2 => MoodConfidence.high,
+        1 => MoodConfidence.medium,
+        _ => MoodConfidence.low,
+      };
 }
 
 // nivel de fiabilidad de una correlación según el volumen de datos

@@ -25,7 +25,7 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 ### Fase C — Engagement diario
 
 25. ✅ Habit stacking (Atomic Habits) — Cadenas de hábitos con grupos, drag & drop, bonus XP, onboarding. Desplegado.
-26. 🔲 Tracking de energía/ánimo — Slider 1-5 diario. IA cruza con hábitos para correlaciones.
+26. ✅ Tracking de energía/ánimo — Registro multi-franja (rating 1-5 + etiquetas + nota), heatmap mensual, pantalla de correlación ánimo-hábitos con nivel de confianza y efecto retardado (día siguiente), integrado en la revisión semanal IA. Datos privados, borrados al eliminar cuenta. Lógica pura testeada (`mood_math.dart`).
 27. 🔲 Widgets de home screen — `home_widget` (Android nativo + iOS WidgetKit). Check-in sin abrir app.
 
 ### Fase D — Marketing orgánico
@@ -83,7 +83,7 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 47. 🔲 Firebase Crashlytics + Analytics
 48. 🔲 Manejo de modo offline
 49. 🔲 Push notifications con FCM
-50. 🔲 Tests mínimos (modelos + repos)
+50. 🔲 Tests mínimos (modelos + repos) — en progreso: tests de modelos de dominio (hábitos, social, IA, retos, niveles…) y de la lógica de ánimo (modelo `MoodEntryModel` + funciones puras de correlación).
 
 ---
 

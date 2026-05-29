@@ -28,6 +28,11 @@ Proyecto desarrollado como **Trabajo Final de Grado** del ciclo 2º DAM (Desarro
 - **Plantillas de la comunidad**: marketplace global para publicar grupos propios e importar los de otros con un tap.
 - **Perfiles públicos** con lista de hábitos activos (opt-in).
 
+### Ánimo y energía
+- **Registro de ánimo** por franja horaria (mañana/mediodía/tarde/noche): rating 1-5, etiquetas emocionales y nota opcional.
+- **Heatmap mensual** estilo GitHub con el ánimo medio de cada día.
+- **Correlación ánimo-hábitos**: la app cruza tus check-ins con tu estado de ánimo y muestra qué hábitos te suben/bajan el ánimo, con nivel de confianza y efecto retardado (impacto en el día siguiente). Los registros alimentan también la revisión semanal de la IA.
+
 ### Dashboard
 - Gráfica semanal con `fl_chart`, stats agregadas, distribución por categoría (pie chart) y rachas activas.
 - Vistas de detalle: 30 días, desglose por categoría, todas las rachas.
@@ -98,6 +103,7 @@ Flutter  →  Cloud Function (callable)  →  Gemini (Firebase AI Logic)
 users/{uid}
   ├── habits/{habitId}
   │     └── logs/{logId}
+  ├── mood_entries/{entryId}         # registros de ánimo (privados)
   ├── achievements/{achievementId}
   ├── ai_conversations/{conversationId}
   ├── weekly_reviews/{weekId}        # 2026-W15
