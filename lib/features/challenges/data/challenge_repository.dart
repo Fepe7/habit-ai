@@ -155,25 +155,27 @@ class ChallengeRepository {
   }
 
   Stream<List<ChallengeModel>> watchPendingInvites() {
-    // Filtro de status en cliente para evitar índice compuesto en Firestore
+    // La regla solo permite filtrar por participantUids; invitedUid/status en cliente
     return _challengesRef
-        .where('invitedUid', isEqualTo: _uid)
+        .where('participantUids', arrayContains: _uid)
         .snapshots()
         .map((snap) => snap.docs
             .map((doc) => ChallengeModel.fromJson(doc.data(), doc.id))
-            .where((c) => c.status == ChallengeStatus.pending)
+            .where((c) => c.invitedUid == _uid &&
+                c.status == ChallengeStatus.pending)
             .toList());
   }
 
   // retos que yo creé y el compañero acaba de aceptar (status = active)
   Stream<List<ChallengeModel>> watchAcceptedByOthers() {
-    // Filtro de status en cliente para evitar índice compuesto en Firestore
+    // La regla solo permite filtrar por participantUids; creatorUid/status en cliente
     return _challengesRef
-        .where('creatorUid', isEqualTo: _uid)
+        .where('participantUids', arrayContains: _uid)
         .snapshots()
         .map((snap) => snap.docs
             .map((doc) => ChallengeModel.fromJson(doc.data(), doc.id))
-            .where((c) => c.status == ChallengeStatus.active)
+            .where((c) => c.creatorUid == _uid &&
+                c.status == ChallengeStatus.active)
             .toList());
   }
 

@@ -341,6 +341,6 @@ GoRouter createRouter(AuthRepository authRepository) {
 // (refreshListenable necesita un Listenable, no un Stream)
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
-    stream.listen((_) => notifyListeners());
+    stream.listen((_) => notifyListeners(), onError: (_) {});
   }
 }

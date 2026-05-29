@@ -55,30 +55,30 @@ class NotificationsService {
       if (reference == null || d.isAfter(reference)) return true;
     }
 
-    // Invitaciones de reto pendientes (filtro status en cliente)
+    // Retos: una sola query por participantUids (lo único que permite la regla).
+    // El filtro fino (invitación pendiente / aceptación) se hace en cliente.
     final challengeSnap = await db
         .collection('challenges')
-        .where('invitedUid', isEqualTo: uid)
-        .limit(5)
+        .where('participantUids', arrayContains: uid)
         .get();
     for (final doc in challengeSnap.docs) {
-      if (doc.data()['status'] != 'pending') continue;
-      final d = (doc.data()['createdAt'] as Timestamp).toDate();
-      if (reference == null || d.isAfter(reference)) return true;
-    }
-
-    // Reto aceptado por el compañero (soy el creador)
-    final acceptedSnap = await db
-        .collection('challenges')
-        .where('creatorUid', isEqualTo: uid)
-        .where('status', isEqualTo: 'active')
-        .limit(5)
-        .get();
-    for (final doc in acceptedSnap.docs) {
-      final startDate = doc.data()['startDate'];
-      if (startDate != null) {
-        final d = (startDate as Timestamp).toDate();
-        if (reference == null || d.isAfter(reference)) return true;
+      final data = doc.data();
+      final status = data['status'];
+      // invitación pendiente dirigida a mí
+      if (data['invitedUid'] == uid && status == 'pending') {
+        final ts = data['createdAt'];
+        if (ts is Timestamp) {
+          final d = ts.toDate();
+          if (reference == null || d.isAfter(reference)) return true;
+        }
+      }
+      // reto que yo creé y el compañero ya aceptó (activo)
+      if (data['creatorUid'] == uid && status == 'active') {
+        final ts = data['startDate'];
+        if (ts is Timestamp) {
+          final d = ts.toDate();
+          if (reference == null || d.isAfter(reference)) return true;
+        }
       }
     }
 
@@ -211,7 +211,11 @@ class _NotificationsBottomSheetState extends State<NotificationsBottomSheet> {
 
   Future<void> _clearAll() async {
     await NotificationsService.clearAll();
-    if (mounted) setState(() => _future = _loadAll(S.of(context)));
+    if (!mounted) return;
+    final future = _loadAll(S.of(context));
+    setState(() {
+      _future = future;
+    });
   }
 
   Future<_NotifData> _loadAll(S l10n) async {

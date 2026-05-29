@@ -157,8 +157,12 @@ class _HabitsScreenState extends State<HabitsScreen>
   }
 
   Future<void> _checkNewNotifs(String uid) async {
-    final hasNew = await NotificationsService.hasNew(uid);
-    if (mounted) setState(() => _hasNewNotifs = hasNew);
+    try {
+      final hasNew = await NotificationsService.hasNew(uid);
+      if (mounted) setState(() => _hasNewNotifs = hasNew);
+    } catch (_) {
+      // badge de notificaciones: si falla una query, no debe tumbar la pantalla
+    }
   }
 
   void _watchNotifs(String uid) {
@@ -166,20 +170,24 @@ class _HabitsScreenState extends State<HabitsScreen>
 
     void recheck(_) => _checkNewNotifs(uid);
 
+    // badges en segundo plano: si una query falla (índice/permiso/red)
+    // no debe tumbar la app, solo se ignora el recheck
+    void onErr(Object _) {}
+
     _notifSubs.addAll([
       // nuevo logro desbloqueado
       db.collection('users').doc(uid).collection('achievements')
-          .snapshots().listen(recheck),
+          .snapshots().listen(recheck, onError: onErr),
       // solicitud de seguimiento recibida
       db.collection('follow_requests')
           .where('toUid', isEqualTo: uid)
           .where('status', isEqualTo: 'pending')
-          .snapshots().listen(recheck),
+          .snapshots().listen(recheck, onError: onErr),
       // solicitud enviada que fue aceptada
       db.collection('follow_requests')
           .where('fromUid', isEqualTo: uid)
           .where('status', isEqualTo: 'accepted')
-          .snapshots().listen(recheck),
+          .snapshots().listen(recheck, onError: onErr),
     ]);
   }
 
@@ -217,7 +225,7 @@ class _HabitsScreenState extends State<HabitsScreen>
               };
             });
           }
-        });
+        }, onError: (_) {});
       }
       _initialized = true;
     }

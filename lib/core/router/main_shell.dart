@@ -88,7 +88,7 @@ class _MainShellState extends State<MainShell> {
       }
       _knownPendingCount = requests.length;
       setState(() => _pendingBadgeCount = requests.length);
-    });
+    }, onError: (_) {});
 
     _acceptedFollowSub = repo.watchAcceptedSentRequests().listen((accepted) {
       if (_knownAcceptedCount == -1) {
@@ -104,7 +104,7 @@ class _MainShellState extends State<MainShell> {
         );
       }
       _knownAcceptedCount = accepted.length;
-    });
+    }, onError: (_) {});
   }
 
   Future<void> _ensureUserDirectory() async {

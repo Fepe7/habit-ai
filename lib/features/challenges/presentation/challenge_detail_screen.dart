@@ -102,18 +102,18 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     // streams en tiempo real
     _challengeSub = _repo.watchChallenge(widget.challengeId).listen((c) {
       if (mounted && c != null) setState(() => _challenge = c);
-    });
+    }, onError: (_) {});
 
     _myProgressSub =
         _repo.watchProgress(widget.challengeId, _uid).listen((p) {
       if (mounted) setState(() => _myProgress = p);
-    });
+    }, onError: (_) {});
 
     if (partnerP != null) {
       _partnerProgressSub =
           _repo.watchProgress(widget.challengeId, partnerP.uid).listen((p) {
         if (mounted) setState(() => _partnerProgress = p);
-      });
+      }, onError: (_) {});
     }
   }
 
