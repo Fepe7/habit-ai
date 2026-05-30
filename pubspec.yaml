@@ -60,6 +60,9 @@ dependencies:
   firebase_crashlytics: ^5.2.0
   firebase_analytics: ^12.3.0
   in_app_review: ^2.0.10
+  app_links: ^6.3.4
+  package_info_plus: ^8.3.0
+  firebase_remote_config: ^6.0.0
 
 dev_dependencies:
   flutter_test:

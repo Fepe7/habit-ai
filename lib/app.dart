@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -42,15 +44,25 @@ class HabitAIApp extends StatefulWidget {
 class _HabitAIAppState extends State<HabitAIApp> {
   final _authRepository = AuthRepository();
   late final GoRouter _router;
+  StreamSubscription<Uri>? _deepLinkSub;
 
   @override
   void initState() {
     super.initState();
     _router = createRouter(_authRepository);
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    // links recibidos con la app ya en memoria (warm/hot start)
+    _deepLinkSub = AppLinks().uriLinkStream.listen((uri) {
+      _router.go(uri.path, extra: uri.queryParameters);
+    });
   }
 
   @override
   void dispose() {
+    _deepLinkSub?.cancel();
     _router.dispose();
     super.dispose();
   }

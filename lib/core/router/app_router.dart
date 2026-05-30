@@ -70,14 +70,20 @@ GoRouter createRouter(AuthRepository authRepository) {
       final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register';
 
-      // No logueado y no está en login/register -> mandar a login
+      // No logueado: redirigir a login y conservar destino en ?from=
       if (!isLoggedIn && !isAuthRoute) {
-        return '/login';
+        final dest = state.uri.toString();
+        // no pasar /login o / como from (no tiene sentido)
+        final from = (dest != '/' && dest != '/login') ? dest : null;
+        return from != null
+            ? '/login?from=${Uri.encodeComponent(from)}'
+            : '/login';
       }
 
-      // Ya logueado pero intenta ir a login/register -> mandar a home
+      // Ya logueado en ruta auth: ir al destino guardado en ?from= o a home
       if (isLoggedIn && isAuthRoute) {
-        return '/';
+        final from = state.uri.queryParameters['from'];
+        return from != null ? Uri.decodeComponent(from) : '/';
       }
 
       // Todo bien, no hace falta redirigir
