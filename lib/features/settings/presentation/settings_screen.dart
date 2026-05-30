@@ -12,6 +12,8 @@ import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../habits/data/habit_repository.dart';
+import '../../../core/services/feedback_service.dart';
+import '../../../core/services/review_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -246,6 +248,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: s.settingsPrivacy,
                   subtitle: s.settingsPrivacySubtitle,
                   onTap: () => context.pushNamed('privacy-settings'),
+                ),
+                _SettingsTile(
+                  icon: Icons.star_rounded,
+                  title: s.settingsRateApp,
+                  subtitle: s.settingsRateAppSubtitle,
+                  onTap: () async {
+                    await FeedbackService.instance.moodSelected();
+                    await ReviewService.instance.openStoreListing();
+                  },
+                  divider: false,
                 ),
               ],
             ),

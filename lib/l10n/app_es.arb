@@ -78,6 +78,12 @@
   "settingsPrivacySubtitle": "Retos, perfil y visibilidad",
   "@settingsPrivacySubtitle": {},
 
+  "settingsRateApp": "Valorar HabitAI",
+  "@settingsRateApp": {},
+
+  "settingsRateAppSubtitle": "¿Te gusta la app? Déjanos una reseña",
+  "@settingsRateAppSubtitle": {},
+
   "settingsSectionLegal": "Legal",
   "@settingsSectionLegal": {},
 
