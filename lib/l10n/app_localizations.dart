@@ -241,6 +241,18 @@ abstract class S {
   /// **'Retos, perfil y visibilidad'**
   String get settingsPrivacySubtitle;
 
+  /// No description provided for @settingsRateApp.
+  ///
+  /// In es, this message translates to:
+  /// **'Valorar HabitAI'**
+  String get settingsRateApp;
+
+  /// No description provided for @settingsRateAppSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Te gusta la app? Déjanos una reseña'**
+  String get settingsRateAppSubtitle;
+
   /// No description provided for @settingsSectionLegal.
   ///
   /// In es, this message translates to:
@@ -5142,6 +5154,30 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Lo que pesa hoy'**
   String get moodLabelsNegative;
+
+  /// No description provided for @updateForceTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualización obligatoria'**
+  String get updateForceTitle;
+
+  /// No description provided for @updateSoftTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva versión disponible'**
+  String get updateSoftTitle;
+
+  /// No description provided for @updateNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Actualizar ahora'**
+  String get updateNow;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get updateLater;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

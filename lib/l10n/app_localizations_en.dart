@@ -90,6 +90,12 @@ class SEn extends S {
   String get settingsPrivacySubtitle => 'Challenges, profile and visibility';
 
   @override
+  String get settingsRateApp => 'Rate HabitAI';
+
+  @override
+  String get settingsRateAppSubtitle => 'Enjoying the app? Leave us a review';
+
+  @override
   String get settingsSectionLegal => 'Legal';
 
   @override
@@ -2868,4 +2874,16 @@ class SEn extends S {
 
   @override
   String get moodLabelsNegative => 'Feeling tough';
+
+  @override
+  String get updateForceTitle => 'Update required';
+
+  @override
+  String get updateSoftTitle => 'New version available';
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get updateLater => 'Later';
 }

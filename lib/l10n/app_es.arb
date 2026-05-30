@@ -2002,5 +2002,14 @@
   "moodLabelsPositive": "Lo que sientes bien",
   "@moodLabelsPositive": {},
   "moodLabelsNegative": "Lo que pesa hoy",
-  "@moodLabelsNegative": {}
+  "@moodLabelsNegative": {},
+
+  "updateForceTitle": "Actualización obligatoria",
+  "@updateForceTitle": {},
+  "updateSoftTitle": "Nueva versión disponible",
+  "@updateSoftTitle": {},
+  "updateNow": "Actualizar ahora",
+  "@updateNow": {},
+  "updateLater": "Ahora no",
+  "@updateLater": {}
 }

@@ -90,6 +90,12 @@ class SEs extends S {
   String get settingsPrivacySubtitle => 'Retos, perfil y visibilidad';
 
   @override
+  String get settingsRateApp => 'Valorar HabitAI';
+
+  @override
+  String get settingsRateAppSubtitle => '¿Te gusta la app? Déjanos una reseña';
+
+  @override
   String get settingsSectionLegal => 'Legal';
 
   @override
@@ -2881,4 +2887,16 @@ class SEs extends S {
 
   @override
   String get moodLabelsNegative => 'Lo que pesa hoy';
+
+  @override
+  String get updateForceTitle => 'Actualización obligatoria';
+
+  @override
+  String get updateSoftTitle => 'Nueva versión disponible';
+
+  @override
+  String get updateNow => 'Actualizar ahora';
+
+  @override
+  String get updateLater => 'Ahora no';
 }

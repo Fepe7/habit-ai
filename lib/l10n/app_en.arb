@@ -941,5 +941,9 @@
   "moodDeleteError": "Couldn't delete the entry",
   "moodDeleteConfirm": "Delete this mood entry?",
   "moodLabelsPositive": "Feeling good",
-  "moodLabelsNegative": "Feeling tough"
+  "moodLabelsNegative": "Feeling tough",
+  "updateForceTitle": "Update required",
+  "updateSoftTitle": "New version available",
+  "updateNow": "Update now",
+  "updateLater": "Later"
 }
