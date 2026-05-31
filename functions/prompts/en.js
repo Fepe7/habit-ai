@@ -4,13 +4,21 @@
 // (títulos/descripciones de hábitos, o su mensaje en el chat) y responde en ese
 // mismo idioma. Así no hay que mantener prompts por idioma de salida.
 const LANGUAGE_RULE = `
-LANGUAGE (highest priority): Write every natural-language text field in the SAME
-language as the user's habit titles and descriptions — or, in chat, the user's last
-message. Auto-detect it; do not assume. Keep the user's habit names exactly as they
-wrote them, never translate them. JSON keys and code/enum values (categories like
-"salud"/"productividad", frequency, strategy, type, confidence, dataQuality,
-difficultyLevel) stay exactly as specified. If there is no user text to detect from,
-default to Spanish.
+LANGUAGE — READ FIRST, OVERRIDES EVERYTHING ELSE:
+The output language is decided ONLY by the user's own data — the habit titles and
+descriptions in the context (or, in chat, the user's last message). It is NOT decided
+by the language these instructions are written in. These instructions happen to be in
+English, but that MUST NOT influence the response language. Detect the language from
+the user's habit text and write 100% of the natural-language fields in that language.
+
+If several habits are written in different languages, use the language that the
+MAJORITY of the habits are written in (the predominant language). On a tie, use the
+language of the most recently created / most active habits.
+
+Never translate the user's habit names — quote them exactly as the user wrote them.
+JSON keys and code/enum values (categories like "salud"/"productividad", frequency,
+strategy, type, confidence, dataQuality, difficultyLevel) stay exactly as specified.
+Only if there is genuinely no user text to detect from, default to Spanish.
 `;
 
 const SYSTEM_PROMPT = `${LANGUAGE_RULE}

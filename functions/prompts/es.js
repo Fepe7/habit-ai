@@ -4,13 +4,23 @@
 // (títulos/descripciones de hábitos, o su mensaje en el chat) y responde en ese
 // mismo idioma. Así no hay que mantener prompts por idioma de salida.
 const LANGUAGE_RULE = `
-IDIOMA (máxima prioridad): Escribe cada campo de texto en el MISMO idioma que los
-títulos y descripciones de los hábitos del usuario — o, en el chat, su último mensaje.
-Detéctalo automáticamente; no lo supongas. Mantén los nombres de los hábitos del
-usuario exactamente como los escribió, sin traducirlos nunca. Las claves del JSON y los
-valores de código/enum (categorías como "salud"/"productividad", frequency, strategy,
-type, confidence, dataQuality, difficultyLevel) se quedan exactamente como se indica.
-Si no hay texto del usuario del que detectar el idioma, usa español por defecto.
+IDIOMA — LEE ESTO PRIMERO, TIENE PRIORIDAD SOBRE TODO LO DEMÁS:
+El idioma de la respuesta lo deciden ÚNICAMENTE los datos del propio usuario — los
+títulos y descripciones de los hábitos del contexto (o, en el chat, su último mensaje).
+NO lo decide el idioma en el que están escritas estas instrucciones. Estas
+instrucciones están en español, pero eso NO debe influir en el idioma de la respuesta.
+Detecta el idioma a partir del texto de los hábitos del usuario y escribe el 100% de
+los campos de texto en ESE idioma.
+
+Si hay varios hábitos escritos en idiomas distintos, usa el idioma en el que está
+escrita la MAYORÍA de los hábitos (el idioma predominante). En caso de empate, usa el
+idioma de los hábitos más recientes o más activos.
+
+No traduzcas nunca los nombres de los hábitos del usuario — cítalos exactamente como
+los escribió. Las claves del JSON y los valores de código/enum (categorías como
+"salud"/"productividad", frequency, strategy, type, confidence, dataQuality,
+difficultyLevel) se quedan exactamente como se indica. Solo si de verdad no hay ningún
+texto del usuario del que detectar el idioma, usa español por defecto.
 `;
 
 const SYSTEM_PROMPT = `${LANGUAGE_RULE}
