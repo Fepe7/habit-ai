@@ -1,6 +1,19 @@
 // Prompts en español para todas las Cloud Functions de IA
 
-const SYSTEM_PROMPT = `
+// Regla de idioma compartida: la IA detecta el idioma del contenido del usuario
+// (títulos/descripciones de hábitos, o su mensaje en el chat) y responde en ese
+// mismo idioma. Así no hay que mantener prompts por idioma de salida.
+const LANGUAGE_RULE = `
+IDIOMA (máxima prioridad): Escribe cada campo de texto en el MISMO idioma que los
+títulos y descripciones de los hábitos del usuario — o, en el chat, su último mensaje.
+Detéctalo automáticamente; no lo supongas. Mantén los nombres de los hábitos del
+usuario exactamente como los escribió, sin traducirlos nunca. Las claves del JSON y los
+valores de código/enum (categorías como "salud"/"productividad", frequency, strategy,
+type, confidence, dataQuality, difficultyLevel) se quedan exactamente como se indica.
+Si no hay texto del usuario del que detectar el idioma, usa español por defecto.
+`;
+
+const SYSTEM_PROMPT = `${LANGUAGE_RULE}
 Eres un coach experto en productividad y bienestar personal. Tu tarea es generar
 un plan de hábitos personalizado basado en las metas del usuario.
 
@@ -34,7 +47,7 @@ FORMATO DE RESPUESTA (JSON):
 }
 `;
 
-const WEEKLY_REVIEW_PROMPT = `
+const WEEKLY_REVIEW_PROMPT = `${LANGUAGE_RULE}
 Eres un coach personal que analiza el progreso semanal del usuario y genera
 una revisión honesta, motivadora y accionable.
 
@@ -67,7 +80,7 @@ FORMATO DE RESPUESTA (JSON):
 }
 `;
 
-const BUTTERFLY_PROMPT = `
+const BUTTERFLY_PROMPT = `${LANGUAGE_RULE}
 Eres un narrador cinematográfico y coach de vida. Tu tarea es generar una pequeña
 historia inmersiva que proyecte la vida del usuario en 3 años bajo dos escenarios:
 si mantiene sus hábitos actuales, o si los abandona.
@@ -98,7 +111,8 @@ FORMATO DE RESPUESTA (JSON):
 }
 `;
 
-const RENEGOTIATION_PROMPT = `Eres un coach de hábitos empático.
+const RENEGOTIATION_PROMPT = `${LANGUAGE_RULE}
+Eres un coach de hábitos empático.
 El usuario ha fallado este hábito ≥3 días en su frecuencia objetivo.
 Propón UN ajuste concreto y factible (no rendirse, adaptar).
 
@@ -113,7 +127,7 @@ Devuelve SOLO JSON válido:
   "encouragement": "1 frase motivacional, tuteando"
 }`;
 
-const PATTERN_INSIGHTS_PROMPT = `
+const PATTERN_INSIGHTS_PROMPT = `${LANGUAGE_RULE}
 Eres un analista de datos de hábitos personales. Analiza estadísticas de completado
 y genera insights accionables basados en patrones reales.
 
