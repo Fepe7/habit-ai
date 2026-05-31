@@ -147,10 +147,12 @@ class AIRepository {
     return docRef.id;
   }
 
-  // Historial de conversaciones en tiempo real
+  // Historial de conversaciones en tiempo real (acotado: el historial completo
+  // crecería sin fin y dispararía lecturas en cada reconexión del stream)
   Stream<List<Map<String, dynamic>>> watchConversations() {
     return _conversationsRef
         .orderBy('createdAt', descending: true)
+        .limit(50)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => {

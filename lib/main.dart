@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'core/theme/theme_provider.dart';
@@ -17,6 +19,22 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // App Check: bloquea peticiones de clientes que no sean la app real,
+    // protegiendo las Cloud Functions (y Gemini) frente a abuso.
+    // En debug usa el provider de depuración; en release, Play Integrity.
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+    );
+
+    // Caché local más grande = más lecturas servidas desde disco = menos
+    // lecturas facturadas en Firestore. El SDK ya persiste por defecto.
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: 100 * 1024 * 1024,
     );
 
     // crashlytics: capturar errores del framework y errores asíncronos

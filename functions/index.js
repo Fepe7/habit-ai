@@ -1,10 +1,27 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onMessagePublished } = require("firebase-functions/v2/pubsub");
+const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { CloudBillingClient } = require("@google-cloud/billing");
 const { defineSecret } = require("firebase-functions/params");
 
 admin.initializeApp();
+
+// Fusible de coste: techo duro de instancias para toda la app.
+// Evita que un bug en bucle o un abuso disparen la factura.
+// concurrency alto porque las funciones esperan a Gemini (I/O), no calculan.
+setGlobalOptions({
+  region: "europe-west1",
+  maxInstances: 10,
+  concurrency: 40,
+});
+
+// Modelos Gemini: pro para chat interactivo (calidad), flash para jobs
+// automáticos en background (10-20x más barato, sobra para resúmenes).
+const MODEL_PRO = "gemini-2.5-pro";
+const MODEL_FLASH = "gemini-2.5-flash";
 
 // La API key se guarda como secret en Firebase, nunca en el codigo
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
@@ -32,7 +49,7 @@ async function checkRateLimit(uid) {
       (ts) => ts > oneHourAgo
     );
 
-    if (requests.length >= 15) {
+    if (requests.length >= 10) {
       return false;
     }
 
@@ -52,6 +69,7 @@ exports.generateHabitPlan = onCall(
   {
     region: "europe-west1",
     secrets: [geminiApiKey],
+    maxInstances: 3,
   },
   async (request) => {
     // 1. Verificar autenticacion
@@ -88,7 +106,7 @@ exports.generateHabitPlan = onCall(
       console.log("API key presente:", apiKey ? "SI" : "NO");
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-pro",
+        model: MODEL_PRO,
         systemInstruction: prompts.SYSTEM_PROMPT,
       });
 
@@ -345,7 +363,7 @@ Datos de ánimo de la semana:
   const apiKey = geminiApiKey.value();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: MODEL_FLASH,
     systemInstruction: getPrompts(locale).WEEKLY_REVIEW_PROMPT,
   });
 
@@ -403,6 +421,7 @@ exports.generateWeeklyReview = onCall(
   {
     region: "europe-west1",
     secrets: [geminiApiKey],
+    maxInstances: 3,
   },
   async (request) => {
     if (!request.auth) {
@@ -629,7 +648,7 @@ Resumen del mes:
   const apiKey = geminiApiKey.value();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: MODEL_FLASH,
     systemInstruction: getPrompts(locale).BUTTERFLY_PROMPT,
   });
 
@@ -682,6 +701,7 @@ exports.generateButterflyProjection = onCall(
   {
     region: "europe-west1",
     secrets: [geminiApiKey],
+    maxInstances: 3,
   },
   async (request) => {
     if (!request.auth) {
@@ -850,7 +870,7 @@ Propón un ajuste concreto para que pueda retomarlo.`;
   const apiKey = geminiApiKey.value();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: MODEL_FLASH,
     systemInstruction: getPrompts(locale).RENEGOTIATION_PROMPT,
   });
 
@@ -896,6 +916,7 @@ exports.generateRenegotiation = onCall(
   {
     region: "europe-west1",
     secrets: [geminiApiKey],
+    maxInstances: 3,
   },
   async (request) => {
     if (!request.auth) {
@@ -1241,7 +1262,7 @@ Genera entre 2 y 6 insights relevantes basándote exclusivamente en los datos an
   const apiKey = geminiApiKey.value();
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-pro",
+    model: MODEL_FLASH,
     systemInstruction: getPrompts(locale).PATTERN_INSIGHTS_PROMPT,
   });
 
@@ -1292,6 +1313,7 @@ exports.generatePatternInsights = onCall(
     region: "europe-west1",
     secrets: [geminiApiKey],
     timeoutSeconds: 300,
+    maxInstances: 3,
   },
   async (request) => {
     if (!request.auth) {
@@ -1381,3 +1403,47 @@ function extractJson(text) {
   // Si no hay llaves, devolvemos el texto original para que el try-catch de arriba lo maneje
   return text;
 }
+
+// ==================== KILL SWITCH DE FACTURACIÓN ====================
+
+// Freno de emergencia. El presupuesto de Cloud Billing publica un mensaje en el
+// topic "billing-alerts" cada vez que cambia el gasto. Si el gasto supera el
+// presupuesto, esta función DESACTIVA la facturación del proyecto entero.
+// ⚠️ Eso tumba toda la app (Firestore, Auth, Functions) hasta reactivarla a mano.
+// Es el último recurso contra una factura inesperada estando ausente.
+exports.killBillingOnBudgetExceeded = onMessagePublished(
+  {
+    topic: "billing-alerts",
+    region: "europe-west1",
+    maxInstances: 1,
+  },
+  async (event) => {
+    const data = event.data.message.json;
+    const cost = data.costAmount;
+    const budget = data.budgetAmount;
+    console.log(`[billing] gasto ${cost} / presupuesto ${budget}`);
+
+    // Solo actuamos si el gasto real supera el presupuesto
+    if (typeof cost !== "number" || typeof budget !== "number" || cost <= budget) {
+      console.log("[billing] dentro del presupuesto, no se hace nada");
+      return;
+    }
+
+    const projectId = process.env.GCLOUD_PROJECT;
+    const projectName = `projects/${projectId}`;
+    const billing = new CloudBillingClient();
+
+    const [info] = await billing.getProjectBillingInfo({ name: projectName });
+    if (!info.billingEnabled) {
+      console.log("[billing] la facturación ya estaba desactivada");
+      return;
+    }
+
+    // billingAccountName vacío = desvincula la cuenta de facturación = corte
+    await billing.updateProjectBillingInfo({
+      name: projectName,
+      projectBillingInfo: { billingAccountName: "" },
+    });
+    console.warn(`[billing] FACTURACIÓN DESACTIVADA para ${projectId}`);
+  }
+);
