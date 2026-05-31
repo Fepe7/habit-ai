@@ -80,10 +80,12 @@ Referenciado desde CLAUDE.md. Contiene el roadmap de lanzamiento público y el b
 44. ✅ Feedback háptico — Vibración en check-in, navegación entre pestañas, botones. FeedbackService centralizado.
 45. ✅ Reordenamiento de hábitos — Drag & drop global y edición por lotes.
 46. ✅ Visibilidad granular de hábitos — Cada hábito con visibility individual, sobreescribe config global.
-47. 🔲 Firebase Crashlytics + Analytics
+47. ✅ Firebase Crashlytics + Analytics — Crashlytics captura errores de framework y asíncronos (`main.dart` con `runZonedGuarded`), `AnalyticsService` para eventos.
 48. 🔲 Manejo de modo offline
 49. 🔲 Push notifications con FCM
 50. 🔲 Tests mínimos (modelos + repos) — en progreso: tests de modelos de dominio (hábitos, social, IA, retos, niveles…) y de la lógica de ánimo (modelo `MoodEntryModel` + funciones puras de correlación).
+51. ✅ Blindaje de costes Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs de fondo (Pro solo en chat), App Check (cliente activado, app registrada con upload key), kill switch de facturación a 20€ (`killBillingOnBudgetExceeded` + topic `billing-alerts`), caché Firestore 100MB, límite en `watchConversations`. Precios y predicción → `docs/gemini-costes.md`.
+    - 🔲 PENDIENTE: activar Enforce de App Check tras subir a Play (+ añadir App Signing SHA), migrar functions a Node.js 22 antes del 2026-10-30, subir presupuesto de 20€ al crecer (autoapaga la app si se supera).
 
 ---
 

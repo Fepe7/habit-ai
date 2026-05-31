@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -12,9 +14,18 @@ class LocaleProvider extends ChangeNotifier {
 
   Locale? get locale => _locale;
 
+  // Idiomas soportados — si el dispositivo trae otro, caemos a español
+  static const _supported = {'en', 'es'};
+
   // Código de locale actual accesible sin context — útil en capas data
   // Se actualiza cada vez que cambia el locale (o al arrancar desde SharedPrefs)
-  static String currentCode = 'es';
+  static String currentCode = _deviceCode();
+
+  // idioma efectivo del dispositivo, recortado a lo que soportamos
+  static String _deviceCode() {
+    final code = PlatformDispatcher.instance.locale.languageCode;
+    return _supported.contains(code) ? code : 'es';
+  }
 
   LocaleProvider() {
     _loadFromPrefs();
@@ -24,15 +35,20 @@ class LocaleProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final value = prefs.getString(_key);
     if (value != null) {
+      // el usuario eligió idioma a mano
       _locale = Locale(value);
       currentCode = value;
-      notifyListeners();
+    } else {
+      // sin elección manual: seguimos el idioma del dispositivo, igual que la UI
+      currentCode = _deviceCode();
     }
+    notifyListeners();
   }
 
   Future<void> setLocale(Locale? locale) async {
     _locale = locale;
-    currentCode = locale?.languageCode ?? 'es';
+    // null = volver al idioma del dispositivo
+    currentCode = locale?.languageCode ?? _deviceCode();
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
