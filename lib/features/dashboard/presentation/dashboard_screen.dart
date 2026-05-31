@@ -87,19 +87,17 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<void> _loadStats() async {
     try {
       final results = await Future.wait([
-        _statsRepo.getGeneralStats(),
-        _statsRepo.getWeeklyProgress(),
-        _statsRepo.getCategoryDistribution(),
-        _statsRepo.getTopStreaks(),
+        _statsRepo.loadDashboard(),
         _achievementRepo.watchAchievements().first,
       ]);
+      final data = results[0] as DashboardData;
       if (mounted) {
         setState(() {
-          _generalStats = results[0] as Map<String, dynamic>;
-          _weeklyProgress = results[1] as List<DailyProgress>;
-          _categoryStats = results[2] as List<CategoryStat>;
-          _topStreaks = results[3] as List<HabitModel>;
-          _achievements = results[4] as List<AchievementModel>;
+          _generalStats = data.generalStats;
+          _weeklyProgress = data.weeklyProgress;
+          _categoryStats = data.categoryStats;
+          _topStreaks = data.topStreaks;
+          _achievements = results[1] as List<AchievementModel>;
           _loading = false;
         });
       }

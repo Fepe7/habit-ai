@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../habits/data/habit_repository.dart';
+import '../../habits/domain/habit_log_model.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../mood/data/mood_repository.dart';
 import '../../mood/domain/mood_math.dart';
 
-// Agrega estadisticas de habitos para el dashboard
+// Agrega estadisticas de habitos para el dashboard.
+// Optimizado para minimizar lecturas Firestore: una sola carga de habitos,
+// una query de logs por habito (ventana fija) y agregaciones count() para
+// totales historicos en vez de bajar todos los logs.
 class StatsRepository {
   final HabitRepository _habitRepo;
   final String _uid;
@@ -17,164 +21,86 @@ class StatsRepository {
         _firestore = firestore ?? FirebaseFirestore.instance,
         _habitRepo = HabitRepository(uid: uid, firestore: firestore);
 
-  // stats generales: completados hoy, total activos, mejor racha global
-  Future<Map<String, dynamic>> getGeneralStats() async {
+  // carga completa del dashboard en una sola pasada:
+  // 1 lectura de habitos + N logs (ventana 7 dias) + N count() agregados.
+  // Todo en paralelo. Sustituye a las 4 llamadas separadas que releian habitos.
+  Future<DashboardData> loadDashboard() async {
     final habits = await _getActiveHabits();
-    if (habits.isEmpty) {
-      return {
-        'totalActive': 0,
-        'completedToday': 0,
-        'bestStreak': 0,
-        'totalCompletedAllTime': 0,
-      };
-    }
+    if (habits.isEmpty) return DashboardData.empty;
 
-    // cuantos completados hoy
-    int completedToday = 0;
-    final todayHabits = _filterTodayHabits(habits);
-    for (final habit in todayHabits) {
-      final log = await _habitRepo.getTodayLog(habit.id);
-      if (log?.completed == true) completedToday++;
-    }
-
-    // mejor racha de todos los habitos
-    int bestStreak = 0;
-    for (final habit in habits) {
-      if (habit.bestStreak > bestStreak) bestStreak = habit.bestStreak;
-      if (habit.currentStreak > bestStreak) bestStreak = habit.currentStreak;
-    }
-
-    // total completados historico (cuenta todos los logs completed)
-    int totalCompleted = 0;
-    for (final habit in habits) {
-      final logs = await _habitRepo.getLogsByDateRange(
-        habitId: habit.id,
-        startDate: habit.createdAt,
-        endDate: DateTime.now(),
-      );
-      totalCompleted += logs.where((l) => l.completed).length;
-    }
-
-    return {
-      'totalActive': habits.length,
-      'completedToday': completedToday,
-      'todayTotal': todayHabits.length,
-      'bestStreak': bestStreak,
-      'totalCompletedAllTime': totalCompleted,
-    };
-  }
-
-  // % de completados por cada dia de los ultimos 7 dias
-  Future<List<DailyProgress>> getWeeklyProgress() async {
-    final habits = await _getActiveHabits();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final result = <DailyProgress>[];
+    final weekStart = today.subtract(const Duration(days: 6));
+    final weekEnd = today.add(const Duration(days: 1));
 
-    for (int i = 6; i >= 0; i--) {
-      final day = today.subtract(Duration(days: i));
-      final dayEnd = day.add(const Duration(days: 1));
-      final weekday = day.weekday;
+    // logs de los ultimos 7 dias + conteo historico, en paralelo
+    final logsByHabit = _fetchLogsWindow(habits, weekStart, weekEnd);
+    final totalCompleted = _countCompletedAllTime(habits);
+    final results = await Future.wait([logsByHabit, totalCompleted]);
+    final logs = results[0] as Map<String, List<HabitLogModel>>;
+    final total = results[1] as int;
 
-      // solo habitos que tocan ese dia
-      final scheduled = habits.where(
-        (h) => h.targetDays.contains(weekday),
-      ).toList();
+    final weekly = _bucketDailyProgress(habits, logs, weekStart, 7);
 
-      if (scheduled.isEmpty) {
-        result.add(DailyProgress(date: day, completed: 0, total: 0));
-        continue;
+    // completados hoy a partir de los logs ya cargados (sin lecturas extra)
+    final todayHabits =
+        habits.where((h) => h.targetDays.contains(today.weekday)).toList();
+    int completedToday = 0;
+    for (final h in todayHabits) {
+      final hlogs = logs[h.id];
+      if (hlogs != null &&
+          hlogs.any((l) => l.completed && _sameDay(l.date, today))) {
+        completedToday++;
       }
-
-      int completed = 0;
-      for (final habit in scheduled) {
-        final logs = await _habitRepo.getLogsByDateRange(
-          habitId: habit.id,
-          startDate: day,
-          endDate: dayEnd,
-        );
-        if (logs.any((l) => l.completed)) completed++;
-      }
-
-      result.add(DailyProgress(
-        date: day,
-        completed: completed,
-        total: scheduled.length,
-      ));
     }
 
-    return result;
-  }
-
-  // distribucion de habitos por categoria
-  Future<List<CategoryStat>> getCategoryDistribution() async {
-    final habits = await _getActiveHabits();
-    final counts = <String, int>{};
-
-    for (final habit in habits) {
-      counts[habit.category] = (counts[habit.category] ?? 0) + 1;
+    // mejor racha de los campos del habito, sin tocar logs
+    int bestStreak = 0;
+    for (final h in habits) {
+      if (h.bestStreak > bestStreak) bestStreak = h.bestStreak;
+      if (h.currentStreak > bestStreak) bestStreak = h.currentStreak;
     }
 
-    return counts.entries
-        .map((e) => CategoryStat(category: e.key, count: e.value))
-        .toList()
-      ..sort((a, b) => b.count.compareTo(a.count));
+    final top = [...habits]
+      ..sort((a, b) => b.currentStreak.compareTo(a.currentStreak));
+
+    return DashboardData(
+      generalStats: {
+        'totalActive': habits.length,
+        'completedToday': completedToday,
+        'todayTotal': todayHabits.length,
+        'bestStreak': bestStreak,
+        'totalCompletedAllTime': total,
+      },
+      weeklyProgress: weekly,
+      categoryStats: _categoryDistribution(habits),
+      topStreaks: top.where((h) => h.currentStreak > 0).take(3).toList(),
+    );
   }
 
-  // top habitos por racha actual
-  Future<List<HabitModel>> getTopStreaks({int limit = 3}) async {
-    final habits = await _getActiveHabits();
-    habits.sort((a, b) => b.currentStreak.compareTo(a.currentStreak));
-    return habits.where((h) => h.currentStreak > 0).take(limit).toList();
-  }
-
-  // progreso de los ultimos N dias (para la vista detallada)
+  // progreso de los ultimos N dias (vista detallada de 30 dias).
+  // 1 query de logs por habito (ventana entera) + agrupado en memoria.
   Future<List<DailyProgress>> getExtendedProgress({int days = 30}) async {
     final habits = await _getActiveHabits();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final result = <DailyProgress>[];
+    final start = today.subtract(Duration(days: days - 1));
+    final end = today.add(const Duration(days: 1));
 
-    for (int i = days - 1; i >= 0; i--) {
-      final day = today.subtract(Duration(days: i));
-      final dayEnd = day.add(const Duration(days: 1));
-      final weekday = day.weekday;
-
-      final scheduled = habits.where(
-        (h) => h.targetDays.contains(weekday),
-      ).toList();
-
-      if (scheduled.isEmpty) {
-        result.add(DailyProgress(date: day, completed: 0, total: 0));
-        continue;
-      }
-
-      int completed = 0;
-      for (final habit in scheduled) {
-        final logs = await _habitRepo.getLogsByDateRange(
-          habitId: habit.id,
-          startDate: day,
-          endDate: dayEnd,
-        );
-        if (logs.any((l) => l.completed)) completed++;
-      }
-
-      result.add(DailyProgress(
-        date: day,
-        completed: completed,
-        total: scheduled.length,
-      ));
-    }
-
-    return result;
+    final logs = await _fetchLogsWindow(habits, start, end);
+    return _bucketDailyProgress(habits, logs, start, days);
   }
 
-  // stats detallados por categoria: habitos + % completado ultimos 7 dias
+  // stats detallados por categoria: habitos + % completado ultimos 7 dias.
+  // 1 query de logs por habito en vez de 7 queries por habito.
   Future<List<CategoryDetailStat>> getCategoryDetailStats() async {
     final habits = await _getActiveHabits();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final weekAgo = today.subtract(const Duration(days: 7));
+    final weekStart = today.subtract(const Duration(days: 6));
+    final weekEnd = today.add(const Duration(days: 1));
+
+    final logs = await _fetchLogsWindow(habits, weekStart, weekEnd);
 
     final grouped = <String, List<HabitModel>>{};
     for (final habit in habits) {
@@ -187,17 +113,15 @@ class StatsRepository {
       int completedLogs = 0;
 
       for (final habit in entry.value) {
-        // contar dias programados en la ultima semana
+        final hlogs = logs[habit.id] ?? const [];
+        // recorre los 7 dias de la ventana y cuenta los programados
         for (int i = 0; i < 7; i++) {
-          final day = weekAgo.add(Duration(days: i));
+          final day = weekStart.add(Duration(days: i));
           if (!habit.targetDays.contains(day.weekday)) continue;
           totalLogs++;
-          final logs = await _habitRepo.getLogsByDateRange(
-            habitId: habit.id,
-            startDate: day,
-            endDate: day.add(const Duration(days: 1)),
-          );
-          if (logs.any((l) => l.completed)) completedLogs++;
+          if (hlogs.any((l) => l.completed && _sameDay(l.date, day))) {
+            completedLogs++;
+          }
         }
       }
 
@@ -214,7 +138,7 @@ class StatsRepository {
     return result;
   }
 
-  // todos los habitos con rachas (sin limite)
+  // todos los habitos con rachas (sin limite) — 1 lectura de habitos
   Future<List<HabitModel>> getAllHabitsWithStreaks() async {
     final habits = await _getActiveHabits();
     habits.sort((a, b) {
@@ -234,8 +158,11 @@ class StatsRepository {
     final end = today.add(const Duration(days: 1));
 
     final habits = await _getActiveHabits();
-    final moodEntries = await MoodRepository(uid: _uid)
-        .getEntriesForRange(start, end);
+    // ánimo y logs de hábitos en paralelo
+    final moodFuture = MoodRepository(uid: _uid).getEntriesForRange(start, end);
+    final logsFuture = _fetchLogsWindow(habits, start, end);
+    final moodEntries = await moodFuture;
+    final logsByHabit = await logsFuture;
 
     // mood medio por día (índice 0 = start, ... n-1 = today)
     final moodByDay = <int, List<double>>{};
@@ -247,17 +174,10 @@ class StatsRepository {
       }
     }
 
-    // porcentaje de hábitos completados por día
-    final completionByDay = <int, double>{};
+    // días en que cada hábito se completó (índice de día)
     final habitCompletedByDay = <String, Set<int>>{};
-
     for (final habit in habits) {
-      final logs = await _habitRepo.getLogsByDateRange(
-        habitId: habit.id,
-        startDate: start,
-        endDate: end,
-      );
-      for (final log in logs) {
+      for (final log in logsByHabit[habit.id] ?? const <HabitLogModel>[]) {
         if (!log.completed) continue;
         final d = DateTime(log.date.year, log.date.month, log.date.day);
         final idx = d.difference(start).inDays;
@@ -268,6 +188,7 @@ class StatsRepository {
     }
 
     // agrega % hábitos completados por día
+    final completionByDay = <int, double>{};
     for (int i = 0; i < days; i++) {
       if (habits.isEmpty) { completionByDay[i] = 0; continue; }
       final date = start.add(Duration(days: i));
@@ -409,7 +330,8 @@ class StatsRepository {
     return result;
   }
 
-  // helpers
+  // ==================== HELPERS ====================
+
   Future<List<HabitModel>> _getActiveHabits() async {
     final snapshot = await _firestore
         .collection('users')
@@ -423,10 +345,121 @@ class StatsRepository {
         .toList();
   }
 
-  List<HabitModel> _filterTodayHabits(List<HabitModel> habits) {
-    final weekday = DateTime.now().weekday;
-    return habits.where((h) => h.targetDays.contains(weekday)).toList();
+  // baja los logs de una ventana de fechas para todos los habitos en paralelo.
+  // 1 query por habito (vs 7-30 antes). Mapa habitId -> logs.
+  Future<Map<String, List<HabitLogModel>>> _fetchLogsWindow(
+    List<HabitModel> habits,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final lists = await Future.wait(habits.map(
+      (h) => _habitRepo.getLogsByDateRange(
+        habitId: h.id,
+        startDate: start,
+        endDate: end,
+      ),
+    ));
+    return {
+      for (int i = 0; i < habits.length; i++) habits[i].id: lists[i],
+    };
   }
+
+  // total historico de completados via count() agregado: 1 lectura facturada
+  // por habito en vez de bajar todos los documentos de log.
+  Future<int> _countCompletedAllTime(List<HabitModel> habits) async {
+    final counts = await Future.wait(habits.map((h) async {
+      final agg = await _firestore
+          .collection('users')
+          .doc(_uid)
+          .collection('habits')
+          .doc(h.id)
+          .collection('logs')
+          .where('completed', isEqualTo: true)
+          .count()
+          .get();
+      return agg.count ?? 0;
+    }));
+    return counts.fold<int>(0, (a, b) => a + b);
+  }
+
+  // construye el progreso diario a partir de logs ya cargados, sin lecturas
+  List<DailyProgress> _bucketDailyProgress(
+    List<HabitModel> habits,
+    Map<String, List<HabitLogModel>> logsByHabit,
+    DateTime startDay,
+    int days,
+  ) {
+    final result = <DailyProgress>[];
+    for (int i = 0; i < days; i++) {
+      final day = startDay.add(Duration(days: i));
+      final scheduled =
+          habits.where((h) => h.targetDays.contains(day.weekday)).toList();
+
+      if (scheduled.isEmpty) {
+        result.add(DailyProgress(date: day, completed: 0, total: 0));
+        continue;
+      }
+
+      int completed = 0;
+      for (final h in scheduled) {
+        final hlogs = logsByHabit[h.id];
+        if (hlogs == null) continue;
+        if (hlogs.any((l) => l.completed && _sameDay(l.date, day))) {
+          completed++;
+        }
+      }
+
+      result.add(DailyProgress(
+        date: day,
+        completed: completed,
+        total: scheduled.length,
+      ));
+    }
+    return result;
+  }
+
+  // distribucion de habitos por categoria (en memoria, 0 lecturas)
+  List<CategoryStat> _categoryDistribution(List<HabitModel> habits) {
+    final counts = <String, int>{};
+    for (final habit in habits) {
+      counts[habit.category] = (counts[habit.category] ?? 0) + 1;
+    }
+    return counts.entries
+        .map((e) => CategoryStat(category: e.key, count: e.value))
+        .toList()
+      ..sort((a, b) => b.count.compareTo(a.count));
+  }
+
+  bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+// paquete de datos del dashboard cargado en una sola pasada
+class DashboardData {
+  final Map<String, dynamic> generalStats;
+  final List<DailyProgress> weeklyProgress;
+  final List<CategoryStat> categoryStats;
+  final List<HabitModel> topStreaks;
+
+  const DashboardData({
+    required this.generalStats,
+    required this.weeklyProgress,
+    required this.categoryStats,
+    required this.topStreaks,
+  });
+
+  static const empty = DashboardData(
+    generalStats: {
+      'totalActive': 0,
+      'completedToday': 0,
+      'todayTotal': 0,
+      'bestStreak': 0,
+      'totalCompletedAllTime': 0,
+    },
+    weeklyProgress: [],
+    categoryStats: [],
+    topStreaks: [],
+  );
 }
 
 // progreso de un dia
