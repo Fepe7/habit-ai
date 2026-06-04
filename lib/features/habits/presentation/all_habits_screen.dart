@@ -807,8 +807,8 @@ class _AllHabitTile extends StatelessWidget {
       s.weekdaySShort,
       s.weekdayDShort,
     ];
-    final bgColor = AppTheme.categoryBg(habit.category);
-    final fgColor = AppTheme.categoryFg(habit.category);
+    final bgColor = AppTheme.categoryBg(habit.category, scheme.brightness);
+    final fgColor = AppTheme.categoryFg(habit.category, scheme.brightness);
 
     return GestureDetector(
       onLongPress: selectionMode ? null : onSelect,

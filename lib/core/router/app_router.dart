@@ -18,6 +18,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
+import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/public_profiles_feed_screen.dart';
 import '../../features/profile/presentation/public_profile_screen.dart';
 import '../../features/community/presentation/community_templates_feed_screen.dart';
@@ -314,6 +315,14 @@ GoRouter createRouter(AuthRepository authRepository) {
             pageBuilder: (context, state) => _fadeSlideTransition(
               state: state,
               child: const PrivacySettingsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/edit-profile',
+            name: 'edit-profile',
+            pageBuilder: (context, state) => _fadeSlideTransition(
+              state: state,
+              child: const EditProfileScreen(),
             ),
           ),
         ],

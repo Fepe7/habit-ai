@@ -245,10 +245,10 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+              color: AppTheme.tertiaryContainer.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                color: AppTheme.tertiaryContainer.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               boxShadow: AppTheme.ambientShadow(),
@@ -263,13 +263,13 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                       height: 36,
                       decoration: BoxDecoration(
                         color:
-                            const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            AppTheme.tertiaryContainer.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(
                         Icons.handshake_outlined,
                         size: 18,
-                        color: Color(0xFFF59E0B),
+                        color: AppTheme.tertiaryContainer,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -283,7 +283,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                                 .textTheme
                                 .labelMedium
                                 ?.copyWith(
-                                  color: const Color(0xFFF59E0B),
+                                  color: AppTheme.tertiaryContainer,
                                   fontWeight: FontWeight.w700,
                                 ),
                           ),
@@ -344,7 +344,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
                         },
                         style: FilledButton.styleFrom(
                           backgroundColor:
-                              const Color(0xFFF59E0B).withValues(alpha: 0.9),
+                              AppTheme.tertiaryContainer.withValues(alpha: 0.9),
                           foregroundColor: Colors.white,
                           shape: const StadiumBorder(),
                           minimumSize: const Size(0, 40),
@@ -408,8 +408,8 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
     }
 
     final habit = _habit!;
-    final catBg = AppTheme.categoryBg(habit.category);
-    final catFg = AppTheme.categoryFg(habit.category);
+    final catBg = AppTheme.categoryBg(habit.category, scheme.brightness);
+    final catFg = AppTheme.categoryFg(habit.category, scheme.brightness);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
     return Scaffold(

@@ -31,6 +31,9 @@ class PublicProfileModel {
   /// URL de la foto de perfil (null = sin foto, usa iniciales)
   final String? photoUrl;
 
+  /// Bio corta del perfil (null = sin bio)
+  final String? bio;
+
   /// Si el perfil permite follow directo (false = requiere solicitud)
   final bool isProfilePublic;
 
@@ -46,6 +49,7 @@ class PublicProfileModel {
     this.unlockedAchievementTypes = const [],
     required this.createdAt,
     this.photoUrl,
+    this.bio,
     this.isProfilePublic = true,
   });
 
@@ -69,6 +73,7 @@ class PublicProfileModel {
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
       photoUrl: data['photoUrl'] as String?,
+      bio: data['bio'] as String?,
       isProfilePublic: data['isProfilePublic'] as bool? ?? true,
     );
   }
@@ -85,6 +90,7 @@ class PublicProfileModel {
       'unlockedAchievementTypes': unlockedAchievementTypes,
       'createdAt': Timestamp.fromDate(createdAt),
       'photoUrl': photoUrl,
+      'bio': bio,
       'isProfilePublic': isProfilePublic,
     };
   }
@@ -100,6 +106,8 @@ class PublicProfileModel {
     List<String>? unlockedAchievementTypes,
     String? photoUrl,
     bool clearPhotoUrl = false,
+    String? bio,
+    bool clearBio = false,
     bool? isProfilePublic,
   }) {
     return PublicProfileModel(
@@ -115,6 +123,7 @@ class PublicProfileModel {
           unlockedAchievementTypes ?? this.unlockedAchievementTypes,
       createdAt: createdAt,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+      bio: clearBio ? null : (bio ?? this.bio),
       isProfilePublic: isProfilePublic ?? this.isProfilePublic,
     );
   }

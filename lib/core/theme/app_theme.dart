@@ -431,8 +431,28 @@ class AppTheme {
     );
   }
 
-  // colores por categoria (fondo + texto). valores ajustados para combinar con Editorial Vitality
-  static Color categoryBg(String category) {
+  // colores por categoria (fondo + texto). valores ajustados para combinar con Editorial Vitality.
+  // En modo oscuro se devuelven variantes profundas (bg) + claras (fg) para mantener el contraste,
+  // igual que MoodTheme. El parámetro brightness es opcional (default light) por compatibilidad.
+  static Color categoryBg(String category, [Brightness brightness = Brightness.light]) {
+    if (brightness == Brightness.dark) {
+      switch (category) {
+        case 'salud':
+          return const Color(0xFF042F2E);
+        case 'productividad':
+          return const Color(0xFF082F49);
+        case 'bienestar':
+          return const Color(0xFF422006);
+        case 'social':
+          return const Color(0xFF500724);
+        case 'aprendizaje':
+          return const Color(0xFF2E1065);
+        case 'finanzas':
+          return const Color(0xFF450A0A);
+        default:
+          return const Color(0xFF1A2432);
+      }
+    }
     switch (category) {
       case 'salud':
         return const Color(0xFFCCFBF1);
@@ -451,7 +471,25 @@ class AppTheme {
     }
   }
 
-  static Color categoryFg(String category) {
+  static Color categoryFg(String category, [Brightness brightness = Brightness.light]) {
+    if (brightness == Brightness.dark) {
+      switch (category) {
+        case 'salud':
+          return const Color(0xFF5EEAD4);
+        case 'productividad':
+          return const Color(0xFF7DD3FC);
+        case 'bienestar':
+          return const Color(0xFFFCD34D);
+        case 'social':
+          return const Color(0xFFF9A8D4);
+        case 'aprendizaje':
+          return const Color(0xFFC4B5FD);
+        case 'finanzas':
+          return const Color(0xFFFCA5A5);
+        default:
+          return const Color(0xFFBDC7D1);
+      }
+    }
     switch (category) {
       case 'salud':
         return const Color(0xFF115E59);

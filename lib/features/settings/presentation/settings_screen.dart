@@ -75,10 +75,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            // tarjeta de perfil con gradiente hero
+            // tarjeta de perfil con gradiente hero — toda la tarjeta lleva a editar perfil
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-              child: Container(
+              child: GestureDetector(
+                onTap: () => context.pushNamed('edit-profile'),
+                child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: AppTheme.heroGradient,
@@ -112,19 +114,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ),
                                 ),
                               ),
-                              GestureDetector(
-                                onTap: () => _editName(context),
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit_rounded,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  size: 14,
+                                  color: Colors.white,
                                 ),
                               ),
                             ],
@@ -164,6 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
+              ),
               ),
             ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
@@ -480,32 +480,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               : s.settingsDeleteAccountError(e.toString()),
         );
       }
-    }
-  }
-
-  Future<void> _editName(BuildContext context) async {
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    if (firebaseUser == null) return;
-
-    final current = firebaseUser.displayName ?? '';
-    final s = S.of(context);
-
-    // _EditNameDialog gestiona su propio controller y lo dispone en dispose(),
-    // evitando el crash _dependents.isEmpty que ocurre con dispose() manual
-    // justo cuando la animación de salida del diálogo todavía corre.
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (_) => _EditNameDialog(initialName: current),
-    );
-
-    if (newName == null || newName.isEmpty || newName == current) return;
-
-    try {
-      await firebaseUser.updateDisplayName(newName);
-      if (mounted) setState(() {});
-      if (mounted) AppSnackBar.showSuccess(context, s.settingsNameUpdated); // ignore: use_build_context_synchronously
-    } catch (_) {
-      if (mounted) AppSnackBar.showError(context, s.settingsNameUpdateError); // ignore: use_build_context_synchronously
     }
   }
 
@@ -1087,62 +1061,6 @@ class _SickModeTileState extends State<_SickModeTile> {
               value: _isActive,
               onChanged: (_) => _toggle(),
             ),
-    );
-  }
-}
-
-/// Diálogo para editar el nombre — gestiona su propio TextEditingController
-/// para que dispose() ocurra después de la animación de salida, evitando
-/// el assert _dependents.isEmpty que causa crash con dispose() manual prematuro.
-class _EditNameDialog extends StatefulWidget {
-  final String initialName;
-  const _EditNameDialog({required this.initialName});
-
-  @override
-  State<_EditNameDialog> createState() => _EditNameDialogState();
-}
-
-class _EditNameDialogState extends State<_EditNameDialog> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    return AlertDialog(
-      title: Text(s.settingsEditNameTitle),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        textCapitalization: TextCapitalization.words,
-        decoration: InputDecoration(
-          hintText: s.settingsEditNameHint,
-          counterText: '',
-        ),
-        maxLength: 40,
-        onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(null),
-          child: Text(s.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
-          child: Text(s.save),
-        ),
-      ],
     );
   }
 }

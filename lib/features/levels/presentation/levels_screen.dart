@@ -253,7 +253,7 @@ class _LevelsScreenState extends State<LevelsScreen> {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppTheme.categoryFg(cat),
+                      color: AppTheme.categoryFg(cat, Theme.of(context).brightness),
                       shape: BoxShape.circle,
                     ),
                   ),

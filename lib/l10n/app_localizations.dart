@@ -2101,6 +2101,78 @@ abstract class S {
   /// **'Maestría'**
   String get profileMastery;
 
+  /// No description provided for @profileEditButton.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar perfil'**
+  String get profileEditButton;
+
+  /// No description provided for @profileOpenSettings.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get profileOpenSettings;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar perfil'**
+  String get editProfileTitle;
+
+  /// No description provided for @editProfileSave.
+  ///
+  /// In es, this message translates to:
+  /// **'Guardar'**
+  String get editProfileSave;
+
+  /// No description provided for @editProfileNameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre'**
+  String get editProfileNameLabel;
+
+  /// No description provided for @editProfileBioLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Biografía'**
+  String get editProfileBioLabel;
+
+  /// No description provided for @editProfileBioHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuéntale al mundo sobre tus hábitos…'**
+  String get editProfileBioHint;
+
+  /// No description provided for @editProfileChangePhoto.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambiar foto'**
+  String get editProfileChangePhoto;
+
+  /// No description provided for @editProfileUsernameLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de usuario'**
+  String get editProfileUsernameLabel;
+
+  /// No description provided for @editProfileChooseUsername.
+  ///
+  /// In es, this message translates to:
+  /// **'Elegir nombre de usuario'**
+  String get editProfileChooseUsername;
+
+  /// No description provided for @editProfileSaved.
+  ///
+  /// In es, this message translates to:
+  /// **'Perfil actualizado'**
+  String get editProfileSaved;
+
+  /// No description provided for @editProfileSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el perfil'**
+  String get editProfileSaveError;
+
   /// No description provided for @profileActiveHabits.
   ///
   /// In es, this message translates to:
@@ -3030,6 +3102,36 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Activa tu perfil público en Ajustes antes de publicar.'**
   String get groupDetailPublishNeedPublic;
+
+  /// No description provided for @groupDetailPublishNeedPublicTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Necesitas un perfil público'**
+  String get groupDetailPublishNeedPublicTitle;
+
+  /// No description provided for @groupDetailPublishNeedPublicBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Para compartir una plantilla con la comunidad necesitas un perfil público con username. ¿Crear el tuyo ahora?'**
+  String get groupDetailPublishNeedPublicBody;
+
+  /// No description provided for @groupDetailPublishCreateProfileCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Crear perfil público'**
+  String get groupDetailPublishCreateProfileCta;
+
+  /// No description provided for @groupDetailPublishReactivateBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu perfil público está desactivado. Reactívalo para compartir esta plantilla con tu username.'**
+  String get groupDetailPublishReactivateBody;
+
+  /// No description provided for @groupDetailPublishReactivateCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Reactivar perfil'**
+  String get groupDetailPublishReactivateCta;
 
   /// No description provided for @groupDetailPublishTitle.
   ///

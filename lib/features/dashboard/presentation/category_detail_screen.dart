@@ -195,7 +195,7 @@ class _CategoryCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppTheme.categoryBg(stat.category).withValues(alpha: 0.5),
+        color: AppTheme.categoryBg(stat.category, colorScheme.brightness).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Theme(
@@ -205,12 +205,12 @@ class _CategoryCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.categoryBg(stat.category),
+              color: AppTheme.categoryBg(stat.category, colorScheme.brightness),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               AppTheme.categoryIcon(stat.category),
-              color: AppTheme.categoryFg(stat.category),
+              color: AppTheme.categoryFg(stat.category, colorScheme.brightness),
               size: 20,
             ),
           ),

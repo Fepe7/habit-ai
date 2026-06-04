@@ -10,7 +10,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/widgets/avatar_circle.dart';
 import '../../../features/profile/data/public_profile_repository.dart';
+import '../../../features/profile/presentation/widgets/username_input_sheet.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
@@ -129,6 +131,75 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     }
   }
 
+  /// Garantiza que el usuario tenga un perfil público ACTIVO antes de publicar.
+  /// - Si ya lo tiene activo, devuelve sus datos.
+  /// - Si nunca lo creó, le ofrece crearlo (username + perfil) en línea.
+  /// - Si lo tiene desactivado, le ofrece reactivarlo.
+  /// Devuelve el doc del perfil público ya activo, o null si el usuario cancela.
+  Future<Map<String, dynamic>?> _ensureActivePublicProfile(String uid) async {
+    final profileRepo = PublicProfileRepository(uid: uid);
+    final existing = await _communityRepo.getAuthorPublicProfile(uid);
+
+    // Ya tiene perfil; un flag ausente se considera activo (perfil recién creado).
+    if (existing != null && (existing['isProfilePublic'] as bool? ?? true)) {
+      return existing;
+    }
+
+    if (!mounted) return null;
+    final s = S.of(context);
+    final isDisabled = existing != null; // doc existe pero isProfilePublic == false
+
+    // Diálogo explicativo según el caso (crear vs reactivar)
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.groupDetailPublishNeedPublicTitle),
+        content: Text(isDisabled
+            ? s.groupDetailPublishReactivateBody
+            : s.groupDetailPublishNeedPublicBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(isDisabled
+                ? s.groupDetailPublishReactivateCta
+                : s.groupDetailPublishCreateProfileCta),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return null;
+
+    if (isDisabled) {
+      // Reactivar: ya tiene username y doc, solo cambia el flag.
+      await profileRepo.reenablePublicProfile();
+    } else {
+      // Primera vez: pedir username y crear el perfil (patrón de privacy_settings_screen).
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return null;
+      final chosenUsername = await UsernameInputSheet.show(context, profileRepo);
+      if (chosenUsername == null || !mounted) return null;
+      final displayName = user.displayName ?? user.email ?? 'Usuario';
+      final initials = AvatarCircle.fromName(user.displayName, user.email);
+      final ok = await profileRepo.enablePublicProfile(
+        username: chosenUsername,
+        displayName: displayName,
+        avatarInitials: initials,
+        photoUrl: user.photoURL,
+      );
+      if (!ok) {
+        if (mounted) AppSnackBar.showInfo(context, s.privacyUsernameTaken);
+        return null;
+      }
+    }
+
+    // Releer el perfil ya activo para usar sus datos en la publicación.
+    return _communityRepo.getAuthorPublicProfile(uid);
+  }
+
   // Muestra un dialogo para pedir descripcion y publica el grupo como plantilla
   Future<void> _publishTemplate(
       HabitGroupModel group, List<HabitModel> habits) async {
@@ -137,18 +208,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       return;
     }
 
-    // Verificar perfil público ANTES del diálogo — no exponer datos de usuarios privados
+    // Verificar perfil público ANTES del diálogo — no exponer datos de usuarios privados.
+    // Si no tiene perfil público (o lo tiene desactivado), se le guía a crearlo/reactivarlo
+    // en línea en vez de cortar el flujo. Devuelve null si el usuario se echa atrás.
     final uid = FirebaseAuth.instance.currentUser!.uid;
-    final profileDoc = await _communityRepo.getAuthorPublicProfile(uid);
-    if (profileDoc == null) {
-      if (mounted) {
-        AppSnackBar.showInfo(
-          context,
-          S.of(context).groupDetailPublishNeedPublic,
-        );
-      }
-      return;
-    }
+    final profileDoc = await _ensureActivePublicProfile(uid);
+    if (profileDoc == null) return;
 
     final username = profileDoc['username'] as String? ?? uid;
     final displayName = profileDoc['displayName'] as String? ??
@@ -625,8 +690,8 @@ class _GroupHabitTile extends StatelessWidget {
       s.weekdaySShort,
       s.weekdayDShort,
     ];
-    final catBg = AppTheme.categoryBg(habit.category);
-    final catFg = AppTheme.categoryFg(habit.category);
+    final catBg = AppTheme.categoryBg(habit.category, colorScheme.brightness);
+    final catFg = AppTheme.categoryFg(habit.category, colorScheme.brightness);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
     return Card(

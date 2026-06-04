@@ -152,8 +152,9 @@ class _CommunityTemplateDetailScreenState
     }
 
     final t = _template!;
-    final bgColor = AppTheme.categoryBg(t.category);
-    final fgColor = AppTheme.categoryFg(t.category);
+    final brightness = Theme.of(context).brightness;
+    final bgColor = AppTheme.categoryBg(t.category, brightness);
+    final fgColor = AppTheme.categoryFg(t.category, brightness);
 
     // nombre para mostrar del autor (del perfil publico si existe)
     final authorName = (_authorProfile?['displayName'] as String?) ??
@@ -491,8 +492,8 @@ class _HabitPreviewTile extends StatelessWidget {
       s.weekdaySShort,
       s.weekdayDShort,
     ];
-    final bgColor = AppTheme.categoryBg(habit.category);
-    final fgColor = AppTheme.categoryFg(habit.category);
+    final bgColor = AppTheme.categoryBg(habit.category, Theme.of(context).brightness);
+    final fgColor = AppTheme.categoryFg(habit.category, Theme.of(context).brightness);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

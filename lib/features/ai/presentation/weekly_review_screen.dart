@@ -233,7 +233,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
         color: scheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          color: AppTheme.success.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: AppTheme.ambientShadow(),
@@ -249,7 +249,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
                 s.weeklyReviewMoodInsights,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF10B981),
+                      color: AppTheme.success,
                     ),
               ),
             ],

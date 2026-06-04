@@ -52,6 +52,7 @@ class PublicProfileRepository {
     required String displayName,
     required String avatarInitials,
     String? photoUrl,
+    String? bio,
   }) async {
     // Verificar disponibilidad antes del batch
     final available = await isUsernameAvailable(username);
@@ -98,6 +99,7 @@ class PublicProfileRepository {
       unlockedAchievementTypes: achievementTypes,
       createdAt: now,
       photoUrl: photoUrl,
+      bio: bio,
     );
 
     // Batch atómico
@@ -284,6 +286,31 @@ class PublicProfileRepository {
       await _myProfileRef.update({'photoUrl': url});
     } catch (_) {
       // perfil público no existe, ignorar
+    }
+  }
+
+  /// Sincroniza nombre y/o bio en el espejo público y en el directorio.
+  /// Solo toca los campos no nulos. Si el perfil público no existe, ignora.
+  Future<void> syncProfileFields({String? displayName, String? bio}) async {
+    final data = <String, dynamic>{};
+    if (displayName != null) data['displayName'] = displayName;
+    if (bio != null) data['bio'] = bio;
+    if (data.isEmpty) return;
+
+    try {
+      await _myProfileRef.update(data);
+    } catch (_) {
+      // perfil público no existe todavía, ignorar
+    }
+
+    // El directorio solo guarda displayName (no bio)
+    if (displayName != null) {
+      try {
+        await _firestore
+            .collection('user_directory')
+            .doc(_uid)
+            .set({'displayName': displayName}, SetOptions(merge: true));
+      } catch (_) {}
     }
   }
 

@@ -572,13 +572,13 @@ class _HabitVisibilityRow extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppTheme.categoryBg(habit.category),
+                  color: AppTheme.categoryBg(habit.category, Theme.of(context).brightness),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   AppTheme.categoryIcon(habit.category),
                   size: 17,
-                  color: AppTheme.categoryFg(habit.category),
+                  color: AppTheme.categoryFg(habit.category, Theme.of(context).brightness),
                 ),
               ),
               const SizedBox(width: 10),

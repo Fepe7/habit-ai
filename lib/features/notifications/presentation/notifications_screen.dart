@@ -579,7 +579,7 @@ class _NotifTile extends StatelessWidget {
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
-        maxLines: 2,
+        maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: Text(

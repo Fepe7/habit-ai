@@ -1170,6 +1170,42 @@ class SEn extends S {
   String get profileMastery => 'Mastery';
 
   @override
+  String get profileEditButton => 'Edit profile';
+
+  @override
+  String get profileOpenSettings => 'Settings';
+
+  @override
+  String get editProfileTitle => 'Edit profile';
+
+  @override
+  String get editProfileSave => 'Save';
+
+  @override
+  String get editProfileNameLabel => 'Name';
+
+  @override
+  String get editProfileBioLabel => 'Bio';
+
+  @override
+  String get editProfileBioHint => 'Tell the world about your habits…';
+
+  @override
+  String get editProfileChangePhoto => 'Change photo';
+
+  @override
+  String get editProfileUsernameLabel => 'Username';
+
+  @override
+  String get editProfileChooseUsername => 'Choose a username';
+
+  @override
+  String get editProfileSaved => 'Profile updated';
+
+  @override
+  String get editProfileSaveError => 'Couldn\'t save profile';
+
+  @override
   String get profileActiveHabits => 'Active habits';
 
   @override
@@ -1708,6 +1744,23 @@ class SEn extends S {
   @override
   String get groupDetailPublishNeedPublic =>
       'Enable your public profile in Settings before publishing.';
+
+  @override
+  String get groupDetailPublishNeedPublicTitle => 'You need a public profile';
+
+  @override
+  String get groupDetailPublishNeedPublicBody =>
+      'To share a template with the community you need a public profile with a username. Create yours now?';
+
+  @override
+  String get groupDetailPublishCreateProfileCta => 'Create public profile';
+
+  @override
+  String get groupDetailPublishReactivateBody =>
+      'Your public profile is disabled. Reactivate it to share this template under your username.';
+
+  @override
+  String get groupDetailPublishReactivateCta => 'Reactivate profile';
 
   @override
   String get groupDetailPublishTitle => 'Publish as template';

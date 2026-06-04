@@ -315,8 +315,8 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     final challenge = _challenge!;
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    final catBg = AppTheme.categoryBg(challenge.habitCategory);
-    final catFg = AppTheme.categoryFg(challenge.habitCategory);
+    final catBg = AppTheme.categoryBg(challenge.habitCategory, scheme.brightness);
+    final catFg = AppTheme.categoryFg(challenge.habitCategory, scheme.brightness);
     final amInvited = challenge.invitedUid == _uid;
     final isPending = challenge.isPending;
 

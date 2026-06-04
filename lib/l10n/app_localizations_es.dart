@@ -1173,6 +1173,42 @@ class SEs extends S {
   String get profileMastery => 'Maestría';
 
   @override
+  String get profileEditButton => 'Editar perfil';
+
+  @override
+  String get profileOpenSettings => 'Ajustes';
+
+  @override
+  String get editProfileTitle => 'Editar perfil';
+
+  @override
+  String get editProfileSave => 'Guardar';
+
+  @override
+  String get editProfileNameLabel => 'Nombre';
+
+  @override
+  String get editProfileBioLabel => 'Biografía';
+
+  @override
+  String get editProfileBioHint => 'Cuéntale al mundo sobre tus hábitos…';
+
+  @override
+  String get editProfileChangePhoto => 'Cambiar foto';
+
+  @override
+  String get editProfileUsernameLabel => 'Nombre de usuario';
+
+  @override
+  String get editProfileChooseUsername => 'Elegir nombre de usuario';
+
+  @override
+  String get editProfileSaved => 'Perfil actualizado';
+
+  @override
+  String get editProfileSaveError => 'No se pudo guardar el perfil';
+
+  @override
   String get profileActiveHabits => 'Hábitos activos';
 
   @override
@@ -1713,6 +1749,23 @@ class SEs extends S {
   @override
   String get groupDetailPublishNeedPublic =>
       'Activa tu perfil público en Ajustes antes de publicar.';
+
+  @override
+  String get groupDetailPublishNeedPublicTitle => 'Necesitas un perfil público';
+
+  @override
+  String get groupDetailPublishNeedPublicBody =>
+      'Para compartir una plantilla con la comunidad necesitas un perfil público con username. ¿Crear el tuyo ahora?';
+
+  @override
+  String get groupDetailPublishCreateProfileCta => 'Crear perfil público';
+
+  @override
+  String get groupDetailPublishReactivateBody =>
+      'Tu perfil público está desactivado. Reactívalo para compartir esta plantilla con tu username.';
+
+  @override
+  String get groupDetailPublishReactivateCta => 'Reactivar perfil';
 
   @override
   String get groupDetailPublishTitle => 'Publicar como plantilla';

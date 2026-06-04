@@ -17,8 +17,8 @@ class CommunityTemplateCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final bgColor = AppTheme.categoryBg(template.category);
-    final fgColor = AppTheme.categoryFg(template.category);
+    final bgColor = AppTheme.categoryBg(template.category, scheme.brightness);
+    final fgColor = AppTheme.categoryFg(template.category, scheme.brightness);
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
