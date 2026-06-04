@@ -135,6 +135,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     ),
                               ),
                             ),
+                            IconButton(
+                              tooltip: S.of(context)!.profileOpenSettings,
+                              icon: const Icon(Icons.menu_rounded),
+                              onPressed: () => context.pushNamed('settings'),
+                            ),
                           ],
                         ),
                       ),
@@ -145,6 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                         initials: initials,
                         displayName: displayName,
                         username: userData?.username,
+                        bio: userData?.bio,
                         isProfilePublic: userData?.isProfilePublic ?? false,
                         photoUrl: userData?.photoUrl,
                         followersCount: _followersCount,
@@ -153,6 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                           context,
                           currentPhotoUrl: userData?.photoUrl,
                         ),
+                        onEditProfile: () => context.pushNamed('edit-profile'),
                       )
                           .animate()
                           .fadeIn(duration: 320.ms)
@@ -330,9 +337,11 @@ class _ProfileHeader extends StatelessWidget {
   final String initials;
   final String displayName;
   final String? username;
+  final String? bio;
   final bool isProfilePublic;
   final String? photoUrl;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onEditProfile;
   final int followersCount;
   final int followingCount;
 
@@ -340,17 +349,20 @@ class _ProfileHeader extends StatelessWidget {
     required this.initials,
     required this.displayName,
     required this.username,
+    required this.bio,
     required this.isProfilePublic,
     required this.followersCount,
     required this.followingCount,
     this.photoUrl,
     this.onAvatarTap,
+    this.onEditProfile,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final hasUsername = username != null && username!.isNotEmpty;
+    final hasBio = bio != null && bio!.trim().isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
@@ -457,6 +469,18 @@ class _ProfileHeader extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
+          // bio del usuario, centrada bajo el username
+          if (hasBio) ...[
+            const SizedBox(height: 10),
+            Text(
+              bio!.trim(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.35,
+                  ),
+            ),
+          ],
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -503,6 +527,23 @@ class _ProfileHeader extends StatelessWidget {
                 onTap: () => context.push('/followers?tab=1'),
               ),
             ],
+          ),
+
+          // botón principal de edición de perfil (estilo Instagram)
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonalIcon(
+              onPressed: onEditProfile,
+              icon: const Icon(Icons.edit_rounded, size: 18),
+              label: Text(S.of(context)!.profileEditButton),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
           ),
         ],
       ),

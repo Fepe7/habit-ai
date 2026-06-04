@@ -25,8 +25,8 @@ class ChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final catBg = AppTheme.categoryBg(challenge.habitCategory);
-    final catFg = AppTheme.categoryFg(challenge.habitCategory);
+    final catBg = AppTheme.categoryBg(challenge.habitCategory, scheme.brightness);
+    final catFg = AppTheme.categoryFg(challenge.habitCategory, scheme.brightness);
 
     return GestureDetector(
       onTap: onTap,

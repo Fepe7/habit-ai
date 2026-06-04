@@ -19,8 +19,8 @@ class CategoryLevelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fgColor = AppTheme.categoryFg(level.category);
-    final bgColor = AppTheme.categoryBg(level.category);
+    final fgColor = AppTheme.categoryFg(level.category, scheme.brightness);
+    final bgColor = AppTheme.categoryBg(level.category, scheme.brightness);
     final l10n = S.of(context);
 
     return GestureDetector(
@@ -131,8 +131,8 @@ class CategoryDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final fgColor = AppTheme.categoryFg(level.category);
-    final bgColor = AppTheme.categoryBg(level.category);
+    final fgColor = AppTheme.categoryFg(level.category, scheme.brightness);
+    final bgColor = AppTheme.categoryBg(level.category, scheme.brightness);
     final l10n = S.of(context);
     final titleCurrent = CategoryL10n.levelTitle(level.category, level.level, l10n);
     final titleNext = level.level < 5

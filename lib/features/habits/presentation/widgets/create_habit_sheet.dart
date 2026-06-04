@@ -223,8 +223,8 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               runSpacing: 8,
               children: AppTheme.categories.map((cat) {
                 final selected = cat == _category;
-                final bg = AppTheme.categoryBg(cat);
-                final fg = AppTheme.categoryFg(cat);
+                final bg = AppTheme.categoryBg(cat, scheme.brightness);
+                final fg = AppTheme.categoryFg(cat, scheme.brightness);
                 return GestureDetector(
                   onTap: () => setState(() => _category = cat),
                   child: AnimatedContainer(

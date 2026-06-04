@@ -251,13 +251,13 @@ class _StreakTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.categoryBg(habit.category),
+              color: AppTheme.categoryBg(habit.category, colorScheme.brightness),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               AppTheme.categoryIcon(habit.category),
               size: 20,
-              color: AppTheme.categoryFg(habit.category),
+              color: AppTheme.categoryFg(habit.category, colorScheme.brightness),
             ),
           ),
           const SizedBox(width: 12),

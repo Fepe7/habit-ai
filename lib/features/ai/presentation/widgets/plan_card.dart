@@ -124,8 +124,8 @@ class _HabitTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    final catBg = AppTheme.categoryBg(habit.category);
-    final catFg = AppTheme.categoryFg(habit.category);
+    final catBg = AppTheme.categoryBg(habit.category, scheme.brightness);
+    final catFg = AppTheme.categoryFg(habit.category, scheme.brightness);
 
     return InkWell(
       onTap: enabled ? () => onChanged(!habit.accepted) : null,

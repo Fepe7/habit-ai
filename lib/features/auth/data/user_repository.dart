@@ -93,6 +93,15 @@ class UserRepository {
     await _userRef.set({'photoUrl': url}, SetOptions(merge: true));
   }
 
+  // Actualizar nombre y/o bio del perfil (solo escribe los campos no nulos)
+  Future<void> updateProfile({String? displayName, String? bio}) async {
+    final data = <String, dynamic>{};
+    if (displayName != null) data['displayName'] = displayName;
+    if (bio != null) data['bio'] = bio;
+    if (data.isEmpty) return;
+    await _userRef.set(data, SetOptions(merge: true));
+  }
+
   // Cambiar visibilidad del perfil (público/privado)
   Future<void> setProfilePublic(bool isPublic) async {
     await _userRef.set({'isProfilePublic': isPublic}, SetOptions(merge: true));

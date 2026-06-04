@@ -1617,8 +1617,8 @@ class _ReorderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final catBg = AppTheme.categoryBg(habit.category);
-    final catFg = AppTheme.categoryFg(habit.category);
+    final catBg = AppTheme.categoryBg(habit.category, scheme.brightness);
+    final catFg = AppTheme.categoryFg(habit.category, scheme.brightness);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
     return Container(

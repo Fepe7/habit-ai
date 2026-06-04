@@ -642,13 +642,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: AppTheme.categoryBg(habit.category),
+                            color: AppTheme.categoryBg(habit.category, Theme.of(context).brightness),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             AppTheme.categoryIcon(habit.category),
                             size: 20,
-                            color: AppTheme.categoryFg(habit.category),
+                            color: AppTheme.categoryFg(habit.category, Theme.of(context).brightness),
                           ),
                         ),
                         title: Text(
@@ -1562,13 +1562,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppTheme.categoryBg(stat.category),
+                      color: AppTheme.categoryBg(stat.category, scheme.brightness),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       AppTheme.categoryIcon(stat.category),
                       size: 18,
-                      color: AppTheme.categoryFg(stat.category),
+                      color: AppTheme.categoryFg(stat.category, scheme.brightness),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1599,7 +1599,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                             minHeight: 5,
                             backgroundColor: scheme.outlineVariant.withValues(alpha: 0.15),
                             valueColor: AlwaysStoppedAnimation(
-                              AppTheme.categoryFg(stat.category),
+                              AppTheme.categoryFg(stat.category, scheme.brightness),
                             ),
                           ),
                         ),
@@ -1638,13 +1638,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: AppTheme.categoryBg(habit.category),
+                      color: AppTheme.categoryBg(habit.category, Theme.of(context).brightness),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       AppTheme.categoryIcon(habit.category),
                       size: 18,
-                      color: AppTheme.categoryFg(habit.category),
+                      color: AppTheme.categoryFg(habit.category, Theme.of(context).brightness),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1937,14 +1937,15 @@ class _MiniLevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fgColor = AppTheme.categoryFg(level.category);
+    final brightness = Theme.of(context).brightness;
+    final fgColor = AppTheme.categoryFg(level.category, brightness);
     return Column(
       children: [
         Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: AppTheme.categoryBg(level.category),
+            color: AppTheme.categoryBg(level.category, brightness),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(AppTheme.categoryIcon(level.category), color: fgColor, size: 18),

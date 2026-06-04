@@ -65,8 +65,8 @@ class HabitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    final catBg = AppTheme.categoryBg(habit.category);
-    final catFg = AppTheme.categoryFg(habit.category);
+    final catBg = AppTheme.categoryBg(habit.category, scheme.brightness);
+    final catFg = AppTheme.categoryFg(habit.category, scheme.brightness);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
     final cardBg = isSelected
@@ -213,9 +213,9 @@ class HabitCard extends StatelessWidget {
                             _MetaChip(
                               icon: Icons.local_fire_department_rounded,
                               label: s.daysLabel(habit.currentStreak),
-                              iconColor: AppTheme.tertiaryContainer,
-                              textColor: AppTheme.tertiary,
-                              bgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
+                              iconColor: scheme.tertiary,
+                              textColor: scheme.tertiary,
+                              bgColor: scheme.tertiary.withValues(alpha: 0.15),
                             ),
                           // chip de categoria
                           Hero(
@@ -447,14 +447,21 @@ class _CoachBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
     final now = TimeOfDay.now();
     final timeStr =
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.35),
+        border: Border(
+          top: BorderSide(
+            color: scheme.primary.withValues(alpha: 0.2),
+            width: 1,
+          ),
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       child: Column(
@@ -462,12 +469,18 @@ class _CoachBanner extends StatelessWidget {
         children: [
           Row(
             children: [
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 12,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 6),
               Text(
                 s.habitCardCoachLabel,
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: scheme.primary,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -477,7 +490,7 @@ class _CoachBanner extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: scheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -485,10 +498,10 @@ class _CoachBanner extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             '"${renegotiation.diagnosis}"',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: scheme.onSurface,
               height: 1.4,
               fontStyle: FontStyle.italic,
             ),
@@ -500,8 +513,8 @@ class _CoachBanner extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onApply,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.white30),
+                    foregroundColor: scheme.primary,
+                    side: BorderSide(color: scheme.primary.withValues(alpha: 0.5)),
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -522,8 +535,8 @@ class _CoachBanner extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onDismiss,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white54,
-                    side: const BorderSide(color: Colors.white12),
+                    foregroundColor: scheme.onSurfaceVariant,
+                    side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

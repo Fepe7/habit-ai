@@ -424,8 +424,9 @@ class _ExploreScreenState extends State<ExploreScreen>
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (_, i) {
                   final c = _activeChallenges[i];
-                  final catBg = AppTheme.categoryBg(c.habitCategory);
-                  final catFg = AppTheme.categoryFg(c.habitCategory);
+                  final brightness = Theme.of(context).brightness;
+                  final catBg = AppTheme.categoryBg(c.habitCategory, brightness);
+                  final catFg = AppTheme.categoryFg(c.habitCategory, brightness);
                   return GestureDetector(
                     onTap: () => context.go('/challenges/${c.id}'),
                     child: Container(
@@ -584,7 +585,9 @@ class _ExploreScreenState extends State<ExploreScreen>
                   crossAxisCount: 2,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 14,
-                  childAspectRatio: 0.95,
+                  // altura de celda fija (en vez de aspect ratio dependiente del
+                  // ancho) para que la tarjeta de creador no desborde en móviles
+                  mainAxisExtent: 224,
                 ),
                 itemBuilder: (_, i) {
                   final p = _creators[i];

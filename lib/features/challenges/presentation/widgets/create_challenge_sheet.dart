@@ -257,14 +257,14 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
                   avatar: Icon(AppTheme.categoryIcon(cat), size: 16),
                   selected: selected,
                   onSelected: (_) => setState(() => _category = cat),
-                  backgroundColor: AppTheme.categoryBg(cat),
-                  selectedColor: AppTheme.categoryBg(cat),
+                  backgroundColor: AppTheme.categoryBg(cat, scheme.brightness),
+                  selectedColor: AppTheme.categoryBg(cat, scheme.brightness),
                   labelStyle: TextStyle(
-                    color: AppTheme.categoryFg(cat),
+                    color: AppTheme.categoryFg(cat, scheme.brightness),
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                   side: selected
-                      ? BorderSide(color: AppTheme.categoryFg(cat), width: 1.5)
+                      ? BorderSide(color: AppTheme.categoryFg(cat, scheme.brightness), width: 1.5)
                       : BorderSide.none,
                 );
               }).toList(),

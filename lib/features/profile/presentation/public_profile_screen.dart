@@ -342,6 +342,7 @@ class _ProfileHeader extends StatelessWidget {
       profile?.avatarInitials ?? dirEntry?.avatarInitials ?? 'U';
   int get _unlockedAchievements => profile?.unlockedAchievements ?? 0;
   DateTime? get _createdAt => profile?.createdAt;
+  String? get _bio => profile?.bio;
 
   @override
   Widget build(BuildContext context) {
@@ -426,6 +427,22 @@ class _ProfileHeader extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
+            ),
+          ],
+
+          // bio del usuario
+          if (_bio != null && _bio!.trim().isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                _bio!.trim(),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.35,
+                    ),
+              ),
             ),
           ],
 

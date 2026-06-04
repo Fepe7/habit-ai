@@ -246,7 +246,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
                         fontWeight: FontWeight.w700,
                         color: isPositive
                             ? AppTheme.primary
-                            : const Color(0xFF64748B),
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                 ),
               ),
@@ -257,7 +257,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
             story,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   height: 1.65,
-                  color: isPositive ? null : const Color(0xFF64748B),
+                  color: isPositive ? null : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
         ],

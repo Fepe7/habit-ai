@@ -29,6 +29,9 @@ class UserModel {
   /// URL de la foto de perfil en Firebase Storage (null = sin foto)
   final String? photoUrl;
 
+  /// Bio corta del perfil (máx. ~150 chars, null = sin bio)
+  final String? bio;
+
   /// Quién puede enviar retos al usuario: "everyone" | "followers" | "nobody"
   final String challengePrivacy;
 
@@ -58,6 +61,7 @@ class UserModel {
     this.username,
     this.publicProfileCreatedAt,
     this.photoUrl,
+    this.bio,
     this.challengePrivacy = 'everyone',
     this.profileVisibility = 'everyone',
     this.showStats = true,
@@ -91,6 +95,7 @@ class UserModel {
           ? (data['publicProfileCreatedAt'] as Timestamp).toDate()
           : null,
       photoUrl: data['photoUrl'] as String?,
+      bio: data['bio'] as String?,
       challengePrivacy: data['challengePrivacy'] as String? ?? 'everyone',
       profileVisibility: data['profileVisibility'] as String? ?? 'everyone',
       showStats: data['showStats'] as bool? ?? true,
@@ -115,6 +120,7 @@ class UserModel {
           ? Timestamp.fromDate(publicProfileCreatedAt!)
           : null,
       'photoUrl': photoUrl,
+      'bio': bio,
       'challengePrivacy': challengePrivacy,
       'profileVisibility': profileVisibility,
       'showStats': showStats,
@@ -137,6 +143,8 @@ class UserModel {
     bool clearUsername = false,
     String? photoUrl,
     bool clearPhotoUrl = false,
+    String? bio,
+    bool clearBio = false,
     String? challengePrivacy,
     String? profileVisibility,
     bool? showStats,
@@ -155,6 +163,7 @@ class UserModel {
       username: clearUsername ? null : (username ?? this.username),
       publicProfileCreatedAt: publicProfileCreatedAt ?? this.publicProfileCreatedAt,
       photoUrl: clearPhotoUrl ? null : (photoUrl ?? this.photoUrl),
+      bio: clearBio ? null : (bio ?? this.bio),
       challengePrivacy: challengePrivacy ?? this.challengePrivacy,
       profileVisibility: profileVisibility ?? this.profileVisibility,
       showStats: showStats ?? this.showStats,
