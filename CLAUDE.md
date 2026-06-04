@@ -195,7 +195,9 @@ python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; 
 | Sesión nueva / muchos cambios | `/graphify` |
 | Cambios incrementales | `/graphify --update` |
 | Sesión larga en Android Studio | `/graphify --watch` |
-| Tras `git commit` | Automático (post-commit hook) |
 
-**Git hook**: `.git/hooks/post-commit` y `post-checkout` tienen `export PATH="$HOME/.local/bin:$PATH"` al inicio (Android Studio no hereda el PATH de fish). Si reinstalás el hook con `graphify hook install`, hay que añadir el export manualmente.  
-Verificar hook activo: `graphify hook status`
+**Rebuild manual, sin hooks.** El grafo se reconstruye a mano (normalmente `/graphify --update` al empezar sesión). No hay auto-rebuild: los hooks `post-commit`/`post-checkout` se quitaron porque saltaban en cada commit y cada `git switch`, lo cual molestaba más que ayudaba en el flujo multi-equipo.
+
+`graphify-out/` está en `.gitignore` (artefacto derivado, 16M) — cada equipo genera el suyo, nunca se sube al repo.
+
+⚠️ **No correr `graphify hook install`**: vuelve a meter los hooks. Si querés auto-rebuild de nuevo, reinstalalos y acordate de añadir `export PATH="$HOME/.local/bin:$PATH"` al inicio (Android Studio no hereda el PATH de fish).
