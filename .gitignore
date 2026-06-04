@@ -77,6 +77,9 @@ explicacion_auth.md
 graphify-out/*
 !graphify-out/graph.json
 !graphify-out/GRAPH_REPORT.md
+# grafos sueltos creados por error en subcarpetas (solo cache, basura)
+functions/graphify-out/
+lib/graphify-out/
 
 .claudeignore
 
