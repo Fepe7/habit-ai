@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../profile/domain/public_habit_model.dart';
 import '../../../services/notification_service.dart';
+
+/// Record ligero para exponer si un hábito tiene escrituras pendientes de sync.
+typedef HabitWithSync = ({HabitModel habit, bool pendingSync});
 
 class ReorderUpdate {
   final String habitId;
@@ -60,17 +64,19 @@ class HabitRepository {
         .toList());
   }
 
-  // Solo los habitos que tocan hoy
-  Stream<List<HabitModel>> watchTodayHabits() {
-    // arrayContains filtra en el servidor, asi no baja todo
-    final today = DateTime.now().weekday; // 1=Lunes, 7=Domingo
+  // Solo los habitos que tocan hoy; incluye flag de sync pendiente por hábito.
+  Stream<List<HabitWithSync>> watchTodayHabits() {
+    final today = DateTime.now().weekday;
     return _habitsRef
         .where('isActive', isEqualTo: true)
         .where('targetDays', arrayContains: today)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) => snapshot.docs
-        .map((doc) => HabitModel.fromJson(doc.data(), doc.id))
-        .toList());
+            .map((doc) => (
+                  habit: HabitModel.fromJson(doc.data(), doc.id),
+                  pendingSync: doc.metadata.hasPendingWrites,
+                ))
+            .toList());
   }
 
   // Obtener un habito por id
@@ -401,9 +407,11 @@ class HabitRepository {
 
   // ==================== LOGS DIARIOS ====================
 
-  // Guardar log de un dia
+  // Guardar log de un dia; id generado en cliente para no bloquear offline.
   Future<String> addLog(String habitId, HabitLogModel log) async {
-    final docRef = await _logsRef(habitId).add(log.toJson());
+    final docRef = _logsRef(habitId).doc();
+    // No esperamos el ack: Firestore aplica a caché local al instante y encola.
+    unawaited(docRef.set(log.toJson()).catchError((_) {}));
     return docRef.id;
   }
 

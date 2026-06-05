@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -37,6 +38,8 @@ class HabitCard extends StatelessWidget {
   final String? nudgeFromHabitTitle;
   // si se pasa, reemplaza onEnterSelection en el long press (p.ej. modo reorden de cadena)
   final VoidCallback? onLongPressOverride;
+  // true mientras la escritura de este hábito aún no se ha confirmado en servidor
+  final bool pendingSync;
 
   const HabitCard({
     super.key,
@@ -59,6 +62,7 @@ class HabitCard extends StatelessWidget {
     this.stackTotal = 0,
     this.nudgeFromHabitTitle,
     this.onLongPressOverride,
+    this.pendingSync = false,
   });
 
   @override
@@ -192,6 +196,23 @@ class HabitCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                          if (pendingSync)
+                            ValueListenableBuilder<bool>(
+                              valueListenable: ConnectivityService.instance.isOnline,
+                              builder: (context, online, _) => online
+                                  ? const SizedBox.shrink()
+                                  : Padding(
+                                      padding: const EdgeInsets.only(left: 6),
+                                      child: Tooltip(
+                                        message: 'Se sincronizará al volver la conexión',
+                                        child: Icon(
+                                          Icons.cloud_off_rounded,
+                                          size: 14,
+                                          color: scheme.outline,
+                                        ),
+                                      ),
+                                    ),
+                            ),
                         ],
                       ),
                       if (habit.description.isNotEmpty) ...[

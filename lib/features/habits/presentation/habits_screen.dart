@@ -57,7 +57,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   late AIRepository _aiRepo;
   late ChallengeRepository _challengeRepo;
 
-  late Stream<List<HabitModel>> _habitsStream;
+  late Stream<List<HabitWithSync>> _habitsStream;
   late Stream<List<HabitGroupModel>> _groupsStream;
 
   final Map<String, bool> _completedToday = {};
@@ -266,18 +266,17 @@ class _HabitsScreenState extends State<HabitsScreen>
     final wasCompleted = _completedToday[habit.id] ?? false;
     setState(() => _completedToday[habit.id] = !wasCompleted);
 
-    try {
-      if (!wasCompleted) {
-        final log = HabitLogModel(id: '', date: DateTime.now(), completed: true);
-        await _habitRepo.addLog(habit.id, log);
-        await _habitRepo.updateStreak(habit.id);
-        AnalyticsService.instance.logHabitCheckin(habit.id);
-      } else {
-        await _habitRepo.uncheckAndRecalculate(habit.id);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _completedToday[habit.id] = wasCompleted);
-      return;
+    if (!wasCompleted) {
+      final log = HabitLogModel(id: '', date: DateTime.now(), completed: true);
+      // addLog retorna id inmediatamente (sin await al servidor).
+      await _habitRepo.addLog(habit.id, log);
+      // updateStreak se dispara sin bloquear: lee de caché y encola la escritura.
+      unawaited(_habitRepo.updateStreak(habit.id).catchError((_) {}));
+      AnalyticsService.instance.logHabitCheckin(habit.id);
+    } else {
+      unawaited(_habitRepo.uncheckAndRecalculate(habit.id).catchError((_) {
+        if (mounted) setState(() => _completedToday[habit.id] = wasCompleted);
+      }));
     }
 
     if (!wasCompleted) {
@@ -818,7 +817,7 @@ class _HabitsScreenState extends State<HabitsScreen>
         child: StreamBuilder<List<HabitGroupModel>>(
           stream: _groupsStream,
           builder: (context, groupsSnapshot) {
-            return StreamBuilder<List<HabitModel>>(
+            return StreamBuilder<List<HabitWithSync>>(
               stream: _habitsStream,
               builder: (context, habitsSnapshot) {
                 if (habitsSnapshot.connectionState == ConnectionState.waiting) {
@@ -833,7 +832,12 @@ class _HabitsScreenState extends State<HabitsScreen>
                   return _buildError(context, habitsSnapshot.error);
                 }
 
-                final allHabits = habitsSnapshot.data ?? [];
+                final habitsSynced = habitsSnapshot.data ?? [];
+                final allHabits = habitsSynced.map((e) => e.habit).toList();
+                final pendingSyncIds = habitsSynced
+                    .where((e) => e.pendingSync)
+                    .map((e) => e.habit.id)
+                    .toSet();
                 _currentTodayHabits = allHabits;
 
                 // grupos antes del early-return para poder mostrarlos aunque no haya hábitos hoy
@@ -938,6 +942,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
                             onReorderStack: _reorderStack,
+                            pendingSyncIds: pendingSyncIds,
                           ),
                         );
                       }),
@@ -963,6 +968,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
                             onReorderStack: _reorderStack,
+                            pendingSyncIds: pendingSyncIds,
                           ),
                         ),
                     SliverToBoxAdapter(
@@ -1337,6 +1343,7 @@ List<Widget> _buildStackedHabitWidgets({
   required void Function(HabitModel) onApplyRenegotiation,
   required void Function(String) onDismissRenegotiation,
   required Future<void> Function(String stackId, List<String> orderedIds) onReorderStack,
+  Set<String> pendingSyncIds = const {},
 }) {
   // separar encadenados de individuales
   final Map<String, List<HabitModel>> byStack = {};
@@ -1373,6 +1380,7 @@ List<Widget> _buildStackedHabitWidgets({
         isNextInStack: nudgeHabitIds.contains(habit.id),
         nudgeFromHabitTitle: nudgeFromTitles[habit.id],
         onLongPressOverride: onEnterReorder,
+        pendingSync: pendingSyncIds.contains(habit.id),
       );
 
   final widgets = <Widget>[];
@@ -1397,6 +1405,7 @@ List<Widget> _buildStackedHabitWidgets({
       onApplyRenegotiation: onApplyRenegotiation,
       onDismissRenegotiation: onDismissRenegotiation,
       onReorderStack: onReorderStack,
+      pendingSyncIds: pendingSyncIds,
     ));
   }
 
@@ -1427,6 +1436,7 @@ class _StackSection extends StatefulWidget {
   final void Function(HabitModel) onApplyRenegotiation;
   final void Function(String) onDismissRenegotiation;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
+  final Set<String> pendingSyncIds;
 
   const _StackSection({
     super.key,
@@ -1446,6 +1456,7 @@ class _StackSection extends StatefulWidget {
     required this.onApplyRenegotiation,
     required this.onDismissRenegotiation,
     required this.onReorderStack,
+    this.pendingSyncIds = const {},
   });
 
   @override
@@ -1512,6 +1523,7 @@ class _StackSectionState extends State<_StackSection> {
         stackTotal: total,
         nudgeFromHabitTitle: widget.nudgeFromTitles[habit.id],
         onLongPressOverride: widget.selectionMode ? null : widget.onEnterReorder,
+        pendingSync: widget.pendingSyncIds.contains(habit.id),
       );
 
   @override
@@ -1898,6 +1910,7 @@ class _GroupSection extends StatelessWidget {
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
+  final Set<String> pendingSyncIds;
 
   const _GroupSection({
     required this.group,
@@ -1922,6 +1935,7 @@ class _GroupSection extends StatelessWidget {
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
     required this.onReorderStack,
+    this.pendingSyncIds = const {},
   });
 
   @override
@@ -2090,6 +2104,7 @@ class _GroupSection extends StatelessWidget {
                       onApplyRenegotiation: onApplyRenegotiation,
                       onDismissRenegotiation: onDismissRenegotiation,
                       onReorderStack: onReorderStack,
+                      pendingSyncIds: pendingSyncIds,
                     ),
                 ],
               ),
@@ -2125,6 +2140,7 @@ class _UngroupedSection extends StatelessWidget {
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
+  final Set<String> pendingSyncIds;
 
   const _UngroupedSection({
     required this.habits,
@@ -2143,6 +2159,7 @@ class _UngroupedSection extends StatelessWidget {
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
     required this.onReorderStack,
+    this.pendingSyncIds = const {},
   });
 
   @override
@@ -2211,6 +2228,7 @@ class _UngroupedSection extends StatelessWidget {
                 onApplyRenegotiation: onApplyRenegotiation,
                 onDismissRenegotiation: onDismissRenegotiation,
                 onReorderStack: onReorderStack,
+                pendingSyncIds: pendingSyncIds,
               ),
             ),
           ),
