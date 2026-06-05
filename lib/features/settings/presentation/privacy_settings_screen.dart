@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
+import '../../../core/widgets/ux/skeletons.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../habits/data/habit_repository.dart';
@@ -41,8 +42,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   Future<void> _updateChallengePrivacy(PrivacyLevel level) async {
     try {
       await _dirRepo.updatePrivacySettings(challengePrivacy: level);
-    } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
+    } catch (_) {
+      if (mounted) AppSnackBar.showError(context, S.of(context).commonSaveError);
     }
   }
 
@@ -54,8 +55,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         showAchievements: field == 'showAchievements' ? value : null,
         showFollowerCount: field == 'showFollowerCount' ? value : null,
       );
-    } catch (e) {
-      if (mounted) AppSnackBar.showError(context, 'Error al guardar: $e');
+    } catch (_) {
+      if (mounted) AppSnackBar.showError(context, S.of(context).commonSaveError);
     }
   }
 
@@ -75,7 +76,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         builder: (context, snap) {
           final user = snap.data;
           if (user == null) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView(
+              padding: const EdgeInsets.only(top: 16, bottom: 100),
+              children: const [
+                SectionSkeleton(itemCount: 1),
+                SizedBox(height: 16),
+                SectionSkeleton(itemCount: 4),
+              ],
+            );
           }
 
           final challengeLevel = PrivacyLevelX.fromString(user.challengePrivacy);
@@ -91,7 +99,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: scheme.tertiaryContainer.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     children: [
@@ -327,7 +335,7 @@ class _ProfilePublicityCardState extends State<_ProfilePublicityCard> {
                 height: 36,
                 decoration: BoxDecoration(
                   color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _isPublic ? Icons.public_rounded : Icons.lock_outline_rounded,
@@ -464,7 +472,9 @@ class _SectionVisibilityCard extends StatelessWidget {
             secondary: Icon(item.icon, color: scheme.primary, size: 22),
             title: Text(
               item.label,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
             ),
             value: item.value,
             onChanged: (val) => onToggle(item.field, val),
@@ -495,7 +505,20 @@ class _VisibleHabitsSection extends StatelessWidget {
           stream: habitRepo.watchActiveHabits(),
           builder: (context, snap) {
             if (!snap.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return Container(
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: const Column(
+                  children: [
+                    HabitCardSkeleton(),
+                    HabitCardSkeleton(),
+                    HabitCardSkeleton(),
+                  ],
+                ),
+              );
             }
             final habits = snap.data!;
             if (habits.isEmpty) {
@@ -573,7 +596,7 @@ class _HabitVisibilityRow extends StatelessWidget {
                 height: 34,
                 decoration: BoxDecoration(
                   color: AppTheme.categoryBg(habit.category, Theme.of(context).brightness),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   AppTheme.categoryIcon(habit.category),
@@ -617,7 +640,7 @@ class _HabitVisibilityRow extends StatelessWidget {
                             ? scheme.primary
                             : scheme.surfaceContainerHighest
                                 .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -702,7 +725,7 @@ class _PrivacyCard extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: scheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 18, color: scheme.onPrimaryContainer),
               ),
@@ -739,7 +762,7 @@ class _PrivacyCard extends StatelessWidget {
                             ? scheme.primary
                             : scheme.surfaceContainerHighest
                                 .withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
                         child: Text(

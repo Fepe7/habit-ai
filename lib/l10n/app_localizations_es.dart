@@ -1203,10 +1203,20 @@ class SEs extends S {
   String get editProfileChooseUsername => 'Elegir nombre de usuario';
 
   @override
+  String get editProfileUsernameHint =>
+      'Se guarda al instante, sin pulsar Guardar.';
+
+  @override
+  String get editProfileUsernameUpdated => 'Nombre de usuario actualizado';
+
+  @override
   String get editProfileSaved => 'Perfil actualizado';
 
   @override
   String get editProfileSaveError => 'No se pudo guardar el perfil';
+
+  @override
+  String get commonSaveError => 'No se pudo guardar el cambio';
 
   @override
   String get profileActiveHabits => 'Hábitos activos';

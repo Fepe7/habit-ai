@@ -1200,10 +1200,19 @@ class SEn extends S {
   String get editProfileChooseUsername => 'Choose a username';
 
   @override
+  String get editProfileUsernameHint => 'Saved instantly, no need to tap Save.';
+
+  @override
+  String get editProfileUsernameUpdated => 'Username updated';
+
+  @override
   String get editProfileSaved => 'Profile updated';
 
   @override
   String get editProfileSaveError => 'Couldn\'t save profile';
+
+  @override
+  String get commonSaveError => 'Couldn\'t save the change';
 
   @override
   String get profileActiveHabits => 'Active habits';
