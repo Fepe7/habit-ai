@@ -73,11 +73,8 @@ explicacion_auth.md
 .claude/agent-memory/
 
 
-# graphify: subir solo el grafo y el report, ignorar cache (12M) y la viz html
-graphify-out/*
-!graphify-out/graph.json
-!graphify-out/GRAPH_REPORT.md
-# grafos sueltos creados por error en subcarpetas (solo cache, basura)
+# graphify: artefacto derivado (~16M), cada equipo genera el suyo. Nunca al repo.
+graphify-out/
 functions/graphify-out/
 lib/graphify-out/
 
