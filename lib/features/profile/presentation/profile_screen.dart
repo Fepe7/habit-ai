@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                             IconButton(
                               tooltip: S.of(context)!.profileOpenSettings,
-                              icon: const Icon(Icons.menu_rounded),
+                              icon: const Icon(Icons.settings_outlined),
                               onPressed: () => context.pushNamed('settings'),
                             ),
                           ],
@@ -481,35 +481,6 @@ class _ProfileHeader extends StatelessWidget {
                   ),
             ),
           ],
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: AppTheme.heroGradient,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: AppTheme.ambientShadow(opacity: 0.18),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 14,
-                  color: Colors.white,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  S.of(context)!.appTitle,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
-                ),
-              ],
-            ),
-          ),
-
           // Contadores de seguidores / siguiendo — tapeables
           const SizedBox(height: 16),
           Row(
@@ -538,10 +509,8 @@ class _ProfileHeader extends StatelessWidget {
               icon: const Icon(Icons.edit_rounded, size: 18),
               label: Text(S.of(context)!.profileEditButton),
               style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: const StadiumBorder(),
               ),
             ),
           ),
@@ -615,13 +584,11 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
+        // jerarquía por superficie, sin bordes 1px duros (Ghost-Border Rule)
         color: highlighted
             ? scheme.primary.withValues(alpha: 0.08)
             : scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(18),
-        border: highlighted
-            ? Border.all(color: scheme.primary.withValues(alpha: 0.3), width: 1)
-            : Border.all(color: scheme.outlineVariant.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         children: [
@@ -647,8 +614,8 @@ class _StatTile extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  fontSize: 9,
+                  letterSpacing: 0.8,
+                  fontSize: 11,
                 ),
           ),
         ],
@@ -781,11 +748,9 @@ class _ProfileHabitCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
+        // separación por shift de superficie, sin borde duro
         color: scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.2),
-        ),
       ),
       child: Row(
         children: [
@@ -867,7 +832,7 @@ class _ProfileHabitCard extends StatelessWidget {
                 S.of(context)!.profileStreak,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
-                      fontSize: 9,
+                      fontSize: 11,
                       letterSpacing: 0.5,
                     ),
               ),

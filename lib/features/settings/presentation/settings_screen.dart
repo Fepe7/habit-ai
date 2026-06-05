@@ -50,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final userData = snapshot.data;
 
     return Scaffold(
-      backgroundColor: scheme.surfaceContainerLow,
+      backgroundColor: scheme.surface,
       body: SafeArea(
         bottom: false,
         child: ListView(
@@ -84,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: AppTheme.heroGradient,
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: AppTheme.ambientShadow(opacity: 0.14),
                 ),
                 child: Row(
@@ -141,14 +141,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.auto_awesome_rounded,
+                                Icon(
+                                  userData?.username?.isNotEmpty == true
+                                      ? Icons.alternate_email_rounded
+                                      : Icons.mail_outline_rounded,
                                   size: 13,
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  s.appTitle,
+                                  userData?.username?.isNotEmpty == true
+                                      ? userData!.username!
+                                      : (FirebaseAuth.instance.currentUser?.email ??
+                                          s.settingsFallbackUsername),
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
@@ -168,6 +173,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 8),
+
+            // privacidad y visibilidad — primer nivel (principio privacy-first)
+            _SectionLabel(label: s.privacySectionVisibility),
+            _SectionGroup(
+              children: [
+                _SettingsTile(
+                  icon: Icons.lock_outline_rounded,
+                  title: s.settingsPrivacy,
+                  subtitle: s.settingsPrivacySubtitle,
+                  onTap: () => context.pushNamed('privacy-settings'),
+                  divider: false,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
 
             // accesos a la parte social
             _SectionLabel(label: s.settingsSectionCommunity),
@@ -233,6 +254,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
+            // protección de racha: escudos y modo enfermedad (feature de juego, antes que info/legal)
+            _SectionLabel(label: s.settingsSectionStreakProtection),
+            _SectionGroup(
+              children: [
+                _ShieldCountTile(shieldsCount: userData?.shieldsCount ?? 0),
+                _SickModeTile(
+                  userData: userData,
+                  userRepo: _userRepo,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
             // información
             _SectionLabel(label: s.settingsSectionInfo),
             _SectionGroup(
@@ -242,12 +277,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: s.settingsAbout,
                   subtitle: s.settingsAboutSubtitle,
                   onTap: () => _showAbout(context),
-                ),
-                _SettingsTile(
-                  icon: Icons.shield_outlined,
-                  title: s.settingsPrivacy,
-                  subtitle: s.settingsPrivacySubtitle,
-                  onTap: () => context.pushNamed('privacy-settings'),
                 ),
                 _SettingsTile(
                   icon: Icons.star_rounded,
@@ -286,22 +315,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     mode: LaunchMode.externalApplication,
                   ),
                   divider: false,
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // sección de escudos de racha y modo enfermedad
-            _SectionLabel(label: s.settingsSectionStreakProtection),
-            _SectionGroup(
-              children: [
-                // contador de escudos
-                _ShieldCountTile(shieldsCount: userData?.shieldsCount ?? 0),
-                // modo enfermedad
-                _SickModeTile(
-                  userData: userData,
-                  userRepo: _userRepo,
                 ),
               ],
             ),
@@ -576,7 +589,7 @@ class _SettingsTile extends StatelessWidget {
               color: isDestructive
                   ? scheme.errorContainer.withValues(alpha: 0.3)
                   : scheme.primaryContainer.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 18, color: iconColor),
           ),
@@ -635,7 +648,7 @@ class _ThemeTile extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: scheme.primaryContainer.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.palette_outlined, size: 18, color: scheme.primary),
           ),
@@ -654,7 +667,7 @@ class _ThemeTile extends StatelessWidget {
                 SegmentedButton<ThemeMode>(
                   style: SegmentedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     selectedBackgroundColor:
                         scheme.primaryContainer.withValues(alpha: 0.3),
@@ -713,7 +726,7 @@ class _LanguageTile extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: scheme.primaryContainer.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.language_rounded, size: 18, color: scheme.primary),
           ),
@@ -732,7 +745,7 @@ class _LanguageTile extends StatelessWidget {
                 SegmentedButton<String>(
                   style: SegmentedButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     selectedBackgroundColor:
                         scheme.primaryContainer.withValues(alpha: 0.3),
@@ -797,7 +810,7 @@ class _ShieldCountTile extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 color: scheme.primaryContainer.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.shield_rounded, size: 18, color: scheme.primary),
             ),
@@ -894,7 +907,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
         height: 36,
         decoration: BoxDecoration(
           color: scheme.primaryContainer.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(Icons.notifications_outlined, size: 18, color: scheme.primary),
       ),
@@ -1035,7 +1048,7 @@ class _SickModeTileState extends State<_SickModeTile> {
         height: 36,
         decoration: BoxDecoration(
           color: scheme.primaryContainer.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(Icons.medical_services_outlined,
             size: 18, color: scheme.primary),

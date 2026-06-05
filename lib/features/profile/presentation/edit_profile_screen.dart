@@ -39,6 +39,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _userRepo = UserRepository(uid: uid);
     _publicProfileRepo = PublicProfileRepository(uid: uid);
     _prefill();
+    // rehabilitar/inhabilitar "Guardar" según el nombre sea válido
+    _nameController.addListener(_onNameChanged);
+  }
+
+  void _onNameChanged() {
+    if (mounted) setState(() {});
   }
 
   // Precargar nombre y bio una sola vez desde Firestore (los controllers no
@@ -59,6 +65,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _bioController.dispose();
     super.dispose();
@@ -68,6 +75,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_saving) return;
     final name = _nameController.text.trim();
     final bio = _bioController.text.trim();
+    if (name.isEmpty) return; // el nombre es obligatorio
 
     setState(() => _saving = true);
     try {
@@ -129,6 +137,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       if (!ok) {
         AppSnackBar.showInfo(context, S.of(context).privacyUsernameTaken);
+      } else {
+        AppSnackBar.showSuccess(context, S.of(context).editProfileUsernameUpdated);
       }
     } finally {
       if (mounted) setState(() => _usernameBusy = false);
@@ -139,6 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
+    final canSave = _nameController.text.trim().isNotEmpty;
 
     return Scaffold(
       backgroundColor: scheme.surface,
@@ -159,7 +170,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 )
               : TextButton(
-                  onPressed: _save,
+                  onPressed: canSave ? _save : null,
                   child: Text(
                     s.editProfileSave,
                     style: const TextStyle(fontWeight: FontWeight.w700),
@@ -244,7 +255,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _nameController,
                 textInputAction: TextInputAction.next,
                 textCapitalization: TextCapitalization.words,
-                decoration: _inputDecoration(scheme),
               ),
 
               const SizedBox(height: 20),
@@ -258,6 +268,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 placeholder: s.editProfileChooseUsername,
                 onTap: () => _editUsername(user),
               ),
+              const SizedBox(height: 6),
+              // el username se reserva al instante (no espera al botón Guardar)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  s.editProfileUsernameHint,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
 
               const SizedBox(height: 20),
 
@@ -269,7 +290,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 maxLines: 4,
                 maxLength: 150,
                 textCapitalization: TextCapitalization.sentences,
-                decoration: _inputDecoration(scheme).copyWith(
+                decoration: InputDecoration(
                   hintText: s.editProfileBioHint,
                   alignLabelWithHint: true,
                 ),
@@ -281,17 +302,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(ColorScheme scheme) {
-    return InputDecoration(
-      filled: true,
-      fillColor: scheme.surfaceContainerLow,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-    );
-  }
 }
 
 class _FieldLabel extends StatelessWidget {
@@ -334,13 +344,14 @@ class _UsernameField extends StatelessWidget {
     final hasUsername = username != null;
 
     return Material(
-      color: scheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(14),
+      // mismo fill y radio que los TextField del tema, para que los tres campos coincidan
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      borderRadius: BorderRadius.circular(24),
       child: InkWell(
         onTap: busy ? null : onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           child: Row(
             children: [
               Icon(

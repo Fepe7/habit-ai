@@ -2161,6 +2161,18 @@ abstract class S {
   /// **'Elegir nombre de usuario'**
   String get editProfileChooseUsername;
 
+  /// No description provided for @editProfileUsernameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Se guarda al instante, sin pulsar Guardar.'**
+  String get editProfileUsernameHint;
+
+  /// No description provided for @editProfileUsernameUpdated.
+  ///
+  /// In es, this message translates to:
+  /// **'Nombre de usuario actualizado'**
+  String get editProfileUsernameUpdated;
+
   /// No description provided for @editProfileSaved.
   ///
   /// In es, this message translates to:
@@ -2172,6 +2184,12 @@ abstract class S {
   /// In es, this message translates to:
   /// **'No se pudo guardar el perfil'**
   String get editProfileSaveError;
+
+  /// No description provided for @commonSaveError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo guardar el cambio'**
+  String get commonSaveError;
 
   /// No description provided for @profileActiveHabits.
   ///
