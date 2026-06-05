@@ -27,18 +27,22 @@
 
 ## Paleta de colores
 
+Valores reales del tema (`lib/core/theme/app_theme.dart`). Sistema visual completo (escala de superficies, tipografía, componentes) → **DESIGN.md**.
+
 | Rol | Hex |
 |-----|-----|
-| Primary | `#38BDF8` |
-| Secondary | `#0EA5E9` |
-| Success | `#10B981` |
-| Streak/Logros | `#F59E0B` |
-| Error | `#EF4444` |
-| Surface light | `#F0F9FF` |
-| Background | `#FFFFFF` |
-| Dark bg | `#0F172A` |
-| Texto principal | `#0F172A` |
-| Texto secundario | `#64748B` |
+| Primary (Deep Harbor Teal) | `#00668A` |
+| Primary container (Sky) | `#38BDF8` |
+| Secondary (Signal Blue) | `#006591` / container `#39B8FD` |
+| Tertiary / Streak / Logros (Amber) | `#F59E0B` (deep `#855300`) |
+| Success (gradiente emerald) | `#059669` → `#34D399` |
+| Error | `#BA1A1A` / container `#FFDAD6` |
+| Surface (campo) | `#F8F9FF` |
+| Background / cards (lowest) | `#FFFFFF` |
+| Escala de superficies (low→highest) | `#EFF4FF` · `#E5EEFF` · `#DCE9FF` · `#D3E4FE` |
+| Dark bg | `#0F1620` |
+| Texto principal (Ink) | `#0B1C30` |
+| Texto secundario (Slate) | `#3E484F` |
 
 **Categorías** (fondo / texto): Salud `#CCFBF1/#115E59` · Productividad `#E0F2FE/#0C4A6E` · Bienestar `#FEF3C7/#92400E` · Social `#FCE7F3/#9D174D` · Aprendizaje `#EDE9FE/#5B21B6` · Finanzas `#FEE2E2/#991B1B`
 

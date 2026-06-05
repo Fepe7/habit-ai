@@ -13,16 +13,19 @@ Primary: 18–35 year-olds who want to build better habits and develop self-awar
 Warm, encouraging, personal. Not clinical or corporate. Not gamified-aggressive. Feels like a thoughtful friend, not a productivity drill sergeant.
 
 ## Color palette
-- Primary: #38BDF8 (sky blue)
-- Secondary: #0EA5E9
-- Success: #10B981 (emerald)
-- Streak/Achievements: #F59E0B (amber)
-- Error: #EF4444
-- Surface light: #F0F9FF
-- Background: #FFFFFF
-- Dark bg: #0F172A
-- Text primary: #0F172A
-- Text secondary: #64748B
+Real values shipped by the app theme (`lib/core/theme/app_theme.dart`). The full visual system, including tonal ladder, typography, and components, lives in DESIGN.md.
+- Primary (Deep Harbor Teal): #00668A
+- Primary container (Sky): #38BDF8
+- Secondary (Signal Blue): #006591 / container #39B8FD
+- Tertiary / Streak / Achievements (Amber): #F59E0B (deep #855300)
+- Success gradient (emerald): #059669 → #34D399
+- Error: #BA1A1A / container #FFDAD6
+- Surface field: #F8F9FF
+- Background / cards (surface-container-lowest): #FFFFFF
+- Surface ladder (low → highest): #EFF4FF · #E5EEFF · #DCE9FF · #D3E4FE
+- Dark surface: #0F1620
+- Text primary (Ink): #0B1C30
+- Text secondary (Slate): #3E484F
 
 ## Anti-references
 - Don't feel like a corporate productivity tool (no Jira vibes)
