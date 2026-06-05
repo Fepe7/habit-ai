@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-05T00:00:00.000Z",
+  "title": "Design System: HabitAI",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Deep Harbor Teal",
+        "canonical": "#00668A",
+        "tonalRamp": ["#021F2B", "#003547", "#004C66", "#00668A", "#1B83AB", "#46A3C9", "#7EC4E2", "#C4E7FF"]
+      },
+      "primary-container": {
+        "role": "primary",
+        "displayName": "Sky",
+        "canonical": "#38BDF8",
+        "tonalRamp": ["#0A2F40", "#0E4A63", "#13688C", "#1E88B8", "#2FA6DF", "#38BDF8", "#7BD0FF", "#C4E7FF"]
+      },
+      "secondary": {
+        "role": "secondary",
+        "displayName": "Signal Blue",
+        "canonical": "#006591",
+        "tonalRamp": ["#021E2C", "#00344A", "#004B6B", "#006591", "#1C82AE", "#46A2CC", "#7FC3E4", "#C9E6FF"]
+      },
+      "tertiary-container": {
+        "role": "tertiary",
+        "displayName": "Streak Amber",
+        "canonical": "#F59E0B",
+        "tonalRamp": ["#2A1700", "#43250A", "#653E00", "#8A5400", "#B97500", "#E08C00", "#F59E0B", "#FFDDB8"]
+      },
+      "error": {
+        "role": "error",
+        "displayName": "Alert Red",
+        "canonical": "#BA1A1A",
+        "tonalRamp": ["#2C0001", "#480003", "#690005", "#93000A", "#BA1A1A", "#DE3730", "#FF897D", "#FFDAD6"]
+      },
+      "on-surface": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0B1C30",
+        "tonalRamp": ["#0B1C30", "#1E2D40", "#3E484F", "#6E7980", "#9AA4AC", "#BDC8D1", "#D3E4FE", "#F8F9FF"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Sky-Tinted Surface Ladder",
+        "canonical": "#F8F9FF",
+        "tonalRamp": ["#CBDBF5", "#D3E4FE", "#DCE9FF", "#E5EEFF", "#EFF4FF", "#F8F9FF", "#FCFDFF", "#FFFFFF"]
+      },
+      "dark-surface": {
+        "role": "neutral",
+        "displayName": "Night",
+        "canonical": "#0F1620",
+        "tonalRamp": ["#0A1119", "#0F1620", "#141D28", "#1A2432", "#1F2A38", "#3E484F", "#87919B", "#E2E8F0"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Manrope. Hero numbers, splash, big celebratory moments only. Rare." },
+      "headline": { "displayName": "Headline", "purpose": "Manrope. Screen titles, section headers, dialog titles." },
+      "title": { "displayName": "Title", "purpose": "Inter. Card titles, list leads, button labels, app-bar title." },
+      "body": { "displayName": "Body", "purpose": "Inter. Paragraphs and descriptions; cap prose at 65-75ch." },
+      "label": { "displayName": "Label", "purpose": "Inter. Chips, nav labels, metadata, overlines. Only place tracking opens up." }
+    },
+    "shadows": [
+      { "name": "ambient", "value": "0 8px 24px rgba(11,28,48,0.06)", "purpose": "Default lift for elevated cards and active primary buttons. Diffuse, navy-tinted, low-opacity." },
+      { "name": "tinted", "value": "0 6px 16px rgba(245,158,11,0.22)", "purpose": "Colored glow under achievement/streak cards, using the card's own accent." }
+    ],
+    "motion": [
+      { "name": "transition-standard", "value": "200ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "State changes (ease-out-quint). Convey state, not decoration. 150-250ms." },
+      { "name": "haptic-light", "value": "HapticFeedback.lightImpact()", "purpose": "Tactile confirmation on primary CTA tap and habit/mood logging." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "0px" },
+      { "name": "tablet", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Solid Deep Harbor Teal pill, full-width, 56px. The default commit action.",
+      "html": "<button class=\"ds-btn-primary\">Guardar hábito</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; background: #00668A; color: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.2px; border: none; border-radius: 999px; cursor: pointer; transition: background 200ms cubic-bezier(0.16,1,0.3,1), transform 200ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #00587A; } .ds-btn-primary:active { transform: scale(0.985); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,102,138,0.4); } .ds-btn-primary:disabled { opacity: 0.5; cursor: default; }"
+    },
+    {
+      "name": "Hero Gradient Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Signature CTA. Teal-to-Sky gradient pill with ambient shadow. One per screen, for the single most important action.",
+      "html": "<button class=\"ds-btn-hero\">Crear mi plan con IA</button>",
+      "css": ".ds-btn-hero { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; background: linear-gradient(135deg, #00668A 0%, #38BDF8 100%); color: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 18px; font-weight: 600; border: none; border-radius: 999px; box-shadow: 0 8px 24px rgba(11,28,48,0.12); cursor: pointer; transition: transform 200ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-hero:hover { transform: translateY(-1px); } .ds-btn-hero:active { transform: translateY(0) scale(0.99); } .ds-btn-hero:focus-visible { outline: none; box-shadow: 0 8px 24px rgba(11,28,48,0.12), 0 0 0 3px rgba(56,189,248,0.45); }"
+    },
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "refersTo": "button-outlined",
+      "description": "Low-emphasis pill. Ghost stroke, primary label.",
+      "html": "<button class=\"ds-btn-outlined\">Cancelar</button>",
+      "css": ".ds-btn-outlined { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 56px; background: #F8F9FF; color: #00668A; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 600; border: 1px solid rgba(189,200,209,0.3); border-radius: 999px; cursor: pointer; transition: background 200ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-outlined:hover { background: #EFF4FF; } .ds-btn-outlined:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0,102,138,0.3); }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Flat white card on the tinted surface field. No border; separation is the surface shift. Optional ambient lift.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Meditación matinal</div><div class=\"ds-card-body\">Racha de 12 días</div></div>",
+      "css": ".ds-card { background: #FFFFFF; border-radius: 24px; padding: 20px; color: #0B1C30; } .ds-card--elevated { box-shadow: 0 8px 24px rgba(11,28,48,0.06); } .ds-card-title { font-family: Inter, system-ui, sans-serif; font-size: 20px; font-weight: 600; color: #0B1C30; } .ds-card-body { font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 400; color: #3E484F; margin-top: 4px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Soft filled well. No border at rest; primary border wakes on focus.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Nombre del hábito\" />",
+      "css": ".ds-input { width: 100%; box-sizing: border-box; padding: 18px 20px; background: rgba(211,228,254,0.4); color: #0B1C30; font-family: Inter, system-ui, sans-serif; font-size: 15px; border: none; border-radius: 24px; outline: none; transition: box-shadow 200ms cubic-bezier(0.16,1,0.3,1); } .ds-input::placeholder { color: rgba(62,72,79,0.7); } .ds-input:focus { box-shadow: inset 0 0 0 1.5px rgba(0,102,138,0.4); } .ds-input.ds-input--error { box-shadow: inset 0 0 0 1px #BA1A1A; }"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Small-radius pill (the one place radius goes to 8px). Carries category bg/fg pair.",
+      "html": "<span class=\"ds-chip\">Salud</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; padding: 6px 10px; background: #CCFBF1; color: #115E59; font-family: Inter, system-ui, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; border: none; border-radius: 8px; }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "card",
+      "description": "Glass floating nav. Transparent over a blurred surface, 72px, pill indicator at 25% on the active tab.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-nav-item--active\"><span class=\"ds-nav-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 12h16M12 4v16\" stroke=\"#00668A\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></span><span class=\"ds-nav-label\">Hábitos</span></button><button class=\"ds-nav-item\"><span class=\"ds-nav-ind\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M4 18V9m5 9V4m5 14v-6m5 6V8\" stroke=\"#3E484F\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></span><span class=\"ds-nav-label ds-nav-label--muted\">Progreso</span></button></nav>",
+      "css": ".ds-nav { display: flex; gap: 8px; height: 72px; padding: 8px 12px; background: rgba(248,249,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 32px; border: 1px solid rgba(189,200,209,0.15); } .ds-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: none; border: none; cursor: pointer; } .ds-nav-ind { display: flex; align-items: center; justify-content: center; width: 56px; height: 30px; border-radius: 999px; transition: background 200ms cubic-bezier(0.16,1,0.3,1); } .ds-nav-item--active .ds-nav-ind { background: rgba(56,189,248,0.25); } .ds-nav-label { font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.4px; color: #00668A; } .ds-nav-label--muted { font-weight: 500; color: #3E484F; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Editorial Vitality",
+    "overview": "HabitAI feels like a thoughtful friend who happens to keep beautiful notes. The system pairs an editorial display voice (Manrope, set large and tightly tracked) with a calm, layered field of sky-tinted surfaces. Color is mostly held back so that when a streak amber or a hero teal gradient appears, it reads as a small reward, not as decoration. Depth comes from stacking near-white surfaces in faint blue steps, never from hard rules or heavy shadows. The register is product: the interface serves a sub-two-minute daily ritual. The most distinctive structural decision is the refusal of the 1px hard border; separation is carried by tonal surface shifts and a soft ambient shadow reserved for genuine elevation.",
+    "keyCharacteristics": [
+      "Dual typography: Manrope for display and headlines, Inter for everything functional.",
+      "Sky-tinted neutral system: every surface and text neutral leans toward the brand blue, never pure gray.",
+      "Generous, consistent radii (24px cards, 32px dialogs, 36px sheets, full-pill buttons).",
+      "Color as reward: teal hero gradient and streak amber appear sparingly, against a restrained field.",
+      "No hard borders: depth via tonal surface layering and ambient shadow only."
+    ],
+    "rules": [
+      { "name": "The Color-As-Reward Rule", "body": "The teal hero gradient and streak amber are earned moments, not background texture. On a resting screen, the dominant colors are sky-tinted neutrals; saturated color covers a small fraction of the surface and marks a primary action or an achievement. Never wash a whole screen in primary.", "section": "colors" },
+      { "name": "The Navy-Tint Rule", "body": "No neutral is ever pure gray or pure black. Every surface, text, and outline color is tinted toward the brand blue. If a neutral looks gray next to the surfaces, it is wrong.", "section": "colors" },
+      { "name": "The Two-Voice Rule", "body": "Manrope speaks only at display and headline scale. Inter owns titles, body, labels, buttons, and all data. Never set body or a button in Manrope; never set a screen title in Inter.", "section": "typography" },
+      { "name": "The Surface-Shift-First Rule", "body": "To separate two layers, change the surface step before reaching for a shadow. A card is surface-container-lowest on a surface field; that contrast alone is the separation. Shadow is added only when an element must read as floating above the plane.", "section": "elevation" },
+      { "name": "The Ghost-Border Rule", "body": "Hard 1px strokes are forbidden. The only allowed seam is the ghost border, outline-variant at 15% opacity, and only where a divider is truly needed.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do anchor primary actions in Deep Harbor Teal (#00668A) and reserve the Teal-to-Sky hero gradient for the single most important CTA on a screen.",
+      "Do separate layers with the surface ladder before reaching for any shadow.",
+      "Do keep radii generous and consistent: 24px cards, 32px dialogs, 36px sheets, full-pill buttons.",
+      "Do tint every neutral toward navy/blue. Pure gray is a bug.",
+      "Do reserve Streak Amber (#F59E0B) for streaks, achievements, and gamification.",
+      "Do set screen titles and hero numbers in Manrope; set everything functional in Inter."
+    ],
+    "donts": [
+      "Don't use a 1px hard border anywhere. The only seam allowed is the ghost border (outline-variant at 15%). No side-stripe borders ever.",
+      "Don't wash a whole screen in saturated primary; color is a reward, not a background.",
+      "Don't feel like a corporate productivity tool, clinical health app, aggressive gamification, or a diary app.",
+      "Don't apply glassmorphism to content cards. Glass is for floating chrome only (nav, FAB, overlays).",
+      "Don't set body text, labels, or buttons in Manrope; don't set screen titles in Inter.",
+      "Don't add shadows to elements that aren't actually floating. Elevation 0 is the default.",
+      "Don't reuse the Mood rating/label colors as general UI accents; they belong to the mood feature only."
+    ]
+  }
+}
