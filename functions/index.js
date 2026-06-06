@@ -4,7 +4,6 @@ const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { CloudBillingClient } = require("@google-cloud/billing");
 const { defineSecret } = require("firebase-functions/params");
 
 admin.initializeApp();
@@ -62,6 +61,18 @@ async function checkRateLimit(uid) {
   return true;
 }
 
+// Lanza HttpsError si la IA está pausada por presupuesto o manualmente.
+// Consultar antes de cada llamada a Gemini para evitar coste innecesario.
+async function assertAiAvailable() {
+  const doc = await admin.firestore().doc("system/ai_state").get();
+  if (doc.exists && doc.data().paused === true) {
+    throw new HttpsError(
+      "unavailable",
+      "El asistente de IA está en pausa temporal. El resto de la app funciona con normalidad."
+    );
+  }
+}
+
 
 
 // Cloud Function callable desde Flutter
@@ -91,6 +102,7 @@ exports.generateHabitPlan = onCall(
       );
     }
 
+    await assertAiAvailable();
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -433,6 +445,7 @@ exports.generateWeeklyReview = onCall(
 
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
+    await assertAiAvailable();
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -468,6 +481,12 @@ exports.weeklyReviewJob = onSchedule(
   async () => {
     const db = admin.firestore();
     const now = new Date();
+
+    const aiState = await db.doc("system/ai_state").get();
+    if (aiState.exists && aiState.data().paused === true) {
+      console.log("[billing] IA pausada — saltando weeklyReviewJob");
+      return;
+    }
 
     // Solo usuarios que han terminado el onboarding
     const usersSnapshot = await db
@@ -713,6 +732,7 @@ exports.generateButterflyProjection = onCall(
 
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
+    await assertAiAvailable();
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -745,6 +765,12 @@ exports.butterflyProjectionJob = onSchedule(
   async () => {
     const db = admin.firestore();
     const now = new Date();
+
+    const aiState = await db.doc("system/ai_state").get();
+    if (aiState.exists && aiState.data().paused === true) {
+      console.log("[billing] IA pausada — saltando butterflyProjectionJob");
+      return;
+    }
 
     const usersSnapshot = await db
       .collection("users")
@@ -927,6 +953,7 @@ exports.generateRenegotiation = onCall(
     }
 
     const uid = request.auth.uid;
+    await assertAiAvailable();
     const { habitId, locale } = request.data;
 
     if (!habitId || typeof habitId !== "string") {
@@ -978,6 +1005,12 @@ exports.renegotiationJob = onSchedule(
   },
   async () => {
     const db = admin.firestore();
+
+    const aiState = await db.doc("system/ai_state").get();
+    if (aiState.exists && aiState.data().paused === true) {
+      console.log("[billing] IA pausada — saltando renegotiationJob");
+      return;
+    }
 
     const usersSnapshot = await db
       .collection("users")
@@ -1324,6 +1357,7 @@ exports.generatePatternInsights = onCall(
     }
 
     const uid = request.auth.uid;
+    await assertAiAvailable();
     const locale = request.data?.locale || "es";
     const allowed = await checkRateLimit(uid);
     if (!allowed) {
@@ -1358,6 +1392,12 @@ exports.patternInsightsJob = onSchedule(
   async () => {
     const db = admin.firestore();
     const now = new Date();
+
+    const aiState = await db.doc("system/ai_state").get();
+    if (aiState.exists && aiState.data().paused === true) {
+      console.log("[billing] IA pausada — saltando patternInsightsJob");
+      return;
+    }
 
     const usersSnapshot = await db
       .collection("users")
@@ -1404,46 +1444,30 @@ function extractJson(text) {
   return text;
 }
 
-// ==================== KILL SWITCH DE FACTURACIÓN ====================
-
-// Freno de emergencia. El presupuesto de Cloud Billing publica un mensaje en el
-// topic "billing-alerts" cada vez que cambia el gasto. Si el gasto supera el
-// presupuesto, esta función DESACTIVA la facturación del proyecto entero.
-// ⚠️ Eso tumba toda la app (Firestore, Auth, Functions) hasta reactivarla a mano.
-// Es el último recurso contra una factura inesperada estando ausente.
-exports.killBillingOnBudgetExceeded = onMessagePublished(
-  {
-    topic: "billing-alerts",
-    region: "europe-west1",
-    maxInstances: 1,
-  },
+// Pausa selectiva de IA cuando el presupuesto de Cloud Billing lo supera.
+// Escribe el flag en system/ai_state; los callables y los jobs lo consultan
+// antes de llamar a Gemini. Auto-recuperación: cuando cost <= budget el flag
+// vuelve a false solo con el siguiente mensaje del presupuesto.
+exports.pauseAiOnBudgetExceeded = onMessagePublished(
+  { topic: "billing-alerts", region: "europe-west1", maxInstances: 1 },
   async (event) => {
     const data = event.data.message.json;
-    const cost = data.costAmount;
-    const budget = data.budgetAmount;
-    console.log(`[billing] gasto ${cost} / presupuesto ${budget}`);
+    const cost = data?.costAmount ?? 0;
+    const budget = data?.budgetAmount ?? 0;
 
-    // Solo actuamos si el gasto real supera el presupuesto
-    if (typeof cost !== "number" || typeof budget !== "number" || cost <= budget) {
-      console.log("[billing] dentro del presupuesto, no se hace nada");
-      return;
-    }
+    const paused = cost > budget;
+    await admin.firestore().doc("system/ai_state").set(
+      {
+        paused,
+        cost,
+        budget,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
 
-    const projectId = process.env.GCLOUD_PROJECT;
-    const projectName = `projects/${projectId}`;
-    const billing = new CloudBillingClient();
-
-    const [info] = await billing.getProjectBillingInfo({ name: projectName });
-    if (!info.billingEnabled) {
-      console.log("[billing] la facturación ya estaba desactivada");
-      return;
-    }
-
-    // billingAccountName vacío = desvincula la cuenta de facturación = corte
-    await billing.updateProjectBillingInfo({
-      name: projectName,
-      projectBillingInfo: { billingAccountName: "" },
-    });
-    console.warn(`[billing] FACTURACIÓN DESACTIVADA para ${projectId}`);
+    console.log(
+      `[billing] IA ${paused ? "pausada" : "reanudada"} — coste: ${cost}, presupuesto: ${budget}`
+    );
   }
 );

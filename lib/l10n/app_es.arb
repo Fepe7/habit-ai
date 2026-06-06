@@ -683,6 +683,27 @@
   "aiSuggestion4": "Mejorar mi salud mental",
   "@aiSuggestion4": {},
 
+  "createHabitVisibilityLabel": "Visibilidad",
+  "@createHabitVisibilityLabel": { "description": "Etiqueta de la sección de visibilidad en crear/editar hábito" },
+
+  "challengeVisibilityToggleTitle": "Reto público",
+  "@challengeVisibilityToggleTitle": { "description": "Título del toggle de visibilidad del reto" },
+
+  "challengeVisibilityToggleSubtitle": "Visible en tu perfil público",
+  "@challengeVisibilityToggleSubtitle": { "description": "Subtítulo del toggle de visibilidad del reto" },
+
+  "challengesSectionTitle": "Retos",
+  "@challengesSectionTitle": { "description": "Título de la sección de retos en el perfil público" },
+
+  "challengeAnonymousPartner": "Compañero",
+  "@challengeAnonymousPartner": { "description": "Nombre por defecto cuando el compañero de reto no tiene nombre" },
+
+  "aiPausedBanner": "IA en mantenimiento temporalmente — el resto de la app funciona con normalidad.",
+  "@aiPausedBanner": { "description": "Banner cuando la IA está pausada por presupuesto" },
+
+  "aiPausedMessage": "El asistente de IA está en mantenimiento temporalmente. El resto de la app funciona con normalidad.",
+  "@aiPausedMessage": { "description": "Mensaje de error/info cuando la IA está pausada" },
+
   "categorySalud": "Salud",
   "@categorySalud": {},
   "categoryProductividad": "Productividad",

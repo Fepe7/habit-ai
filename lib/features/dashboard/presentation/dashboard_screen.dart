@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
+import '../../../core/services/ai_availability_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/router/main_shell.dart';
@@ -40,6 +41,23 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   bool get wantKeepAlive => true;
 
+  @override
+  void initState() {
+    super.initState();
+    _isAiPaused = AiAvailabilityService.instance.isPaused.value;
+    AiAvailabilityService.instance.isPaused.addListener(_onAiPausedChanged);
+  }
+
+  void _onAiPausedChanged() {
+    if (mounted) setState(() => _isAiPaused = AiAvailabilityService.instance.isPaused.value);
+  }
+
+  @override
+  void dispose() {
+    AiAvailabilityService.instance.isPaused.removeListener(_onAiPausedChanged);
+    super.dispose();
+  }
+
   late StatsRepository _statsRepo;
   late AchievementRepository _achievementRepo;
   late AIRepository _aiRepo;
@@ -50,6 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _generatingButterfly = false;
   bool _generatingReno = false;
   bool _generatingPatterns = false;
+  bool _isAiPaused = false;
 
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
@@ -662,6 +681,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                         onTap: () async {
                           Navigator.of(sheetCtx).pop();
+                          if (_isAiPaused) {
+                            if (mounted) AppSnackBar.showInfo(context, S.of(context).aiPausedMessage);
+                            return;
+                          }
                           setState(() => _generatingReno = true);
                           try {
                             final reason = await _aiRepo
@@ -745,7 +768,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       SizedBox(
                         height: 36,
                         child: FilledButton.tonalIcon(
-                          onPressed: _generatingPatterns
+                          onPressed: _generatingPatterns || _isAiPaused
                               ? null
                               : _generatePatternsManually,
                           icon: _generatingPatterns
@@ -875,7 +898,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: _generatingPatterns
+                      onPressed: _generatingPatterns || _isAiPaused
                           ? null
                           : _generatePatternsManually,
                       icon: _generatingPatterns
@@ -942,7 +965,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       SizedBox(
                         height: 36,
                         child: FilledButton.tonalIcon(
-                          onPressed: _generatingButterfly
+                          onPressed: _generatingButterfly || _isAiPaused
                               ? null
                               : _generateButterflyManually,
                           icon: _generatingButterfly
@@ -1061,7 +1084,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      onPressed: _generatingButterfly
+                      onPressed: _generatingButterfly || _isAiPaused
                           ? null
                           : _generateButterflyManually,
                       icon: _generatingButterfly
@@ -1131,7 +1154,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         height: 36,
                         child: FilledButton.tonalIcon(
                           onPressed:
-                              _generatingReview ? null : _generateReviewManually,
+                              _generatingReview || _isAiPaused ? null : _generateReviewManually,
                           icon: _generatingReview
                               ? const SizedBox(
                                   width: 14,
@@ -1217,7 +1240,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
                       onPressed:
-                          _generatingReview ? null : _generateReviewManually,
+                          _generatingReview || _isAiPaused ? null : _generateReviewManually,
                       icon: _generatingReview
                           ? const SizedBox(
                               width: 14,

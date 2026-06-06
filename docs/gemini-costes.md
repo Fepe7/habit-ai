@@ -83,13 +83,27 @@ const MODEL_FLASH = "gemini-2.5-flash";
 - **El chat (Pro) es el 50-80% de la factura.** Los jobs Flash + infra suman solo ~€10-25/mes incluso en el caso alto.
 - **Por usuario activo/mes:** ~€0.05 (conservador) a ~€0.30 (alto).
 
-### ⚠️ Aviso sobre el kill switch
+### Control de costes — dos niveles
 
-El corte de facturación está en **20€/mes**. Con 1000 usuarios reales, **hasta el escenario conservador (~€22) supera los 20€** → el kill switch apagaría la app.
+#### Nivel 1 — Pausa selectiva de IA (implementado)
 
-- 20€ está bien **ahora** (gasto real ~1€/mes, sin usuarios).
-- Al crecer de verdad → **subir el presupuesto**, o te autoapagás la app pensando que es un ataque.
-- Regla: presupuesto ≈ 2-3× el gasto mensual normal con tráfico real. Para 1000 usuarios → **~80-120€**.
+La función `pauseAiOnBudgetExceeded` recibe mensajes Pub/Sub del presupuesto de Cloud Billing y escribe el flag `system/ai_state.paused` en Firestore. Cuando `paused = true`:
+- Los 5 callables de IA lanzan `HttpsError("unavailable")` antes de llamar a Gemini.
+- Los 4 jobs `onSchedule` hacen `return` temprano con un log.
+- El cliente Flutter muestra un banner y desactiva los campos de entrada.
+- Auto-recuperación: cuando `cost <= budget`, el flag vuelve a `false` automáticamente.
+
+**Pasos manuales para activar el Nivel 1** (una sola vez en GCP):
+1. En Cloud Billing → Presupuestos y alertas → editar el presupuesto existente → activar **"Connect a Pub/Sub topic"** → seleccionar `billing-alerts`. Si el topic no existe, crearlo primero en Pub/Sub (mismo proyecto).
+2. El presupuesto debe tener **solo alertas por email**, sin acciones de corte automático (ningún check en "Link Billing account actions"). El Nivel 1 se encarga del corte selectivo.
+3. Regla orientativa: umbral ≈ 2-3× el gasto mensual normal. Para 1000 usuarios → **~80-120€**.
+4. **Pausa manual opcional**: editar `system/ai_state.paused = true` a mano en la consola de Firestore corta la IA de inmediato; `false` la reactiva sin redesplegar.
+
+#### Nivel 2 — Red dura (backstop manual, no automatizado)
+
+Protección de último recurso que actúa incluso si el Nivel 1 falla:
+1. **Cuota dura de la API**: GCP → APIs y Servicios → *Generative Language API* → Cuotas → fijar un techo de requests/min y/o requests/día. Al superarlo Gemini devuelve `429` aunque el Nivel 1 no haya actuado.
+2. **Presupuesto solo-email**: asegurarse de que el presupuesto de Cloud Billing **no** tenga configurada ninguna acción de desvinculación de cuenta (solo notificación). El Nivel 1 es el freno; el presupuesto solo avisa.
 
 ### Palancas para bajar el coste del chat
 

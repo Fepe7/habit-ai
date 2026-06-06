@@ -1741,6 +1741,48 @@ abstract class S {
   /// **'Mejorar mi salud mental'**
   String get aiSuggestion4;
 
+  /// Etiqueta de la sección de visibilidad en crear/editar hábito
+  ///
+  /// In es, this message translates to:
+  /// **'Visibilidad'**
+  String get createHabitVisibilityLabel;
+
+  /// Título del toggle de visibilidad del reto
+  ///
+  /// In es, this message translates to:
+  /// **'Reto público'**
+  String get challengeVisibilityToggleTitle;
+
+  /// Subtítulo del toggle de visibilidad del reto
+  ///
+  /// In es, this message translates to:
+  /// **'Visible en tu perfil público'**
+  String get challengeVisibilityToggleSubtitle;
+
+  /// Título de la sección de retos en el perfil público
+  ///
+  /// In es, this message translates to:
+  /// **'Retos'**
+  String get challengesSectionTitle;
+
+  /// Nombre por defecto cuando el compañero de reto no tiene nombre
+  ///
+  /// In es, this message translates to:
+  /// **'Compañero'**
+  String get challengeAnonymousPartner;
+
+  /// Banner cuando la IA está pausada por presupuesto
+  ///
+  /// In es, this message translates to:
+  /// **'IA en mantenimiento temporalmente — el resto de la app funciona con normalidad.'**
+  String get aiPausedBanner;
+
+  /// Mensaje de error/info cuando la IA está pausada
+  ///
+  /// In es, this message translates to:
+  /// **'El asistente de IA está en mantenimiento temporalmente. El resto de la app funciona con normalidad.'**
+  String get aiPausedMessage;
+
   /// No description provided for @categorySalud.
   ///
   /// In es, this message translates to:
@@ -2700,12 +2742,6 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Ninguno'**
   String get createHabitChainNone;
-
-  /// No description provided for @createHabitVisibilityLabel.
-  ///
-  /// In es, this message translates to:
-  /// **'Privacidad'**
-  String get createHabitVisibilityLabel;
 
   /// No description provided for @createHabitCta.
   ///
@@ -3804,30 +3840,6 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Marcar hoy como completado'**
   String get challengeDetailMarkToday;
-
-  /// No description provided for @challengeVisibilityToggleTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Mostrar en mi perfil público'**
-  String get challengeVisibilityToggleTitle;
-
-  /// No description provided for @challengeVisibilityToggleSubtitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Tu progreso será visible. El de tu compañero solo si él también lo activa.'**
-  String get challengeVisibilityToggleSubtitle;
-
-  /// No description provided for @challengesSectionTitle.
-  ///
-  /// In es, this message translates to:
-  /// **'Retos activos'**
-  String get challengesSectionTitle;
-
-  /// No description provided for @challengeAnonymousPartner.
-  ///
-  /// In es, this message translates to:
-  /// **'Compañero'**
-  String get challengeAnonymousPartner;
 
   /// No description provided for @challengeDetailProgressDays.
   ///
