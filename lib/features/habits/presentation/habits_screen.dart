@@ -362,6 +362,10 @@ class _HabitsScreenState extends State<HabitsScreen>
       if (updated.groupId != habit.groupId) {
         await _habitRepo.reassignGroup(habit.id, habit.groupId, updated.groupId);
       }
+      // actualizar visibilidad si cambió
+      if (updated.visibility != habit.visibility) {
+        await _habitRepo.setHabitVisibility(habit.id, updated.visibility);
+      }
       // los cambios de cadena se gestionan directamente desde EditHabitSheet
       if (mounted) {
         AppSnackBar.showSuccess(context, S.of(context).habitsUpdated);

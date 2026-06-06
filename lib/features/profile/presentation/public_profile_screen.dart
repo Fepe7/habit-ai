@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -13,6 +14,7 @@ import '../../social/data/follow_repository.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/user_directory_entry.dart';
 import '../data/public_profile_repository.dart';
+import '../domain/public_challenge_model.dart';
 import '../domain/public_habit_model.dart';
 import '../domain/public_profile_model.dart';
 
@@ -298,6 +300,27 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   );
                 },
               ),
+
+            // sección de retos públicos
+            StreamBuilder<List<PublicChallengeModel>>(
+              stream: _repo.watchPublicChallenges(widget.userId),
+              builder: (context, snap) {
+                final challenges = snap.data ?? [];
+                if (challenges.isEmpty) {
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                }
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                    child: _ChallengesSection(
+                      challenges: challenges,
+                      ownerUid: widget.userId,
+                      publicRepo: _repo,
+                    ),
+                  ),
+                );
+              },
+            ),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -1117,5 +1140,166 @@ class _HabitChip extends StatelessWidget {
         .animate(delay: Duration(milliseconds: index * 50))
         .fadeIn(duration: 280.ms)
         .slideY(begin: 0.06, end: 0, duration: 280.ms);
+  }
+}
+
+// ==================== RETOS PÚBLICOS ====================
+
+class _ChallengesSection extends StatelessWidget {
+  final List<PublicChallengeModel> challenges;
+  final String ownerUid;
+  final PublicProfileRepository publicRepo;
+
+  const _ChallengesSection({
+    required this.challenges,
+    required this.ownerUid,
+    required this.publicRepo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          s.challengesSectionTitle,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: scheme.onSurfaceVariant,
+              ),
+        ),
+        const SizedBox(height: 12),
+        ...challenges.map((c) => _ChallengeCard(
+              challenge: c,
+              publicRepo: publicRepo,
+            )),
+      ],
+    );
+  }
+}
+
+class _ChallengeCard extends StatelessWidget {
+  final PublicChallengeModel challenge;
+  final PublicProfileRepository publicRepo;
+
+  const _ChallengeCard({required this.challenge, required this.publicRepo});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bg = AppTheme.categoryBg(
+        challenge.habitCategory, Theme.of(context).brightness);
+    final fg = AppTheme.categoryFg(
+        challenge.habitCategory, Theme.of(context).brightness);
+    final s = S.of(context);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    AppTheme.categoryIcon(challenge.habitCategory),
+                    size: 15,
+                    color: fg,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    challenge.habitTitle,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${challenge.durationDays}d',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: scheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.local_fire_department_rounded,
+                    size: 14, color: AppTheme.tertiaryContainer),
+                const SizedBox(width: 4),
+                Text(
+                  '${challenge.currentStreak}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 12),
+                Icon(Icons.check_circle_outline_rounded,
+                    size: 14, color: scheme.primary),
+                const SizedBox(width: 4),
+                Text(
+                  '${challenge.completedCount}/${challenge.durationDays}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const Spacer(),
+                // progreso del compañero (si también lo hizo público)
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: FirebaseFirestore.instance
+                      .collection('public_profiles')
+                      .doc(challenge.partnerUid)
+                      .collection('challenges')
+                      .doc(challenge.challengeId)
+                      .snapshots(),
+                  builder: (ctx, snap) {
+                    final partnerPublic = snap.data?.exists ?? false;
+                    if (partnerPublic && snap.data != null) {
+                      final partnerData = PublicChallengeModel.fromFirestore(
+                          snap.data!.data()!, snap.data!.id);
+                      return Text(
+                        '${challenge.partnerDisplayName ?? s.challengeAnonymousPartner}: ${partnerData.completedCount}/${challenge.durationDays}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      );
+                    }
+                    return Text(
+                      s.challengeAnonymousPartner,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

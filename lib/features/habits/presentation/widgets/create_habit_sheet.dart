@@ -8,6 +8,8 @@ import '../../data/habit_group_repository.dart';
 import '../../data/habit_repository.dart';
 import '../../domain/habit_group_model.dart';
 import '../../domain/habit_model.dart';
+import '../../domain/habit_visibility.dart';
+import 'habit_visibility_selector.dart';
 
 // Bottom sheet para crear un hábito manualmente
 class CreateHabitSheet extends StatefulWidget {
@@ -36,6 +38,8 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
   String _category = 'productividad';
   final List<int> _targetDays = [1, 2, 3, 4, 5, 6, 7];
   String? _reminderTime;
+
+  HabitVisibility _visibility = HabitVisibility.private;
 
   // hábito seleccionado como ancla de cadena (opcional)
   HabitModel? _stackAnchor;
@@ -113,6 +117,7 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
       reminderTime: _reminderTime,
       createdAt: DateTime.now(),
       groupId: _selectedGroup?.id,
+      visibility: _visibility,
       // stackAfterHabitId transitorio: el repo lo procesa al crear
       stackAfterHabitId: _stackAnchor?.id,
     );
@@ -422,6 +427,15 @@ class _CreateHabitSheetState extends State<CreateHabitSheet> {
               const SizedBox(height: 28),
             ] else
               const SizedBox(height: 4),
+
+            // sección visibilidad
+            _SheetLabel(label: s.createHabitVisibilityLabel),
+            const SizedBox(height: 12),
+            HabitVisibilitySelector(
+              value: _visibility,
+              onChanged: (v) => setState(() => _visibility = v),
+            ),
+            const SizedBox(height: 24),
 
             // CTA
             GradientButton(

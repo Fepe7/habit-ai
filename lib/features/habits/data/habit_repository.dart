@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
+import '../domain/habit_visibility.dart';
 import '../../profile/domain/public_habit_model.dart';
 import '../../../services/notification_service.dart';
 
@@ -101,7 +102,7 @@ class HabitRepository {
     final newId = docRef.id;
 
     // sync al perfil público si el hábito no es privado y el perfil está activo
-    if (habit.visibility != 'private' && await _isProfilePublic()) {
+    if (habit.visibility != HabitVisibility.private && await _isProfilePublic()) {
       final publicHabit = PublicHabitModel(
         id: newId,
         title: habit.title,
@@ -109,7 +110,7 @@ class HabitRepository {
         emoji: null,
         currentStreak: habit.currentStreak,
         bestStreak: habit.bestStreak,
-        visibility: habit.visibility,
+        visibility: habit.visibility.value,
       );
       try {
         await _publicHabitsRef.doc(newId).set(publicHabit.toJson());
@@ -673,13 +674,13 @@ class HabitRepository {
     }
   }
 
-  /// Cambia la visibilidad de un hábito: 'public' | 'followers' | 'private'.
-  /// - public/followers → crea o actualiza el espejo en public_profiles/{uid}/habits (con campo visibility).
+  /// Cambia la visibilidad de un hábito: public | followers | private.
+  /// - public/followers → crea o actualiza el espejo en public_profiles/{uid}/habits.
   /// - private          → elimina el espejo.
-  Future<void> setHabitVisibility(String habitId, String visibility) async {
-    await _habitsRef.doc(habitId).update({'visibility': visibility});
+  Future<void> setHabitVisibility(String habitId, HabitVisibility visibility) async {
+    await _habitsRef.doc(habitId).update({'visibility': visibility.value});
 
-    if (visibility != 'private') {
+    if (visibility != HabitVisibility.private) {
       final doc = await _habitsRef.doc(habitId).get();
       if (!doc.exists) return;
       final habit = HabitModel.fromJson(doc.data()!, doc.id);
@@ -690,7 +691,7 @@ class HabitRepository {
         emoji: null,
         currentStreak: habit.currentStreak,
         bestStreak: habit.bestStreak,
-        visibility: visibility,
+        visibility: visibility.value,
       );
       try {
         await _publicHabitsRef.doc(habitId).set(publicHabit.toJson());

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habitai/features/habits/domain/habit_model.dart';
+import 'package:habitai/features/habits/domain/habit_visibility.dart';
 
 void main() {
   final now = DateTime(2026, 5, 20, 10, 30);
@@ -143,21 +144,21 @@ void main() {
       expect(
         HabitModel(
           id: '', title: '', description: '', category: '', frequency: '',
-          targetDays: [], createdAt: now, visibility: 'public',
+          targetDays: [], createdAt: now, visibility: HabitVisibility.public,
         ).isVisibleToAnyone,
         true,
       );
       expect(
         HabitModel(
           id: '', title: '', description: '', category: '', frequency: '',
-          targetDays: [], createdAt: now, visibility: 'followers',
+          targetDays: [], createdAt: now, visibility: HabitVisibility.followers,
         ).isVisibleToAnyone,
         true,
       );
       expect(
         HabitModel(
           id: '', title: '', description: '', category: '', frequency: '',
-          targetDays: [], createdAt: now, visibility: 'private',
+          targetDays: [], createdAt: now, visibility: HabitVisibility.private,
         ).isVisibleToAnyone,
         false,
       );
