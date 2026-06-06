@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/public_profile_model.dart';
 import '../domain/public_habit_model.dart';
+import '../domain/public_challenge_model.dart';
 
 /// Repositorio que gestiona los perfiles públicos.
 /// Colección espejo: public_profiles/{uid} — nunca expone datos privados.
@@ -407,6 +408,59 @@ class PublicProfileRepository {
         return false;
       }).toList();
     });
+  }
+
+  // ==================== RETOS PÚBLICOS ====================
+
+  CollectionReference<Map<String, dynamic>> get _myChallengesRef =>
+      _myProfileRef.collection('challenges');
+
+  /// Crea o sobreescribe el espejo público de un reto.
+  Future<void> syncChallenge(PublicChallengeModel c) async {
+    await _myChallengesRef.doc(c.challengeId).set(c.toJson());
+  }
+
+  /// Elimina el espejo público de un reto.
+  Future<void> removeChallenge(String challengeId) async {
+    await _myChallengesRef.doc(challengeId).delete();
+  }
+
+  /// Actualiza solo el progreso del reto en el espejo público.
+  Future<void> updateChallengeProgress(
+    String challengeId, {
+    required int completedCount,
+    required int currentStreak,
+    required Map<int, String> days,
+  }) async {
+    try {
+      await _myChallengesRef.doc(challengeId).update({
+        'completedCount': completedCount,
+        'currentStreak': currentStreak,
+        'days': days.map((k, v) => MapEntry(k.toString(), v)),
+      });
+    } catch (_) {
+      // el doc no existe = reto privado, ignorar
+    }
+  }
+
+  /// Stream de retos públicos de un usuario (para mostrar en su perfil).
+  Stream<List<PublicChallengeModel>> watchPublicChallenges(String uid) {
+    return _publicProfilesRef
+        .doc(uid)
+        .collection('challenges')
+        .snapshots()
+        .map((snap) => snap.docs
+            .map((doc) =>
+                PublicChallengeModel.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
+  /// Stream que indica si un reto concreto está publicado en el perfil propio.
+  Stream<bool> watchMyChallengeVisibility(String challengeId) {
+    return _myChallengesRef
+        .doc(challengeId)
+        .snapshots()
+        .map((snap) => snap.exists);
   }
 
   // ==================== HELPERS PRIVADOS ====================

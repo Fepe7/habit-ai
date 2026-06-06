@@ -2701,6 +2701,12 @@ abstract class S {
   /// **'Ninguno'**
   String get createHabitChainNone;
 
+  /// No description provided for @createHabitVisibilityLabel.
+  ///
+  /// In es, this message translates to:
+  /// **'Privacidad'**
+  String get createHabitVisibilityLabel;
+
   /// No description provided for @createHabitCta.
   ///
   /// In es, this message translates to:
@@ -3798,6 +3804,30 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Marcar hoy como completado'**
   String get challengeDetailMarkToday;
+
+  /// No description provided for @challengeVisibilityToggleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Mostrar en mi perfil público'**
+  String get challengeVisibilityToggleTitle;
+
+  /// No description provided for @challengeVisibilityToggleSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu progreso será visible. El de tu compañero solo si él también lo activa.'**
+  String get challengeVisibilityToggleSubtitle;
+
+  /// No description provided for @challengesSectionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Retos activos'**
+  String get challengesSectionTitle;
+
+  /// No description provided for @challengeAnonymousPartner.
+  ///
+  /// In es, this message translates to:
+  /// **'Compañero'**
+  String get challengeAnonymousPartner;
 
   /// No description provided for @challengeDetailProgressDays.
   ///

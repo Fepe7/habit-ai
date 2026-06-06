@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'habit_visibility.dart';
 
 // Modelo de habito
 class HabitModel {
@@ -30,11 +31,11 @@ class HabitModel {
   // Usado para pasar "encadenar después de este hábito" desde la UI al repositorio.
   final String? stackAfterHabitId;
 
-  /// Visibilidad en el perfil: 'public' | 'followers' | 'private'
-  final String visibility;
+  /// Visibilidad en el perfil: public | followers | private
+  final HabitVisibility visibility;
 
   /// true si el hábito aparece en algún perfil (público o solo seguidores)
-  bool get isVisibleToAnyone => visibility != 'private';
+  bool get isVisibleToAnyone => visibility.isVisibleToAnyone;
 
   /// true si pertenece a una cadena de hábitos
   bool get isInStack => stackId != null;
@@ -57,7 +58,7 @@ class HabitModel {
     this.isActive = true,
     this.groupId,
     this.challengeId,
-    this.visibility = 'private',
+    this.visibility = HabitVisibility.private,
     this.stackId,
     this.stackOrder = 0,
     this.stackAfterHabitId,
@@ -82,8 +83,10 @@ class HabitModel {
       groupId: json['groupId'] as String?,
       challengeId: json['challengeId'] as String?,
       // retrocompat: si no hay 'visibility', leer el bool antiguo
-      visibility: json['visibility'] as String? ??
-          ((json['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private'),
+      visibility: HabitVisibility.fromString(
+        json['visibility'] as String? ??
+            ((json['isPubliclyVisible'] as bool? ?? false) ? 'public' : 'private'),
+      ),
       stackId: json['stackId'] as String?,
       stackOrder: json['stackOrder'] as int? ?? 0,
       sortOrder: json['sortOrder'] as int? ?? 0,
@@ -107,7 +110,7 @@ class HabitModel {
       'isActive': isActive,
       'groupId': groupId,
       'challengeId': challengeId,
-      'visibility': visibility,
+      'visibility': visibility.value,
       'stackId': stackId,
       'stackOrder': stackOrder,
       'sortOrder': sortOrder,
@@ -129,7 +132,7 @@ class HabitModel {
     String? groupId,
     bool clearGroupId = false,
     String? challengeId,
-    String? visibility,
+    HabitVisibility? visibility,
     String? stackId,
     int? stackOrder,
     String? stackAfterHabitId,

@@ -10,6 +10,7 @@ import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../habits/domain/habit_visibility.dart';
 import '../../profile/data/public_profile_repository.dart';
 import '../../profile/presentation/widgets/username_input_sheet.dart';
 import '../../social/data/user_directory_repository.dart';
@@ -578,9 +579,9 @@ class _HabitVisibilityRow extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final l10n = S.of(context);
     final options = [
-      (value: 'public',    icon: Icons.public_rounded,       label: l10n.privacyOptionPublic),
-      (value: 'followers', icon: Icons.people_rounded,        label: l10n.privacyOptionFollowers),
-      (value: 'private',   icon: Icons.lock_outline_rounded,  label: l10n.privacyOptionPrivate),
+      (value: HabitVisibility.public,    icon: Icons.public_rounded,       label: l10n.privacyOptionPublic),
+      (value: HabitVisibility.followers, icon: Icons.people_rounded,        label: l10n.privacyOptionFollowers),
+      (value: HabitVisibility.private,   icon: Icons.lock_outline_rounded,  label: l10n.privacyOptionPrivate),
     ];
 
     return Padding(
@@ -621,7 +622,7 @@ class _HabitVisibilityRow extends StatelessWidget {
           // selector de 3 opciones
           Row(
             children: options.map((opt) {
-              final selected = habit.visibility == opt.value;
+              final selected = habit.visibility == opt.value; // HabitVisibility enum comparison
               return Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 3),

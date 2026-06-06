@@ -8,6 +8,8 @@ import '../../data/habit_group_repository.dart';
 import '../../data/habit_repository.dart';
 import '../../domain/habit_group_model.dart';
 import '../../domain/habit_model.dart';
+import '../../domain/habit_visibility.dart';
+import 'habit_visibility_selector.dart';
 
 // Bottom sheet para editar un hábito existente
 class EditHabitSheet extends StatefulWidget {
@@ -44,6 +46,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
   // grupo asignado: null = sin rutina
   String? _selectedGroupId;
   List<HabitGroupModel> _groups = [];
+  late HabitVisibility _visibility;
 
   // cadena: hábitos en la misma cadena que este (para mostrar contexto)
   List<HabitModel> _stackSiblings = [];
@@ -59,6 +62,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
     _targetDays = List.from(widget.habit.targetDays);
     _reminderTime = widget.habit.reminderTime;
     _selectedGroupId = widget.habit.groupId;
+    _visibility = widget.habit.visibility;
     _loadGroups();
     _loadStackSiblings();
   }
@@ -134,6 +138,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
       createdAt: widget.habit.createdAt,
       isActive: widget.habit.isActive,
       groupId: _selectedGroupId,
+      visibility: _visibility,
       // preservar campos de cadena
       stackId: widget.habit.stackId,
       stackOrder: widget.habit.stackOrder,
@@ -501,6 +506,15 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                 ),
               const SizedBox(height: 28),
             ],
+
+          // sección visibilidad
+          _SheetLabel(label: s.createHabitVisibilityLabel),
+          const SizedBox(height: 12),
+          HabitVisibilitySelector(
+            value: _visibility,
+            onChanged: (v) => setState(() => _visibility = v),
+          ),
+          const SizedBox(height: 24),
 
           // botón guardar debajo del recordatorio
           GradientButton(

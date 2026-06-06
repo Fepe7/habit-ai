@@ -1487,6 +1487,9 @@ class SEs extends S {
   String get createHabitChainNone => 'Ninguno';
 
   @override
+  String get createHabitVisibilityLabel => 'Privacidad';
+
+  @override
   String get createHabitCta => 'Crear hábito';
 
   @override
@@ -2140,6 +2143,18 @@ class SEs extends S {
 
   @override
   String get challengeDetailMarkToday => 'Marcar hoy como completado';
+
+  @override
+  String get challengeVisibilityToggleTitle => 'Mostrar en mi perfil público';
+
+  @override
+  String get challengeVisibilityToggleSubtitle => 'Tu progreso será visible. El de tu compañero solo si él también lo activa.';
+
+  @override
+  String get challengesSectionTitle => 'Retos activos';
+
+  @override
+  String get challengeAnonymousPartner => 'Compañero';
 
   @override
   String challengeDetailProgressDays(int completed, int total) {

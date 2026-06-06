@@ -17,6 +17,7 @@ import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_log_model.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../profile/data/public_profile_repository.dart';
+import '../../profile/domain/public_challenge_model.dart';
 import '../data/challenge_repository.dart';
 import '../domain/challenge_model.dart';
 import '../domain/challenge_participant_model.dart';
@@ -35,6 +36,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   late final String _uid;
   late final ChallengeRepository _repo;
   late final HabitRepository _habitRepo;
+  late final PublicProfileRepository _publicRepo;
 
   ChallengeModel? _challenge;
   // participante que soy yo (null si aún no acepté)
@@ -43,10 +45,12 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
   ChallengeParticipantModel? _partner;
   bool _loading = true;
   bool _accepting = false;
+  bool _isPublic = false;
 
   StreamSubscription? _challengeSub;
   StreamSubscription? _myProgressSub;
   StreamSubscription? _partnerProgressSub;
+  StreamSubscription? _visibilitySub;
 
   ChallengeProgressModel? _myProgress;
   ChallengeProgressModel? _partnerProgress;
@@ -61,6 +65,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     _uid = FirebaseAuth.instance.currentUser!.uid;
     _repo = ChallengeRepository(uid: _uid);
     _habitRepo = HabitRepository(uid: _uid);
+    _publicRepo = PublicProfileRepository(uid: _uid);
     _load();
   }
 
@@ -98,6 +103,13 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         await _onChallengeCompleted();
       }
     }
+
+    // suscribirse al stream de visibilidad pública del reto
+    _visibilitySub = _publicRepo
+        .watchMyChallengeVisibility(widget.challengeId)
+        .listen((exists) {
+      if (mounted) setState(() => _isPublic = exists);
+    });
 
     // streams en tiempo real
     _challengeSub = _repo.watchChallenge(widget.challengeId).listen((c) {
@@ -232,6 +244,15 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         challengeId: widget.challengeId,
         completed: !wasCompleted,
       );
+
+      // sync al espejo público si está activo (fire-and-forget)
+      unawaited(_publicRepo.updateChallengeProgress(
+        widget.challengeId,
+        completedCount: _myProgress?.completedCount ?? 0,
+        currentStreak: _myProgress?.currentStreak ?? 0,
+        days: (_myProgress?.days ?? {})
+            .map((k, v) => MapEntry(k, v.name)),
+      ).catchError((_) {}));
     } catch (e) {
       if (mounted) setState(() => _completedToday = wasCompleted);
     }
@@ -273,6 +294,33 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  // ── VISIBILIDAD PÚBLICA DEL RETO ────────────────────────────────────────────
+
+  Future<void> _togglePublicVisibility(bool makePublic) async {
+    if (_challenge == null) return;
+    try {
+      if (makePublic) {
+        final model = PublicChallengeModel(
+          challengeId: _challenge!.id,
+          habitTitle: _challenge!.habitTitle,
+          habitCategory: _challenge!.habitCategory,
+          durationDays: _challenge!.durationDays,
+          status: _challenge!.status.name,
+          partnerUid: _challenge!.partnerUid(_uid),
+          partnerDisplayName: _partner?.displayName,
+          partnerPhotoUrl: _partner?.photoUrl,
+          completedCount: _myProgress?.completedCount ?? 0,
+          currentStreak: _myProgress?.currentStreak ?? 0,
+          days: (_myProgress?.days ?? {})
+              .map((k, v) => MapEntry(k, v.name)),
+        );
+        await _publicRepo.syncChallenge(model);
+      } else {
+        await _publicRepo.removeChallenge(_challenge!.id);
+      }
+    } catch (_) {}
+  }
+
   Future<void> _onChallengeCompleted() async {
     final checker = AchievementChecker(
       achievementRepo: AchievementRepository(uid: _uid),
@@ -291,6 +339,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
     _challengeSub?.cancel();
     _myProgressSub?.cancel();
     _partnerProgressSub?.cancel();
+    _visibilitySub?.cancel();
     super.dispose();
   }
 
@@ -400,6 +449,21 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
             // ── botón de check-in diario ──
             if (challenge.isActive && _myHabit != null)
               _buildCheckInButton(scheme),
+
+            // ── toggle de visibilidad pública ──
+            if (challenge.isActive || challenge.status == ChallengeStatus.completed)
+              Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: SwitchListTile(
+                  secondary: Icon(
+                    _isPublic ? Icons.public_rounded : Icons.lock_outline_rounded,
+                  ),
+                  title: Text(s.challengeVisibilityToggleTitle),
+                  subtitle: Text(s.challengeVisibilityToggleSubtitle),
+                  value: _isPublic,
+                  onChanged: _togglePublicVisibility,
+                ),
+              ),
 
             // ── mi progreso ──
             _ProgressSection(
