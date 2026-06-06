@@ -984,6 +984,30 @@ class SEs extends S {
   String get aiSuggestion4 => 'Mejorar mi salud mental';
 
   @override
+  String get createHabitVisibilityLabel => 'Visibilidad';
+
+  @override
+  String get challengeVisibilityToggleTitle => 'Reto público';
+
+  @override
+  String get challengeVisibilityToggleSubtitle =>
+      'Visible en tu perfil público';
+
+  @override
+  String get challengesSectionTitle => 'Retos';
+
+  @override
+  String get challengeAnonymousPartner => 'Compañero';
+
+  @override
+  String get aiPausedBanner =>
+      'IA en mantenimiento temporalmente — el resto de la app funciona con normalidad.';
+
+  @override
+  String get aiPausedMessage =>
+      'El asistente de IA está en mantenimiento temporalmente. El resto de la app funciona con normalidad.';
+
+  @override
   String get categorySalud => 'Salud';
 
   @override
@@ -1485,9 +1509,6 @@ class SEs extends S {
 
   @override
   String get createHabitChainNone => 'Ninguno';
-
-  @override
-  String get createHabitVisibilityLabel => 'Privacidad';
 
   @override
   String get createHabitCta => 'Crear hábito';
@@ -2143,18 +2164,6 @@ class SEs extends S {
 
   @override
   String get challengeDetailMarkToday => 'Marcar hoy como completado';
-
-  @override
-  String get challengeVisibilityToggleTitle => 'Mostrar en mi perfil público';
-
-  @override
-  String get challengeVisibilityToggleSubtitle => 'Tu progreso será visible. El de tu compañero solo si él también lo activa.';
-
-  @override
-  String get challengesSectionTitle => 'Retos activos';
-
-  @override
-  String get challengeAnonymousPartner => 'Compañero';
 
   @override
   String challengeDetailProgressDays(int completed, int total) {

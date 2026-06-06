@@ -207,5 +207,12 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
       allow update: if false;
     }
+
+    // Flag de disponibilidad de IA — cualquier usuario autenticado puede leer,
+    // solo el admin SDK (función de billing) puede escribir.
+    match /system/{doc} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
   }
 }

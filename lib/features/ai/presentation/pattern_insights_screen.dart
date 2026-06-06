@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/ai_availability_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
@@ -41,6 +42,12 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
     if (!ConnectivityService.instance.isOnline.value) {
       if (mounted) {
         AppSnackBar.showInfo(context, S.of(context).patternInsightsNeedConnection);
+      }
+      return;
+    }
+    if (AiAvailabilityService.instance.isPaused.value) {
+      if (mounted) {
+        AppSnackBar.showInfo(context, S.of(context).aiPausedMessage);
       }
       return;
     }

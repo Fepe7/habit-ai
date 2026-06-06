@@ -127,6 +127,8 @@ class AIRepository {
         return 'Has hecho demasiadas peticiones. Espera unos minutos.';
       case 'invalid-argument':
         return 'El mensaje no puede estar vacío.';
+      case 'unavailable':
+        return 'El asistente de IA está en pausa temporal. El resto de la app funciona con normalidad.';
       default:
         return 'Error del asistente. Inténtalo más tarde.';
     }

@@ -285,6 +285,15 @@
   "aiSuggestion3": "I want to read more and sleep better",
   "aiSuggestion4": "Improve my mental health",
 
+  "createHabitVisibilityLabel": "Visibility",
+  "challengeVisibilityToggleTitle": "Public challenge",
+  "challengeVisibilityToggleSubtitle": "Visible on your public profile",
+  "challengesSectionTitle": "Challenges",
+  "challengeAnonymousPartner": "Partner",
+
+  "aiPausedBanner": "AI temporarily paused — the rest of the app works normally.",
+  "aiPausedMessage": "The AI assistant is temporarily paused. The rest of the app works normally.",
+
   "categorySalud": "Health",
   "categoryProductividad": "Productivity",
   "categoryBienestar": "Wellbeing",

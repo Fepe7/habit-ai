@@ -18,6 +18,7 @@ import '../../../l10n/app_localizations.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/archivement_repository.dart';
+import '../../../core/services/ai_availability_service.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../achievements/data/achievement_checker.dart';
@@ -46,6 +47,7 @@ class _AIScreenState extends State<AIScreen>
   late final HabitGroupRepository _groupRepo;
   late final AchievementChecker _achievementChecker;
   bool _isLoading = false;
+  bool _isAiPaused = false;
   String? _lastUserMessage;
   String? _userName;
 
@@ -66,6 +68,9 @@ class _AIScreenState extends State<AIScreen>
       publicProfileRepo: PublicProfileRepository(uid: uid),
     );
 
+    _isAiPaused = AiAvailabilityService.instance.isPaused.value;
+    AiAvailabilityService.instance.isPaused.addListener(_onAiPausedChanged);
+
     _messages.add(ChatMessage(
       // TODO: i18n — no se puede usar S.of(context) en initState
       text: '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
@@ -75,8 +80,13 @@ class _AIScreenState extends State<AIScreen>
     ));
   }
 
+  void _onAiPausedChanged() {
+    if (mounted) setState(() => _isAiPaused = AiAvailabilityService.instance.isPaused.value);
+  }
+
   @override
   void dispose() {
+    AiAvailabilityService.instance.isPaused.removeListener(_onAiPausedChanged);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -93,6 +103,13 @@ class _AIScreenState extends State<AIScreen>
           context,
           S.of(context).aiOfflineError,
         );
+      }
+      return;
+    }
+
+    if (_isAiPaused) {
+      if (mounted) {
+        AppSnackBar.showInfo(context, S.of(context).aiPausedMessage);
       }
       return;
     }
@@ -349,10 +366,43 @@ class _AIScreenState extends State<AIScreen>
               ),
             ),
 
+            // banner de IA en pausa
+            if (_isAiPaused)
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.pause_circle_outline_rounded,
+                      size: 16,
+                      color: Color(0xFFF59E0B),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        S.of(context).aiPausedBanner,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF92400E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // input bar glassmorphism
             _InputBar(
               controller: _controller,
               isLoading: _isLoading,
+              isPaused: _isAiPaused,
               onSend: _sendMessage,
             ),
           ],
@@ -367,11 +417,13 @@ class _AIScreenState extends State<AIScreen>
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final bool isLoading;
+  final bool isPaused;
   final VoidCallback onSend;
 
   const _InputBar({
     required this.controller,
     required this.isLoading,
+    required this.isPaused,
     required this.onSend,
   });
 
@@ -405,6 +457,7 @@ class _InputBar extends StatelessWidget {
                   ),
                   child: TextField(
                     controller: controller,
+                    enabled: !isLoading && !isPaused,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => onSend(),
                     maxLines: 4,
@@ -427,9 +480,9 @@ class _InputBar extends StatelessWidget {
               const SizedBox(width: 10),
               // boton enviar con gradiente
               GestureDetector(
-                onTap: isLoading ? null : onSend,
+                onTap: isLoading || isPaused ? null : onSend,
                 child: AnimatedOpacity(
-                  opacity: isLoading ? 0.5 : 1,
+                  opacity: isLoading || isPaused ? 0.5 : 1,
                   duration: const Duration(milliseconds: 200),
                   child: Container(
                     width: 48,

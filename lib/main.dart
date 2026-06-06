@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'firebase_options.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/l10n/locale_provider.dart';
+import 'core/services/ai_availability_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/update_service.dart';
 import 'services/notification_service.dart';
@@ -53,6 +54,7 @@ void main() async {
     await NotificationService.instance.init();
     await ConnectivityService.instance.init();
     await UpdateService.instance.init();
+    await AiAvailabilityService.instance.init();
 
     runApp(const ThemeScope(child: LocaleScope(child: HabitAIApp())));
   }, (error, stack) {
