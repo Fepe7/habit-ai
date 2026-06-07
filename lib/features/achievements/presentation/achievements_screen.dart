@@ -3,8 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/skeletons.dart';
-import '../data/archivement_repository.dart';
-import '../domain/achivement_model.dart';
+import '../data/achievement_repository.dart';
+import '../domain/achievement_model.dart';
 import '../../../l10n/app_localizations.dart';
 import 'achievement_l10n.dart';
 

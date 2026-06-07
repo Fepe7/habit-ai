@@ -10,7 +10,7 @@ import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../achievements/data/achievement_checker.dart';
-import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/data/achievement_repository.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';
 import '../../habits/data/habit_repository.dart';
