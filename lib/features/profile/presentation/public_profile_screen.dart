@@ -422,7 +422,6 @@ class _ProfileHeader extends StatelessWidget {
 
   String get _displayName =>
       profile?.displayName ?? dirEntry?.displayName ?? 'Usuario';
-  String get _username => profile?.username ?? dirEntry?.username ?? '';
   String? get _photoUrl => profile?.photoUrl ?? dirEntry?.photoUrl;
   String get _initials =>
       profile?.avatarInitials ?? dirEntry?.avatarInitials ?? 'U';
@@ -438,80 +437,35 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         children: [
-          // Avatar con badge de verificado (solo para veteranos con 5+ logros)
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [AppTheme.primaryContainer, AppTheme.primary],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: scheme.surface,
-                  ),
-                  child: AvatarCircle(
-                    initials: _initials,
-                    size: 96,
-                    photoUrl: _photoUrl,
-                    backgroundColor: scheme.primaryContainer,
-                    textColor: scheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-              if (_unlockedAchievements >= 5)
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: scheme.surface, width: 3),
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                  ),
-                ),
-            ],
+          // Avatar con anillo de gradiente y badge verificado (veteranos 5+ logros)
+          AvatarCircle(
+            initials: _initials,
+            size: 96,
+            photoUrl: _photoUrl,
+            ringGradient: true,
+            badge: _unlockedAchievements >= 5
+                ? AvatarBadge.verified
+                : AvatarBadge.none,
           ),
           const SizedBox(height: 16),
+          // nombre real como título principal
           Text(
-            '@$_username',
+            _displayName,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
                 ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _displayName,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+            textAlign: TextAlign.center,
           ),
 
-          // "Miembro desde"
+          // "Miembro desde" en color primario
           if (_createdAt != null) ...[
             const SizedBox(height: 6),
             Text(
               S.of(context).publicProfileMemberSince(_formatMonth(_createdAt!, S.of(context))),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ],
@@ -545,7 +499,12 @@ class _ProfileHeader extends StatelessWidget {
                       ? () => context.push('/followers?tab=0')
                       : null,
                 ),
-                const SizedBox(width: 24),
+                Container(
+                  width: 1,
+                  height: 28,
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  color: scheme.outlineVariant.withValues(alpha: 0.4),
+                ),
                 _CounterChip(
                   value: followingCount,
                   label: S.of(context).profileFollowing,
@@ -679,6 +638,7 @@ class _FollowButton extends StatelessWidget {
     Color bg;
     Color fg;
     IconData icon;
+    Gradient? gradient;
 
     final l10n = S.of(context);
     switch (state) {
@@ -696,9 +656,11 @@ class _FollowButton extends StatelessWidget {
         break;
       case _FollowState.none:
         label = l10n.exploreFollow;
+        // estado principal: gradiente de marca (estilo Stitch)
         bg = scheme.primary;
         fg = scheme.onPrimary;
         icon = Icons.person_add_rounded;
+        gradient = AppTheme.heroGradient;
         break;
     }
 
@@ -706,10 +668,12 @@ class _FollowButton extends StatelessWidget {
       onTap: loading ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
         decoration: BoxDecoration(
-          color: bg,
+          color: gradient == null ? bg : null,
+          gradient: gradient,
           borderRadius: BorderRadius.circular(50),
+          boxShadow: gradient != null ? AppTheme.ambientShadow(opacity: 0.18) : null,
         ),
         child: loading
             ? SizedBox(
@@ -863,47 +827,57 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = iconColor ?? scheme.primary;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: highlighted
-            ? scheme.primary.withValues(alpha: 0.08)
-            : scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(18),
-        border: highlighted
-            ? Border.all(
-                color: scheme.primary.withValues(alpha: 0.3), width: 1)
-            : Border.all(
-                color: scheme.outlineVariant.withValues(alpha: 0.2)),
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.ambientShadow(),
+        gradient: highlighted
+            ? LinearGradient(
+                colors: [
+                  accent.withValues(alpha: 0.16),
+                  accent.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 16,
-                    color: iconColor ?? scheme.onSurfaceVariant),
-                const SizedBox(width: 5),
-              ],
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
+          // círculo de icono arriba (estilo Stitch)
+          if (icon != null)
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: highlighted ? 0.22 : 0.12),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
+              child: Icon(icon, size: 20, color: accent),
+            ),
+          const SizedBox(height: 12),
           Text(
-            label.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  fontSize: 9,
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                  color: highlighted ? accent : scheme.onSurface,
                 ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

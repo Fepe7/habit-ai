@@ -77,14 +77,22 @@ class AvatarCircle extends StatelessWidget {
                   width: badgeSize,
                   height: badgeSize,
                   decoration: BoxDecoration(
-                    color: scheme.primary,
+                    // badge blanco con icono teal (estilo Stitch), flota con sombra
+                    color: scheme.surfaceContainerLowest,
                     shape: BoxShape.circle,
                     border: Border.all(color: scheme.surface, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: scheme.primary.withValues(alpha: 0.18),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Icon(
                     Icons.camera_alt_rounded,
-                    size: badgeSize * 0.55,
-                    color: scheme.onPrimary,
+                    size: badgeSize * 0.5,
+                    color: scheme.primary,
                   ),
                 )
               : Container(
