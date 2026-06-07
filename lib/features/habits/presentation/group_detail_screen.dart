@@ -22,7 +22,7 @@ import 'widgets/edit_habit_sheet.dart';
 import 'widgets/create_habit_sheet.dart';
 import 'widgets/create_choice_sheet.dart';
 import 'widgets/create_group_sheet.dart';
-import '../../../features/achievements/data/archivement_repository.dart';
+import '../../../features/achievements/data/achievement_repository.dart';
 import '../../../features/achievements/data/achievement_checker.dart';
 import '../../../features/achievements/presentation/achievement_overlay.dart';
 import '../../../features/auth/data/user_repository.dart';

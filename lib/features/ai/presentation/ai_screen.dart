@@ -17,7 +17,7 @@ import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
-import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/data/achievement_repository.dart';
 import '../../../core/services/ai_availability_service.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/connectivity_service.dart';

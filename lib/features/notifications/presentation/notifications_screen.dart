@@ -8,8 +8,8 @@ import '../../../l10n/app_localizations.dart';
 import '../../achievements/presentation/achievement_l10n.dart';
 
 import '../../../core/theme/app_theme.dart';
-import '../../../features/achievements/data/archivement_repository.dart';
-import '../../../features/achievements/domain/achivement_model.dart';
+import '../../../features/achievements/data/achievement_repository.dart';
+import '../../../features/achievements/domain/achievement_model.dart';
 import '../../../features/ai/data/ai_repository.dart';
 import '../../../features/ai/domain/butterfly_projection_model.dart';
 import '../../../features/ai/domain/renegotiation_model.dart';

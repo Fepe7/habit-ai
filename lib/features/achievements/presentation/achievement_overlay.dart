@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../l10n/app_localizations.dart';
-import '../domain/achivement_model.dart';
+import '../domain/achievement_model.dart';
 import 'achievement_l10n.dart';
 
 // Muestra un banner celebratorio cuando se desbloquea un logro

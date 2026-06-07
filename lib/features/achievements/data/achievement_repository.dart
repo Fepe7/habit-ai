@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../domain/achivement_model.dart';
+import '../domain/achievement_model.dart';
 
 // Gestiona los logros (solo lectura y creacion, no se borran)
 class AchievementRepository {

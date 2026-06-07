@@ -1,5 +1,5 @@
-import '../../achievements/data/archivement_repository.dart';
-import '../../achievements/domain/achivement_model.dart';
+import '../../achievements/data/achievement_repository.dart';
+import '../../achievements/domain/achievement_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../domain/level_model.dart';

@@ -28,7 +28,7 @@ import '../../../core/widgets/ux/gradient_fab.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../achievements/data/archivement_repository.dart';
+import '../../achievements/data/achievement_repository.dart';
 import '../../achievements/data/achievement_checker.dart';
 import '../../achievements/presentation/achievement_overlay.dart';
 import '../../auth/data/user_repository.dart';

@@ -1,5 +1,5 @@
 import '../../../l10n/app_localizations.dart';
-import '../domain/achivement_model.dart';
+import '../domain/achievement_model.dart';
 
 /// Resuelve título y descripción localizada de logros sin tocar la capa de dominio.
 class AchievementL10n {

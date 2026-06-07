@@ -9,7 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../achievements/presentation/achievement_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
-import '../../achievements/domain/achivement_model.dart';
+import '../../achievements/domain/achievement_model.dart';
 import '../../../core/services/feedback_service.dart';
 import '../../social/data/follow_repository.dart';
 import '../../social/data/reaction_repository.dart';

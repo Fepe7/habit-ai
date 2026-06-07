@@ -2,8 +2,8 @@ import '../../auth/data/user_repository.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../profile/data/public_profile_repository.dart';
-import '../domain/achivement_model.dart';
-import 'archivement_repository.dart';
+import '../domain/achievement_model.dart';
+import 'achievement_repository.dart';
 
 // Comprueba condiciones y desbloquea logros tras cada accion
 class AchievementChecker {
