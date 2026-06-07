@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 
-/// Etiqueta de sección — uppercase, spacing 1.2, onSurfaceVariant.
-/// Usada en settings y privacy para consistencia visual.
+/// Etiqueta de sección suelta (uppercase) — usada por la pantalla de privacidad,
+/// donde los grupos no llevan cabecera interna.
 class SettingsSectionLabel extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -40,136 +40,176 @@ class SettingsSectionLabel extends StatelessWidget {
   }
 }
 
-/// Contenedor de grupo de tiles con radio 20 + ambient shadow.
-class SettingsGroup extends StatelessWidget {
+/// Tarjeta de sección de ajustes al estilo "Editorial Vitality":
+/// cabecera interna con icono en chip de color + título grande, separador
+/// sutil, y debajo las filas. Reemplaza al patrón etiqueta-fuera + grupo.
+class SettingsSectionCard extends StatelessWidget {
+  final IconData icon;
+  final Color? iconColor;
+  final String title;
   final List<Widget> children;
 
-  const SettingsGroup({super.key, required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: AppTheme.ambientShadow(),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(children: children),
-      ),
-    );
-  }
-}
-
-/// Tile genérico de ajustes con Semantics, touch target ≥48dp y separador opcional.
-class SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final VoidCallback onTap;
-  final bool isDestructive;
-  final bool divider;
-  final Widget? trailing;
-  final Color? iconBgColor;
-  final Color? iconColor;
-
-  const SettingsTile({
+  const SettingsSectionCard({
     super.key,
     required this.icon,
     required this.title,
-    this.subtitle,
-    required this.onTap,
-    this.isDestructive = false,
-    this.divider = true,
-    this.trailing,
-    this.iconBgColor,
+    required this.children,
     this.iconColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = isDestructive ? scheme.error : scheme.onSurface;
-    final effectiveIconColor = iconColor ??
-        (isDestructive ? scheme.error : scheme.primary);
-    final effectiveIconBg = iconBgColor ??
-        (isDestructive
-            ? scheme.errorContainer.withValues(alpha: 0.3)
-            : scheme.primaryContainer.withValues(alpha: 0.2));
+    final accent = iconColor ?? scheme.primary;
 
-    return Semantics(
-      button: true,
-      label: title,
-      hint: subtitle,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: AppTheme.ambientShadow(),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
-                      color: effectiveIconBg,
-                      borderRadius: BorderRadius.circular(8),
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(icon, size: 18, color: effectiveIconColor),
+                    child: Icon(icon, size: 20, color: accent),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 48),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: color,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.3,
                           ),
-                          if (subtitle != null)
-                            Text(
-                              subtitle!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Divider(
+              height: 1,
+              color: scheme.outlineVariant.withValues(alpha: 0.12),
+            ),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Fila de ajustes sin icono propio (el icono representativo vive en la
+/// cabecera de la sección). Soporta subtítulo, control a la derecha (switch,
+/// chips…) o chevron por defecto, y estilo destructivo con icono a la izquierda.
+class SettingsRow extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+  final bool divider;
+  final bool isDestructive;
+  final IconData? destructiveIcon;
+
+  const SettingsRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+    this.trailing,
+    this.divider = true,
+    this.isDestructive = false,
+    this.destructiveIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final titleColor = isDestructive ? scheme.error : scheme.onSurface;
+
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+      child: Row(
+        children: [
+          if (isDestructive && destructiveIcon != null) ...[
+            Icon(destructiveIcon, size: 22, color: scheme.error),
+            const SizedBox(width: 14),
+          ],
+          Expanded(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: titleColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (subtitle != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        subtitle!,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isDestructive
+                                  ? scheme.error.withValues(alpha: 0.7)
+                                  : scheme.onSurfaceVariant,
                             ),
-                        ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  trailing ??
-                      (isDestructive
-                          ? const SizedBox.shrink()
-                          : Icon(
-                              Icons.chevron_right_rounded,
-                              color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
-                              size: 20,
-                            )),
                 ],
               ),
             ),
           ),
-          if (divider)
-            Divider(
-              height: 1,
-              indent: 72,
-              endIndent: 0,
-              color: scheme.outlineVariant.withValues(alpha: 0.12),
-            ),
+          const SizedBox(width: 12),
+          trailing ??
+              (onTap != null && !isDestructive
+                  ? Icon(
+                      Icons.chevron_right_rounded,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                      size: 20,
+                    )
+                  : const SizedBox.shrink()),
         ],
       ),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Semantics(
+          button: onTap != null,
+          label: title,
+          hint: subtitle,
+          child: onTap != null
+              ? InkWell(onTap: onTap, child: row)
+              : row,
+        ),
+        if (divider)
+          Divider(
+            height: 1,
+            indent: 18,
+            endIndent: 18,
+            color: scheme.outlineVariant.withValues(alpha: 0.10),
+          ),
+      ],
     );
   }
 }

@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final auth = AuthProvider.of(context);
     final themeProvider = ThemeProvider.of(context);
     final localeProvider = LocaleProvider.of(context);
-    final s = S.of(context)!;
+    final s = S.of(context);
 
     return StreamBuilder<UserModel>(
       stream: _userRepo.watchUser(),
@@ -70,6 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -0.3,
+                                color: scheme.primary,
                               ),
                         ),
                       ),
@@ -86,118 +87,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
 
                 // ── 1. Privacidad y visibilidad ──────────────────────────
-                SettingsSectionLabel(
-                  label: s.privacySectionVisibility,
+                SettingsSectionCard(
                   icon: Icons.shield_outlined,
-                  iconColor: scheme.primary,
-                ),
-                SettingsGroup(
+                  title: s.privacySectionVisibility,
                   children: [
-                    SettingsTile(
-                      icon: Icons.lock_outline_rounded,
+                    SettingsRow(
                       title: s.settingsPrivacy,
                       subtitle: s.settingsPrivacySubtitle,
                       onTap: () => context.pushNamed('privacy-settings'),
                       divider: false,
                     ),
                   ],
-                ),
+                ).animate().fadeIn(delay: 40.ms, duration: 260.ms),
 
                 const SizedBox(height: 16),
 
                 // ── 2. Preferencias (tema + idioma + notificaciones) ─────
-                SettingsSectionLabel(
-                  label: s.settingsSectionAppearance,
+                SettingsSectionCard(
                   icon: Icons.tune_rounded,
-                  iconColor: scheme.primary,
-                ),
-                SettingsGroup(
+                  title: s.settingsSectionAppearance,
                   children: [
-                    _ThemeTile(
+                    _ThemeRow(
                       currentMode: themeProvider.themeMode,
                       onChanged: (mode) => themeProvider.setThemeMode(mode),
                     ),
-                    _LanguageTile(
+                    _LanguageRow(
                       currentLocale: localeProvider.locale,
                       onChanged: (locale) => localeProvider.setLocale(locale),
                     ),
-                    const _NotificationsTile(),
+                    const _NotificationsRow(),
                   ],
-                ),
+                ).animate().fadeIn(delay: 80.ms, duration: 260.ms),
 
                 const SizedBox(height: 16),
 
                 // ── 3. Tu progreso (logros + protección de racha) ────────
-                SettingsSectionLabel(
-                  label: s.settingsSectionStreakProtection,
+                SettingsSectionCard(
                   icon: Icons.local_fire_department_rounded,
                   iconColor: AppTheme.tertiaryContainer,
-                ),
-                SettingsGroup(
+                  title: s.settingsSectionStreakProtection,
                   children: [
-                    SettingsTile(
-                      icon: Icons.emoji_events_rounded,
+                    SettingsRow(
                       title: s.settingsAchievements,
                       subtitle: s.settingsAchievementsSubtitle,
-                      iconBgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
-                      iconColor: AppTheme.tertiaryContainer,
                       onTap: () => context.goNamed('achievements'),
                     ),
-                    _ShieldCountTile(shieldsCount: userData?.shieldsCount ?? 0),
-                    _SickModeTile(
-                      userData: userData,
-                      userRepo: _userRepo,
-                    ),
+                    _ShieldRow(shieldsCount: userData?.shieldsCount ?? 0),
+                    _SickModeRow(userData: userData, userRepo: _userRepo),
                   ],
-                ),
+                ).animate().fadeIn(delay: 120.ms, duration: 260.ms),
 
                 const SizedBox(height: 16),
 
                 // ── 4. Comunidad ─────────────────────────────────────────
-                SettingsSectionLabel(
-                  label: s.settingsSectionCommunity,
+                SettingsSectionCard(
                   icon: Icons.people_outline_rounded,
-                  iconColor: scheme.primary,
-                ),
-                SettingsGroup(
+                  title: s.settingsSectionCommunity,
                   children: [
-                    SettingsTile(
-                      icon: Icons.explore_rounded,
+                    SettingsRow(
                       title: s.settingsExploreDirectory,
                       subtitle: s.settingsExploreDirectorySubtitle,
                       onTap: () => context.pushNamed('public-profiles-feed'),
                     ),
-                    SettingsTile(
-                      icon: Icons.people_rounded,
+                    SettingsRow(
                       title: s.settingsFollowers,
                       subtitle: s.settingsFollowersSubtitle,
                       onTap: () => context.pushNamed('followers'),
                       divider: false,
                     ),
                   ],
-                ),
+                ).animate().fadeIn(delay: 160.ms, duration: 260.ms),
 
                 const SizedBox(height: 16),
 
                 // ── 5. Información ───────────────────────────────────────
-                SettingsSectionLabel(
-                  label: s.settingsSectionInfo,
+                SettingsSectionCard(
                   icon: Icons.info_outline_rounded,
                   iconColor: scheme.onSurfaceVariant,
-                ),
-                SettingsGroup(
+                  title: s.settingsSectionInfo,
                   children: [
-                    SettingsTile(
-                      icon: Icons.info_outline_rounded,
+                    SettingsRow(
                       title: s.settingsAbout,
                       subtitle: s.settingsAboutSubtitle,
                       onTap: () => _showAbout(context),
                     ),
-                    SettingsTile(
-                      icon: Icons.star_rounded,
+                    SettingsRow(
                       title: s.settingsRateApp,
                       subtitle: s.settingsRateAppSubtitle,
                       onTap: () async {
@@ -205,8 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         await ReviewService.instance.openStoreListing();
                       },
                     ),
-                    SettingsTile(
-                      icon: Icons.policy_outlined,
+                    SettingsRow(
                       title: s.settingsPrivacyPolicy,
                       subtitle: s.settingsPrivacyPolicySubtitle,
                       onTap: () => launchUrl(
@@ -214,8 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         mode: LaunchMode.externalApplication,
                       ),
                     ),
-                    SettingsTile(
-                      icon: Icons.description_outlined,
+                    SettingsRow(
                       title: s.settingsTerms,
                       subtitle: s.settingsTermsSubtitle,
                       onTap: () => launchUrl(
@@ -225,7 +200,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       divider: false,
                     ),
                   ],
-                ),
+                ).animate().fadeIn(delay: 200.ms, duration: 260.ms),
 
                 const SizedBox(height: 16),
 
@@ -235,31 +210,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Container(
                     decoration: BoxDecoration(
                       color: scheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: AppTheme.ambientShadow(),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: scheme.error.withValues(alpha: 0.12),
+                      ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SettingsTile(
-                          icon: Icons.logout_rounded,
+                        const SizedBox(height: 6),
+                        SettingsRow(
                           title: s.settingsSignOut,
                           isDestructive: true,
+                          destructiveIcon: Icons.logout_rounded,
                           onTap: () => _confirmSignOut(context, auth),
                         ),
-                        SettingsTile(
-                          icon: Icons.delete_forever_rounded,
+                        SettingsRow(
                           title: s.settingsDeleteAccount,
                           subtitle: s.settingsDeleteAccountSubtitle,
                           isDestructive: true,
+                          destructiveIcon: Icons.delete_forever_rounded,
                           onTap: () => _confirmDeleteAccount(context, auth),
                           divider: false,
                         ),
+                        const SizedBox(height: 6),
                       ],
                     ),
                   ),
-                ),
+                ).animate().fadeIn(delay: 240.ms, duration: 260.ms),
               ],
             ),
           ),
@@ -269,7 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _confirmSignOut(BuildContext context, dynamic auth) {
-    final s = S.of(context)!;
+    final s = S.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -296,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context, dynamic auth) async {
-    final s = S.of(context)!;
+    final s = S.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -349,7 +328,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showAbout(BuildContext context) {
     showAboutDialog(
       context: context,
-      applicationName: S.of(context)!.appTitle,
+      applicationName: S.of(context).appTitle,
       applicationVersion: '1.0.0',
       applicationLegalese: 'Trabajo Final de Grado — 2º DAM\nAndrei Felipe Staicu',
     );
@@ -370,19 +349,19 @@ class _AccountHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context)!;
+    final s = S.of(context);
     final fbUser = FirebaseAuth.instance.currentUser;
     final displayName = (userData?.displayName?.isNotEmpty == true
             ? userData!.displayName!
             : null) ??
-        (fbUser?.displayName?.isNotEmpty == true
-            ? fbUser!.displayName!
-            : null) ??
+        (fbUser?.displayName?.isNotEmpty == true ? fbUser!.displayName! : null) ??
         s.settingsFallbackUsername;
     final initials = AvatarCircle.fromName(
       userData?.displayName ?? fbUser?.displayName,
       userData?.email ?? fbUser?.email,
     );
+    final hasUsername = userData?.username?.isNotEmpty == true;
+    final isPublic = userData?.isProfilePublic == true;
 
     return GestureDetector(
       onTap: onTap,
@@ -393,103 +372,106 @@ class _AccountHeroCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: AppTheme.ambientShadow(opacity: 0.18),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AvatarCircle(
-              initials: initials,
-              size: 68,
-              photoUrl: userData?.photoUrl,
-              badge: AvatarBadge.camera,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
-              textColor: Colors.white,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              children: [
+                AvatarCircle(
+                  initials: initials,
+                  size: 64,
+                  photoUrl: userData?.photoUrl,
+                  badge: AvatarBadge.camera,
+                  backgroundColor: Colors.white.withValues(alpha: 0.25),
+                  textColor: Colors.white,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          displayName,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.2,
-                              ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text(
+                        displayName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 6),
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Icon(
-                          Icons.edit_rounded,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          userData?.username?.isNotEmpty == true
-                              ? Icons.alternate_email_rounded
-                              : Icons.mail_outline_rounded,
-                          size: 12,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          userData?.username?.isNotEmpty == true
-                              ? userData!.username!
-                              : (fbUser?.email ?? s.settingsFallbackUsername),
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              hasUsername
+                                  ? Icons.alternate_email_rounded
+                                  : Icons.mail_outline_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              hasUsername
+                                  ? userData!.username!
+                                  : (fbUser?.email ?? s.settingsFallbackUsername),
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.4,
                                   ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  if (userData?.isProfilePublic == true) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.public_rounded,
-                            size: 12, color: Colors.white.withValues(alpha: 0.8)),
-                        const SizedBox(width: 4),
-                        Text(
-                          s.privacyPublicProfileDescOn,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
+                ),
+              ],
+            ),
+            // línea inferior con separador: estado de visibilidad del perfil
+            const SizedBox(height: 14),
+            Divider(height: 1, color: Colors.white.withValues(alpha: 0.20)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  isPublic ? Icons.public_rounded : Icons.lock_outline_rounded,
+                  size: 16,
+                  color: Colors.white.withValues(alpha: 0.85),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isPublic
+                        ? s.privacyPublicProfileDescOn
+                        : s.privacyPublicProfileDescOff,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.85),
                         ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -498,74 +480,58 @@ class _AccountHeroCard extends StatelessWidget {
   }
 }
 
-/// Selector de tema con SegmentedButton
-class _ThemeTile extends StatelessWidget {
+/// Fila de selección de tema (label + SegmentedButton debajo).
+class _ThemeRow extends StatelessWidget {
   final ThemeMode currentMode;
   final ValueChanged<ThemeMode> onChanged;
 
-  const _ThemeTile({required this.currentMode, required this.onChanged});
+  const _ThemeRow({required this.currentMode, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context)!;
+    final s = S.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.palette_outlined, size: 18, color: scheme.primary),
+          Text(
+            s.settingsThemeLabel,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.settingsThemeLabel,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                SegmentedButton<ThemeMode>(
-                  style: SegmentedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    selectedBackgroundColor:
-                        scheme.primaryContainer.withValues(alpha: 0.35),
-                    selectedForegroundColor: scheme.primary,
-                  ),
-                  segments: [
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      icon: const Icon(Icons.light_mode_outlined, size: 16),
-                      label: Text(s.themeLight),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      icon: const Icon(Icons.phone_android_outlined, size: 16),
-                      label: Text(s.themeAuto),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      icon: const Icon(Icons.dark_mode_outlined, size: 16),
-                      label: Text(s.themeDark),
-                    ),
-                  ],
-                  selected: {currentMode},
-                  onSelectionChanged: (s) => onChanged(s.first),
-                ),
-              ],
+          const SizedBox(height: 10),
+          SegmentedButton<ThemeMode>(
+            style: SegmentedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              selectedBackgroundColor:
+                  scheme.primaryContainer.withValues(alpha: 0.35),
+              selectedForegroundColor: scheme.primary,
             ),
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.light,
+                icon: const Icon(Icons.light_mode_outlined, size: 16),
+                label: Text(s.themeLight),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                icon: const Icon(Icons.phone_android_outlined, size: 16),
+                label: Text(s.themeAuto),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                icon: const Icon(Icons.dark_mode_outlined, size: 16),
+                label: Text(s.themeDark),
+              ),
+            ],
+            selected: {currentMode},
+            onSelectionChanged: (sel) => onChanged(sel.first),
           ),
         ],
       ),
@@ -573,63 +539,46 @@ class _ThemeTile extends StatelessWidget {
   }
 }
 
-/// Selector de idioma con SegmentedButton
-class _LanguageTile extends StatelessWidget {
+/// Fila de selección de idioma (label + SegmentedButton debajo).
+class _LanguageRow extends StatelessWidget {
   final Locale? currentLocale;
   final ValueChanged<Locale?> onChanged;
 
-  const _LanguageTile({required this.currentLocale, required this.onChanged});
+  const _LanguageRow({required this.currentLocale, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context)!;
+    final s = S.of(context);
     final selectedCode = currentLocale?.languageCode ?? 'es';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: scheme.primaryContainer.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child:
-                Icon(Icons.language_rounded, size: 18, color: scheme.primary),
+          Text(
+            s.settingsSectionLanguage,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.settingsSectionLanguage,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                SegmentedButton<String>(
-                  style: SegmentedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    selectedBackgroundColor:
-                        scheme.primaryContainer.withValues(alpha: 0.35),
-                    selectedForegroundColor: scheme.primary,
-                  ),
-                  segments: [
-                    ButtonSegment(value: 'es', label: Text(s.languageEs)),
-                    ButtonSegment(value: 'en', label: Text(s.languageEn)),
-                  ],
-                  selected: {selectedCode},
-                  onSelectionChanged: (sel) => onChanged(Locale(sel.first)),
-                ),
-              ],
+          const SizedBox(height: 10),
+          SegmentedButton<String>(
+            style: SegmentedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              selectedBackgroundColor:
+                  scheme.primaryContainer.withValues(alpha: 0.35),
+              selectedForegroundColor: scheme.primary,
             ),
+            segments: [
+              ButtonSegment(value: 'es', label: Text(s.languageEs)),
+              ButtonSegment(value: 'en', label: Text(s.languageEn)),
+            ],
+            selected: {selectedCode},
+            onSelectionChanged: (sel) => onChanged(Locale(sel.first)),
           ),
         ],
       ),
@@ -637,57 +586,53 @@ class _LanguageTile extends StatelessWidget {
   }
 }
 
-/// Tile de escudos disponibles con puntos visuales y tooltip.
-class _ShieldCountTile extends StatelessWidget {
+/// Fila de escudos disponibles con puntos visuales y tooltip.
+class _ShieldRow extends StatelessWidget {
   final int shieldsCount;
-  const _ShieldCountTile({required this.shieldsCount});
+  const _ShieldRow({required this.shieldsCount});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context)!;
+    final s = S.of(context);
 
     final shields = List.generate(
       5,
-      (i) => Icon(
-        i < shieldsCount ? Icons.shield_rounded : Icons.shield_outlined,
-        size: 18,
-        color: i < shieldsCount
-            ? AppTheme.tertiaryContainer
-            : scheme.outlineVariant.withValues(alpha: 0.5),
+      (i) => Padding(
+        padding: const EdgeInsets.only(left: 2),
+        child: Icon(
+          i < shieldsCount ? Icons.shield_rounded : Icons.shield_outlined,
+          size: 18,
+          color: i < shieldsCount
+              ? AppTheme.tertiaryContainer
+              : scheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
     );
 
     return Tooltip(
       message: s.settingsShieldsTooltip,
-      child: SettingsTile(
-        icon: Icons.shield_rounded,
+      child: SettingsRow(
         title: s.settingsShieldsTile,
         subtitle: s.settingsShieldsCount(shieldsCount),
-        iconBgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
-        iconColor: AppTheme.tertiaryContainer,
-        onTap: () {},
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: shields,
-        ),
+        trailing: Row(mainAxisSize: MainAxisSize.min, children: shields),
       ),
     );
   }
 }
 
-/// Tile de modo enfermedad con switch.
-class _SickModeTile extends StatefulWidget {
+/// Fila de modo enfermedad con switch.
+class _SickModeRow extends StatefulWidget {
   final UserModel? userData;
   final UserRepository userRepo;
 
-  const _SickModeTile({required this.userData, required this.userRepo});
+  const _SickModeRow({required this.userData, required this.userRepo});
 
   @override
-  State<_SickModeTile> createState() => _SickModeTileState();
+  State<_SickModeRow> createState() => _SickModeRowState();
 }
 
-class _SickModeTileState extends State<_SickModeTile> {
+class _SickModeRowState extends State<_SickModeRow> {
   bool _loading = false;
 
   bool get _isActive {
@@ -697,7 +642,7 @@ class _SickModeTileState extends State<_SickModeTile> {
   }
 
   String _subtitle(BuildContext context) {
-    final s = S.of(context)!;
+    final s = S.of(context);
     if (_isActive) {
       final until = widget.userData!.sickModeUntil!;
       final diff = until.difference(DateTime.now()).inDays + 1;
@@ -727,7 +672,7 @@ class _SickModeTileState extends State<_SickModeTile> {
   }
 
   Future<int?> _showDaysPicker(BuildContext context) async {
-    final s = S.of(context)!;
+    final s = S.of(context);
     int selectedDays = 1;
     return showDialog<int>(
       context: context,
@@ -751,8 +696,7 @@ class _SickModeTileState extends State<_SickModeTile> {
                       max: 7,
                       divisions: 6,
                       label: s.daysLabel(selectedDays),
-                      onChanged: (v) =>
-                          setDlg(() => selectedDays = v.round()),
+                      onChanged: (v) => setDlg(() => selectedDays = v.round()),
                     ),
                   ),
                   Text('$selectedDays'),
@@ -777,13 +721,9 @@ class _SickModeTileState extends State<_SickModeTile> {
 
   @override
   Widget build(BuildContext context) {
-    return SettingsTile(
-      icon: Icons.medical_services_outlined,
-      title: S.of(context)!.settingsSickMode,
+    return SettingsRow(
+      title: S.of(context).settingsSickMode,
       subtitle: _subtitle(context),
-      iconBgColor: AppTheme.tertiaryContainer.withValues(alpha: 0.15),
-      iconColor: AppTheme.tertiaryContainer,
-      onTap: _toggle,
       divider: false,
       trailing: _loading
           ? const SizedBox(
@@ -791,23 +731,20 @@ class _SickModeTileState extends State<_SickModeTile> {
               height: 24,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Switch(
-              value: _isActive,
-              onChanged: (_) => _toggle(),
-            ),
+          : Switch(value: _isActive, onChanged: (_) => _toggle()),
     );
   }
 }
 
-/// Tile de notificaciones con switch.
-class _NotificationsTile extends StatefulWidget {
-  const _NotificationsTile();
+/// Fila de notificaciones con switch.
+class _NotificationsRow extends StatefulWidget {
+  const _NotificationsRow();
 
   @override
-  State<_NotificationsTile> createState() => _NotificationsTileState();
+  State<_NotificationsRow> createState() => _NotificationsRowState();
 }
 
-class _NotificationsTileState extends State<_NotificationsTile> {
+class _NotificationsRowState extends State<_NotificationsRow> {
   bool _enabled = true;
   bool _loading = true;
 
@@ -831,7 +768,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
           if (mounted) {
             AppSnackBar.showInfo(
               context, // ignore: use_build_context_synchronously
-              S.of(context)!.settingsNotificationsSystemPrompt,
+              S.of(context).settingsNotificationsSystemPrompt,
             );
           }
           return;
@@ -855,14 +792,12 @@ class _NotificationsTileState extends State<_NotificationsTile> {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context)!;
-    return SettingsTile(
-      icon: Icons.notifications_outlined,
+    final s = S.of(context);
+    return SettingsRow(
       title: s.settingsNotifications,
       subtitle: _enabled
           ? s.settingsNotificationsEnabled
           : s.settingsNotificationsDisabled,
-      onTap: () => _toggle(!_enabled),
       divider: false,
       trailing: _loading
           ? const SizedBox(
@@ -870,10 +805,7 @@ class _NotificationsTileState extends State<_NotificationsTile> {
               height: 24,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Switch(
-              value: _enabled,
-              onChanged: _toggle,
-            ),
+          : Switch(value: _enabled, onChanged: _toggle),
     );
   }
 }
@@ -906,7 +838,7 @@ class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context)!;
+    final s = S.of(context);
     return AlertDialog(
       title: Text(s.settingsDeleteConfirmTitle),
       content: Column(

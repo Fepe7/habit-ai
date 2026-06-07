@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               (authUser?.displayName?.isNotEmpty == true
                   ? authUser!.displayName!
                   : null) ??
-              S.of(context)!.settingsFallbackUsername;
+              S.of(context).settingsFallbackUsername;
           final email = userData?.email ?? authUser?.email ?? '';
           final initials = _initials(displayName, email);
 
@@ -135,15 +135,17 @@ class _ProfileScreenState extends State<ProfileScreen>
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                S.of(context)!.profileTitle,
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w700,
+                                S.of(context).profileTitle,
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.3,
+                                      color: scheme.primary,
                                     ),
                               ),
                             ),
                             IconButton(
-                              tooltip: S.of(context)!.profileOpenSettings,
-                              icon: const Icon(Icons.settings_outlined),
+                              tooltip: S.of(context).profileOpenSettings,
+                              icon: Icon(Icons.settings_outlined, color: scheme.onSurfaceVariant),
                               onPressed: () => context.pushNamed('settings'),
                             ),
                           ],
@@ -219,7 +221,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                             child: Center(
                               child: Text(
-                                S.of(context)!.profileNoHabits,
+                                S.of(context).profileNoHabits,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                       color: scheme.onSurfaceVariant,
                                     ),
@@ -254,7 +256,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Row(
             children: [
               Text(
-                S.of(context)!.profileMastery,
+                S.of(context).profileMastery,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -314,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Row(
             children: [
               Text(
-                S.of(context)!.profileActiveHabits,
+                S.of(context).profileActiveHabits,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.2,
@@ -430,25 +432,26 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                 ),
               if (hasUsername && isProfilePublic)
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
               if (isProfilePublic)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.1),
+                    // chip neutro en superficie, estilo Stitch (no teñido de teal)
+                    color: scheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.public_rounded,
-                          size: 12, color: scheme.primary),
-                      const SizedBox(width: 3),
+                          size: 13, color: scheme.onSurfaceVariant),
+                      const SizedBox(width: 4),
                       Text(
-                        'Público',
+                        S.of(context).privacyOptionPublic,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: scheme.primary,
-                              fontWeight: FontWeight.w700,
+                              color: scheme.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
                             ),
                       ),
                     ],
@@ -477,7 +480,7 @@ class _ProfileHeader extends StatelessWidget {
             children: [
               _FollowCounter(
                 value: followersCount,
-                label: S.of(context)!.profileFollowers,
+                label: S.of(context).profileFollowers,
                 onTap: () => context.push('/followers?tab=0'),
               ),
               Container(
@@ -488,7 +491,7 @@ class _ProfileHeader extends StatelessWidget {
               ),
               _FollowCounter(
                 value: followingCount,
-                label: S.of(context)!.profileFollowing,
+                label: S.of(context).profileFollowing,
                 onTap: () => context.push('/followers?tab=1'),
               ),
             ],
@@ -501,7 +504,7 @@ class _ProfileHeader extends StatelessWidget {
             child: FilledButton.tonalIcon(
               onPressed: onEditProfile,
               icon: const Icon(Icons.edit_rounded, size: 18),
-              label: Text(S.of(context)!.profileEditButton),
+              label: Text(S.of(context).profileEditButton),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: const StadiumBorder(),
@@ -532,14 +535,14 @@ class _StatsBento extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: '$totalHabits',
-            label: S.of(context)!.profileHabits,
+            label: S.of(context).profileHabits,
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: _StatTile(
             value: '$bestStreakEver',
-            label: S.of(context)!.profileBestStreak,
+            label: S.of(context).profileBestStreak,
             icon: Icons.local_fire_department_rounded,
             iconColor: AppTheme.tertiaryContainer,
             highlighted: true,
@@ -549,7 +552,7 @@ class _StatsBento extends StatelessWidget {
         Expanded(
           child: _StatTile(
             value: averageLevel == null ? '—' : averageLevel!.toStringAsFixed(1),
-            label: S.of(context)!.profileLevel,
+            label: S.of(context).profileLevel,
           ),
         ),
       ],
@@ -659,7 +662,7 @@ class _CategorySection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                CategoryL10n.label(category, S.of(context)!).toUpperCase(),
+                CategoryL10n.label(category, S.of(context)).toUpperCase(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w800,
@@ -745,7 +748,7 @@ class _ProfileHabitCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  S.of(context)!.profileBestStreakShort(habit.bestStreak),
+                  S.of(context).profileBestStreakShort(habit.bestStreak),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -780,7 +783,7 @@ class _ProfileHabitCard extends StatelessWidget {
                 ],
               ),
               Text(
-                S.of(context)!.profileStreak,
+                S.of(context).profileStreak,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontSize: 11,
