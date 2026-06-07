@@ -122,6 +122,7 @@ class UserDirectoryRepository {
     bool? showHabits,
     bool? showAchievements,
     bool? showFollowerCount,
+    bool? socialReactionsEnabled,
   }) async {
     final updates = <String, dynamic>{};
     if (challengePrivacy != null) updates['challengePrivacy'] = challengePrivacy.value;
@@ -131,6 +132,7 @@ class UserDirectoryRepository {
     if (showHabits != null) updates['showHabits'] = showHabits;
     if (showAchievements != null) updates['showAchievements'] = showAchievements;
     if (showFollowerCount != null) updates['showFollowerCount'] = showFollowerCount;
+    if (socialReactionsEnabled != null) updates['socialReactionsEnabled'] = socialReactionsEnabled;
     if (updates.isEmpty) return;
 
     // sincronizar en user_directory y en users/{uid} en batch

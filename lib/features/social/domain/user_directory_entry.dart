@@ -22,6 +22,9 @@ class UserDirectoryEntry {
   final bool showAchievements;
   final bool showFollowerCount;
 
+  /// Si otros usuarios pueden reaccionar a los logros del perfil
+  final bool socialReactionsEnabled;
+
   const UserDirectoryEntry({
     required this.uid,
     required this.username,
@@ -35,6 +38,7 @@ class UserDirectoryEntry {
     this.showHabits = true,
     this.showAchievements = true,
     this.showFollowerCount = true,
+    this.socialReactionsEnabled = true,
   });
 
   String get avatarInitials {
@@ -71,6 +75,7 @@ class UserDirectoryEntry {
       showHabits: data['showHabits'] as bool? ?? true,
       showAchievements: data['showAchievements'] as bool? ?? true,
       showFollowerCount: data['showFollowerCount'] as bool? ?? true,
+      socialReactionsEnabled: data['socialReactionsEnabled'] as bool? ?? true,
     );
   }
 
@@ -86,5 +91,6 @@ class UserDirectoryEntry {
         'showHabits': showHabits,
         'showAchievements': showAchievements,
         'showFollowerCount': showFollowerCount,
+        'socialReactionsEnabled': socialReactionsEnabled,
       };
 }

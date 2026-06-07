@@ -16,6 +16,16 @@ class FeedbackService {
     }
   }
 
+  /// Patrón celebratorio al recibir una reacción social: 100-80-100-80-150ms
+  Future<void> reactionReceived() async {
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(pattern: [0, 100, 80, 100, 80, 150]);
+    } else {
+      await HapticFeedback.mediumImpact();
+    }
+  }
+
   // haptic ligero al seleccionar un emoji de ánimo
   Future<void> moodSelected() async {
     final hasVibrator = await Vibration.hasVibrator() ?? false;

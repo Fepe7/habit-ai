@@ -94,6 +94,24 @@ service cloud.firestore {
         allow read: if true;
         allow write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Reacciones al perfil — doc ID = reactorUid (una reacción por persona)
+      match /reactions/{reactorUid} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null
+                      && reactorUid == request.auth.uid
+                      && request.resource.data.reactorUid == request.auth.uid
+                      && request.resource.data.emoji in ['🔥', '💪', '👏']
+                      && request.resource.data.keys().hasAll([
+                           'reactorUid', 'reactorUsername', 'reactorDisplayName',
+                           'emoji', 'createdAt']);
+        allow update: if request.auth != null
+                      && reactorUid == request.auth.uid
+                      && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['emoji', 'createdAt']);
+        allow delete: if request.auth != null
+                      && reactorUid == request.auth.uid;
+      }
     }
 
     // Marketplace de plantillas de la comunidad
