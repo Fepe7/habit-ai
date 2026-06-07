@@ -18,6 +18,9 @@ import '../../levels/domain/level_model.dart';
 import '../../levels/presentation/widgets/category_level_card.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../social/data/follow_repository.dart';
+import '../../social/data/reaction_repository.dart';
+import '../../social/domain/reaction_model.dart';
+import '../../social/presentation/widgets/reaction_bar.dart';
 
 /// Pantalla de perfil del usuario logueado.
 /// Reutiliza la estética de PublicProfileScreen pero con datos propios.
@@ -37,6 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final HabitRepository _habitRepo;
   late final LevelsRepository _levelsRepo;
   late final FollowRepository _followRepo;
+  late final ReactionRepository _reactRepo;
   LevelsProfile? _levels;
   int _followersCount = 0;
   int _followingCount = 0;
@@ -49,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     _habitRepo = HabitRepository(uid: uid);
     _levelsRepo = LevelsRepository(uid: uid);
     _followRepo = FollowRepository(uid: uid);
+    _reactRepo = ReactionRepository();
     _loadLevels();
     _loadFollowCounts();
   }
@@ -164,6 +169,26 @@ class _ProfileScreenState extends State<ProfileScreen>
                           .animate()
                           .fadeIn(duration: 320.ms)
                           .slideY(begin: 0.05, end: 0, duration: 360.ms),
+                    ),
+
+                    StreamBuilder<List<ReactionModel>>(
+                      stream: _reactRepo.watchReactionsForProfile(
+                          FirebaseAuth.instance.currentUser!.uid),
+                      builder: (context, snap) {
+                        final reactions = snap.data ?? [];
+                        if (reactions.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+                        return SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                            child: ProfileReactionsPill(
+                              myUid: FirebaseAuth.instance.currentUser!.uid,
+                              reactions: reactions,
+                              isOwnProfile: true,
+                              onTap: (_) async {},
+                            ),
+                          ).animate().fadeIn(delay: 60.ms, duration: 280.ms),
+                        );
+                      },
                     ),
 
                     SliverToBoxAdapter(

@@ -15,8 +15,12 @@ import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/explore/presentation/explore_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/social/data/follow_repository.dart';
+import '../../features/social/data/reaction_repository.dart';
 import '../../features/social/domain/follow_request_model.dart';
+import '../../features/social/domain/reaction_model.dart';
+import '../../features/social/presentation/widgets/reaction_received_overlay.dart';
 import '../../services/notification_service.dart';
+import '../services/feedback_service.dart';
 import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/ux/offline_banner.dart';
@@ -39,8 +43,10 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   StreamSubscription<List<FollowRequestModel>>? _pendingFollowSub;
   StreamSubscription<List<FollowRequestModel>>? _acceptedFollowSub;
+  StreamSubscription<List<ReactionModel>>? _reactionsSub;
   int _knownPendingCount = -1;
   int _knownAcceptedCount = -1;
+  int _knownReactionsCount = -1;
   int _pendingBadgeCount = 0;
 
   final PageController _pageController = PageController();
@@ -63,6 +69,7 @@ class _MainShellState extends State<MainShell> {
     _pageController.dispose();
     _pendingFollowSub?.cancel();
     _acceptedFollowSub?.cancel();
+    _reactionsSub?.cancel();
     super.dispose();
   }
 
@@ -104,6 +111,32 @@ class _MainShellState extends State<MainShell> {
         );
       }
       _knownAcceptedCount = accepted.length;
+    }, onError: (_) {});
+
+    final reactRepo = ReactionRepository();
+    _reactionsSub = reactRepo.watchMyReceivedReactions(uid).listen((reactions) {
+      if (_knownReactionsCount == -1) {
+        _knownReactionsCount = reactions.length;
+        return;
+      }
+      if (reactions.length > _knownReactionsCount && reactions.isNotEmpty) {
+        final newest = reactions.first;
+        FeedbackService.instance.reactionReceived();
+
+        if (mounted) {
+          ReactionReceivedOverlay.show(
+            context,
+            reactorUsername: newest.reactorUsername,
+            emoji: newest.emoji,
+          );
+        }
+
+        NotificationService.instance.showSocialNotification(
+          title: '¡Nueva reacción!',
+          body: '@${newest.reactorUsername} reaccionó a tu perfil',
+        );
+      }
+      _knownReactionsCount = reactions.length;
     }, onError: (_) {});
   }
 

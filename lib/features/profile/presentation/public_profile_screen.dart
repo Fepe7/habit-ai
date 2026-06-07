@@ -10,9 +10,13 @@ import '../../achievements/presentation/achievement_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../achievements/domain/achivement_model.dart';
+import '../../../core/services/feedback_service.dart';
 import '../../social/data/follow_repository.dart';
+import '../../social/data/reaction_repository.dart';
 import '../../social/data/user_directory_repository.dart';
+import '../../social/domain/reaction_model.dart';
 import '../../social/domain/user_directory_entry.dart';
+import '../../social/presentation/widgets/reaction_bar.dart';
 import '../data/public_profile_repository.dart';
 import '../domain/public_challenge_model.dart';
 import '../domain/public_habit_model.dart';
@@ -39,6 +43,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   late final PublicProfileRepository _repo;
   late final FollowRepository _followRepo;
   late final UserDirectoryRepository _dirRepo;
+  late final ReactionRepository _reactRepo;
 
   PublicProfileModel? _profile;
   UserDirectoryEntry? _dirEntry;
@@ -58,6 +63,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     _repo = PublicProfileRepository(uid: _myUid);
     _followRepo = FollowRepository(uid: _myUid);
     _dirRepo = UserDirectoryRepository(uid: _myUid);
+    _reactRepo = ReactionRepository();
     _fetch();
   }
 
@@ -105,6 +111,36 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       });
     } catch (e) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _handleReact(String emoji) async {
+    try {
+      final myEntry = await _dirRepo.getEntry(_myUid);
+      final myUser = FirebaseAuth.instance.currentUser!;
+      await _reactRepo.react(
+        ownerUid: widget.userId,
+        reactorUid: _myUid,
+        reactorUsername: myEntry?.username ?? '',
+        reactorDisplayName: myUser.displayName ?? '',
+        reactorPhotoUrl: myUser.photoURL,
+        emoji: emoji,
+      );
+      FeedbackService.instance.moodSelected();
+    } catch (e) {
+      if (mounted) AppSnackBar.showError(context, 'Error: $e');
+    }
+  }
+
+  Future<void> _handleUnreact() async {
+    try {
+      await _reactRepo.unreact(
+        ownerUid: widget.userId,
+        reactorUid: _myUid,
+      );
+      FeedbackService.instance.habitUncompleted();
+    } catch (e) {
+      if (mounted) AppSnackBar.showError(context, 'Error: $e');
     }
   }
 
@@ -243,6 +279,33 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 .fadeIn(duration: 320.ms)
                 .slideY(begin: 0.05, end: 0, duration: 360.ms),
           ),
+
+          // Reacciones al perfil — visibles siempre que se pueda ver el contenido
+          if (canSeeContent && (_dirEntry?.socialReactionsEnabled ?? true))
+            StreamBuilder<List<ReactionModel>>(
+              stream: _reactRepo.watchReactionsForProfile(widget.userId),
+              builder: (context, snap) {
+                final reactions = snap.data ?? [];
+                return SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    child: ProfileReactionsPill(
+                      myUid: _myUid,
+                      reactions: reactions,
+                      isOwnProfile: _isOwnProfile,
+                      onTap: (emoji) {
+                        final myEmoji = reactions
+                            .where((r) => r.reactorUid == _myUid)
+                            .map((r) => r.emoji)
+                            .firstOrNull;
+                        if (myEmoji == emoji) return _handleUnreact();
+                        return _handleReact(emoji);
+                      },
+                    ),
+                  ).animate().fadeIn(delay: 60.ms, duration: 280.ms),
+                );
+              },
+            ),
 
           if (!canSeeContent)
             SliverToBoxAdapter(
