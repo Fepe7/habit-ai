@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
+enum AvatarBadge { none, camera, verified }
 
 /// Widget reutilizable de avatar circular.
 /// Muestra la foto de red si se proporciona photoUrl, con fallback a iniciales.
+/// [badge] muestra un indicador en la esquina inferior-derecha:
+///   - [AvatarBadge.camera]: botón de editar foto (círculo primario con icono cámara)
+///   - [AvatarBadge.verified]: check de perfil público
+///   - [AvatarBadge.none]: sin badge
+/// [ringGradient] envuelve el avatar en un anillo con el gradiente hero de la marca.
 class AvatarCircle extends StatelessWidget {
   final String initials;
   final double size;
   final Color? backgroundColor;
   final Color? textColor;
   final TextStyle? textStyle;
-
-  /// URL de la foto de perfil. Si es null o vacío, muestra las iniciales.
   final String? photoUrl;
+  final AvatarBadge badge;
+  final bool ringGradient;
 
   const AvatarCircle({
     super.key,
@@ -20,6 +28,8 @@ class AvatarCircle extends StatelessWidget {
     this.textColor,
     this.textStyle,
     this.photoUrl,
+    this.badge = AvatarBadge.none,
+    this.ringGradient = false,
   });
 
   @override
@@ -28,6 +38,75 @@ class AvatarCircle extends StatelessWidget {
     final bg = backgroundColor ?? scheme.primaryContainer;
     final fg = textColor ?? scheme.onPrimaryContainer;
 
+    Widget avatar = _buildCore(bg, fg);
+
+    if (ringGradient) {
+      avatar = Container(
+        padding: const EdgeInsets.all(3),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [AppTheme.primaryContainer, AppTheme.primary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.surface,
+          ),
+          child: avatar,
+        ),
+      );
+    }
+
+    if (badge == AvatarBadge.none) return avatar;
+
+    final badgeSize = size * 0.30;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        avatar,
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: badge == AvatarBadge.camera
+              ? Container(
+                  width: badgeSize,
+                  height: badgeSize,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: scheme.surface, width: 2),
+                  ),
+                  child: Icon(
+                    Icons.camera_alt_rounded,
+                    size: badgeSize * 0.55,
+                    color: scheme.onPrimary,
+                  ),
+                )
+              : Container(
+                  width: badgeSize,
+                  height: badgeSize,
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: scheme.surface, width: 2),
+                  ),
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: badgeSize * 0.55,
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCore(Color bg, Color fg) {
     if (photoUrl != null && photoUrl!.isNotEmpty) {
       return SizedBox(
         width: size,
@@ -45,7 +124,6 @@ class AvatarCircle extends StatelessWidget {
         ),
       );
     }
-
     return _buildInitials(bg, fg);
   }
 

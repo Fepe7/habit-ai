@@ -7,6 +7,7 @@ import '../../../core/router/main_shell.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/avatar_circle.dart';
 import '../../auth/data/user_repository.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/domain/user_model.dart';
@@ -390,93 +391,23 @@ class _ProfileHeader extends StatelessWidget {
     final hasBio = bio != null && bio!.trim().isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
       child: Column(
         children: [
-          // avatar con ring gradient, overlay de cámara y tap para editar
+          // Avatar con anillo de gradiente y badge discreto de cámara
           GestureDetector(
             onTap: onAvatarTap,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [AppTheme.primaryContainer, AppTheme.primary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: scheme.surface,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        _AvatarContent(
-                          initials: initials,
-                          photoUrl: photoUrl,
-                          size: 96,
-                        ),
-                        // overlay oscuro con icono de cámara para indicar que es editable
-                        ClipOval(
-                          child: Container(
-                            width: 96,
-                            height: 96,
-                            color: Colors.black.withValues(alpha: 0.35),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.camera_alt_rounded,
-                                    color: Colors.white, size: 26),
-                                const SizedBox(height: 2),
-                                Text(
-                                  S.of(context)!.commonEdit,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // badge verificado si perfil público
-                if (isProfilePublic)
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: scheme.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: scheme.surface, width: 3),
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                    ),
-                  ),
-              ],
+            child: AvatarCircle(
+              initials: initials,
+              photoUrl: photoUrl,
+              size: 96,
+              badge: AvatarBadge.camera,
+              ringGradient: true,
             ),
           ),
-          const SizedBox(height: 16),
-          // nombre real siempre visible como título principal
+          const SizedBox(height: 18),
+
+          // nombre principal
           Text(
             displayName,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -485,16 +416,48 @@ class _ProfileHeader extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 4),
-          // @usuario siempre visible si existe
-          if (hasUsername)
-            Text(
-              '@$username',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.primary,
-                    fontWeight: FontWeight.w600,
+
+          // @username + chip de perfil público
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (hasUsername)
+                Text(
+                  '@$username',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              if (hasUsername && isProfilePublic)
+                const SizedBox(width: 6),
+              if (isProfilePublic)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-            ),
-          // bio del usuario, centrada bajo el username
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.public_rounded,
+                          size: 12, color: scheme.primary),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Público',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: scheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+
+          // bio
           if (hasBio) ...[
             const SizedBox(height: 10),
             Text(
@@ -502,12 +465,13 @@ class _ProfileHeader extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
-                    height: 1.35,
+                    height: 1.4,
                   ),
             ),
           ],
-          // Contadores de seguidores / siguiendo — tapeables
-          const SizedBox(height: 16),
+
+          // contadores de seguidores / siguiendo
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -516,7 +480,12 @@ class _ProfileHeader extends StatelessWidget {
                 label: S.of(context)!.profileFollowers,
                 onTap: () => context.push('/followers?tab=0'),
               ),
-              const SizedBox(width: 28),
+              Container(
+                width: 1,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+              ),
               _FollowCounter(
                 value: followingCount,
                 label: S.of(context)!.profileFollowing,
@@ -525,7 +494,7 @@ class _ProfileHeader extends StatelessWidget {
             ],
           ),
 
-          // botón principal de edición de perfil (estilo Instagram)
+          // botón de edición de perfil
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -606,13 +575,22 @@ class _StatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        // jerarquía por superficie, sin bordes 1px duros (Ghost-Border Rule)
-        color: highlighted
-            ? scheme.primary.withValues(alpha: 0.08)
-            : scheme.surfaceContainerLow,
+        // racha: gradiente sutil ámbar; resto: superficie
+        gradient: highlighted
+            ? LinearGradient(
+                colors: [
+                  AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                  AppTheme.tertiaryContainer.withValues(alpha: 0.06),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              )
+            : null,
+        color: highlighted ? null : scheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
@@ -629,6 +607,7 @@ class _StatTile extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
+                      color: highlighted ? AppTheme.tertiaryContainer : null,
                     ),
               ),
             ],
@@ -637,68 +616,15 @@ class _StatTile extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+                  color: highlighted
+                      ? AppTheme.tertiaryContainer.withValues(alpha: 0.8)
+                      : scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8,
                   fontSize: 11,
                 ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Contenido interior del avatar: foto de red o iniciales con fondo primaryContainer
-class _AvatarContent extends StatelessWidget {
-  final String initials;
-  final String? photoUrl;
-  final double size;
-
-  const _AvatarContent({
-    required this.initials,
-    required this.size,
-    this.photoUrl,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    if (photoUrl != null && photoUrl!.isNotEmpty) {
-      return SizedBox(
-        width: size,
-        height: size,
-        child: ClipOval(
-          child: Image.network(
-            photoUrl!,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildInitials(scheme),
-          ),
-        ),
-      );
-    }
-    return _buildInitials(scheme);
-  }
-
-  Widget _buildInitials(ColorScheme scheme) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.primaryContainer,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initials,
-        style: const TextStyle(
-          fontSize: 36,
-          fontWeight: FontWeight.w800,
-          color: Colors.white,
-        ),
       ),
     );
   }
