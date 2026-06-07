@@ -4759,6 +4759,18 @@ abstract class S {
   /// **'Nadie'**
   String get privacyLevelNobody;
 
+  /// No description provided for @privacySocialReactionsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Reacciones en logros'**
+  String get privacySocialReactionsTitle;
+
+  /// No description provided for @privacySocialReactionsSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Permite que tus seguidores reaccionen a tus logros con 🔥 💪 👏'**
+  String get privacySocialReactionsSubtitle;
+
   /// No description provided for @achievementFirstHabitTitle.
   ///
   /// In es, this message translates to:

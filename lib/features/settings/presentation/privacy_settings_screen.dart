@@ -1,4 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/app_theme.dart';
@@ -15,6 +15,7 @@ import '../../profile/data/public_profile_repository.dart';
 import '../../profile/presentation/widgets/username_input_sheet.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/privacy_level.dart';
+import 'widgets/settings_widgets.dart';
 
 /// Pantalla de ajustes de privacidad.
 class PrivacySettingsScreen extends StatefulWidget {
@@ -120,7 +121,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 ).animate().fadeIn(),
 
               // master switch: perfil público / privado
-              _SectionLabel(label: S.of(context).privacySectionVisibility),
+              SettingsSectionLabel(label: S.of(context).privacySectionVisibility),
               _ProfilePublicityCard(
                 userData: user,
                 publicProfileRepo: _publicProfileRepo,
@@ -130,7 +131,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const SizedBox(height: 24),
 
                 // header dinámico: el label cambia según público/privado
-                _SectionLabel(
+                SettingsSectionLabel(
                   label: user.isProfilePublic
                       ? S.of(context).privacyPublicViewLabel
                       : S.of(context).privacyFollowersViewLabel,
@@ -150,7 +151,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const SizedBox(height: 24),
 
                 // retos
-                _SectionLabel(label: S.of(context).exploreChallenges),
+                SettingsSectionLabel(label: S.of(context).exploreChallenges),
                 _PrivacyCard(
                   icon: Icons.sports_score_rounded,
                   title: S.of(context).privacyChallengesTitle,
@@ -158,6 +159,14 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                   selected: challengeLevel,
                   onChanged: _updateChallengePrivacy,
                 ).animate().fadeIn(delay: 200.ms),
+
+                const SizedBox(height: 24),
+
+                // reacciones sociales (movido desde editar perfil, ahora localizado)
+                SettingsSectionLabel(label: S.of(context).privacySectionVisibility),
+                _SocialReactionsTile(
+                  dirRepo: _dirRepo,
+                ).animate().fadeIn(delay: 250.ms),
               ],
             ],
           );
@@ -169,25 +178,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
 // ==================== WIDGETS INTERNOS ====================
 
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        label.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
-      ),
-    );
-  }
-}
+// _SectionLabel → reemplazado por SettingsSectionLabel del paquete compartido
 
 /// Master switch: activar/desactivar perfil público + gestión de username.
 /// Cuando está ON → apareces en el directorio, cualquiera puede seguirte.
@@ -501,7 +492,7 @@ class _VisibleHabitsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionLabel(label: S.of(context).privacyVisibleHabitsSection),
+        SettingsSectionLabel(label: S.of(context).privacyVisibleHabitsSection),
         StreamBuilder<List<HabitModel>>(
           stream: habitRepo.watchActiveHabits(),
           builder: (context, snap) {
@@ -785,6 +776,88 @@ class _PrivacyCard extends StatelessWidget {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Toggle de reacciones sociales en logros — localizado.
+class _SocialReactionsTile extends StatefulWidget {
+  final UserDirectoryRepository dirRepo;
+  const _SocialReactionsTile({required this.dirRepo});
+
+  @override
+  State<_SocialReactionsTile> createState() => _SocialReactionsTileState();
+}
+
+class _SocialReactionsTileState extends State<_SocialReactionsTile> {
+  bool _enabled = true;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final entry = await widget.dirRepo.getEntry(uid);
+    if (mounted) {
+      setState(() {
+        _enabled = entry?.socialReactionsEnabled ?? true;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _toggle(bool value) async {
+    setState(() => _enabled = value);
+    try {
+      await widget.dirRepo.updatePrivacySettings(socialReactionsEnabled: value);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _enabled = !value);
+        AppSnackBar.showError(context, S.of(context).commonSaveError); // ignore: use_build_context_synchronously
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.ambientShadow(),
+      ),
+      child: SwitchListTile(
+        secondary: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: scheme.primaryContainer.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.thumb_up_alt_outlined, size: 18, color: scheme.primary),
+        ),
+        title: Text(
+          s.privacySocialReactionsTitle,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+        ),
+        subtitle: Text(
+          s.privacySocialReactionsSubtitle,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        value: _loading ? true : _enabled,
+        onChanged: _loading ? null : _toggle,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       ),
     );
   }

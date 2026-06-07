@@ -8,7 +8,6 @@ import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
-import '../../social/data/user_directory_repository.dart';
 import '../data/public_profile_repository.dart';
 import 'widgets/avatar_picker_sheet.dart';
 import 'widgets/username_input_sheet.dart';
@@ -25,7 +24,6 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final UserRepository _userRepo;
   late final PublicProfileRepository _publicProfileRepo;
-  late final UserDirectoryRepository _dirRepo;
 
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
@@ -33,7 +31,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _saving = false;
   bool _usernameBusy = false;
   bool _prefilled = false;
-  bool _socialReactionsEnabled = true;
 
   @override
   void initState() {
@@ -41,7 +38,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final uid = FirebaseAuth.instance.currentUser!.uid;
     _userRepo = UserRepository(uid: uid);
     _publicProfileRepo = PublicProfileRepository(uid: uid);
-    _dirRepo = UserDirectoryRepository(uid: uid);
     _prefill();
     // rehabilitar/inhabilitar "Guardar" según el nombre sea válido
     _nameController.addListener(_onNameChanged);
@@ -54,9 +50,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   // Precargar nombre y bio una sola vez desde Firestore (los controllers no
   // deben sobreescribirse mientras el usuario escribe).
   Future<void> _prefill() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
     final user = await _userRepo.getUser();
-    final dirEntry = await _dirRepo.getEntry(uid);
     if (!mounted || _prefilled) return;
     final authUser = FirebaseAuth.instance.currentUser;
     final name = (user.displayName?.isNotEmpty == true)
@@ -65,7 +59,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     setState(() {
       _nameController.text = name;
       _bioController.text = user.bio ?? '';
-      _socialReactionsEnabled = dirEntry?.socialReactionsEnabled ?? true;
       _prefilled = true;
     });
   }
@@ -303,28 +296,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
-              _FieldLabel('Privacidad'),
-              const SizedBox(height: 8),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Reacciones en logros'),
-                subtitle: const Text(
-                  'Permite que tus seguidores reaccionen a tus logros con 🔥 💪 👏',
-                ),
-                value: _socialReactionsEnabled,
-                onChanged: (value) async {
-                  setState(() => _socialReactionsEnabled = value);
-                  try {
-                    await _dirRepo.updatePrivacySettings(
-                        socialReactionsEnabled: value);
-                  } catch (_) {
-                    if (mounted) {
-                      setState(() => _socialReactionsEnabled = !value);
-                    }
-                  }
-                },
-              ),
             ],
           );
         },

@@ -1852,6 +1852,11 @@
   "privacyLevelNobody": "Nadie",
   "@privacyLevelNobody": {},
 
+  "privacySocialReactionsTitle": "Reacciones en logros",
+  "@privacySocialReactionsTitle": {},
+  "privacySocialReactionsSubtitle": "Permite que tus seguidores reaccionen a tus logros con 🔥 💪 👏",
+  "@privacySocialReactionsSubtitle": {},
+
   "achievementFirstHabitTitle": "Primer paso",
   "@achievementFirstHabitTitle": {},
   "achievementFirstHabitDesc": "Crea tu primer hábito",

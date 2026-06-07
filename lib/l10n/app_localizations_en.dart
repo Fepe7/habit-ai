@@ -2671,6 +2671,13 @@ class SEn extends S {
   String get privacyLevelNobody => 'Nobody';
 
   @override
+  String get privacySocialReactionsTitle => 'Reactions on achievements';
+
+  @override
+  String get privacySocialReactionsSubtitle =>
+      'Let your followers react to your achievements with 🔥 💪 👏';
+
+  @override
   String get achievementFirstHabitTitle => 'First step';
 
   @override
