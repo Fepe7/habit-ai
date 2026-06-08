@@ -12,6 +12,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/l10n/locale_provider.dart';
 import 'core/widgets/ux/update_dialog.dart';
+import 'services/push_notification_service.dart';
 import 'l10n/app_localizations.dart';
 
 // Para poder acceder al AuthRepository desde cualquier pantalla
@@ -54,6 +55,8 @@ class _HabitAIAppState extends State<HabitAIApp> {
   void initState() {
     super.initState();
     _router = createRouter(_authRepository);
+    // Permite que los push (FCM) y las notificaciones locales naveguen al tocarse.
+    PushNotificationService.instance.attachRouter((route) => _router.go(route));
     _initDeepLinks();
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
   }

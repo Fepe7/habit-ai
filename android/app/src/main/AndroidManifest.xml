@@ -43,6 +43,12 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- Canal por defecto para los push de FCM recibidos en background.
+             Debe coincidir con el canal creado en NotificationService. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="push_default" />
+
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
             <intent-filter>

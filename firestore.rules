@@ -76,6 +76,12 @@ service cloud.firestore {
       match /mood_entries/{entryId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Tokens de FCM del dispositivo — solo el propietario los escribe;
+      // las Cloud Functions los leen vía admin SDK (se saltan las reglas).
+      match /fcm_tokens/{tokenId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // Perfiles públicos — lectura abierta, escritura solo del propio usuario

@@ -1,6 +1,10 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
+const {
+  onDocumentCreated,
+  onDocumentUpdated,
+} = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -507,6 +511,12 @@ exports.weeklyReviewJob = onSchedule(
           skipped += 1;
         } else {
           generated += 1;
+          // avisar al usuario de que su revisión ya está disponible
+          await sendPushToUser(userDoc.id, {
+            title: "Tu revisión semanal está lista",
+            body: "Descubre cómo te fue la semana y tus recomendaciones.",
+            route: `/dashboard/weekly-review/${result.weekId}`,
+          });
         }
       } catch (e) {
         errors += 1;
@@ -1469,5 +1479,114 @@ exports.pauseAiOnBudgetExceeded = onMessagePublished(
     console.log(
       `[billing] IA ${paused ? "pausada" : "reanudada"} — coste: ${cost}, presupuesto: ${budget}`
     );
+  }
+);
+
+// ==================== PUSH NOTIFICATIONS (FCM) ====================
+
+// Envía una notificación push a todos los dispositivos registrados de un
+// usuario. Lee los tokens de users/{uid}/fcm_tokens y limpia los inválidos
+// para no acumular basura ni gastar envíos en tokens muertos.
+async function sendPushToUser(uid, { title, body, route }) {
+  if (!uid) return;
+  const db = admin.firestore();
+  const tokensSnap = await db
+    .collection("users")
+    .doc(uid)
+    .collection("fcm_tokens")
+    .get();
+  if (tokensSnap.empty) return;
+
+  const tokens = tokensSnap.docs.map((d) => d.id);
+
+  const message = {
+    notification: { title, body },
+    // data debe ser plano de strings; el cliente lee `route` para el deep link
+    data: route ? { route } : {},
+    android: {
+      priority: "high",
+      notification: { channelId: "push_default" },
+    },
+    apns: {
+      payload: { aps: { sound: "default" } },
+    },
+    tokens,
+  };
+
+  let resp;
+  try {
+    resp = await admin.messaging().sendEachForMulticast(message);
+  } catch (e) {
+    console.error(`[fcm] error enviando a ${uid}:`, e.message);
+    return;
+  }
+
+  // Borrar tokens que FCM reporta como no registrados/ inválidos
+  const cleanups = [];
+  resp.responses.forEach((r, i) => {
+    if (r.success) return;
+    const code = r.error?.code || "";
+    if (
+      code.includes("registration-token-not-registered") ||
+      code.includes("invalid-registration-token") ||
+      code.includes("invalid-argument")
+    ) {
+      cleanups.push(tokensSnap.docs[i].ref.delete());
+    }
+  });
+  if (cleanups.length > 0) await Promise.all(cleanups);
+
+  console.log(
+    `[fcm] ${uid}: ${resp.successCount}/${tokens.length} enviados, ${cleanups.length} tokens limpiados`
+  );
+}
+
+// Notifica al receptor cuando recibe una solicitud de seguimiento (perfil privado).
+exports.onFollowRequestCreated = onDocumentCreated(
+  { document: "follow_requests/{requestId}", region: "europe-west1" },
+  async (event) => {
+    const data = event.data?.data();
+    if (!data || data.status !== "pending") return;
+    const fromName = data.fromDisplayName || data.fromUsername || "Alguien";
+    await sendPushToUser(data.toUid, {
+      title: "Nueva solicitud de seguimiento",
+      body: `${fromName} quiere seguirte`,
+      route: "/followers?tab=2",
+    });
+  }
+);
+
+// Notifica al solicitante cuando su solicitud pasa a "accepted".
+exports.onFollowRequestAccepted = onDocumentUpdated(
+  { document: "follow_requests/{requestId}", region: "europe-west1" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+    // solo en la transición a accepted (evita reenvíos en otros updates)
+    if (before.status === "accepted" || after.status !== "accepted") return;
+    const toName = after.toDisplayName || after.toUsername || "Alguien";
+    await sendPushToUser(after.fromUid, {
+      title: "¡Solicitud aceptada!",
+      body: `${toName} aceptó tu solicitud de seguimiento`,
+      route: "/followers?tab=1",
+    });
+  }
+);
+
+// Notifica al usuario cuando alguien empieza a seguirle (follow directo a
+// perfil público; también cubre el alta de follower al aceptar una solicitud).
+exports.onNewFollower = onDocumentCreated(
+  { document: "users/{userId}/followers/{followerId}", region: "europe-west1" },
+  async (event) => {
+    const { userId, followerId } = event.params;
+    if (userId === followerId) return;
+    const data = event.data?.data() || {};
+    const name = data.displayName || data.username || "Alguien";
+    await sendPushToUser(userId, {
+      title: "Tienes un nuevo seguidor",
+      body: `${name} empezó a seguirte`,
+      route: "/followers?tab=0",
+    });
   }
 );

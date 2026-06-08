@@ -87,5 +87,9 @@
 		<string>958324745015-hbfhifjrvsbv91qaonqvpjr95thkgdka.apps.googleusercontent.com</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>
