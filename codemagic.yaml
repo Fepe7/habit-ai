@@ -12,6 +12,7 @@ workflows:
         - ios_signing
       vars:
         BUNDLE_ID: "com.andreistaicu.habitai"
+        APP_STORE_APP_ID: "6777939075"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -35,7 +36,12 @@ workflows:
           keychain add-certificates
 
       - name: Compilar Flutter sin firmar
-        script: flutter build ios --release --no-codesign
+        script: |
+          # Número de build automático: último en App Store Connect + 1
+          LATEST=$(app-store-connect get-latest-build-number "$APP_STORE_APP_ID" 2>/dev/null || echo "0")
+          BUILD_NUMBER=$(($LATEST + 1))
+          echo "Compilando con build number $BUILD_NUMBER"
+          flutter build ios --release --no-codesign --build-number=$BUILD_NUMBER
 
       - name: Archivar y firmar IPA
         script: |
