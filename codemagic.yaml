@@ -8,6 +8,8 @@ workflows:
       app_store_connect: Habit-ai
 
     environment:
+      groups:
+        - ios_signing
       vars:
         BUNDLE_ID: "com.andreistaicu.habitai"
       flutter: stable
@@ -28,6 +30,7 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
           keychain add-certificates
 
