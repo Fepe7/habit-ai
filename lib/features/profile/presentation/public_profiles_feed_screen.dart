@@ -111,7 +111,7 @@ class _PublicProfilesFeedScreenState extends State<PublicProfilesFeedScreen> {
   }
 
   void _openProfile(String uid) {
-    context.goNamed('public-profile', pathParameters: {'userId': uid});
+    context.pushNamed('public-profile', pathParameters: {'userId': uid});
   }
 
   @override

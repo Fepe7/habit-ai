@@ -132,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SettingsRow(
                       title: s.settingsAchievements,
                       subtitle: s.settingsAchievementsSubtitle,
-                      onTap: () => context.goNamed('achievements'),
+                      onTap: () => context.pushNamed('achievements'),
                     ),
                     _ShieldRow(shieldsCount: userData?.shieldsCount ?? 0),
                     _SickModeRow(userData: userData, userRepo: _userRepo),

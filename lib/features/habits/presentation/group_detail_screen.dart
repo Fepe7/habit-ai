@@ -280,7 +280,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           backgroundColor: AppTheme.success,
           action: SnackBarAction(
             label: S.of(context).groupDetailViewAction,
-            onPressed: () => context.go('/community/$templateId'),
+            onPressed: () => context.push('/community/$templateId'),
           ),
         ),
       );
@@ -565,7 +565,7 @@ class _GroupBody extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: _GroupHabitTile(
                   habit: habit,
-                  onTap: () => context.go('/habit/${habit.id}'),
+                  onTap: () => context.push('/habit/${habit.id}'),
                   onEdit: () => onEditHabit(habit),
                   onDelete: () => onDeleteHabit(habit),
                 ),

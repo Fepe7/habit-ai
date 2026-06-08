@@ -239,7 +239,7 @@ class _CommunityTemplatesFeedScreenState
                 return CommunityTemplateCard(
                   key: ValueKey(filtered[i].id),
                   template: filtered[i],
-                  onTap: () => context.go(
+                  onTap: () => context.push(
                     '/community/${filtered[i].id}',
                   ),
                 ).animate().fadeIn(

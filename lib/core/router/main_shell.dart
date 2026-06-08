@@ -322,12 +322,22 @@ class _MainShellState extends State<MainShell> {
     final location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/dashboard')) return 1;
     if (location.startsWith('/ai')) return 2;
+    // sección Explorar: feeds de comunidad, perfiles públicos y retos
     if (location.startsWith('/explore') ||
         location.startsWith('/community') ||
-        location.startsWith('/profiles')) {
+        location.startsWith('/profiles') ||
+        location.startsWith('/challenges')) {
       return 3;
     }
-    if (location.startsWith('/profile')) return 4;
+    // sección Perfil: ajustes, seguidores y edición de perfil cuelgan de aquí
+    // (startsWith('/profile') no captura '/profiles', ya resuelto arriba)
+    if (location.startsWith('/profile') ||
+        location.startsWith('/settings') ||
+        location.startsWith('/followers') ||
+        location.startsWith('/edit-profile') ||
+        location.startsWith('/privacy-settings')) {
+      return 4;
+    }
     return 0;
   }
 }
