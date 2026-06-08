@@ -1,4 +1,7 @@
 {
+  "env": {
+    "GRAPHIFY_VIZ_NODE_LIMIT": "10000"
+  },
   "hooks": {
     "PreToolUse": [
       {

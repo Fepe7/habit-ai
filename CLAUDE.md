@@ -169,6 +169,7 @@ TFG completado y defendido. Fase actual: **lanzamiento público**.
 - UX: feedback háptico, skeleton loaders, animaciones con flutter_animate, notificaciones locales
 - Legal: política de privacidad + términos en Firebase Hosting, eliminación de cuenta con doble confirmación
 - Release: keystore de producción configurado, AAB generado
+- iOS: cuenta Apple Developer activa, CI/CD con Codemagic (`codemagic.yaml`) compila y firma sin Mac, sube a TestFlight. App probada y funcionando en iPhone vía testing interno. Bundle ID `com.andreistaicu.habitai`, mínimo iOS 15.0. Clave privada de firma persistente en variable `CERTIFICATE_PRIVATE_KEY` (grupo `ios_signing`) de Codemagic.
 - Costes: blindaje Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs, App Check (cliente activado), caché Firestore 100MB. Ver `docs/gemini-costes.md`.
 
 **Pendiente para lanzamiento:** manejo offline, FCM push, tests mínimos. App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
