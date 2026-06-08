@@ -25,9 +25,6 @@ workflows:
       - name: Instalar pods iOS
         script: cd ios && pod install --repo-update
 
-      - name: Configurar firma de código
-        script: xcode-project use-profiles
-
       - name: Compilar IPA
         script: |
           flutter build ipa \
@@ -37,7 +34,6 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       app_store_connect:
