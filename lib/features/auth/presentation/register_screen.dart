@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -123,6 +126,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
   }
+
+  Future<void> _handleAppleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final authRepository = AuthProvider.of(context);
+      await authRepository.signInWithApple();
+      AnalyticsService.instance.logSignUp('apple');
+    } catch (e) {
+      // 'cancelled' = el usuario cerró el diálogo de Apple, no es un error
+      if (e.toString() != 'cancelled') {
+        setState(() => _errorMessage = e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // Sign in with Apple solo se ofrece en plataformas Apple.
+  bool get _showAppleButton =>
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
 
   @override
   Widget build(BuildContext context) {
@@ -411,6 +440,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ).animate().fadeIn(delay: 650.ms, duration: 400.ms),
                 const SizedBox(height: 24),
 
+                // botón Apple — solo en iOS/macOS, por encima de Google
+                if (_showAppleButton) ...[
+                  _AppleButton(
+                    onPressed: _isLoading ? null : _handleAppleSignIn,
+                  ).animate().fadeIn(delay: 690.ms, duration: 400.ms),
+                  const SizedBox(height: 12),
+                ],
+
                 // botón Google
                 _GoogleButton(
                   onPressed: _isLoading ? null : _handleGoogleSignIn,
@@ -486,6 +523,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Botón Apple — negro con el glifo de Apple (HIG). Solo se muestra en iOS/macOS,
+// donde el glifo  (U+F8FF) se renderiza con la fuente del sistema.
+class _AppleButton extends StatelessWidget {
+  const _AppleButton({this.onPressed});
+
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(56),
+          boxShadow: AppTheme.ambientShadow(opacity: 0.04),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              '\u{F8FF}', // glifo de Apple (solo iOS/macOS)
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.white,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              S.of(context)!.authContinueWithApple,
+              style: textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

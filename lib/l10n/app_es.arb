@@ -266,6 +266,8 @@
   "@authOrSeparator": {},
   "authContinueWithGoogle": "Continuar con Google",
   "@authContinueWithGoogle": {},
+  "authContinueWithApple": "Continuar con Apple",
+  "@authContinueWithApple": {},
   "authSignIn": "Iniciar sesión",
   "@authSignIn": {},
   "authNoAccount": "¿No tienes cuenta? ",

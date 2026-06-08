@@ -95,6 +95,7 @@
   "authUsernameRequiredFull": "Choose a valid and available username",
   "authOrSeparator": "or",
   "authContinueWithGoogle": "Continue with Google",
+  "authContinueWithApple": "Continue with Apple",
   "authSignIn": "Sign in",
   "authNoAccount": "Don't have an account? ",
   "authRegisterLink": "Sign up",

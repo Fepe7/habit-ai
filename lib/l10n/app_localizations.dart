@@ -643,6 +643,12 @@ abstract class S {
   /// **'Continuar con Google'**
   String get authContinueWithGoogle;
 
+  /// No description provided for @authContinueWithApple.
+  ///
+  /// In es, this message translates to:
+  /// **'Continuar con Apple'**
+  String get authContinueWithApple;
+
   /// No description provided for @authSignIn.
   ///
   /// In es, this message translates to:
