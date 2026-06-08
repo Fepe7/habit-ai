@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
@@ -301,7 +302,7 @@ class _CommunityTemplateDetailScreenState
                                 size: 13, color: fgColor),
                             const SizedBox(width: 4),
                             Text(
-                              AppTheme.categoryLabel(t.category),
+                              CategoryL10n.labelOf(t.category, context),
                               style: Theme.of(context)
                                   .textTheme
                                   .labelSmall

@@ -1,8 +1,13 @@
+import 'package:flutter/widgets.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Resuelve etiquetas de categoría y títulos de nivel localizados
 /// sin tocar la capa de dominio.
 class CategoryL10n {
+  /// Versión de conveniencia que resuelve la localización desde el [context].
+  static String labelOf(String category, BuildContext context) =>
+      label(category, S.of(context));
+
   static String label(String category, S l10n) {
     switch (category) {
       case 'salud':

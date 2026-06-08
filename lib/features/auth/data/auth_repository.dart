@@ -97,10 +97,9 @@ class AuthRepository {
       final userCredential = await _auth.signInWithCredential(credential);
       final user = userCredential.user!;
 
-      // 4. si es la primera vez, crear el doc en Firestore
-      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await _ensureUserDoc(user);
-      }
+      // 4. crear el doc si es la primera vez, o sincronizar la foto de Google
+      //    si la cuenta ya existía pero le faltaba el campo photoUrl.
+      await _ensureUserDoc(user);
 
       return UserModel(
         uid: user.uid,
@@ -142,10 +141,13 @@ class AuthRepository {
         nonce: hashedNonce,
       );
 
-      // 3. construir el credential de Firebase con el idToken + nonce crudo
+      // 3. construir el credential de Firebase con el idToken + nonce crudo.
+      //    Firebase exige también el authorizationCode como accessToken para
+      //    validar el token; sin él devuelve "Invalid Auth response from apple.com".
       final oauthCredential = OAuthProvider('apple.com').credential(
         idToken: appleCredential.identityToken,
         rawNonce: rawNonce,
+        accessToken: appleCredential.authorizationCode,
       );
 
       // 4. autenticar en Firebase
@@ -182,11 +184,6 @@ class AuthRepository {
       if (e.code == AuthorizationErrorCode.canceled) throw 'cancelled';
       throw 'Error al iniciar sesión con Apple';
     } on FirebaseAuthException catch (e) {
-      // TODO(diagnóstico Apple): temporal — exponer code+message reales para
-      // depurar el invalid-credential en TestFlight. Revertir al mapeo limpio
-      // (los `case` de abajo) cuando se resuelva.
-      throw 'Apple err: [${e.code}] ${e.message}';
-      // ignore: dead_code
       switch (e.code) {
         case 'account-exists-with-different-credential':
           throw 'Ya existe una cuenta con este correo usando otro método';
@@ -224,12 +221,23 @@ class AuthRepository {
   Future<void> _ensureUserDoc(User user, {String? displayName}) async {
     final docRef = _firestore.collection('users').doc(user.uid);
     final snapshot = await docRef.get();
-    if (snapshot.exists) return;
+    if (snapshot.exists) {
+      // Doc existente: rellenar la foto del proveedor (Google/Apple) si falta.
+      // Cubre cuentas creadas antes de unificar el nombre del campo a 'photoUrl'
+      // (antes se guardaba como 'photoURL' y el modelo nunca lo leía).
+      final data = snapshot.data();
+      final hasPhoto = (data?['photoUrl'] as String?)?.isNotEmpty ?? false;
+      if (!hasPhoto && (user.photoURL?.isNotEmpty ?? false)) {
+        await docRef.update({'photoUrl': user.photoURL});
+      }
+      return;
+    }
 
     await docRef.set({
       'email': user.email,
       'displayName': displayName ?? user.displayName,
-      'photoURL': user.photoURL,
+      // Campo canónico 'photoUrl' (coincide con UserModel.fromFirestore/toJson)
+      'photoUrl': user.photoURL,
       'createdAt': FieldValue.serverTimestamp(),
       'onboardingCompleted': false,
     });
@@ -287,6 +295,7 @@ class AuthRepository {
           final oauthCredential = OAuthProvider('apple.com').credential(
             idToken: appleCredential.identityToken,
             rawNonce: rawNonce,
+            accessToken: appleCredential.authorizationCode,
           );
           await user.reauthenticateWithCredential(oauthCredential);
           break;
@@ -346,6 +355,9 @@ class AuthRepository {
     // 6. borrar follow_requests donde participe
     await _deleteFollowRequests(uid);
 
+    // 6.5 borrar plantillas de comunidad subidas por el usuario
+    await _deleteCommunityTemplates(uid);
+
     // 7. borrar avatar de Storage
     try {
       await FirebaseStorage.instance.ref('users/$uid/avatar.jpg').delete();
@@ -387,6 +399,24 @@ class AuthRepository {
         }
         await doc.reference.delete();
       }
+    }
+  }
+
+  // Borra las plantillas (rutinas) que el usuario publicó en la comunidad,
+  // junto con su subcolección de hábitos.
+  Future<void> _deleteCommunityTemplates(String uid) async {
+    final templates = await _firestore
+        .collection('community_templates')
+        .where('authorUid', isEqualTo: uid)
+        .get();
+    for (final tpl in templates.docs) {
+      // La regla de borrado de habits/{id} verifica el authorUid del doc
+      // padre, así que hay que vaciar la subcolección ANTES de borrar el doc.
+      final habits = await tpl.reference.collection('habits').get();
+      for (final h in habits.docs) {
+        await h.reference.delete();
+      }
+      await tpl.reference.delete();
     }
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/habit_model.dart';
 import '../../../ai/domain/renegotiation_model.dart';
@@ -260,7 +261,7 @@ class HabitCard extends StatelessWidget {
                               color: Colors.transparent,
                               child: _MetaChip(
                                 icon: catIcon,
-                                label: AppTheme.categoryLabel(habit.category),
+                                label: CategoryL10n.labelOf(habit.category, context),
                                 iconColor: catFg,
                                 textColor: catFg,
                                 bgColor: catBg,

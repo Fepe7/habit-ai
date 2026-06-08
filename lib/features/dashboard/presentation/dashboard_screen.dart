@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app.dart';
 import '../../../core/services/ai_availability_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/router/main_shell.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
@@ -1603,7 +1604,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              AppTheme.categoryLabel(stat.category),
+                              CategoryL10n.labelOf(stat.category, context),
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(fontWeight: FontWeight.w500),
                             ),
@@ -1943,7 +1944,7 @@ class _MiniRadarChart extends StatelessWidget {
         getTitle: (index, angle) {
           final cat = AppTheme.categories[index];
           return RadarChartTitle(
-            text: AppTheme.categoryLabel(cat),
+            text: CategoryL10n.labelOf(cat, context),
             angle: 0,
           );
         },

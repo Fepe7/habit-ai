@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/challenge_model.dart';
@@ -70,7 +71,7 @@ class ChallengeCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        AppTheme.categoryLabel(challenge.habitCategory),
+                        CategoryL10n.labelOf(challenge.habitCategory, context),
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
@@ -404,7 +405,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
                         size: 14, color: catFg),
                     const SizedBox(width: 4),
                     Text(
-                      AppTheme.categoryLabel(challenge.habitCategory),
+                      CategoryL10n.labelOf(challenge.habitCategory, context),
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,

@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 
@@ -167,7 +168,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    AppTheme.categoryLabel(cat.category),
+                    CategoryL10n.labelOf(cat.category, context),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -215,7 +216,7 @@ class _CategoryCard extends StatelessWidget {
             ),
           ),
           title: Text(
-            AppTheme.categoryLabel(stat.category),
+            CategoryL10n.labelOf(stat.category, context),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

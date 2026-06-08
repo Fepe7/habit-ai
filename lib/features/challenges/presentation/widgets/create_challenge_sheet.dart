@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../../../core/widgets/gradient_button.dart';
@@ -253,7 +254,7 @@ class _CreateChallengeSheetState extends State<CreateChallengeSheet> {
               children: AppTheme.categories.map((cat) {
                 final selected = cat == _category;
                 return FilterChip(
-                  label: Text(AppTheme.categoryLabel(cat)),
+                  label: Text(CategoryL10n.labelOf(cat, context)),
                   avatar: Icon(AppTheme.categoryIcon(cat), size: 16),
                   selected: selected,
                   onSelected: (_) => setState(() => _category = cat),
