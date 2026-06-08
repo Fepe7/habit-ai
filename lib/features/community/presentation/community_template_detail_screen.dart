@@ -329,7 +329,7 @@ class _CommunityTemplateDetailScreenState
                   const SizedBox(height: 14),
                   GestureDetector(
                     onTap: hasPublicProfile
-                        ? () => context.go('/profiles/$authorUid')
+                        ? () => context.push('/profiles/$authorUid')
                         : null,
                     child: Row(
                       children: [

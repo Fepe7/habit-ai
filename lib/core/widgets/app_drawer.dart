@@ -38,14 +38,22 @@ class _AppDrawerState extends State<AppDrawer> {
     _habitRepo = HabitRepository(uid: uid);
   }
 
+  // go() solo para los tabs del bottom nav (cambio de pestaña, sin apilar).
   void _goAndClose(String path) {
     Navigator.of(context).pop();
     context.go(path);
   }
 
-  void _goNamedAndClose(String name, {Map<String, String>? params}) {
+  // push() para pantallas secundarias (no-tab): así "atrás" vuelve a donde
+  // se abrió el drawer en vez de saltar a Hábitos.
+  void _pushAndClose(String path) {
     Navigator.of(context).pop();
-    context.goNamed(name, pathParameters: params ?? const {});
+    context.push(path);
+  }
+
+  void _pushNamedAndClose(String name, {Map<String, String>? params}) {
+    Navigator.of(context).pop();
+    context.pushNamed(name, pathParameters: params ?? const {});
   }
 
   Future<void> _openLatestWeeklyReview() async {
@@ -58,7 +66,7 @@ class _AppDrawerState extends State<AppDrawer> {
       );
       return;
     }
-    _goNamedAndClose('weekly-review', params: {'weekId': review.weekId});
+    _pushNamedAndClose('weekly-review', params: {'weekId': review.weekId});
   }
 
   Future<void> _openLatestButterfly() async {
@@ -71,7 +79,7 @@ class _AppDrawerState extends State<AppDrawer> {
       );
       return;
     }
-    _goNamedAndClose(
+    _pushNamedAndClose(
       'butterfly-projection',
       params: {'monthId': proj.monthId},
     );
@@ -119,32 +127,32 @@ class _AppDrawerState extends State<AppDrawer> {
                 _DrawerHeader(
                   user: user,
                   userData: userData,
-                  onTap: () => _goAndClose('/settings'),
+                  onTap: () => _pushAndClose('/settings'),
                 ),
                 _SectionLabel(label: s.drawerProgress),
                 _DrawerTile(
                   icon: Icons.emoji_events_rounded,
                   title: s.drawerAchievements,
                   subtitle: s.drawerAchievementsSubtitle,
-                  onTap: () => _goNamedAndClose('achievements'),
+                  onTap: () => _pushNamedAndClose('achievements'),
                 ),
                 _DrawerTile(
                   icon: Icons.bar_chart_rounded,
                   title: s.drawerLevels,
                   subtitle: s.drawerLevelsSubtitle,
-                  onTap: () => _goNamedAndClose('levels'),
+                  onTap: () => _pushNamedAndClose('levels'),
                 ),
                 _DrawerTile(
                   icon: Icons.mood_rounded,
                   title: s.drawerMoodCalendar,
                   subtitle: s.drawerMoodCalendarSubtitle,
-                  onTap: () => _goNamedAndClose('mood-calendar'),
+                  onTap: () => _pushNamedAndClose('mood-calendar'),
                 ),
                 _DrawerTile(
                   icon: Icons.list_alt_rounded,
                   title: s.drawerAllHabits,
                   subtitle: s.drawerAllHabitsSubtitle,
-                  onTap: () => _goNamedAndClose('all-habits'),
+                  onTap: () => _pushNamedAndClose('all-habits'),
                 ),
                 _DrawerTile(
                   icon: Icons.calendar_month_rounded,
@@ -184,7 +192,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   icon: Icons.settings_outlined,
                   title: s.drawerSettings,
                   subtitle: s.drawerSettingsSubtitle,
-                  onTap: () => _goAndClose('/settings'),
+                  onTap: () => _pushAndClose('/settings'),
                 ),
                 const SizedBox(height: 24),
               ],

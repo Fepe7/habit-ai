@@ -288,7 +288,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               actions: [
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
-                  onPressed: () => context.goNamed('settings'),
+                  onPressed: () => context.pushNamed('settings'),
                 ),
               ],
             ),
@@ -349,7 +349,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           _SectionHeader(
             title: s.exploreChallenges,
             action: s.exploreSeeAll,
-            onAction: () => context.go('/challenges'),
+            onAction: () => context.push('/challenges'),
           ),
           const SizedBox(height: 12),
           if (_loadingChallenges)
@@ -432,7 +432,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   final catBg = AppTheme.categoryBg(c.habitCategory, brightness);
                   final catFg = AppTheme.categoryFg(c.habitCategory, brightness);
                   return GestureDetector(
-                    onTap: () => context.go('/challenges/${c.id}'),
+                    onTap: () => context.push('/challenges/${c.id}'),
                     child: Container(
                       width: 200,
                       padding: const EdgeInsets.all(12),
@@ -514,7 +514,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           _SectionHeader(
             title: s.exploreFeaturedTemplates,
             action: s.exploreSeeAllAlt,
-            onAction: () => context.goNamed('community-feed'),
+            onAction: () => context.pushNamed('community-feed'),
           ),
           const SizedBox(height: 12),
           if (_loadingFeatured)
@@ -538,7 +538,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 itemBuilder: (_, i) => _FeaturedTemplateCard(
                   template: _featured[i],
                   onTap: () =>
-                      context.go('/community/${_featured[i].id}'),
+                      context.push('/community/${_featured[i].id}'),
                 )
                     .animate()
                     .fadeIn(
@@ -564,7 +564,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           _SectionHeader(
             title: s.exploreFeaturedCreators,
             action: s.exploreSeeAll,
-            onAction: () => context.goNamed('public-profiles-feed'),
+            onAction: () => context.pushNamed('public-profiles-feed'),
           ),
           const SizedBox(height: 12),
           if (_loadingCreators)
@@ -599,7 +599,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                     profile: p,
                     highlighted: i < 2,
                     isFollowing: _followingUids.contains(p.uid),
-                    onTap: () => context.goNamed(
+                    onTap: () => context.pushNamed(
                       'public-profile',
                       pathParameters: {'userId': p.uid},
                     ),
@@ -678,7 +678,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               isFollowing: isFollowing,
               isPending: isPending,
               isPrivate: isPrivate,
-              onTap: () => context.goNamed(
+              onTap: () => context.pushNamed(
                 'public-profile',
                 pathParameters: {'userId': u.uid},
               ),
@@ -715,7 +715,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               template: _searchTemplates[i],
               full: true,
               onTap: () =>
-                  context.go('/community/${_searchTemplates[i].id}'),
+                  context.push('/community/${_searchTemplates[i].id}'),
             ),
           ),
         ),

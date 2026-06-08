@@ -306,7 +306,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                     _selectedGroupIds.contains(group.id),
                                 onTap: _selectionMode
                                     ? () => _toggleGroupSelection(group.id)
-                                    : () => context.go('/group/${group.id}'),
+                                    : () => context.push('/group/${group.id}'),
                                 onLongPress: _selectionMode
                                     ? null
                                     : () => _enterSelection(group.id),
@@ -337,7 +337,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                         !(_expandedGroups[group.id] ?? true);
                                   }),
                                   onTapHabit: (h) =>
-                                      context.go('/habit/${h.id}'),
+                                      context.push('/habit/${h.id}'),
                                   onEditHabit: _editHabit,
                                   onDeleteHabit: _hardDelete,
                                   selectionMode: _selectionMode,
@@ -356,7 +356,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                 child: _UngroupedAllSection(
                                   habits: ungrouped,
                                   onTapHabit: (h) =>
-                                      context.go('/habit/${h.id}'),
+                                      context.push('/habit/${h.id}'),
                                   onEditHabit: _editHabit,
                                   onDeleteHabit: _hardDelete,
                                   selectionMode: _selectionMode,

@@ -753,7 +753,7 @@ class _HabitsScreenState extends State<HabitsScreen>
     try {
       final groupId = await _groupRepo.createGroup(group);
       if (mounted) {
-        context.go('/group/$groupId');
+        context.push('/group/$groupId');
       }
     } catch (e) {
       if (mounted) AppSnackBar.showError(context, S.of(context).habitsGroupCreateError);
@@ -929,11 +929,11 @@ class _HabitsScreenState extends State<HabitsScreen>
                               _expandedGroups[group.id] =
                                   !(_expandedGroups[group.id] ?? true);
                             }),
-                            onEditGroup: () => context.go('/group/${group.id}'),
+                            onEditGroup: () => context.push('/group/${group.id}'),
                             onDeleteGroup: () => _deleteGroup(group),
                             completedToday: _completedToday,
                             onToggleHabit: _toggleHabit,
-                            onTapHabit: (h) => context.go('/habit/${h.id}'),
+                            onTapHabit: (h) => context.push('/habit/${h.id}'),
                             onEditHabit: _editHabit,
                             onDeleteHabit: _deleteHabit,
                             selectionMode: _selectionMode,
@@ -959,7 +959,7 @@ class _HabitsScreenState extends State<HabitsScreen>
                             habits: ungroupedHabits,
                             completedToday: _completedToday,
                             onToggleHabit: _toggleHabit,
-                            onTapHabit: (h) => context.go('/habit/${h.id}'),
+                            onTapHabit: (h) => context.push('/habit/${h.id}'),
                             onEditHabit: _editHabit,
                             onDeleteHabit: _deleteHabit,
                             selectionMode: _selectionMode,

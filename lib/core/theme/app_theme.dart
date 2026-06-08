@@ -18,18 +18,20 @@ class AppTheme {
   static const Color error = Color(0xFFBA1A1A);
   static const Color errorContainer = Color(0xFFFFDAD6);
 
-  // surfaces
-  static const Color surface = Color(0xFFF8F9FF);
+  // surfaces — escala de grises azulados suaves (baja luminancia, poca saturación)
+  // para no deslumbrar: el fondo descansa y las cards blancas destacan como islas.
+  static const Color surface = Color(0xFFF1F3F7);
   static const Color surfaceContainerLowest = Color(0xFFFFFFFF);
-  static const Color surfaceContainerLow = Color(0xFFEFF4FF);
-  static const Color surfaceContainer = Color(0xFFE5EEFF);
-  static const Color surfaceContainerHigh = Color(0xFFDCE9FF);
-  static const Color surfaceContainerHighest = Color(0xFFD3E4FE);
-  static const Color surfaceDim = Color(0xFFCBDBF5);
+  static const Color surfaceContainerLow = Color(0xFFE9ECF2);
+  static const Color surfaceContainer = Color(0xFFE1E5EC);
+  static const Color surfaceContainerHigh = Color(0xFFD9DEE7);
+  static const Color surfaceContainerHighest = Color(0xFFD0D7E1);
+  static const Color surfaceDim = Color(0xFFC6CDD9);
 
-  // textos
-  static const Color onSurface = Color(0xFF0B1C30);
-  static const Color onSurfaceVariant = Color(0xFF3E484F);
+  // textos — onSurface es un slate muy oscuro (no negro puro) para reducir la
+  // dureza del contraste sobre fondos claros sin sacrificar legibilidad (~13:1).
+  static const Color onSurface = Color(0xFF18222E);
+  static const Color onSurfaceVariant = Color(0xFF44505A);
   static const Color outline = Color(0xFF6E7980);
   static const Color outlineVariant = Color(0xFFBDC8D1);
 
