@@ -20,6 +20,7 @@ import '../../features/social/domain/follow_request_model.dart';
 import '../../features/social/domain/reaction_model.dart';
 import '../../features/social/presentation/widgets/reaction_received_overlay.dart';
 import '../../services/notification_service.dart';
+import '../../services/push_notification_service.dart';
 import '../services/feedback_service.dart';
 import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
@@ -61,6 +62,8 @@ class _MainShellState extends State<MainShell> {
     _rescheduleNotifications();
     _ensureUserDirectory();
     _watchSocialNotifications();
+    // registrar el token de FCM del dispositivo para este usuario (push remotos)
+    PushNotificationService.instance.registerForCurrentUser();
     AnalyticsService.instance.setUserId(FirebaseAuth.instance.currentUser?.uid);
   }
 

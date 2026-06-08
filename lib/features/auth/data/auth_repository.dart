@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../domain/user_model.dart';
+import '../../../services/push_notification_service.dart';
 
 // Gestiona todo lo de autenticacion con Firebase Auth
 class AuthRepository {
@@ -240,8 +241,9 @@ class AuthRepository {
     );
   }
 
-  // Cerrar sesion (limpia tambien la sesion de Google)
+  // Cerrar sesion (limpia tambien la sesion de Google y el token de push)
   Future<void> signOut() async {
+    await PushNotificationService.instance.unregisterForCurrentUser();
     await GoogleSignIn.instance.signOut();
     await _auth.signOut();
   }
@@ -298,6 +300,7 @@ class AuthRepository {
       'mood_entries',
       'followers',
       'following',
+      'fcm_tokens',
     ];
 
     for (final sub in subs) {

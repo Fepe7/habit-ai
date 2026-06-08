@@ -13,6 +13,7 @@ import 'core/services/ai_availability_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/update_service.dart';
 import 'services/notification_service.dart';
+import 'services/push_notification_service.dart';
 import 'app.dart';
 
 void main() async {
@@ -52,6 +53,7 @@ void main() async {
     );
 
     await NotificationService.instance.init();
+    await PushNotificationService.instance.init();
     await ConnectivityService.instance.init();
     await UpdateService.instance.init();
     await AiAvailabilityService.instance.init();

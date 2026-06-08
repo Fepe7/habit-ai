@@ -5,6 +5,7 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../features/habits/domain/habit_model.dart';
+import 'push_notification_service.dart';
 
 // Servicio singleton de notificaciones locales
 // Programa recordatorios semanales por dia de la semana para cada habito
@@ -37,6 +38,7 @@ class NotificationService {
 
     await _plugin.initialize(
       settings: const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
     // crear canal Android explicitamente (en iOS no es necesario)
@@ -52,6 +54,14 @@ class NotificationService {
       'social_notifications',
       'Notificaciones sociales',
       description: 'Solicitudes de seguimiento y actualizaciones sociales',
+      importance: Importance.high,
+    ));
+    // canal por defecto para los push de FCM en background (debe coincidir con
+    // el meta-data default_notification_channel_id del AndroidManifest)
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      'push_default',
+      'Avisos de HabitAI',
+      description: 'Revisión semanal, seguidores y otros avisos remotos',
       importance: Importance.high,
     ));
 
@@ -174,10 +184,13 @@ class NotificationService {
 
   Future<void> cancelAll() => _plugin.cancelAll();
 
-  // Muestra una notificacion inmediata para eventos sociales (follow request, aceptacion)
+  // Muestra una notificacion inmediata para eventos sociales (follow request,
+  // aceptacion) y para los push de FCM recibidos en primer plano.
+  // [payload] opcional = ruta de deep link a la que navegar al tocarla.
   Future<void> showSocialNotification({
     required String title,
     required String body,
+    String? payload,
   }) async {
     if (!_initialized) return;
     await _plugin.show(
@@ -194,7 +207,18 @@ class NotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: payload,
     );
+  }
+
+  // Tap en una notificacion local: traduce el payload a una ruta y navega.
+  // Convención: payload que empieza por '/' es una ruta directa; cualquier otro
+  // valor se interpreta como el id de un habito (recordatorios).
+  void _onNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.isEmpty) return;
+    final route = payload.startsWith('/') ? payload : '/habit/$payload';
+    PushNotificationService.instance.navigateTo(route);
   }
 
   // ==================== helpers ====================
