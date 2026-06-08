@@ -18,14 +18,15 @@ workflows:
 
     scripts:
       - name: Instalar dependencias Flutter
-        script: flutter pub get
+        script: |
+          flutter config --no-enable-swift-package-manager
+          flutter pub get
 
       - name: Instalar pods iOS
-        script: cd ios && pod install
+        script: cd ios && pod install --repo-update
 
       - name: Configurar firma de código
-        script: |
-          xcode-project use-profiles
+        script: xcode-project use-profiles
 
       - name: Compilar IPA
         script: |
@@ -33,8 +34,6 @@ workflows:
             --release \
             --no-tree-shake-icons \
             --export-options-plist=$HOME/export_options.plist
-        env:
-          FLUTTER_BUILD_MODE: release
 
     artifacts:
       - build/ios/ipa/*.ipa
