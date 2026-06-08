@@ -73,6 +73,10 @@ class HabitCard extends StatelessWidget {
     final catFg = AppTheme.categoryFg(habit.category, scheme.brightness);
     final catIcon = AppTheme.categoryIcon(habit.category);
 
+    // Modo "En Llamas": racha > 5 días → realce visual (borde ámbar brillante,
+    // glow reforzado y llama animada en el chip de racha).
+    final isOnFire = habit.currentStreak > 5;
+
     final cardBg = isSelected
         ? scheme.primaryContainer.withValues(alpha: 0.25)
         : isCompletedToday
@@ -123,8 +127,14 @@ class HabitCard extends StatelessWidget {
           : BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: habit.currentStreak >= 7
-                  ? AppTheme.tintedShadow(AppTheme.tertiary)
+              border: isOnFire
+                  ? Border.all(
+                      color: AppTheme.tertiary.withValues(alpha: 0.55),
+                      width: 1.5,
+                    )
+                  : null,
+              boxShadow: isOnFire
+                  ? AppTheme.tintedShadow(AppTheme.tertiary, opacity: 0.28)
                   : isCompletedToday
                       ? AppTheme.tintedShadow(AppTheme.primary, opacity: 0.14)
                       : AppTheme.ambientShadow(),
@@ -236,7 +246,12 @@ class HabitCard extends StatelessWidget {
                               label: s.daysLabel(habit.currentStreak),
                               iconColor: scheme.tertiary,
                               textColor: scheme.tertiary,
-                              bgColor: scheme.tertiary.withValues(alpha: 0.15),
+                              bgColor: scheme.tertiary
+                                  .withValues(alpha: isOnFire ? 0.22 : 0.15),
+                              // en modo "En Llamas" la llama parpadea
+                              leading: isOnFire
+                                  ? const _AnimatedFlame(color: AppTheme.tertiary)
+                                  : null,
                             ),
                           // chip de categoria
                           Hero(
@@ -581,6 +596,33 @@ class _CoachBanner extends StatelessWidget {
   }
 }
 
+// ==================== LLAMA ANIMADA (Modo "En Llamas") ====================
+
+/// Icono de fuego que parpadea para las rachas > 5 días.
+/// Animación barata con flutter_animate: escala oscilante + tinte naranja
+/// pulsante, en bucle reverso para dar sensación de llama viva.
+class _AnimatedFlame extends StatelessWidget {
+  final Color color;
+
+  const _AnimatedFlame({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.local_fire_department_rounded, size: 11, color: color)
+        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .scaleXY(
+          begin: 0.88,
+          end: 1.18,
+          duration: 700.ms,
+          curve: Curves.easeInOut,
+        )
+        .tint(
+          color: Colors.deepOrange.withValues(alpha: 0.45),
+          duration: 700.ms,
+        );
+  }
+}
+
 // ==================== META CHIP ====================
 
 class _MetaChip extends StatelessWidget {
@@ -589,6 +631,8 @@ class _MetaChip extends StatelessWidget {
   final Color iconColor;
   final Color textColor;
   final Color bgColor;
+  // si se pasa, reemplaza el icono estático (p.ej. la llama animada del modo fuego)
+  final Widget? leading;
 
   const _MetaChip({
     required this.icon,
@@ -596,6 +640,7 @@ class _MetaChip extends StatelessWidget {
     required this.iconColor,
     required this.textColor,
     required this.bgColor,
+    this.leading,
   });
 
   @override
@@ -609,7 +654,7 @@ class _MetaChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: iconColor),
+          leading ?? Icon(icon, size: 11, color: iconColor),
           const SizedBox(width: 4),
           Text(
             label,
