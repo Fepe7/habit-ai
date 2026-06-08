@@ -182,6 +182,11 @@ class AuthRepository {
       if (e.code == AuthorizationErrorCode.canceled) throw 'cancelled';
       throw 'Error al iniciar sesión con Apple';
     } on FirebaseAuthException catch (e) {
+      // TODO(diagnóstico Apple): temporal — exponer code+message reales para
+      // depurar el invalid-credential en TestFlight. Revertir al mapeo limpio
+      // (los `case` de abajo) cuando se resuelva.
+      throw 'Apple err: [${e.code}] ${e.message}';
+      // ignore: dead_code
       switch (e.code) {
         case 'account-exists-with-different-credential':
           throw 'Ya existe una cuenta con este correo usando otro método';
@@ -258,23 +263,25 @@ class AuthRepository {
     final userDoc = await _firestore.collection('users').doc(uid).get();
     final username = userDoc.data()?['username'] as String?;
 
-    // 2. borrar subcolecciones de users/{uid}
+    // 2. borrar referencias en followers/following de otros usuarios.
+    //    DEBE ir antes de _deleteSubcollections, que borra mis subcolecciones
+    //    following/followers (de las que aquí leo a quién hay que avisar).
+    await _deleteFollowRelations(uid);
+
+    // 3. borrar subcolecciones de users/{uid}
     await _deleteSubcollections(uid);
 
-    // 3. borrar doc principal del usuario
+    // 4. borrar doc principal del usuario
     await _firestore.collection('users').doc(uid).delete();
 
-    // 4. borrar entrada de directorio y username reservado
+    // 5. borrar entrada de directorio y username reservado
     await _firestore.collection('user_directory').doc(uid).delete();
     if (username != null) {
       await _firestore.collection('usernames').doc(username).delete();
     }
 
-    // 5. borrar follow_requests donde participe
+    // 6. borrar follow_requests donde participe
     await _deleteFollowRequests(uid);
-
-    // 6. borrar referencias en followers/following de otros usuarios
-    await _deleteFollowRelations(uid);
 
     // 7. borrar avatar de Storage
     try {
@@ -298,6 +305,7 @@ class AuthRepository {
       'renegotiations',
       'shield_grants',
       'mood_entries',
+      'habit_groups',
       'followers',
       'following',
       'fcm_tokens',
