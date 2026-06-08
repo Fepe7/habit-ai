@@ -319,6 +319,9 @@ class SEn extends S {
   String get authContinueWithGoogle => 'Continue with Google';
 
   @override
+  String get authContinueWithApple => 'Continue with Apple';
+
+  @override
   String get authSignIn => 'Sign in';
 
   @override

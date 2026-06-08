@@ -321,6 +321,9 @@ class SEs extends S {
   String get authContinueWithGoogle => 'Continuar con Google';
 
   @override
+  String get authContinueWithApple => 'Continuar con Apple';
+
+  @override
   String get authSignIn => 'Iniciar sesión';
 
   @override

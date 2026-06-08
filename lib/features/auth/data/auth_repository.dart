@@ -1,7 +1,12 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../domain/user_model.dart';
 
 // Gestiona todo lo de autenticacion con Firebase Auth
@@ -118,6 +123,95 @@ class AuthRepository {
       if (e is String) rethrow;
       throw 'Error al iniciar sesión con Google';
     }
+  }
+
+  // Iniciar sesion con Apple (cuenta nueva o existente) — solo iOS/macOS.
+  Future<UserModel> signInWithApple() async {
+    try {
+      // 1. nonce: Apple firma el sha256, Firebase verifica con el valor crudo
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256ofString(rawNonce);
+
+      // 2. lanzar el diálogo nativo de Apple (lanza si el usuario cancela)
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      // 3. construir el credential de Firebase con el idToken + nonce crudo
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
+
+      // 4. autenticar en Firebase
+      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final user = userCredential.user!;
+
+      // 5. Apple SOLO entrega el nombre en el primer inicio de sesión.
+      //    Lo persistimos en Firebase Auth si aún no hay displayName.
+      final fullName = [
+        appleCredential.givenName,
+        appleCredential.familyName,
+      ].whereType<String>().where((p) => p.trim().isNotEmpty).join(' ').trim();
+      if (fullName.isNotEmpty &&
+          (user.displayName == null || user.displayName!.isEmpty)) {
+        await user.updateDisplayName(fullName);
+      }
+
+      // 6. si es la primera vez, crear el doc en Firestore
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        await _ensureUserDoc(
+          user,
+          displayName: fullName.isNotEmpty ? fullName : null,
+        );
+      }
+
+      return UserModel(
+        uid: user.uid,
+        email: user.email ?? '',
+        displayName:
+            user.displayName ?? (fullName.isNotEmpty ? fullName : null),
+      );
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // cancelación del usuario → sentinela que la UI ignora sin mostrar error
+      if (e.code == AuthorizationErrorCode.canceled) throw 'cancelled';
+      throw 'Error al iniciar sesión con Apple';
+    } on FirebaseAuthException catch (e) {
+      switch (e.code) {
+        case 'account-exists-with-different-credential':
+          throw 'Ya existe una cuenta con este correo usando otro método';
+        case 'invalid-credential':
+          throw 'Credenciales no válidas';
+        case 'network-request-failed':
+          throw 'Sin conexión a internet';
+        default:
+          throw 'Error al iniciar sesión con Apple';
+      }
+    } catch (e) {
+      if (e is String) rethrow;
+      throw 'Error al iniciar sesión con Apple';
+    }
+  }
+
+  // Genera un nonce criptográficamente seguro para el flujo de Apple.
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(
+      length,
+      (_) => charset[random.nextInt(charset.length)],
+    ).join();
+  }
+
+  // SHA-256 en hex de una cadena (para el nonce que recibe Apple).
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    return sha256.convert(bytes).toString();
   }
 
   // Crea el doc users/{uid} si no existe (primer login)
