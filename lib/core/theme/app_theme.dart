@@ -529,26 +529,8 @@ class AppTheme {
     }
   }
 
-  static String categoryLabel(String category) {
-    switch (category) {
-      case 'salud':
-        return 'Salud';
-      case 'productividad':
-        return 'Productividad';
-      case 'bienestar':
-        return 'Bienestar';
-      case 'social':
-        return 'Social';
-      case 'aprendizaje':
-        return 'Aprendizaje';
-      case 'finanzas':
-        return 'Finanzas';
-      default:
-        return category.isEmpty
-            ? category
-            : category[0].toUpperCase() + category.substring(1);
-    }
-  }
+  // La etiqueta localizada de categoría vive en CategoryL10n.label/labelOf
+  // (necesita el locale activo); aquí solo quedan color, fondo e icono.
 
   static const List<String> categories = [
     'salud',

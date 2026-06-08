@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/gradient_button.dart';
@@ -265,7 +266,7 @@ class _EditHabitSheetState extends State<EditHabitSheet> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          AppTheme.categoryLabel(cat),
+                          CategoryL10n.labelOf(cat, context),
                           style: TextStyle(
                             fontSize: 13,
                             color: selected ? fg : scheme.onSurfaceVariant,

@@ -8,6 +8,7 @@ import '../domain/habit_model.dart';
 import '../domain/habit_log_model.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
@@ -627,7 +628,7 @@ class _HeroHeader extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            AppTheme.categoryLabel(habit.category),
+                            CategoryL10n.labelOf(habit.category, context),
                             style: const TextStyle(
                               fontSize: 12,
                               color: Colors.white,

@@ -9,6 +9,7 @@ import '../../../app.dart';
 import '../../../core/router/main_shell.dart';
 import '../data/habit_repository.dart';
 import '../data/habit_group_repository.dart';
+import '../data/group_collapse_store.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../domain/habit_log_model.dart';
@@ -64,6 +65,7 @@ class _HabitsScreenState extends State<HabitsScreen>
   final Set<String> _logsFetched = {};
   final Map<String, bool> _expandedGroups = {};
   bool _initialized = false;
+  String? _uid;
   String? _userName;
   List<HabitModel> _currentTodayHabits = [];
   List<HabitGroupModel>? _lastGroups;
@@ -203,6 +205,8 @@ class _HabitsScreenState extends State<HabitsScreen>
         _userName = fbUser?.displayName?.isNotEmpty == true
             ? fbUser!.displayName
             : fbUser?.email?.split('@').first;
+        _uid = user.uid;
+        _loadCollapsedGroups(user.uid);
         _habitRepo = HabitRepository(uid: user.uid);
         _groupRepo = HabitGroupRepository(uid: user.uid);
         _habitsStream = _habitRepo.watchTodayHabits();
@@ -238,6 +242,28 @@ class _HabitsScreenState extends State<HabitsScreen>
       sub.cancel();
     }
     super.dispose();
+  }
+
+  // Carga el estado colapsado de grupos persistido para restaurar la vista.
+  Future<void> _loadCollapsedGroups(String uid) async {
+    final collapsed = await GroupCollapseStore.load(uid);
+    if (collapsed.isEmpty || !mounted) return;
+    setState(() {
+      for (final id in collapsed) {
+        _expandedGroups[id] = false;
+      }
+    });
+  }
+
+  // Guarda los grupos actualmente colapsados (los marcados como no expandidos).
+  void _persistCollapsedGroups() {
+    final uid = _uid;
+    if (uid == null) return;
+    final collapsed = _expandedGroups.entries
+        .where((e) => e.value == false)
+        .map((e) => e.key)
+        .toSet();
+    GroupCollapseStore.save(uid, collapsed);
   }
 
   Future<void> _refresh() async {
@@ -925,10 +951,13 @@ class _HabitsScreenState extends State<HabitsScreen>
                             habits: groupHabits,
                             completedCount: groupCompleted,
                             isExpanded: _expandedGroups[group.id] ?? true,
-                            onToggleExpanded: () => setState(() {
-                              _expandedGroups[group.id] =
-                                  !(_expandedGroups[group.id] ?? true);
-                            }),
+                            onToggleExpanded: () {
+                              setState(() {
+                                _expandedGroups[group.id] =
+                                    !(_expandedGroups[group.id] ?? true);
+                              });
+                              _persistCollapsedGroups();
+                            },
                             onEditGroup: () => context.push('/group/${group.id}'),
                             onDeleteGroup: () => _deleteGroup(group),
                             completedToday: _completedToday,

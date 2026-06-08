@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../l10n/app_localizations.dart';
@@ -209,7 +210,7 @@ class _CommunityTemplatesFeedScreenState
                         ...AppTheme.categories.map((cat) => Padding(
                               padding: const EdgeInsets.only(left: 8),
                               child: _SortChip(
-                                label: AppTheme.categoryLabel(cat),
+                                label: CategoryL10n.labelOf(cat, context),
                                 selected: _categoryFilter == cat,
                                 onTap: () => _applyCategory(cat),
                               ),

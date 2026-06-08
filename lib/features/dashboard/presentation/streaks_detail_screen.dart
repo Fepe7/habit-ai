@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
@@ -277,7 +278,7 @@ class _StreakTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  AppTheme.categoryLabel(habit.category),
+                  CategoryL10n.labelOf(habit.category, context),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant
                             .withValues(alpha: 0.7),

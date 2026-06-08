@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../achievements/presentation/achievement_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -1166,7 +1167,7 @@ class _HabitChip extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            AppTheme.categoryLabel(habit.category),
+            CategoryL10n.labelOf(habit.category, context),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),

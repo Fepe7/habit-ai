@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../data/habit_repository.dart';
 import '../data/habit_group_repository.dart';
+import '../data/group_collapse_store.dart';
 import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import 'widgets/edit_habit_sheet.dart';
@@ -33,6 +34,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
   bool _showActive = true;
   bool _showGroups = false;
   final Map<String, bool> _expandedGroups = {};
+  String? _uid;
   bool _initialized = false;
 
   // modo selección múltiple
@@ -85,12 +87,36 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
     if (_initialized) return;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
+      _uid = uid;
+      _loadCollapsedGroups(uid);
       _habitRepo = HabitRepository(uid: uid);
       _groupRepo = HabitGroupRepository(uid: uid);
       _habitsStream = _habitRepo.watchAllHabits();
       _groupsStream = _groupRepo.watchGroups();
     }
     _initialized = true;
+  }
+
+  // Restaura el estado colapsado de grupos persistido entre sesiones.
+  Future<void> _loadCollapsedGroups(String uid) async {
+    final collapsed = await GroupCollapseStore.load(uid);
+    if (collapsed.isEmpty || !mounted) return;
+    setState(() {
+      for (final id in collapsed) {
+        _expandedGroups[id] = false;
+      }
+    });
+  }
+
+  // Guarda los grupos actualmente colapsados.
+  void _persistCollapsedGroups() {
+    final uid = _uid;
+    if (uid == null) return;
+    final collapsed = _expandedGroups.entries
+        .where((e) => e.value == false)
+        .map((e) => e.key)
+        .toSet();
+    GroupCollapseStore.save(uid, collapsed);
   }
 
   Future<void> _editHabit(HabitModel habit) async {
@@ -332,10 +358,13 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                   habits: groupHabits,
                                   isExpanded:
                                       _expandedGroups[group.id] ?? true,
-                                  onToggleExpanded: () => setState(() {
-                                    _expandedGroups[group.id] =
-                                        !(_expandedGroups[group.id] ?? true);
-                                  }),
+                                  onToggleExpanded: () {
+                                    setState(() {
+                                      _expandedGroups[group.id] =
+                                          !(_expandedGroups[group.id] ?? true);
+                                    });
+                                    _persistCollapsedGroups();
+                                  },
                                   onTapHabit: (h) =>
                                       context.push('/habit/${h.id}'),
                                   onEditHabit: _editHabit,

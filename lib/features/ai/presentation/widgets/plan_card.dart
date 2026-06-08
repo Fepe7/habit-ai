@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/chat_message.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -200,7 +201,7 @@ class _HabitTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          AppTheme.categoryLabel(habit.category),
+                          CategoryL10n.labelOf(habit.category, context),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

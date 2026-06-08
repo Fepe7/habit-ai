@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../levels/presentation/category_l10n.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../domain/community_template_model.dart';
 
@@ -143,7 +144,7 @@ class CommunityTemplateCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  AppTheme.categoryLabel(template.category),
+                  CategoryL10n.labelOf(template.category, context),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: fgColor,
                         fontWeight: FontWeight.w600,
