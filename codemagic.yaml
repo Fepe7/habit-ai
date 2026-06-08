@@ -12,6 +12,10 @@ workflows:
         distribution_type: app_store
         bundle_identifier: com.andreistaicu.habitai
 
+      vars:
+        CM_CERTIFICATE: habitai-distribution
+        CM_PROVISIONING_PROFILE: habitai-appstore
+
       flutter: stable
       xcode: latest
       cocoapods: default
