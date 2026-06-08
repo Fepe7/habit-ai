@@ -303,6 +303,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
     if (typed != 'ELIMINAR' || !mounted) return;
 
+    // reautenticación previa: si entró con email/contraseña hay que pedirla;
+    // con Google/Apple la verificación abre el diálogo nativo del proveedor.
+    String? password;
+    if (auth.primaryProviderId == 'password') {
+      password = await showDialog<String>(
+        context: context, // ignore: use_build_context_synchronously
+        builder: (_) => const _ReauthPasswordDialog(),
+      );
+      if (password == null || !mounted) return; // canceló
+    }
+
     showDialog(
       context: context, // ignore: use_build_context_synchronously
       barrierDismissible: false,
@@ -310,15 +321,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      await auth.deleteAccount();
+      await auth.deleteAccount(password: password);
+      // éxito: authStateChanges redirige a login y desmonta esta pantalla,
+      // así que no cerramos el loader manualmente (evita parpadeo).
     } catch (e) {
-      if (mounted) Navigator.of(context).pop(); // ignore: use_build_context_synchronously
+      if (mounted) Navigator.of(context).pop(); // ignore: use_build_context_synchronously — cerrar loader
+      final msg = e.toString();
+      if (msg == 'cancelled') return; // canceló el diálogo del proveedor
       if (mounted) {
         AppSnackBar.showError(
           context, // ignore: use_build_context_synchronously
-          e.toString().contains('requires-recent-login')
-              ? s.settingsDeleteRequiresRelogin
-              : s.settingsDeleteAccountError(e.toString()),
+          switch (msg) {
+            'requires-password' => 'Introduce tu contraseña para confirmar',
+            'wrong-password' ||
+            'invalid-credential' =>
+              'Contraseña incorrecta',
+            _ when msg.contains('requires-recent-login') =>
+              s.settingsDeleteRequiresRelogin,
+            _ => s.settingsDeleteAccountError(msg),
+          },
         );
       }
     }
@@ -873,6 +894,60 @@ class _ConfirmDeleteDialogState extends State<_ConfirmDeleteDialog> {
             foregroundColor: scheme.onError,
           ),
           child: Text(s.settingsDeleteAccount),
+        ),
+      ],
+    );
+  }
+}
+
+/// Pide la contraseña para reautenticar antes de eliminar la cuenta
+/// (solo cuando la sesión es de email/contraseña).
+class _ReauthPasswordDialog extends StatefulWidget {
+  const _ReauthPasswordDialog();
+
+  @override
+  State<_ReauthPasswordDialog> createState() => _ReauthPasswordDialogState();
+}
+
+class _ReauthPasswordDialogState extends State<_ReauthPasswordDialog> {
+  final _controller = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return AlertDialog(
+      title: const Text('Confirma tu contraseña'),
+      content: TextField(
+        controller: _controller,
+        obscureText: _obscure,
+        autofocus: true,
+        decoration: InputDecoration(
+          labelText: 'Contraseña',
+          prefixIcon: const Icon(Icons.lock_outlined),
+          suffixIcon: IconButton(
+            icon: Icon(_obscure
+                ? Icons.visibility_outlined
+                : Icons.visibility_off_outlined),
+            onPressed: () => setState(() => _obscure = !_obscure),
+          ),
+        ),
+        onSubmitted: (value) => Navigator.of(context).pop(value),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: Text(s.confirm),
         ),
       ],
     );

@@ -253,11 +253,74 @@ class AuthRepository {
     await _auth.signOut();
   }
 
+  // Proveedor principal de la sesión actual ('password', 'google.com', 'apple.com').
+  String? get primaryProviderId {
+    final providers = _auth.currentUser?.providerData;
+    if (providers == null || providers.isEmpty) return null;
+    return providers.first.providerId;
+  }
+
+  // Reautentica al usuario según su proveedor. Imprescindible antes de borrar
+  // la cuenta: user.delete() exige login reciente (requires-recent-login).
+  // Para email/contraseña hay que pasar la contraseña; con Google/Apple se
+  // relanza el diálogo nativo del proveedor.
+  Future<void> _reauthenticate(User user, {String? password}) async {
+    final providerId = user.providerData.isNotEmpty
+        ? user.providerData.first.providerId
+        : 'password';
+    try {
+      switch (providerId) {
+        case 'google.com':
+          final googleUser = await GoogleSignIn.instance.authenticate();
+          final googleAuth = googleUser.authentication;
+          final cred =
+              GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+          await user.reauthenticateWithCredential(cred);
+          break;
+        case 'apple.com':
+          final rawNonce = _generateNonce();
+          final hashedNonce = _sha256ofString(rawNonce);
+          final appleCredential = await SignInWithApple.getAppleIDCredential(
+            scopes: const [AppleIDAuthorizationScopes.email],
+            nonce: hashedNonce,
+          );
+          final oauthCredential = OAuthProvider('apple.com').credential(
+            idToken: appleCredential.identityToken,
+            rawNonce: rawNonce,
+          );
+          await user.reauthenticateWithCredential(oauthCredential);
+          break;
+        default: // email/contraseña
+          if (password == null || password.isEmpty) {
+            throw 'requires-password';
+          }
+          final cred = EmailAuthProvider.credential(
+            email: user.email ?? '',
+            password: password,
+          );
+          await user.reauthenticateWithCredential(cred);
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) throw 'cancelled';
+      throw 'Error al verificar con Apple';
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) throw 'cancelled';
+      throw 'Error al verificar con Google';
+    } on FirebaseAuthException catch (e) {
+      // contraseña incorrecta, credencial inválida, etc. → propagar el code
+      throw e.code;
+    }
+  }
+
   // Eliminar cuenta y todos los datos asociados
-  Future<void> deleteAccount() async {
+  Future<void> deleteAccount({String? password}) async {
     final user = _auth.currentUser;
     if (user == null) throw 'No hay sesión activa';
     final uid = user.uid;
+
+    // 0. reautenticar ANTES de tocar datos. Si la verificación falla, los datos
+    //    quedan intactos en vez de borrarse a medias dejando la cuenta huérfana.
+    await _reauthenticate(user, password: password);
 
     // 1. leer username antes de borrar datos
     final userDoc = await _firestore.collection('users').doc(uid).get();
