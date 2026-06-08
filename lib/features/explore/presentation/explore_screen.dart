@@ -133,10 +133,14 @@ class _ExploreScreenState extends State<ExploreScreen>
   }
 
   Future<void> _loadCreators() async {
-    final res = await _profileRepo.watchPublicProfilesFeed(limit: 6);
+    // Creadores destacados = autores que han publicado una rutina (plantilla),
+    // no todos los usuarios públicos. Excluye al propio usuario.
+    final creatorUids = await _templateRepo.fetchCreatorUids(limit: 30);
+    final profiles =
+        await _profileRepo.getPublicProfiles(creatorUids.take(6).toList());
     if (!mounted) return;
     setState(() {
-      _creators = res.profiles;
+      _creators = profiles.where((p) => p.uid != _myUid).toList();
       _loadingCreators = false;
     });
   }

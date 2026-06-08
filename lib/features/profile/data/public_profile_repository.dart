@@ -379,6 +379,14 @@ class PublicProfileRepository {
     return (profiles: profiles, lastDoc: lastDoc);
   }
 
+  /// Fetch en lote de varios perfiles públicos, preservando el orden de [uids].
+  /// Los uids sin perfil público existente se descartan.
+  Future<List<PublicProfileModel>> getPublicProfiles(List<String> uids) async {
+    if (uids.isEmpty) return [];
+    final results = await Future.wait(uids.map(getPublicProfile));
+    return results.whereType<PublicProfileModel>().toList();
+  }
+
   /// Fetch puntual de un perfil público
   Future<PublicProfileModel?> getPublicProfile(String uid) async {
     final doc = await _publicProfilesRef.doc(uid).get();

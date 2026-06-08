@@ -171,6 +171,26 @@ class CommunityTemplateRepository {
     );
   }
 
+  /// UIDs distintos de autores que han publicado al menos una plantilla,
+  /// ordenados por popularidad (importCount). Excluye al usuario actual.
+  /// Sirve para alimentar la sección "Creadores destacados": solo personas
+  /// que realmente han subido una rutina, no todos los usuarios públicos.
+  Future<List<String>> fetchCreatorUids({int limit = 30}) async {
+    final snapshot = await _templatesRef
+        .orderBy('importCount', descending: true)
+        .limit(limit)
+        .get();
+
+    final seen = <String>{};
+    final uids = <String>[];
+    for (final doc in snapshot.docs) {
+      final authorUid = doc.data()['authorUid'] as String?;
+      if (authorUid == null || authorUid.isEmpty || authorUid == _uid) continue;
+      if (seen.add(authorUid)) uids.add(authorUid);
+    }
+    return uids;
+  }
+
   // ==================== DETALLE ====================
 
   Future<CommunityTemplateModel?> getTemplate(String templateId) async {
