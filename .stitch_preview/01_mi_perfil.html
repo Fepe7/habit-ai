@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mi Perfil - HabitAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error": "#ffffff",
+                        "surface-container-low": "#f2f3ff",
+                        "on-surface": "#131b2e",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "primary-container": "#38bdf8",
+                        "tertiary-container": "#f1a02b",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "on-primary-fixed": "#001e2c",
+                        "on-primary-container": "#004965",
+                        "inverse-primary": "#7bd0ff",
+                        "surface": "#faf8ff",
+                        "on-tertiary-container": "#613b00",
+                        "on-secondary-container": "#684000",
+                        "outline": "#6e7980",
+                        "background": "#faf8ff",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "surface-container": "#eaedff",
+                        "tertiary-fixed-dim": "#ffb960",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "secondary": "#855300",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed": "#c4e7ff",
+                        "secondary-container": "#fea619",
+                        "on-secondary-fixed": "#2a1700",
+                        "error-container": "#ffdad6",
+                        "surface-bright": "#faf8ff",
+                        "surface-dim": "#d2d9f4",
+                        "inverse-on-surface": "#eef0ff",
+                        "surface-container-highest": "#dae2fd",
+                        "on-primary-fixed-variant": "#004c69",
+                        "on-background": "#131b2e",
+                        "surface-variant": "#dae2fd",
+                        "on-primary": "#ffffff",
+                        "primary": "#00668a",
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#bdc8d1",
+                        "surface-tint": "#00668a",
+                        "on-surface-variant": "#3e484f",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#ffddb8",
+                        "tertiary-fixed": "#ffddb8",
+                        "inverse-surface": "#283044",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-container-high": "#e2e7ff",
+                        "error": "#ba1a1a",
+                        "tertiary": "#855300"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "section-gap": "80px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "unit": "4px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "display-lg-mobile": ["Manrope"],
+                        "display-lg": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg-mobile": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "display-lg": ["56px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "500"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="w-full top-0 sticky bg-surface dark:bg-background z-40">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-stack-md">
+<button class="text-on-surface-variant dark:text-outline active:scale-95 transition-transform hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile md:text-headline-md text-primary dark:text-primary-fixed-dim">Perfil</h1>
+<button class="text-on-surface-variant dark:text-outline active:scale-95 transition-transform hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+</div>
+</header>
+<main class="px-margin-mobile md:px-margin-desktop max-w-4xl mx-auto flex flex-col gap-section-gap pt-stack-lg">
+<!-- Hero Section -->
+<section class="flex flex-col items-center text-center gap-stack-md">
+<div class="relative inline-block">
+<div class="w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-primary-container to-primary">
+<img alt="Andrei Felipe profile" class="w-full h-full object-cover rounded-full border-4 border-surface" data-alt="A confident young man looking directly at the camera with a slight smile. He is wearing a casual, light-colored shirt. The background is a soft, blurred studio setting with warm, welcoming lighting that matches the modern, refined editorial style of the app. The colors are bright and optimistic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3WYJqEmw3JccFy4fZt7TsYtpHP8gI9vyF8uDIlt1AtZv4hp8muN06UTXgng-tuaStiN7nu22IQlVlM6-IldeckaKn7KqU3iKp-US--cZQYHsyyLU9quJkPEpswxSaag1IGFidZkKSJju5RZhV9DXsi4kLsgjp3DlEcw71XoQjirO1B6v2nxdOBK2q8X2FhF5lGVC-TIYF-oKFFYVScx0jG8dWBE_bvBgDYB7QoNIDJsDSiAPpWe2hPLz2agwOav8ffNCP64ZDqm_-"/>
+</div>
+<button class="absolute bottom-0 right-0 bg-surface-container-lowest text-primary p-2 rounded-full shadow-lg active:scale-95 transition-transform">
+<span class="material-symbols-outlined filled text-xl">photo_camera</span>
+</button>
+</div>
+<div class="flex flex-col gap-unit items-center">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Andrei Felipe</h2>
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary">@andreif</span>
+<div class="flex items-center gap-1 bg-surface-container px-3 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant">public</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Público</span>
+</div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">Construyendo mejores hábitos cada día 🌱</p>
+<div class="flex items-center gap-stack-lg mt-unit">
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-background">1.2k</span>
+<span class="font-label-sm text-label-sm text-outline">Seguidores</span>
+</div>
+<div class="h-8 w-px bg-outline-variant"></div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-background">840</span>
+<span class="font-label-sm text-label-sm text-outline">Siguiendo</span>
+</div>
+</div>
+<button class="mt-stack-sm flex items-center justify-center gap-2 w-full md:w-auto md:px-12 py-3 bg-surface-container hover:bg-surface-container-high text-primary rounded-full font-label-md text-label-md transition-colors active:scale-95 shadow-[0_4px_16px_rgba(0,102,138,0.04)]">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                Editar perfil
+            </button>
+</section>
+<!-- Stats Bento -->
+<section class="grid grid-cols-3 gap-stack-md">
+<div class="bg-surface-container-lowest rounded-3xl p-stack-md flex flex-col items-center text-center shadow-[0_8px_24px_rgba(0,102,138,0.04)]">
+<span class="material-symbols-outlined text-primary mb-2">check_circle</span>
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">12</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">Hábitos</span>
+</div>
+<div class="bg-tertiary-container/10 rounded-3xl p-stack-md flex flex-col items-center text-center shadow-[0_8px_24px_rgba(0,102,138,0.04)] relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-tertiary-container/5 pointer-events-none"></div>
+<span class="material-symbols-outlined filled text-tertiary-container mb-2">local_fire_department</span>
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-tertiary-container">30</span>
+<span class="font-label-sm text-label-sm text-on-tertiary-container mt-1">Mejor racha</span>
+</div>
+<div class="bg-surface-container-lowest rounded-3xl p-stack-md flex flex-col items-center text-center shadow-[0_8px_24px_rgba(0,102,138,0.04)]">
+<span class="material-symbols-outlined text-primary mb-2">star</span>
+<span class="font-headline-md text-headline-md-mobile md:text-headline-md text-on-surface">4.2</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-1">Nivel</span>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-gutter py-stack-sm bg-surface-container-lowest dark:bg-inverse-surface shadow-[0_-8px_32px_rgba(0,102,138,0.08)] rounded-t-lg">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">check_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Habits</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-sm text-label-sm mt-1">Insights</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container dark:hover:bg-surface-variant active:scale-90 transition-all duration-200 px-4 py-1 rounded-full">
+<span class="material-symbols-outlined">auto_awesome</span>
+<span class="font-label-sm text-label-sm mt-1">AI Guide</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary-container dark:bg-on-primary-container text-on-primary-container dark:text-primary-fixed rounded-full px-4 py-1 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined filled">person</span>
+<span class="font-label-sm text-label-sm mt-1">Profile</span>
+</button>
+</nav>
+</body></html>

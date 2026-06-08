@@ -139,7 +139,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -0.3,
-                                      color: scheme.primary,
                                     ),
                               ),
                             ),

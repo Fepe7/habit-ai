@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Perfil de Usuario - HabitAI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#00668a",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#dae2fd",
+                        "on-secondary-container": "#684000",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#613b00",
+                        "on-surface": "#131b2e",
+                        "secondary-fixed-dim": "#ffb95f",
+                        "on-surface-variant": "#3e484f",
+                        "surface-dim": "#d2d9f4",
+                        "tertiary": "#855300",
+                        "inverse-surface": "#283044",
+                        "secondary": "#855300",
+                        "on-background": "#131b2e",
+                        "surface-container": "#eaedff",
+                        "secondary-container": "#fea619",
+                        "tertiary-container": "#f1a02b",
+                        "surface-container-high": "#e2e7ff",
+                        "on-error": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "tertiary-fixed-dim": "#ffb960",
+                        "surface-container-highest": "#dae2fd",
+                        "surface": "#faf8ff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#2a1700",
+                        "surface-bright": "#faf8ff",
+                        "inverse-primary": "#7bd0ff",
+                        "outline": "#6e7980",
+                        "on-primary-fixed-variant": "#004c69",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#7bd0ff",
+                        "primary": "#00668a",
+                        "surface-container-low": "#f2f3ff",
+                        "primary-container": "#38bdf8",
+                        "secondary-fixed": "#ffddb8",
+                        "primary-fixed": "#c4e7ff",
+                        "on-tertiary-fixed": "#2a1700",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "inverse-on-surface": "#eef0ff",
+                        "background": "#faf8ff",
+                        "on-primary-fixed": "#001e2c",
+                        "outline-variant": "#bdc8d1",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#004965",
+                        "tertiary-fixed": "#ffddb8"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-lg": "32px",
+                        "section-gap": "80px",
+                        "stack-sm": "8px",
+                        "unit": "4px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px",
+                        "stack-md": "16px",
+                        "gutter": "24px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Manrope"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-md": ["Inter"],
+                        "display-lg-mobile": ["Manrope"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    fontSize: {
+                        "display-lg": ["56px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "label-sm": ["12px", { lineHeight: "1.2", fontWeight: "500" }],
+                        "headline-md": ["24px", { lineHeight: "1.4", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "1.3", fontWeight: "700" }],
+                        "label-md": ["14px", { lineHeight: "1.2", letterSpacing: "0.01em", fontWeight: "600" }],
+                        "display-lg-mobile": ["40px", { lineHeight: "1.2", letterSpacing: "-0.02em", fontWeight: "800" }],
+                        "body-md": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "body-lg": ["18px", { lineHeight: "1.6", fontWeight: "400" }]
+                    },
+                    boxShadow: {
+                        'ambient': '0 8px 30px rgba(0,102,138,0.08)',
+                        'ambient-hover': '0 12px 40px rgba(0,102,138,0.12)'
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #faf8ff; }
+        h1, h2, h3, h4, h5, h6, .font-display, .font-headline { font-family: 'Manrope', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface antialiased pb-section-gap">
+<!-- TopAppBar (Shared Component) -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center px-margin-mobile h-16 bg-transparent flat no-shadows justify-between backdrop-blur-md bg-surface/80">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="text-center flex-1">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">@alex_runner</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container transition-colors text-on-surface">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<main class="pt-24 px-margin-mobile md:px-margin-desktop max-w-3xl mx-auto flex flex-col gap-stack-lg">
+<!-- Hero Section -->
+<section class="flex flex-col items-center text-center gap-stack-md">
+<div class="relative w-32 h-32">
+<div class="absolute inset-0 rounded-full bg-gradient-to-tr from-primary-container to-primary p-[3px]">
+<div class="w-full h-full bg-surface rounded-full p-[2px]">
+<img alt="Avatar de usuario" class="w-full h-full object-cover rounded-full" data-alt="A close-up portrait of a fit, young man with short dark hair in a bright, modern setting. The lighting is soft and flattering, highlighting his optimistic and energetic expression. The background is a clean, minimalist white studio wall, aligning with a premium editorial light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM-vmT3OBmlW-Z3JY6hR_RuOjWnAvZEuYyZYtbSWD_ffk68qK10k69qQVllGfJ1AoqtquoZsgWduPfL00ijJO1-Cb8ITkGFS4DMXZEPe2DGyw-B3hQfGy53ei-m4S-k5JZXaEXkwVYYj-DigNbkvnWSs8vhCqGJVs_a6rhE7b8VkzJjqUJH9EPlJPY9yHdnZqW43LJW6ZYdUs8DKU_KbcHDUJavklXm4PKEB5H38N81tdv8nrHcCd8Llo5DDpXapzTgV_hSi1XrDmP"/>
+</div>
+</div>
+<div class="absolute bottom-1 right-1 bg-primary text-on-primary rounded-full w-8 h-8 flex items-center justify-center border-4 border-surface shadow-ambient">
+<span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-unit">
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface">Álex Martínez</h2>
+<p class="font-label-md text-label-md text-primary">Miembro desde marzo 2025</p>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-sm mt-2">Apasionado del fitness y la lectura 📚. Creando mi mejor versión día a día.</p>
+</div>
+<div class="flex gap-gutter mt-2">
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-surface">1.2k</span>
+<span class="font-label-sm text-label-sm text-outline">Seguidores</span>
+</div>
+<div class="w-[1px] bg-outline-variant/30"></div>
+<div class="flex flex-col items-center">
+<span class="font-headline-md text-headline-md text-on-surface">450</span>
+<span class="font-label-sm text-label-sm text-outline">Siguiendo</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-stack-sm mt-4 w-full">
+<div class="bg-surface-container px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">group</span>
+<span class="font-label-md text-label-md text-on-surface">Os seguís mutuamente</span>
+</div>
+<button class="w-full max-w-xs bg-gradient-to-r from-primary-container to-primary text-on-primary font-label-md text-label-md py-4 rounded-full flex items-center justify-center gap-2 shadow-ambient hover:shadow-ambient-hover transition-all transform hover:-translate-y-0.5">
+<span class="material-symbols-outlined">person_add</span>
+                    Seguir
+                </button>
+</div>
+</section>
+<!-- Reactions -->
+<section class="flex justify-center">
+<div class="bg-surface-container-low px-6 py-3 rounded-full flex gap-6 shadow-sm border border-white/50">
+<div class="flex items-center gap-1"><span class="text-xl">🔥</span><span class="font-label-md text-label-md text-on-surface-variant">42</span></div>
+<div class="flex items-center gap-1"><span class="text-xl">💪</span><span class="font-label-md text-label-md text-on-surface-variant">18</span></div>
+<div class="flex items-center gap-1"><span class="text-xl">👏</span><span class="font-label-md text-label-md text-on-surface-variant">56</span></div>
+</div>
+</section>
+<!-- Bento Stats -->
+<section class="grid grid-cols-2 gap-stack-sm">
+<div class="bg-surface-container p-6 rounded-DEFAULT flex flex-col gap-2 shadow-ambient">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined">ads_click</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">8</span>
+<span class="font-label-md text-label-md text-outline">Hábitos activos</span>
+</div>
+<div class="bg-surface-container p-6 rounded-DEFAULT flex flex-col gap-2 shadow-ambient relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-10">
+<span class="material-symbols-outlined text-[120px] text-secondary-container" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary-container mb-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">45d</span>
+<span class="font-label-md text-label-md text-outline">Mejor racha</span>
+</div>
+<div class="bg-surface-container p-6 rounded-DEFAULT flex flex-col gap-2 shadow-ambient">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-2">
+<span class="material-symbols-outlined">bar_chart</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">3.8</span>
+<span class="font-label-md text-label-md text-outline">Nivel medio</span>
+</div>
+<div class="bg-surface-container p-6 rounded-DEFAULT flex flex-col gap-2 shadow-ambient">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary-container mb-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">12</span>
+<span class="font-label-md text-label-md text-outline">Logros</span>
+</div>
+</section>
+<!-- Achievements -->
+<section class="flex flex-col gap-stack-md">
+<h3 class="font-headline-md text-headline-md text-on-surface">Logros Recientes</h3>
+<div class="flex gap-stack-md overflow-x-auto hide-scrollbar pb-4 -mx-margin-mobile px-margin-mobile">
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-gradient-to-br from-secondary-container to-tertiary-container flex items-center justify-center text-white shadow-ambient transform hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">directions_run</span>
+</div>
+<span class="font-label-sm text-label-sm text-center text-on-surface-variant leading-tight">Maratón Mensual</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-container to-primary flex items-center justify-center text-white shadow-ambient transform hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">book</span>
+</div>
+<span class="font-label-sm text-label-sm text-center text-on-surface-variant leading-tight">Ratón de Biblioteca</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-gradient-to-br from-[#10b981] to-[#047857] flex items-center justify-center text-white shadow-ambient transform hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">self_improvement</span>
+</div>
+<span class="font-label-sm text-label-sm text-center text-on-surface-variant leading-tight">Mente Zen</span>
+</div>
+<div class="flex flex-col items-center gap-2 min-w-[80px]">
+<div class="w-16 h-16 rounded-full bg-surface-container border-2 border-dashed border-outline-variant flex items-center justify-center text-outline-variant shadow-sm hover:bg-surface-container-high transition-colors cursor-pointer">
+<span class="font-headline-md text-headline-md">+7</span>
+</div>
+<span class="font-label-sm text-label-sm text-center text-on-surface-variant leading-tight">Ver todos</span>
+</div>
+</div>
+</section>
+</main>
+<!-- PRIVATE PROFILE VARIANT (Demonstration purposes) -->
+<div class="w-full bg-surface-container-low py-16 mt-section-gap border-t border-surface-variant">
+<div class="max-w-3xl mx-auto px-margin-mobile flex flex-col items-center text-center gap-stack-md opacity-80">
+<h3 class="font-headline-md text-headline-md text-on-surface-variant mb-4">Vista: Cuenta Privada</h3>
+<div class="relative w-24 h-24 mb-4">
+<div class="w-full h-full bg-surface rounded-full p-[2px] shadow-sm">
+<img alt="Avatar privado" class="w-full h-full object-cover rounded-full grayscale" data-alt="A portrait of a young woman with a neutral expression, shown in grayscale to imply restricted access. The lighting is soft studio light against a plain background. The mood is reserved and elegant, fitting a premium editorial design language." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDADTYEFQgiAFoNFfcD-2QgUfVIUgjf--VRsKnOSOgoV7lKAPKK1x7MtiJzzLgPO9d3rHBB472eYdLWbZhEAZnJLrZTSITscxowoO48H3g7gwyWCUOZ9KDnoM-zRQp6kfwESuRDkpe5yfuoXzQJ1SqIRN60TpLNN_0u7qygBs8ikdmlgX0qRZjslVsOKRbti0nYBpJ9QXFTCurv23HwdFrQ5MnAzl8Ry91DO6-ZbJUyjn0UxiTOxkSBkTdZbuFHlQTQOgptMbAvHKtY"/>
+</div>
+</div>
+<h2 class="font-display-lg-mobile text-display-lg-mobile text-on-surface">@laura_priv</h2>
+<div class="bg-surface-container p-8 rounded-DEFAULT w-full flex flex-col items-center justify-center gap-4 mt-4 shadow-sm border border-white/50">
+<span class="material-symbols-outlined text-[80px] text-outline-variant">lock</span>
+<h4 class="font-headline-md text-headline-md text-on-surface">Cuenta privada</h4>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs">Sigue a esta persona para ver sus hábitos, retos y actividad reciente.</p>
+<button class="mt-4 px-8 py-3 bg-primary text-on-primary font-label-md text-label-md rounded-full shadow-ambient hover:opacity-90 transition-opacity">
+                    Solicitar seguimiento
+                </button>
+</div>
+</div>
+</div>
+</body></html>
