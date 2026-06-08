@@ -8,10 +8,8 @@ workflows:
       app_store_connect: Habit-ai
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.andreistaicu.habitai
-
+      vars:
+        BUNDLE_ID: "com.andreistaicu.habitai"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -24,6 +22,15 @@ workflows:
 
       - name: Instalar pods iOS
         script: cd ios && pod install --repo-update
+
+      - name: Crear certificado y perfil de firma
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
 
       - name: Compilar IPA
         script: |
