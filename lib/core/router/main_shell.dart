@@ -50,7 +50,10 @@ class _MainShellState extends State<MainShell> {
   int _knownReactionsCount = -1;
   int _pendingBadgeCount = 0;
 
-  final PageController _pageController = PageController();
+  // se crea perezosamente en la pestaña correcta cada vez que se entra al
+  // PageView (incl. al volver desde una ruta hija como /settings) y se libera
+  // al salir; así el PageView nunca reaparece en la pestaña anterior
+  PageController? _pageController;
   // evita bucle: swipe → context.go() → rebuild → jumpToPage → onPageChanged
   bool _isSwiping = false;
 
@@ -69,7 +72,7 @@ class _MainShellState extends State<MainShell> {
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     _pendingFollowSub?.cancel();
     _acceptedFollowSub?.cancel();
     _reactionsSub?.cancel();
@@ -260,16 +263,29 @@ class _MainShellState extends State<MainShell> {
     final location = GoRouterState.of(context).uri.path;
     final isMainRoute = _mainPaths.contains(location);
 
-    // sincronizar PageView con la ruta actual (deep links, back button)
-    if (isMainRoute && _pageController.hasClients && !_isSwiping) {
-      final currentPage = _pageController.page?.round() ?? 0;
-      if (currentPage != selected) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_pageController.hasClients) {
-            _pageController.jumpToPage(selected);
-          }
-        });
+    if (isMainRoute) {
+      // crear el controller en la pestaña correcta la primera vez que se monta
+      // el PageView (también al volver desde una ruta hija como /settings),
+      // evitando que reaparezca en la pestaña anterior
+      if (_pageController == null) {
+        _pageController = PageController(initialPage: selected);
+      } else if (_pageController!.hasClients && !_isSwiping) {
+        // ya montado: sincronizar con la ruta actual (deep links, back button)
+        final currentPage = _pageController!.page?.round() ?? selected;
+        if (currentPage != selected) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_pageController?.hasClients ?? false) {
+              _pageController!.jumpToPage(selected);
+            }
+          });
+        }
       }
+    } else if (_pageController != null) {
+      // salimos del PageView (ruta hija): liberar el controller para que al
+      // volver se recree posicionado en la pestaña correcta
+      final old = _pageController!;
+      _pageController = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) => old.dispose());
     }
 
     return Scaffold(
@@ -282,7 +298,7 @@ class _MainShellState extends State<MainShell> {
           Expanded(
             child: isMainRoute
                 ? PageView(
-                    controller: _pageController,
+                    controller: _pageController!,
                     physics: const _QuickSwipePhysics(),
                     onPageChanged: (index) {
                       _isSwiping = true;
@@ -308,9 +324,9 @@ class _MainShellState extends State<MainShell> {
         selectedIndex: selected,
         scheme: scheme,
         onDestinationSelected: (index) {
-          if (isMainRoute && _pageController.hasClients) {
+          if (isMainRoute && (_pageController?.hasClients ?? false)) {
             // tap en nav bar → salto instantáneo (sin animación de deslizamiento)
-            _pageController.jumpToPage(index);
+            _pageController!.jumpToPage(index);
           } else {
             context.go(tabs[index].path);
           }
