@@ -58,7 +58,7 @@ key.properties
 
 # Firebase — configuración con API keys y credenciales de proyecto
 **/google-services.json
-**/GoogleService-Info.plist
+# **/GoogleService-Info.plist  # necesario para CI/CD (iOS)
 # **/firebase_options.dart  # necesario para CI/CD
 functions/node_modules/
 functions/.env

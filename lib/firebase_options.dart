@@ -59,20 +59,22 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBvlhxA-63RgvsbqD80iPqx9Qngl2LCU-8',
-    appId: '1:958324745015:ios:6462cceec48ed1a93cf0b2',
+    appId: '1:958324745015:ios:a63b375576da69263cf0b2',
     messagingSenderId: '958324745015',
     projectId: 'habit-ai-184ad',
     storageBucket: 'habit-ai-184ad.firebasestorage.app',
-    iosBundleId: 'com.habitai.habitai',
+    iosBundleId: 'com.andreistaicu.habitai',
+    iosClientId: '958324745015-hbfhifjrvsbv91qaonqvpjr95thkgdka.apps.googleusercontent.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBvlhxA-63RgvsbqD80iPqx9Qngl2LCU-8',
-    appId: '1:958324745015:ios:6462cceec48ed1a93cf0b2',
+    appId: '1:958324745015:ios:a63b375576da69263cf0b2',
     messagingSenderId: '958324745015',
     projectId: 'habit-ai-184ad',
     storageBucket: 'habit-ai-184ad.firebasestorage.app',
-    iosBundleId: 'com.habitai.habitai',
+    iosBundleId: 'com.andreistaicu.habitai',
+    iosClientId: '958324745015-hbfhifjrvsbv91qaonqvpjr95thkgdka.apps.googleusercontent.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
