@@ -36,6 +36,9 @@ class FollowRepository {
     required String myDisplayName,
     String? myPhotoUrl,
   }) async {
+    // Nadie puede seguirse a sí mismo.
+    if (targetUid == _uid) return;
+
     final now = DateTime.now();
     final batch = _firestore.batch();
 
@@ -78,6 +81,11 @@ class FollowRepository {
     required String toDisplayName,
     String? toPhotoUrl,
   }) async {
+    // Nadie puede enviarse una solicitud a sí mismo.
+    if (toUid == _uid) {
+      throw StateError('No puedes seguirte a ti mismo');
+    }
+
     final doc = _requestsRef.doc();
     await doc.set({
       'fromUid': _uid,

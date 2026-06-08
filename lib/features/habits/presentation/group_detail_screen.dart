@@ -437,10 +437,17 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   onTap: _handleFabTap,
                 ),
               ),
+              // Reutilizamos los snapshots ya resueltos por los StreamBuilders de
+              // arriba: los streams de Firestore (snapshots()) son de suscripción
+              // única, así que no podemos volver a escucharlos dentro de _GroupBody
+              // o el body se quedaría cargando indefinidamente.
               body: _GroupBody(
-                groupStream: _groupStream,
-                habitsStream: _habitsStream,
-                groupId: widget.groupId,
+                group: groupForHeader,
+                groupWaiting:
+                    groupHeaderSnap.connectionState == ConnectionState.waiting,
+                habits: habitsForHeader,
+                habitsWaiting:
+                    habitsHeaderSnap.connectionState == ConnectionState.waiting,
                 onEditGroup: _editGroup,
                 onEditHabit: _editHabit,
                 onDeleteHabit: _deleteHabit,
@@ -453,19 +460,23 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 }
 
-// Extrae el body para no duplicar los StreamBuilders
+// Renderiza el body a partir de los snapshots YA resueltos por los StreamBuilders
+// de GroupDetailScreen. No vuelve a escuchar los streams (serían una segunda
+// suscripción sobre un stream de suscripción única de Firestore → carga infinita).
 class _GroupBody extends StatelessWidget {
-  final Stream<HabitGroupModel?> groupStream;
-  final Stream<List<HabitModel>> habitsStream;
-  final String groupId;
+  final HabitGroupModel? group;
+  final bool groupWaiting;
+  final List<HabitModel> habits;
+  final bool habitsWaiting;
   final Future<void> Function(HabitGroupModel) onEditGroup;
   final Future<void> Function(HabitModel) onEditHabit;
   final Future<void> Function(HabitModel) onDeleteHabit;
 
   const _GroupBody({
-    required this.groupStream,
-    required this.habitsStream,
-    required this.groupId,
+    required this.group,
+    required this.groupWaiting,
+    required this.habits,
+    required this.habitsWaiting,
     required this.onEditGroup,
     required this.onEditHabit,
     required this.onDeleteHabit,
@@ -475,113 +486,98 @@ class _GroupBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    return StreamBuilder<HabitGroupModel?>(
-      stream: groupStream,
-      builder: (context, groupSnap) {
-        if (groupSnap.connectionState == ConnectionState.waiting) {
-          return const SectionSkeleton(itemCount: 4);
-        }
 
-        final group = groupSnap.data;
-        if (group == null || !group.isActive) {
-          return ErrorStateView(
-            message: s.groupDetailNotFound,
-            icon: Icons.folder_off_rounded,
-            onRetry: () => context.go('/'),
-          );
-        }
+    if (groupWaiting) {
+      return const SectionSkeleton(itemCount: 4);
+    }
 
-        return StreamBuilder<List<HabitModel>>(
-          stream: habitsStream,
-          builder: (context, habitsSnap) {
-            final habits = habitsSnap.data ?? [];
+    final group = this.group;
+    if (group == null || !group.isActive) {
+      return ErrorStateView(
+        message: s.groupDetailNotFound,
+        icon: Icons.folder_off_rounded,
+        onRetry: () => context.go('/'),
+      );
+    }
 
-            return CustomScrollView(
-              slivers: [
-                // cabecera editable
-                SliverToBoxAdapter(
-                  child: _GroupHeader(
-                    group: group,
-                    habitCount: habits.length,
-                    onEdit: () => onEditGroup(group),
-                  ),
+    return CustomScrollView(
+      slivers: [
+        // cabecera editable
+        SliverToBoxAdapter(
+          child: _GroupHeader(
+            group: group,
+            habitCount: habits.length,
+            onEdit: () => onEditGroup(group),
+          ),
+        ),
+
+        // separador
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            child: Row(
+              children: [
+                Icon(Icons.list_alt_rounded,
+                    size: 18, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  s.groupDetailHabitsHeader,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
-
-                // separador
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.list_alt_rounded,
-                            size: 18, color: colorScheme.primary),
-                        const SizedBox(width: 8),
-                        Text(
-                          s.groupDetailHabitsHeader,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${habits.length}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(
-                                  color: colorScheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ),
+                const SizedBox(width: 8),
+                Text(
+                  '${habits.length}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant),
                 ),
-
-                if (habitsSnap.connectionState == ConnectionState.waiting)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: SectionSkeleton(itemCount: 3),
-                    ),
-                  )
-                else if (habits.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: EmptyStateView(
-                      icon: Icons.inbox_rounded,
-                      title: s.groupDetailEmptyTitle,
-                      subtitle: s.groupDetailEmptySubtitle,
-                    ),
-                  )
-                else
-                  SliverList.builder(
-                    itemCount: habits.length,
-                    itemBuilder: (context, i) {
-                      final habit = habits[i];
-                      return Padding(
-                        key: ValueKey(habit.id),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: _GroupHabitTile(
-                          habit: habit,
-                          onTap: () => context.go('/habit/${habit.id}'),
-                          onEdit: () => onEditHabit(habit),
-                          onDelete: () => onDeleteHabit(habit),
-                        ),
-                      ).animate().fadeIn(
-                            delay: Duration(milliseconds: 50 * i),
-                            duration: 250.ms,
-                          );
-                    },
-                  ),
-
-                const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
               ],
-            );
-          },
-        );
-      },
+            ),
+          ),
+        ),
+
+        if (habitsWaiting)
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: SectionSkeleton(itemCount: 3),
+            ),
+          )
+        else if (habits.isEmpty)
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: EmptyStateView(
+              icon: Icons.inbox_rounded,
+              title: s.groupDetailEmptyTitle,
+              subtitle: s.groupDetailEmptySubtitle,
+            ),
+          )
+        else
+          SliverList.builder(
+            itemCount: habits.length,
+            itemBuilder: (context, i) {
+              final habit = habits[i];
+              return Padding(
+                key: ValueKey(habit.id),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: _GroupHabitTile(
+                  habit: habit,
+                  onTap: () => context.go('/habit/${habit.id}'),
+                  onEdit: () => onEditHabit(habit),
+                  onDelete: () => onDeleteHabit(habit),
+                ),
+              ).animate().fadeIn(
+                    delay: Duration(milliseconds: 50 * i),
+                    duration: 250.ms,
+                  );
+            },
+          ),
+
+        const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+      ],
     );
   }
 }
