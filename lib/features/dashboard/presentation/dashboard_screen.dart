@@ -71,6 +71,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _generatingPatterns = false;
   bool _isAiPaused = false;
 
+  // pestaña activa del bloque "Insights IA"
+  // (0 ajustes · 1 semanal · 2 mariposa · 3 patrones)
+  int _insightTab = 0;
+
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
   List<CategoryStat> _categoryStats = [];
@@ -163,34 +167,25 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                               const SizedBox(height: 14),
 
-                              const MoodHeroCard(),
-
-                              const SizedBox(height: 14),
-
-                              _buildRenegotiationsCard(context)
+                              // accionable arriba: progreso semanal y ánimo
+                              GestureDetector(
+                                onTap: () => context.goNamed('dashboard-weekly'),
+                                child: _buildWeeklyChart(context),
+                              )
                                   .animate()
                                   .fadeIn(delay: 140.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
 
-                              _buildWeeklyReviewCard(context)
-                                  .animate()
-                                  .fadeIn(delay: 150.ms, duration: 400.ms)
-                                  .slideY(begin: 0.05),
+                              const MoodHeroCard(),
 
                               const SizedBox(height: 14),
 
-                              _buildButterflyCard(context)
+                              // toda la IA agrupada en un único bloque con selector
+                              _buildAIInsightsSection(context)
                                   .animate()
-                                  .fadeIn(delay: 175.ms, duration: 400.ms)
-                                  .slideY(begin: 0.05),
-
-                              const SizedBox(height: 14),
-
-                              _buildPatternsCard(context)
-                                  .animate()
-                                  .fadeIn(delay: 183.ms, duration: 400.ms)
+                                  .fadeIn(delay: 160.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
@@ -201,16 +196,6 @@ class _DashboardScreenState extends State<DashboardScreen>
                               )
                                   .animate()
                                   .fadeIn(delay: 190.ms, duration: 400.ms)
-                                  .slideY(begin: 0.05),
-
-                              const SizedBox(height: 14),
-
-                              GestureDetector(
-                                onTap: () => context.goNamed('dashboard-weekly'),
-                                child: _buildWeeklyChart(context),
-                              )
-                                  .animate()
-                                  .fadeIn(delay: 200.ms, duration: 400.ms)
                                   .slideY(begin: 0.05),
 
                               const SizedBox(height: 14),
@@ -355,6 +340,101 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   static const _amber = Color(0xFFF59E0B);
+
+  // ==================== BLOQUE INSIGHTS IA ====================
+
+  /// Agrupa las 4 features de IA (ajustes, semanal, mariposa, patrones) en un
+  /// solo hueco visual: selector de chips + la tarjeta elegida debajo.
+  /// Evita 4 secciones paralelas compitiendo por atención.
+  Widget _buildAIInsightsSection(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final s = S.of(context);
+    const indigo = Color(0xFF6366F1);
+
+    final tabs = [
+      (s.dashboardInsightsChipAdjust, Icons.auto_fix_high_rounded, _amber),
+      (s.dashboardInsightsChipWeekly, Icons.insights_rounded, AppTheme.tertiary),
+      (s.dashboardInsightsChipButterfly, null, AppTheme.tertiary),
+      (s.dashboardInsightsChipPatterns, Icons.analytics_rounded, indigo),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 18, color: scheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                s.dashboardInsightsTitle,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (int i = 0; i < tabs.length; i++) ...[
+                ChoiceChip(
+                  // mariposa no tiene icono Material: usa el emoji de su card
+                  avatar: tabs[i].$2 == null
+                      ? const Text('🦋', style: TextStyle(fontSize: 13))
+                      : Icon(
+                          tabs[i].$2,
+                          size: 16,
+                          color: _insightTab == i
+                              ? tabs[i].$3
+                              : scheme.onSurfaceVariant,
+                        ),
+                  label: Text(tabs[i].$1),
+                  labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _insightTab == i
+                            ? scheme.onSurface
+                            : scheme.onSurfaceVariant,
+                      ),
+                  selected: _insightTab == i,
+                  selectedColor: tabs[i].$3.withValues(alpha: 0.14),
+                  backgroundColor: scheme.surfaceContainerLowest,
+                  showCheckmark: false,
+                  shape: const StadiumBorder(side: BorderSide.none),
+                  onSelected: (_) => setState(() => _insightTab = i),
+                ),
+                if (i < tabs.length - 1) const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        // la tarjeta seleccionada — altura animada al cambiar de pestaña
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            child: KeyedSubtree(
+              key: ValueKey('insight_$_insightTab'),
+              child: switch (_insightTab) {
+                0 => _buildRenegotiationsCard(context),
+                1 => _buildWeeklyReviewCard(context),
+                2 => _buildButterflyCard(context),
+                _ => _buildPatternsCard(context),
+              },
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   // card de ajuste inteligente — estado vacío o con sugerencias activas
   Widget _buildRenegotiationsCard(BuildContext context) {

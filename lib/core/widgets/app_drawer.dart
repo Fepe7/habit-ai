@@ -136,12 +136,7 @@ class _AppDrawerState extends State<AppDrawer> {
                   subtitle: s.drawerAchievementsSubtitle,
                   onTap: () => _pushNamedAndClose('achievements'),
                 ),
-                _DrawerTile(
-                  icon: Icons.bar_chart_rounded,
-                  title: s.drawerLevels,
-                  subtitle: s.drawerLevelsSubtitle,
-                  onTap: () => _pushNamedAndClose('levels'),
-                ),
+                // "Niveles" se quitó del menú: ya vive en Perfil → Maestría
                 _DrawerTile(
                   icon: Icons.mood_rounded,
                   title: s.drawerMoodCalendar,

@@ -132,10 +132,16 @@ SplashScreen → auth state
   ├── No auth → LoginScreen ↔ RegisterScreen (con Google Sign-In)
   └── Auth
       ├── onboardingCompleted=false → OnboardingFlow
-      └── onboardingCompleted=true → MainShell (BottomNav 4 tabs)
-          Tab 1: HabitsScreen · Tab 2: DashboardScreen · Tab 3: AIScreen · Tab 4: SettingsScreen
-          + Drawer: Perfil, Explorar, Retos, Niveles, Notificaciones, Comunidad
+      └── onboardingCompleted=true → MainShell (BottomNav 5 tabs, swipe entre tabs)
+          Tab 1: HabitsScreen (/) · Tab 2: DashboardScreen (/dashboard) · Tab 3: AIScreen (/ai)
+          Tab 4: ExploreScreen (/explore) · Tab 5: ProfileScreen (/profile)
 ```
+
+- **HabitsScreen** (vista "Hoy"): pendientes arriba por grupos, sección "Completados hoy" plegada al final, enlace a Todos los hábitos. Header con campana de notificaciones (badge) que abre `NotificationsBottomSheet`.
+- **ExploreScreen** agrupa lo social: desde ahí se llega a Comunidad (`/community`), Retos (`/challenges`) y perfiles públicos (`/profiles/:userId`).
+- **ProfileScreen**: header compacto estilo Instagram + tabs Hábitos · Maestría (los niveles viven aquí, no en el drawer). Ajustes via icono ⚙ (`/settings`).
+- **Drawer** (hamburguesa en headers): Logros, Ánimo, Todos los hábitos, Revisión semanal, Mariposa, Crear hábito, Chat IA, Modo enfermedad, Ajustes. Sin Niveles (duplicaría Perfil → Maestría).
+- Badge en tab Perfil = solicitudes de seguimiento pendientes.
 
 ---
 

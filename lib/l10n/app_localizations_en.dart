@@ -495,6 +495,21 @@ class SEn extends S {
   String get dashboardSmartAdjust => 'Smart adjust';
 
   @override
+  String get dashboardInsightsTitle => 'AI Insights';
+
+  @override
+  String get dashboardInsightsChipAdjust => 'Adjustments';
+
+  @override
+  String get dashboardInsightsChipWeekly => 'Weekly';
+
+  @override
+  String get dashboardInsightsChipButterfly => 'Butterfly';
+
+  @override
+  String get dashboardInsightsChipPatterns => 'Patterns';
+
+  @override
   String get dashboardAIPersonalized => 'AI · Personalized';
 
   @override
@@ -786,6 +801,9 @@ class SEn extends S {
 
   @override
   String get habitsAllDone => 'All done!';
+
+  @override
+  String get habitsCompletedTodaySection => 'Completed today';
 
   @override
   String habitsCompletedOf(int completed, int total) {
