@@ -117,6 +117,15 @@ class _HabitAIAppState extends State<HabitAIApp> {
         ],
         supportedLocales: S.supportedLocales,
         routerConfig: _router,
+        // Cierra el teclado al tocar fuera de cualquier campo de texto.
+        builder: (context, child) => GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            final focus = FocusManager.instance.primaryFocus;
+            if (focus != null && focus.hasFocus) focus.unfocus();
+          },
+          child: child,
+        ),
       ),
     );
   }

@@ -961,6 +961,36 @@ abstract class S {
   /// **'Ajuste inteligente'**
   String get dashboardSmartAdjust;
 
+  /// No description provided for @dashboardInsightsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Insights IA'**
+  String get dashboardInsightsTitle;
+
+  /// No description provided for @dashboardInsightsChipAdjust.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustes'**
+  String get dashboardInsightsChipAdjust;
+
+  /// No description provided for @dashboardInsightsChipWeekly.
+  ///
+  /// In es, this message translates to:
+  /// **'Semanal'**
+  String get dashboardInsightsChipWeekly;
+
+  /// No description provided for @dashboardInsightsChipButterfly.
+  ///
+  /// In es, this message translates to:
+  /// **'Mariposa'**
+  String get dashboardInsightsChipButterfly;
+
+  /// No description provided for @dashboardInsightsChipPatterns.
+  ///
+  /// In es, this message translates to:
+  /// **'Patrones'**
+  String get dashboardInsightsChipPatterns;
+
   /// No description provided for @dashboardAIPersonalized.
   ///
   /// In es, this message translates to:
@@ -1410,6 +1440,12 @@ abstract class S {
   /// In es, this message translates to:
   /// **'¡Todo listo!'**
   String get habitsAllDone;
+
+  /// No description provided for @habitsCompletedTodaySection.
+  ///
+  /// In es, this message translates to:
+  /// **'Completados hoy'**
+  String get habitsCompletedTodaySection;
 
   /// No description provided for @habitsCompletedOf.
   ///

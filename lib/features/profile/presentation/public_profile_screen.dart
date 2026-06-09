@@ -9,6 +9,8 @@ import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../achievements/presentation/achievement_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
+import '../../../core/widgets/pinned_tab_bar.dart';
+import '../../../core/widgets/profile_photo_viewer.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../achievements/domain/achievement_model.dart';
 import '../../../core/services/feedback_service.dart';
@@ -113,6 +115,16 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _openAvatar() {
+    final photoUrl = _profile?.photoUrl ?? _dirEntry?.photoUrl;
+    if (photoUrl == null || photoUrl.isEmpty) return;
+    ProfilePhotoViewer.show(
+      context,
+      photoUrl: photoUrl,
+      heroTag: 'profile-photo-${widget.userId}',
+    );
   }
 
   Future<void> _handleReact(String emoji) async {
@@ -248,148 +260,231 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final showAchievements = _dirEntry?.showAchievements ?? true;
     final showFollowerCount = _dirEntry?.showFollowerCount ?? true;
 
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(
-          '@${_dirEntry?.username ?? _profile?.username ?? ''}',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-        ),
+    // pestaña de logros/stats solo si hay datos publicables
+    final showInfoTab = _profile != null && (showStats || showAchievements);
+
+    final headerSlivers = <Widget>[
+      SliverToBoxAdapter(
+        child: _ProfileHeader(
+          profile: _profile,
+          dirEntry: _dirEntry,
+          followState: _followState,
+          followLoading: _followLoading,
+          isOwnProfile: _isOwnProfile,
+          isMutual: _isMutual,
+          followersCount: _followersCount,
+          followingCount: _followingCount,
+          showFollowerCount: showFollowerCount,
+          onFollowTap: _handleFollowTap,
+          onAvatarTap: _openAvatar,
+          heroTag: 'profile-photo-${widget.userId}',
+        )
+            .animate()
+            .fadeIn(duration: 320.ms)
+            .slideY(begin: 0.05, end: 0, duration: 360.ms),
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: _ProfileHeader(
-              profile: _profile,
-              dirEntry: _dirEntry,
-              followState: _followState,
-              followLoading: _followLoading,
-              isOwnProfile: _isOwnProfile,
-              isMutual: _isMutual,
-              followersCount: _followersCount,
-              followingCount: _followingCount,
-              showFollowerCount: showFollowerCount,
-              onFollowTap: _handleFollowTap,
-            )
-                .animate()
-                .fadeIn(duration: 320.ms)
-                .slideY(begin: 0.05, end: 0, duration: 360.ms),
+
+      // Reacciones al perfil — visibles siempre que se pueda ver el contenido
+      if (canSeeContent && (_dirEntry?.socialReactionsEnabled ?? true))
+        SliverToBoxAdapter(
+          child: StreamBuilder<List<ReactionModel>>(
+            stream: _reactRepo.watchReactionsForProfile(widget.userId),
+            builder: (context, snap) {
+              final reactions = snap.data ?? [];
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: ProfileReactionsPill(
+                  myUid: _myUid,
+                  reactions: reactions,
+                  isOwnProfile: _isOwnProfile,
+                  onTap: (emoji) {
+                    final myEmoji = reactions
+                        .where((r) => r.reactorUid == _myUid)
+                        .map((r) => r.emoji)
+                        .firstOrNull;
+                    if (myEmoji == emoji) return _handleUnreact();
+                    return _handleReact(emoji);
+                  },
+                ),
+              ).animate().fadeIn(delay: 60.ms, duration: 280.ms);
+            },
           ),
+        ),
+    ];
 
-          // Reacciones al perfil — visibles siempre que se pueda ver el contenido
-          if (canSeeContent && (_dirEntry?.socialReactionsEnabled ?? true))
-            StreamBuilder<List<ReactionModel>>(
-              stream: _reactRepo.watchReactionsForProfile(widget.userId),
-              builder: (context, snap) {
-                final reactions = snap.data ?? [];
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: ProfileReactionsPill(
-                      myUid: _myUid,
-                      reactions: reactions,
-                      isOwnProfile: _isOwnProfile,
-                      onTap: (emoji) {
-                        final myEmoji = reactions
-                            .where((r) => r.reactorUid == _myUid)
-                            .map((r) => r.emoji)
-                            .firstOrNull;
-                        if (myEmoji == emoji) return _handleUnreact();
-                        return _handleReact(emoji);
-                      },
-                    ),
-                  ).animate().fadeIn(delay: 60.ms, duration: 280.ms),
-                );
-              },
+    final appBar = AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      title: Text(
+        '@${_dirEntry?.username ?? _profile?.username ?? ''}',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
+      ),
+    );
 
-          if (!canSeeContent)
+    if (!canSeeContent) {
+      return Scaffold(
+        backgroundColor: scheme.surface,
+        appBar: appBar,
+        body: CustomScrollView(
+          slivers: [
+            ...headerSlivers,
             SliverToBoxAdapter(
               child: _PrivateProfileMessage(
                 isPending: _followState == _FollowState.pending,
               ).animate().fadeIn(delay: 100.ms),
-            )
-          else ...[
-            if (_profile != null && showStats)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  child: _StatsBento(
-                    profile: _profile!,
-                    showAchievements: showAchievements,
-                  ),
-                ).animate().fadeIn(delay: 80.ms, duration: 320.ms),
-              ),
-
-            if (_profile != null &&
-                showAchievements &&
-                _profile!.unlockedAchievementTypes.isNotEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                  child: _AchievementsShowcase(
-                    types: _profile!.unlockedAchievementTypes,
-                  ),
-                ).animate().fadeIn(delay: 140.ms, duration: 320.ms),
-              ),
-
-            if (showHabits)
-              StreamBuilder<List<PublicHabitModel>>(
-                stream: _repo.watchPublicHabits(
-                  widget.userId,
-                  // el owner y sus seguidores ven hábitos 'followers'
-                  viewerIsFollower: _isOwnProfile ||
-                      _followState == _FollowState.following,
-                ),
-                builder: (context, snap) {
-                  if (snap.connectionState == ConnectionState.waiting) {
-                    return const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    );
-                  }
-                  final habits = snap.data ?? [];
-                  return SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                      child: _HabitsGrid(habits: habits),
-                    ),
-                  );
-                },
-              ),
-
-            // sección de retos públicos
-            StreamBuilder<List<PublicChallengeModel>>(
-              stream: _repo.watchPublicChallenges(widget.userId),
-              builder: (context, snap) {
-                final challenges = snap.data ?? [];
-                if (challenges.isEmpty) {
-                  return const SliverToBoxAdapter(child: SizedBox.shrink());
-                }
-                return SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                    child: _ChallengesSection(
-                      challenges: challenges,
-                      ownerUid: widget.userId,
-                      publicRepo: _repo,
-                    ),
-                  ),
-                );
-              },
             ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
+        ),
+      );
+    }
 
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
-        ],
+    final habitsTab = _PublicHabitsTab(
+      repo: _repo,
+      userId: widget.userId,
+      showHabits: showHabits,
+      viewerIsFollower:
+          _isOwnProfile || _followState == _FollowState.following,
+    );
+
+    return Scaffold(
+      backgroundColor: scheme.surface,
+      appBar: appBar,
+      body: DefaultTabController(
+        length: showInfoTab ? 2 : 1,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            ...headerSlivers,
+            if (showInfoTab)
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: PinnedTabBarDelegate(
+                  backgroundColor: scheme.surface,
+                  tabBar: TabBar(
+                    labelStyle: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                    tabs: [
+                      Tab(text: S.of(context).profileHabits),
+                      Tab(text: S.of(context).achievementsTitle),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+          body: showInfoTab
+              ? TabBarView(
+                  children: [
+                    habitsTab,
+                    _PublicInfoTab(
+                      profile: _profile!,
+                      showStats: showStats,
+                      showAchievements: showAchievements,
+                    ),
+                  ],
+                )
+              : habitsTab,
+        ),
       ),
+    );
+  }
+}
+
+// ==================== TABS ====================
+
+/// Pestaña de hábitos públicos + retos compartidos.
+class _PublicHabitsTab extends StatelessWidget {
+  final PublicProfileRepository repo;
+  final String userId;
+  final bool showHabits;
+  final bool viewerIsFollower;
+
+  const _PublicHabitsTab({
+    required this.repo,
+    required this.userId,
+    required this.showHabits,
+    required this.viewerIsFollower,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+      children: [
+        if (showHabits)
+          StreamBuilder<List<PublicHabitModel>>(
+            stream: repo.watchPublicHabits(
+              userId,
+              // el owner y sus seguidores ven hábitos 'followers'
+              viewerIsFollower: viewerIsFollower,
+            ),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final habits = snap.data ?? [];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 28),
+                child: _HabitsGrid(habits: habits),
+              );
+            },
+          ),
+
+        // sección de retos públicos
+        StreamBuilder<List<PublicChallengeModel>>(
+          stream: repo.watchPublicChallenges(userId),
+          builder: (context, snap) {
+            final challenges = snap.data ?? [];
+            if (challenges.isEmpty) return const SizedBox.shrink();
+            return _ChallengesSection(
+              challenges: challenges,
+              ownerUid: userId,
+              publicRepo: repo,
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+/// Pestaña de estadísticas y logros desbloqueados.
+class _PublicInfoTab extends StatelessWidget {
+  final PublicProfileModel profile;
+  final bool showStats;
+  final bool showAchievements;
+
+  const _PublicInfoTab({
+    required this.profile,
+    required this.showStats,
+    required this.showAchievements,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+      children: [
+        if (showStats)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: _StatsBento(
+              profile: profile,
+              showAchievements: showAchievements,
+            ),
+          ).animate().fadeIn(duration: 320.ms),
+        if (showAchievements && profile.unlockedAchievementTypes.isNotEmpty)
+          _AchievementsShowcase(
+            types: profile.unlockedAchievementTypes,
+          ).animate().fadeIn(delay: 80.ms, duration: 320.ms),
+      ],
     );
   }
 }
@@ -407,6 +502,8 @@ class _ProfileHeader extends StatelessWidget {
   final int followingCount;
   final bool showFollowerCount;
   final VoidCallback onFollowTap;
+  final VoidCallback onAvatarTap;
+  final String heroTag;
 
   const _ProfileHeader({
     required this.profile,
@@ -419,6 +516,8 @@ class _ProfileHeader extends StatelessWidget {
     required this.followingCount,
     required this.showFollowerCount,
     required this.onFollowTap,
+    required this.onAvatarTap,
+    required this.heroTag,
   });
 
   String get _displayName =>
@@ -438,15 +537,22 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: Column(
         children: [
-          // Avatar con anillo de gradiente y badge verificado (veteranos 5+ logros)
-          AvatarCircle(
-            initials: _initials,
-            size: 96,
-            photoUrl: _photoUrl,
-            ringGradient: true,
-            badge: _unlockedAchievements >= 5
-                ? AvatarBadge.verified
-                : AvatarBadge.none,
+          // Avatar con anillo de gradiente y badge verificado (veteranos 5+ logros).
+          // Tap: abre la foto a pantalla completa (estilo Instagram).
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: Hero(
+              tag: heroTag,
+              child: AvatarCircle(
+                initials: _initials,
+                size: 96,
+                photoUrl: _photoUrl,
+                ringGradient: true,
+                badge: _unlockedAchievements >= 5
+                    ? AvatarBadge.verified
+                    : AvatarBadge.none,
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           // nombre real como título principal
