@@ -14,6 +14,7 @@ import '../domain/public_profile_model.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/user_directory_entry.dart';
 import 'widgets/public_profile_card.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Directorio global de perfiles con búsqueda universal por username.
 /// El feed principal solo muestra perfiles públicos (public_profiles).
@@ -243,7 +244,7 @@ class _FeedView extends StatelessWidget {
           return false;
         },
         child: ListView.builder(
-          padding: const EdgeInsets.only(bottom: 100),
+          padding: EdgeInsets.only(bottom: context.bottomNavInset),
           itemCount: profiles.length + (hasMore ? 1 : 0),
           itemBuilder: (context, i) {
             if (i == profiles.length) {
@@ -296,7 +297,7 @@ class _SearchResultsView extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 100),
+      padding: EdgeInsets.only(bottom: context.bottomNavInset),
       itemCount: results.length,
       itemBuilder: (context, i) => _DirectoryEntryCard(
         entry: results[i],

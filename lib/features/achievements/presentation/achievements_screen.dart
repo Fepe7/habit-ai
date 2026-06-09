@@ -7,6 +7,7 @@ import '../data/achievement_repository.dart';
 import '../domain/achievement_model.dart';
 import '../../../l10n/app_localizations.dart';
 import 'achievement_l10n.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla con todos los logros (desbloqueados y bloqueados)
 class AchievementsScreen extends StatefulWidget {
@@ -53,7 +54,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           final unlockedCount = unlockedTypes.length;
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomNavInset),
             child: Column(
               children: [
                 // resumen

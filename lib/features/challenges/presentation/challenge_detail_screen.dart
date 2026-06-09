@@ -23,6 +23,7 @@ import '../data/challenge_repository.dart';
 import '../domain/challenge_model.dart';
 import '../domain/challenge_participant_model.dart';
 import '../domain/challenge_progress_model.dart';
+import '../../../core/router/main_shell.dart';
 
 // Detalle del reto con grid de progreso dual
 class ChallengeDetailScreen extends StatefulWidget {
@@ -383,7 +384,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.fromLTRB(20, 20, 20, context.bottomNavInset),
         children: [
           // ── quién retó a quién ──
           if (_partner != null) _buildChallengerBanner(challenge, scheme),

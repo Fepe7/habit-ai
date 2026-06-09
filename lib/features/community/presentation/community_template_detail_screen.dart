@@ -8,6 +8,7 @@ import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
 import '../domain/template_habit_snapshot.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de detalle de una plantilla de la comunidad con preview de habitos
 /// e importacion con un tap.
@@ -137,7 +138,7 @@ class _CommunityTemplateDetailScreenState
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
     final bottomPad =
-        MediaQuery.of(context).padding.bottom + kBottomNavigationBarHeight + 16;
+        context.bottomNavInset;
 
     if (_loading) {
       return const Scaffold(

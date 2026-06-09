@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../dashboard/data/stats_repository.dart';
 import 'widgets/mood_correlation_card.dart' show MoodCombinedChart;
+import '../../../core/router/main_shell.dart';
 
 // Pantalla expandida con todas las correlaciones ánimo-hábitos
 class MoodInsightsScreen extends StatefulWidget {
@@ -117,7 +118,7 @@ class _MoodInsightsScreenState extends State<MoodInsightsScreen> {
 
           return SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
-                20, 0, 20, 32 + MediaQuery.paddingOf(context).bottom),
+                20, 0, 20, context.bottomNavInset),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

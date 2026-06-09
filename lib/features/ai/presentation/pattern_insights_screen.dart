@@ -9,6 +9,7 @@ import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/pattern_insight_model.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de detalle para los insights de patrones de un período concreto
 class PatternInsightsScreen extends StatefulWidget {
@@ -198,7 +199,7 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
   Widget _buildContent(BuildContext context, PatternInsightModel model) {
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, context.bottomNavInset),
       children: [
         // card de resumen
         _buildSummaryCard(context, model)

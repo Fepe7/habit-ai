@@ -75,10 +75,6 @@ class _HabitsScreenState extends State<HabitsScreen>
 
   bool _hasNewNotifs = false;
 
-  // sección "Completados hoy": empieza plegada para dejar protagonismo
-  // a los hábitos pendientes (vista "Hoy")
-  bool _completedExpanded = false;
-
   // IDs de hábitos que deben mostrar el nudge (siguiente en cadena)
   final Set<String> _nudgeHabitIds = {};
   // título del hábito completado que disparó el nudge, por ID del receptor
@@ -922,15 +918,6 @@ class _HabitsScreenState extends State<HabitsScreen>
                 // todos los grupos activos, incluyendo los vacíos
                 final activeGroups = groups.toList();
 
-                // vista "Hoy": los completados salen de las secciones y se
-                // agrupan en una sección plegada al final
-                final completedHabits = allHabits
-                    .where((h) => _completedToday[h.id] == true)
-                    .toList();
-                final ungroupedPending = ungroupedHabits
-                    .where((h) => _completedToday[h.id] != true)
-                    .toList();
-
                 if (_fullReorderMode) {
                   return _buildFullReorderView(context);
                 }
@@ -951,22 +938,17 @@ class _HabitsScreenState extends State<HabitsScreen>
                         ),
                       ),
 
-                      // grupos como acordeones (solo hábitos pendientes;
-                      // los contadores siguen reflejando el total del grupo)
+                      // grupos como acordeones
                       ...activeGroups.map((group) {
                         final groupHabits = habitsByGroup[group.id] ?? [];
                         final groupCompleted = groupHabits
                             .where((h) => _completedToday[h.id] == true)
                             .length;
-                        final groupPending = groupHabits
-                            .where((h) => _completedToday[h.id] != true)
-                            .toList();
                         return SliverToBoxAdapter(
                           key: ValueKey('group_${group.id}'),
                           child: _GroupSection(
                             group: group,
-                            habits: groupPending,
-                            totalCount: groupHabits.length,
+                            habits: groupHabits,
                             completedCount: groupCompleted,
                             isExpanded: _expandedGroups[group.id] ?? true,
                             onToggleExpanded: () {
@@ -998,12 +980,12 @@ class _HabitsScreenState extends State<HabitsScreen>
                         );
                       }),
 
-                      // habitos sin grupo (solo pendientes)
-                      if (ungroupedPending.isNotEmpty)
+                      // habitos sin grupo
+                      if (ungroupedHabits.isNotEmpty)
                         SliverToBoxAdapter(
                           key: const ValueKey('ungrouped'),
                           child: _UngroupedSection(
-                            habits: ungroupedPending,
+                            habits: ungroupedHabits,
                             completedToday: _completedToday,
                             onToggleHabit: _toggleHabit,
                             onTapHabit: (h) => context.push('/habit/${h.id}'),
@@ -1022,30 +1004,6 @@ class _HabitsScreenState extends State<HabitsScreen>
                             pendingSyncIds: pendingSyncIds,
                           ),
                         ),
-
-                      // completados hoy — plegados y atenuados al final
-                      if (completedHabits.isNotEmpty)
-                        SliverToBoxAdapter(
-                          key: const ValueKey('completed_today'),
-                          child: _CompletedTodaySection(
-                            habits: completedHabits,
-                            expanded: _completedExpanded,
-                            onToggleExpanded: () => setState(
-                              () => _completedExpanded = !_completedExpanded,
-                            ),
-                            onToggleHabit: _toggleHabit,
-                            onTapHabit: (h) => context.push('/habit/${h.id}'),
-                            onEditHabit: _editHabit,
-                            onDeleteHabit: _deleteHabit,
-                            selectionMode: _selectionMode,
-                            selectedIds: _selectedHabitIds,
-                            onToggleSelect: _toggleHabitSelection,
-                          ),
-                        ),
-
-                      // acceso discreto a los hábitos que no tocan hoy
-                      const SliverToBoxAdapter(child: _AllHabitsLink()),
-
                     SliverToBoxAdapter(
                       child: SizedBox(height: context.bottomNavInset),
                     ),
@@ -1964,12 +1922,7 @@ class _DailyProgressHero extends StatelessWidget {
 
 class _GroupSection extends StatelessWidget {
   final HabitGroupModel group;
-
-  /// Hábitos pendientes a mostrar (los completados van a su propia sección).
   final List<HabitModel> habits;
-
-  /// Total de hábitos del grupo hoy (para la barra de progreso y el contador).
-  final int totalCount;
   final int completedCount;
   final bool isExpanded;
   final VoidCallback onToggleExpanded;
@@ -1995,7 +1948,6 @@ class _GroupSection extends StatelessWidget {
   const _GroupSection({
     required this.group,
     required this.habits,
-    required this.totalCount,
     required this.completedCount,
     required this.isExpanded,
     required this.onToggleExpanded,
@@ -2022,8 +1974,8 @@ class _GroupSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final allDone = completedCount == totalCount && totalCount > 0;
-    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+    final allDone = completedCount == habits.length && habits.isNotEmpty;
+    final progress = habits.isNotEmpty ? completedCount / habits.length : 0.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
@@ -2085,7 +2037,7 @@ class _GroupSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                totalCount == 0 ? '–' : '$completedCount/$totalCount',
+                                habits.isEmpty ? '–' : '$completedCount/${habits.length}',
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: allDone
                                       ? AppTheme.tertiaryContainer
@@ -2145,27 +2097,7 @@ class _GroupSection extends StatelessWidget {
               secondChild: Column(
                 children: [
                   Divider(height: 1, color: scheme.outlineVariant.withValues(alpha: 0.12)),
-                  if (totalCount > 0 && habits.isEmpty)
-                    // sin pendientes: todo el grupo completado hoy
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 14),
-                      child: Row(
-                        children: [
-                          Icon(Icons.check_circle_rounded,
-                              size: 16, color: AppTheme.tertiaryContainer),
-                          const SizedBox(width: 8),
-                          Text(
-                            S.of(context).habitsAllDone,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: scheme.onSurfaceVariant,
-                                    ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (habits.isEmpty)
+                  if (habits.isEmpty)
                     // grupo vacío: invitar a añadir hábitos
                     InkWell(
                       onTap: onEditGroup,
@@ -2334,166 +2266,6 @@ class _UngroupedSection extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ==================== COMPLETADOS HOY ====================
-
-/// Sección plegada (por defecto) con los hábitos ya completados hoy.
-/// Mantiene la pantalla centrada en lo pendiente; al desmarcar un hábito
-/// vuelve a su sección original.
-class _CompletedTodaySection extends StatelessWidget {
-  final List<HabitModel> habits;
-  final bool expanded;
-  final VoidCallback onToggleExpanded;
-  final void Function(HabitModel) onToggleHabit;
-  final void Function(HabitModel) onTapHabit;
-  final void Function(HabitModel) onEditHabit;
-  final void Function(HabitModel) onDeleteHabit;
-  final bool selectionMode;
-  final Set<String> selectedIds;
-  final void Function(String) onToggleSelect;
-
-  const _CompletedTodaySection({
-    required this.habits,
-    required this.expanded,
-    required this.onToggleExpanded,
-    required this.onToggleHabit,
-    required this.onTapHabit,
-    required this.onEditHabit,
-    required this.onDeleteHabit,
-    required this.selectionMode,
-    required this.selectedIds,
-    required this.onToggleSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Container(
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: AppTheme.ambientShadow(),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            InkWell(
-              onTap: onToggleExpanded,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 16, 14),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle_rounded,
-                        size: 20, color: AppTheme.tertiaryContainer),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        S.of(context).habitsCompletedTodaySection,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '${habits.length}',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    AnimatedRotation(
-                      turns: expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 250),
-                      child: Icon(Icons.expand_more_rounded,
-                          color: scheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            AnimatedCrossFade(
-              firstChild: const SizedBox.shrink(),
-              secondChild: Column(
-                children: [
-                  Divider(
-                      height: 1,
-                      color: scheme.outlineVariant.withValues(alpha: 0.12)),
-                  // atenuados: ya no compiten visualmente con los pendientes
-                  Opacity(
-                    opacity: 0.65,
-                    child: Column(
-                      children: [
-                        for (final habit in habits)
-                          HabitCard(
-                            key: ValueKey('done_${habit.id}'),
-                            habit: habit,
-                            isCompletedToday: true,
-                            onToggle: () => onToggleHabit(habit),
-                            onTap: () => onTapHabit(habit),
-                            onEdit: () => onEditHabit(habit),
-                            onDelete: () => onDeleteHabit(habit),
-                            isInsideGroup: true,
-                            selectionMode: selectionMode,
-                            isSelected: selectedIds.contains(habit.id),
-                            onToggleSelect: () => onToggleSelect(habit.id),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              crossFadeState: expanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
-              sizeCurve: Curves.easeOutCubic,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Enlace discreto al listado completo de hábitos (incluye los que no tocan hoy).
-class _AllHabitsLink extends StatelessWidget {
-  const _AllHabitsLink();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Center(
-        child: TextButton.icon(
-          onPressed: () => context.pushNamed('all-habits'),
-          icon: Icon(Icons.list_alt_rounded,
-              size: 18, color: scheme.onSurfaceVariant),
-          label: Text(
-            S.of(context).drawerAllHabits,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
       ),
     );
   }

@@ -24,6 +24,7 @@ import '../data/public_profile_repository.dart';
 import '../domain/public_challenge_model.dart';
 import '../domain/public_habit_model.dart';
 import '../domain/public_profile_model.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de detalle de perfil — soporta públicos, privados y estados de follow.
 ///
@@ -336,7 +337,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 isPending: _followState == _FollowState.pending,
               ).animate().fadeIn(delay: 100.ms),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+            SliverToBoxAdapter(child: SizedBox(height: context.bottomNavInset)),
           ],
         ),
       );
@@ -413,7 +414,7 @@ class _PublicHabitsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, context.bottomNavInset),
       children: [
         if (showHabits)
           StreamBuilder<List<PublicHabitModel>>(
@@ -470,7 +471,7 @@ class _PublicInfoTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, context.bottomNavInset),
       children: [
         if (showStats)
           Padding(

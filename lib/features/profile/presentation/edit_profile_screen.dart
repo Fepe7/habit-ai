@@ -11,6 +11,7 @@ import '../../auth/domain/user_model.dart';
 import '../data/public_profile_repository.dart';
 import 'widgets/avatar_picker_sheet.dart';
 import 'widgets/username_input_sheet.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla unificada de edición de perfil, estilo Instagram.
 /// Reúne en un solo sitio la foto, el nombre, el nombre de usuario y la bio.
@@ -193,7 +194,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+            padding: EdgeInsets.fromLTRB(20, 8, 20, context.bottomNavInset),
             children: [
               // avatar + cambiar foto
               Center(

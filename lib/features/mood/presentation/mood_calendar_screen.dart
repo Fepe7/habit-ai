@@ -5,6 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../data/mood_repository.dart';
 import '../domain/mood_entry_model.dart';
 import 'widgets/mood_heatmap_grid.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla con heatmap mensual de ánimo tipo GitHub
 class MoodCalendarScreen extends StatefulWidget {
@@ -147,7 +148,7 @@ class _MoodCalendarScreenState extends State<MoodCalendarScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                      padding: EdgeInsets.fromLTRB(20, 0, 20, context.bottomNavInset),
                       child: MoodHeatmapGrid(
                         year: _year,
                         month: _month,

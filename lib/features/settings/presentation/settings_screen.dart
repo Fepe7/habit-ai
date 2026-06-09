@@ -18,6 +18,7 @@ import '../../../core/services/review_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../l10n/app_localizations.dart';
 import 'widgets/settings_widgets.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de ajustes — Editorial Vitality
 class SettingsScreen extends StatefulWidget {
@@ -55,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           body: SafeArea(
             bottom: false,
             child: ListView(
-              padding: const EdgeInsets.only(bottom: 100),
+              padding: EdgeInsets.only(bottom: context.bottomNavInset),
               children: [
                 // ── Header ──────────────────────────────────────────────
                 Padding(

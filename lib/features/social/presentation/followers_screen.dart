@@ -15,6 +15,7 @@ import '../data/user_directory_repository.dart';
 import '../domain/follow_model.dart';
 import '../domain/follow_request_model.dart';
 import '../domain/user_directory_entry.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de seguidores/siguiendo estilo Instagram.
 /// Tab 1: mis seguidores + búsqueda para encontrar usuarios.
@@ -428,8 +429,7 @@ class _FollowersTabState extends State<_FollowersTab> {
                 );
               }
               return ListView.builder(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.fromLTRB(16, 8, 16, context.bottomNavInset),
                 itemCount: followers.length,
                 itemBuilder: (_, i) {
                   final f = followers[i];
@@ -511,7 +511,7 @@ class _FollowingTabState extends State<_FollowingTab> {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.fromLTRB(16, 8, 16, context.bottomNavInset),
           itemCount: following.length,
           itemBuilder: (context, i) {
             final f = following[i];
@@ -556,7 +556,7 @@ class _RequestsTab extends StatelessWidget {
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, context.bottomNavInset),
           itemCount: requests.length,
           itemBuilder: (_, i) {
             final req = requests[i];
