@@ -7,6 +7,7 @@ import '../../../core/widgets/ux/skeletons.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/butterfly_projection_model.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de detalle del Simulador Efecto Mariposa.
 /// Muestra dos historias inmersivas: si mantienes los hábitos vs si los abandonas.
@@ -104,7 +105,7 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
 
   Widget _buildContent(BuildContext context, ButterflyProjectionModel p) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+      padding: EdgeInsets.fromLTRB(20, 8, 20, context.bottomNavInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

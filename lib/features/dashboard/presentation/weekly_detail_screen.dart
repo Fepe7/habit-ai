@@ -5,6 +5,7 @@ import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
+import '../../../core/router/main_shell.dart';
 
 // Vista detallada del progreso: ultimos 30 dias con grafica y desglose diario
 class WeeklyDetailScreen extends StatefulWidget {
@@ -65,7 +66,7 @@ class _WeeklyDetailScreenState extends State<WeeklyDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomNavInset),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

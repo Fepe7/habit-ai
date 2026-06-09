@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
+import '../../../core/router/main_shell.dart';
 
 // Detalle de categorias: grafico circular + lista con habitos y % por categoria
 class CategoryDetailScreen extends StatefulWidget {
@@ -52,7 +53,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomNavInset),
               child: Column(
                 children: [
                   // grafico circular

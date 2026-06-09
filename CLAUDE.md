@@ -137,9 +137,10 @@ SplashScreen → auth state
           Tab 4: ExploreScreen (/explore) · Tab 5: ProfileScreen (/profile)
 ```
 
-- **HabitsScreen** (vista "Hoy"): pendientes arriba por grupos, sección "Completados hoy" plegada al final, enlace a Todos los hábitos. Header con campana de notificaciones (badge) que abre `NotificationsBottomSheet`.
+- **HabitsScreen**: grupos como acordeones + hábitos sueltos, todos visibles (completados incluidos — ver lo logrado refuerza al usuario; NO ocultar completados, decisión explícita). Header con campana de notificaciones (badge) que abre `NotificationsBottomSheet`.
 - **ExploreScreen** agrupa lo social: desde ahí se llega a Comunidad (`/community`), Retos (`/challenges`) y perfiles públicos (`/profiles/:userId`).
-- **ProfileScreen**: header compacto estilo Instagram + tabs Hábitos · Maestría (los niveles viven aquí, no en el drawer). Ajustes via icono ⚙ (`/settings`).
+- **ProfileScreen** (propio): header centrado clásico (avatar grande, @username, seguidores, bento de stats) + tabs deslizables Hábitos · Maestría debajo. El header compacto estilo Instagram se probó y se descartó; las tabs sí gustaron. Tap en avatar abre `ProfilePhotoViewer` (foto fullscreen con swipe-to-dismiss). Ajustes via icono ⚙ (`/settings`).
+- **PublicProfileScreen** (otros usuarios): header centrado + tabs Hábitos · Logros + visor de foto.
 - **Drawer** (hamburguesa en headers): Logros, Ánimo, Todos los hábitos, Revisión semanal, Mariposa, Crear hábito, Chat IA, Modo enfermedad, Ajustes. Sin Niveles (duplicaría Perfil → Maestría).
 - Badge en tab Perfil = solicitudes de seguimiento pendientes.
 

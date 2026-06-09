@@ -19,6 +19,7 @@ import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/renegotiation_model.dart';
 import 'widgets/edit_habit_sheet.dart';
 import '../../challenges/data/challenge_repository.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla de detalle de un hábito con diseño Editorial Vitality
 class HabitDetailScreen extends StatefulWidget {
@@ -430,7 +431,7 @@ class _HabitDetailScreenState extends State<HabitDetailScreen> {
 
           // contenido principal
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+            padding: EdgeInsets.fromLTRB(20, 20, 20, context.bottomNavInset),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // tarjeta de rachas con números display-lg

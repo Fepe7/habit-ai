@@ -12,6 +12,7 @@ import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
 import 'widgets/community_template_card.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Feed paginado del marketplace de plantillas de la comunidad.
 class CommunityTemplatesFeedScreen extends StatefulWidget {
@@ -253,7 +254,7 @@ class _CommunityTemplatesFeedScreenState
             // indicador de carga / fin de lista
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
+                padding: EdgeInsets.fromLTRB(0, 24, 0, context.bottomNavInset),
                 child: Center(
                   child: _loading
                       ? const CircularProgressIndicator()

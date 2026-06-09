@@ -4,6 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../app.dart';
 import '../../../core/services/ai_availability_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -47,6 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.initState();
     _isAiPaused = AiAvailabilityService.instance.isPaused.value;
     AiAvailabilityService.instance.isPaused.addListener(_onAiPausedChanged);
+    _loadReadInsights();
   }
 
   void _onAiPausedChanged() {
@@ -71,9 +73,28 @@ class _DashboardScreenState extends State<DashboardScreen>
   bool _generatingPatterns = false;
   bool _isAiPaused = false;
 
-  // pestaña activa del bloque "Insights IA"
-  // (0 ajustes · 1 semanal · 2 mariposa · 3 patrones)
-  int _insightTab = 0;
+  // insights ya vistos (weekly_<id>, butterfly_<id>, patterns_<id>) — una
+  // tarjeta leída se colapsa a fila fina hasta que llegue contenido nuevo
+  static const _readInsightsPrefKey = 'dashboard_read_insights';
+  Set<String> _readInsights = {};
+
+  Future<void> _loadReadInsights() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() => _readInsights =
+        (prefs.getStringList(_readInsightsPrefKey) ?? []).toSet());
+  }
+
+  Future<void> _markInsightRead(String key) async {
+    if (_readInsights.contains(key)) return;
+    setState(() => _readInsights.add(key));
+    final prefs = await SharedPreferences.getInstance();
+    // acotado: solo interesan los ids recientes
+    await prefs.setStringList(
+      _readInsightsPrefKey,
+      _readInsights.toList().reversed.take(40).toList(),
+    );
+  }
 
   Map<String, dynamic> _generalStats = {};
   List<DailyProgress> _weeklyProgress = [];
@@ -343,20 +364,12 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   // ==================== BLOQUE INSIGHTS IA ====================
 
-  /// Agrupa las 4 features de IA (ajustes, semanal, mariposa, patrones) en un
-  /// solo hueco visual: selector de chips + la tarjeta elegida debajo.
-  /// Evita 4 secciones paralelas compitiendo por atención.
+  /// Las 4 features de IA apiladas, pero cada tarjeta se gana su tamaño:
+  /// grande solo cuando tiene algo nuevo o accionable; si no, fila fina.
+  /// El tamaño es la señal — si una tarjeta está grande, hay algo para ti.
   Widget _buildAIInsightsSection(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final s = S.of(context);
-    const indigo = Color(0xFF6366F1);
-
-    final tabs = [
-      (s.dashboardInsightsChipAdjust, Icons.auto_fix_high_rounded, _amber),
-      (s.dashboardInsightsChipWeekly, Icons.insights_rounded, AppTheme.tertiary),
-      (s.dashboardInsightsChipButterfly, null, AppTheme.tertiary),
-      (s.dashboardInsightsChipPatterns, Icons.analytics_rounded, indigo),
-    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,62 +389,13 @@ class _DashboardScreenState extends State<DashboardScreen>
             ],
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (int i = 0; i < tabs.length; i++) ...[
-                ChoiceChip(
-                  // mariposa no tiene icono Material: usa el emoji de su card
-                  avatar: tabs[i].$2 == null
-                      ? const Text('🦋', style: TextStyle(fontSize: 13))
-                      : Icon(
-                          tabs[i].$2,
-                          size: 16,
-                          color: _insightTab == i
-                              ? tabs[i].$3
-                              : scheme.onSurfaceVariant,
-                        ),
-                  label: Text(tabs[i].$1),
-                  labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: _insightTab == i
-                            ? scheme.onSurface
-                            : scheme.onSurfaceVariant,
-                      ),
-                  selected: _insightTab == i,
-                  selectedColor: tabs[i].$3.withValues(alpha: 0.14),
-                  backgroundColor: scheme.surfaceContainerLowest,
-                  showCheckmark: false,
-                  shape: const StadiumBorder(side: BorderSide.none),
-                  onSelected: (_) => setState(() => _insightTab = i),
-                ),
-                if (i < tabs.length - 1) const SizedBox(width: 8),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        // la tarjeta seleccionada — altura animada al cambiar de pestaña
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            switchInCurve: Curves.easeOut,
-            switchOutCurve: Curves.easeIn,
-            child: KeyedSubtree(
-              key: ValueKey('insight_$_insightTab'),
-              child: switch (_insightTab) {
-                0 => _buildRenegotiationsCard(context),
-                1 => _buildWeeklyReviewCard(context),
-                2 => _buildButterflyCard(context),
-                _ => _buildPatternsCard(context),
-              },
-            ),
-          ),
-        ),
+        _buildRenegotiationsCard(context),
+        const SizedBox(height: 8),
+        _buildWeeklyReviewCard(context),
+        const SizedBox(height: 8),
+        _buildButterflyCard(context),
+        const SizedBox(height: 8),
+        _buildPatternsCard(context),
       ],
     );
   }
@@ -446,94 +410,15 @@ class _DashboardScreenState extends State<DashboardScreen>
         final s = S.of(context);
 
         if (renos.isEmpty) {
-          return _SectionCard(
-            gradient: LinearGradient(
-              colors: [
-                _amber.withValues(alpha: 0.09),
-                _amber.withValues(alpha: 0.03),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 42,
-                      height: 42,
-                      decoration: BoxDecoration(
-                        color: _amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.auto_fix_high_rounded,
-                        color: _amber,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            s.dashboardSmartAdjust,
-                            style:
-                                Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            s.dashboardAIPersonalized,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
-                                ?.copyWith(
-                                  color: _amber,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  s.dashboardAdjustDescription,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                        height: 1.5,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed:
-                        _generatingReno ? null : _openRenegotiationPicker,
-                    icon: _generatingReno
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.tune_rounded, size: 16),
-                    label: Text(
-                      _generatingReno ? s.dashboardAnalyzing : s.dashboardRequestAdjust,
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          // sin ajustes activos: fila fina — la tarjeta solo crece cuando
+          // hay sugerencias reales que atender
+          return _InsightSlimRow(
+            icon: Icons.auto_fix_high_rounded,
+            accent: _amber,
+            title: s.dashboardSmartAdjust,
+            busy: _generatingReno,
+            trailingIcon: Icons.tune_rounded,
+            onTap: _generatingReno ? null : _openRenegotiationPicker,
           );
         }
 
@@ -816,85 +701,42 @@ class _DashboardScreenState extends State<DashboardScreen>
         final s = S.of(context);
 
         if (model == null) {
-          return _SectionCard(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.analytics_rounded,
-                    color: accent,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.dashboardPatternsTitle,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        s.dashboardPatternsSubtitle,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 36,
-                        child: FilledButton.tonalIcon(
-                          onPressed: _generatingPatterns || _isAiPaused
-                              ? null
-                              : _generatePatternsManually,
-                          icon: _generatingPatterns
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                )
-                              : const Icon(Icons.auto_awesome_rounded,
-                                  size: 16),
-                          label: Text(
-                            _generatingPatterns
-                                ? s.dashboardAnalyzing
-                                : s.dashboardDetectPatterns,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor:
-                                accent.withValues(alpha: 0.14),
-                            foregroundColor: accent,
-                            minimumSize: const Size(0, 36),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
-                            shape: const StadiumBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // sin análisis: fila fina que lo genera al tocar
+          return _InsightSlimRow(
+            icon: Icons.analytics_rounded,
+            accent: accent,
+            title: s.dashboardPatternsTitle,
+            busy: _generatingPatterns,
+            trailingIcon: Icons.auto_awesome_rounded,
+            onTap: _generatingPatterns || _isAiPaused
+                ? null
+                : _generatePatternsManually,
+          );
+        }
+
+        final readKey = 'patterns_${model.periodId}';
+        if (_readInsights.contains(readKey)) {
+          // ya visto: fila fina que navega al detalle
+          return _InsightSlimRow(
+            icon: Icons.analytics_rounded,
+            accent: accent,
+            title: s.dashboardPatternsTitle,
+            detail: model.periodId,
+            onTap: () => context.goNamed(
+              'pattern-insights',
+              pathParameters: {'periodId': model.periodId},
             ),
           );
         }
 
-        // card con insights existentes — tap navega al detalle
         return GestureDetector(
-          onTap: () => context.goNamed(
-            'pattern-insights',
-            pathParameters: {'periodId': model.periodId},
-          ),
+          onTap: () {
+            _markInsightRead(readKey);
+            context.goNamed(
+              'pattern-insights',
+              pathParameters: {'periodId': model.periodId},
+            );
+          },
           child: _SectionCard(
             gradient: LinearGradient(
               colors: [
@@ -1017,81 +859,42 @@ class _DashboardScreenState extends State<DashboardScreen>
         final s = S.of(context);
 
         if (projection == null) {
-          return _SectionCard(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.tertiary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Text('🦋', style: TextStyle(fontSize: 22)),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.dashboardButterflyTitle,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        s.dashboardButterflySubtitle,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 36,
-                        child: FilledButton.tonalIcon(
-                          onPressed: _generatingButterfly || _isAiPaused
-                              ? null
-                              : _generateButterflyManually,
-                          icon: _generatingButterfly
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                )
-                              : const Icon(Icons.auto_awesome_rounded,
-                                  size: 16),
-                          label: Text(
-                            _generatingButterfly
-                                ? s.dashboardGenerating
-                                : s.dashboardGenerateProjection,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor:
-                                AppTheme.tertiary.withValues(alpha: 0.14),
-                            foregroundColor: AppTheme.tertiary,
-                            minimumSize: const Size(0, 36),
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 14),
-                            shape: const StadiumBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // sin proyección: fila fina que la genera al tocar
+          return _InsightSlimRow(
+            emoji: '🦋',
+            accent: AppTheme.tertiary,
+            title: s.dashboardButterflyTitle,
+            busy: _generatingButterfly,
+            trailingIcon: Icons.auto_awesome_rounded,
+            onTap: _generatingButterfly || _isAiPaused
+                ? null
+                : _generateButterflyManually,
+          );
+        }
+
+        final readKey = 'butterfly_${projection.monthId}';
+        if (_readInsights.contains(readKey)) {
+          // ya vista: fila fina que navega al detalle
+          return _InsightSlimRow(
+            emoji: '🦋',
+            accent: AppTheme.tertiary,
+            title: s.dashboardButterflyTitle,
+            detail: projection.monthId,
+            onTap: () => context.goNamed(
+              'butterfly-projection',
+              pathParameters: {'monthId': projection.monthId},
             ),
           );
         }
 
-        // card con proyección existente — tap navega al detalle
         return GestureDetector(
-          onTap: () => context.goNamed(
-            'butterfly-projection',
-            pathParameters: {'monthId': projection.monthId},
-          ),
+          onTap: () {
+            _markInsightRead(readKey);
+            context.goNamed(
+              'butterfly-projection',
+              pathParameters: {'monthId': projection.monthId},
+            );
+          },
           child: _SectionCard(
             gradient: LinearGradient(
               colors: [
@@ -1204,72 +1007,42 @@ class _DashboardScreenState extends State<DashboardScreen>
         final s = S.of(context);
 
         if (review == null) {
-          return _SectionCard(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(Icons.insights_rounded,
-                      color: AppTheme.tertiary, size: 24),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.dashboardWeeklyReviewTitle,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        s.dashboardWeeklyReviewSubtitle,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 36,
-                        child: FilledButton.tonalIcon(
-                          onPressed:
-                              _generatingReview || _isAiPaused ? null : _generateReviewManually,
-                          icon: _generatingReview
-                              ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.auto_awesome_rounded, size: 16),
-                          label: Text(
-                            _generatingReview ? s.dashboardGenerating : s.dashboardGenerateNow,
-                            style: Theme.of(context).textTheme.labelMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: scheme.primaryContainer.withValues(alpha: 0.3),
-                            foregroundColor: scheme.primary,
-                            minimumSize: const Size(0, 36),
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            shape: const StadiumBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // sin revisión generada: fila fina que la genera al tocar
+          return _InsightSlimRow(
+            icon: Icons.insights_rounded,
+            accent: AppTheme.tertiary,
+            title: s.dashboardWeeklyReviewTitle,
+            busy: _generatingReview,
+            trailingIcon: Icons.auto_awesome_rounded,
+            onTap: _generatingReview || _isAiPaused
+                ? null
+                : _generateReviewManually,
+          );
+        }
+
+        final readKey = 'weekly_${review.weekId}';
+        if (_readInsights.contains(readKey)) {
+          // ya leída: fila fina que navega al detalle
+          return _InsightSlimRow(
+            icon: Icons.insights_rounded,
+            accent: AppTheme.tertiary,
+            title: s.dashboardWeeklyReviewTitle,
+            detail: review.weekId,
+            onTap: () => context.goNamed(
+              'weekly-review',
+              pathParameters: {'weekId': review.weekId},
             ),
           );
         }
 
         return GestureDetector(
-          onTap: () => context.goNamed(
-            'weekly-review',
-            pathParameters: {'weekId': review.weekId},
-          ),
+          onTap: () {
+            _markInsightRead(readKey);
+            context.goNamed(
+              'weekly-review',
+              pathParameters: {'weekId': review.weekId},
+            );
+          },
           child: _SectionCard(
             gradient: LinearGradient(
               colors: [
@@ -2196,6 +1969,99 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Fila compacta de un insight de IA sin novedades — la tarjeta completa
+/// solo aparece cuando hay contenido nuevo o accionable.
+class _InsightSlimRow extends StatelessWidget {
+  final IconData? icon;
+  final String? emoji;
+  final Color accent;
+  final String title;
+  final String? detail;
+  final bool busy;
+  final IconData? trailingIcon;
+  final VoidCallback? onTap;
+
+  const _InsightSlimRow({
+    this.icon,
+    this.emoji,
+    required this.accent,
+    required this.title,
+    this.detail,
+    this.busy = false,
+    this.trailingIcon,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerLowest,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: emoji != null
+                    ? Center(
+                        child: Text(
+                          emoji!,
+                          style: const TextStyle(fontSize: 15),
+                        ),
+                      )
+                    : Icon(icon, size: 16, color: accent),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+              if (detail != null) ...[
+                Text(
+                  detail!,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant.withValues(alpha: 0.7),
+                      ),
+                ),
+                const SizedBox(width: 6),
+              ],
+              if (busy)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                Icon(
+                  trailingIcon ?? Icons.chevron_right_rounded,
+                  size: 18,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

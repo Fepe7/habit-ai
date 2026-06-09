@@ -16,6 +16,7 @@ import '../../profile/presentation/widgets/username_input_sheet.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../social/domain/privacy_level.dart';
 import 'widgets/settings_widgets.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Pantalla de ajustes de privacidad.
 class PrivacySettingsScreen extends StatefulWidget {
@@ -79,7 +80,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           final user = snap.data;
           if (user == null) {
             return ListView(
-              padding: const EdgeInsets.only(top: 16, bottom: 100),
+              padding: EdgeInsets.only(top: 16, bottom: context.bottomNavInset),
               children: const [
                 SectionSkeleton(itemCount: 1),
                 SizedBox(height: 16),
@@ -92,7 +93,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           final hasUsername = user.username != null;
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, context.bottomNavInset),
             children: [
               // banner informativo si aún no tiene username
               if (!hasUsername)

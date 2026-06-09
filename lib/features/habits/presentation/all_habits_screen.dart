@@ -13,6 +13,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
+import '../../../core/router/main_shell.dart';
 
 /// Catálogo completo de hábitos: activos y archivados, agrupados igual que HabitsScreen.
 /// No incluye lógica de check-in — es una vista de gestión, no de progreso diario.
@@ -338,8 +339,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                     : () => _enterSelection(group.id),
                               ),
                             )),
-                            const SliverToBoxAdapter(
-                                child: SizedBox(height: 32)),
+                            SliverToBoxAdapter(child: SizedBox(height: context.bottomNavInset)),
                           ],
                         ] else ...[
                           if (filtered.isEmpty)
@@ -397,8 +397,7 @@ class _AllHabitsScreenState extends State<AllHabitsScreen> {
                                 ),
                               ),
 
-                            const SliverToBoxAdapter(
-                                child: SizedBox(height: 32)),
+                            SliverToBoxAdapter(child: SizedBox(height: context.bottomNavInset)),
                           ],
                         ],
 

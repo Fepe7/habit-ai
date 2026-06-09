@@ -26,6 +26,7 @@ import '../../../features/achievements/data/achievement_repository.dart';
 import '../../../features/achievements/data/achievement_checker.dart';
 import '../../../features/achievements/presentation/achievement_overlay.dart';
 import '../../../features/auth/data/user_repository.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla de edicion de un grupo de habitos:
 // - cabecera editable (emoji + titulo)
@@ -576,7 +577,7 @@ class _GroupBody extends StatelessWidget {
             },
           ),
 
-        const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+        SliverPadding(padding: EdgeInsets.only(bottom: context.bottomNavInset)),
       ],
     );
   }

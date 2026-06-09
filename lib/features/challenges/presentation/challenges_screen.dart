@@ -11,6 +11,7 @@ import '../domain/challenge_model.dart';
 import '../domain/challenge_participant_model.dart';
 import 'widgets/challenge_card.dart';
 import 'widgets/create_challenge_sheet.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla con todos mis retos
 class ChallengesScreen extends StatefulWidget {
@@ -92,7 +93,7 @@ class _ChallengesScreenState extends State<ChallengesScreen> {
               .toList();
 
           return ListView(
-            padding: const EdgeInsets.only(top: 8, bottom: 100),
+            padding: EdgeInsets.only(top: 8, bottom: context.bottomNavInset),
             children: [
               if (pending.isNotEmpty) ...[
                 _SectionHeader(title: s.challengesSectionPending, count: pending.length),

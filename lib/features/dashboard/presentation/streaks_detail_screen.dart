@@ -6,6 +6,7 @@ import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/stats_repository.dart';
 import '../../habits/domain/habit_model.dart';
+import '../../../core/router/main_shell.dart';
 
 // Todos los habitos con sus rachas actuales y mejores
 class StreaksDetailScreen extends StatefulWidget {
@@ -67,7 +68,7 @@ class _StreaksDetailScreenState extends State<StreaksDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomNavInset),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

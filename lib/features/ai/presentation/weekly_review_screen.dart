@@ -11,6 +11,7 @@ import '../domain/weekly_review_model.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../habits/domain/habit_model.dart';
 import '../../habits/presentation/widgets/edit_habit_sheet.dart';
+import '../../../core/router/main_shell.dart';
 
 // Pantalla con la revision semanal generada por la IA
 class WeeklyReviewScreen extends StatefulWidget {
@@ -159,7 +160,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   Widget _buildContent(BuildContext context, WeeklyReviewModel review) {
     final s = S.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, context.bottomNavInset),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
