@@ -5394,6 +5394,414 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Ahora no'**
   String get updateLater;
+
+  /// CTA de la pantalla de bienvenida del onboarding
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar'**
+  String get onbStart;
+
+  /// Saltar el onboarding
+  ///
+  /// In es, this message translates to:
+  /// **'Saltar'**
+  String get onbSkip;
+
+  /// No description provided for @onbTagline1.
+  ///
+  /// In es, this message translates to:
+  /// **'Construye hábitos que duran'**
+  String get onbTagline1;
+
+  /// No description provided for @onbTagline2.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu IA personal de hábitos'**
+  String get onbTagline2;
+
+  /// No description provided for @onbTagline3.
+  ///
+  /// In es, this message translates to:
+  /// **'Pequeños pasos, grandes cambios'**
+  String get onbTagline3;
+
+  /// No description provided for @onbWelcomeIntro.
+  ///
+  /// In es, this message translates to:
+  /// **'Vamos a crear tu primer plan de hábitos en menos de 2 minutos.'**
+  String get onbWelcomeIntro;
+
+  /// No description provided for @onbCategoriesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué quieres mejorar?'**
+  String get onbCategoriesTitle;
+
+  /// No description provided for @onbCategoriesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Elige una o varias áreas. La IA diseñará tu plan con ellas.'**
+  String get onbCategoriesSubtitle;
+
+  /// No description provided for @onbLifestyleTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cuéntanos sobre tu día'**
+  String get onbLifestyleTitle;
+
+  /// No description provided for @onbLifestyleSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tres preguntas rápidas para ajustar el plan a tu vida real.'**
+  String get onbLifestyleSubtitle;
+
+  /// No description provided for @onbQ1.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuándo tienes más energía?'**
+  String get onbQ1;
+
+  /// No description provided for @onbQ1Morning.
+  ///
+  /// In es, this message translates to:
+  /// **'Por la mañana'**
+  String get onbQ1Morning;
+
+  /// No description provided for @onbQ1Afternoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Por la tarde'**
+  String get onbQ1Afternoon;
+
+  /// No description provided for @onbQ1Night.
+  ///
+  /// In es, this message translates to:
+  /// **'Por la noche'**
+  String get onbQ1Night;
+
+  /// No description provided for @onbQ2.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cuánto tiempo puedes dedicar al día?'**
+  String get onbQ2;
+
+  /// No description provided for @onbQ2Short.
+  ///
+  /// In es, this message translates to:
+  /// **'10 minutos'**
+  String get onbQ2Short;
+
+  /// No description provided for @onbQ2Medium.
+  ///
+  /// In es, this message translates to:
+  /// **'20-30 minutos'**
+  String get onbQ2Medium;
+
+  /// No description provided for @onbQ2Long.
+  ///
+  /// In es, this message translates to:
+  /// **'1 hora o más'**
+  String get onbQ2Long;
+
+  /// No description provided for @onbQ3.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Qué te frena normalmente?'**
+  String get onbQ3;
+
+  /// No description provided for @onbQ3Start.
+  ///
+  /// In es, this message translates to:
+  /// **'Me cuesta empezar'**
+  String get onbQ3Start;
+
+  /// No description provided for @onbQ3Consistency.
+  ///
+  /// In es, this message translates to:
+  /// **'Empiezo pero lo dejo'**
+  String get onbQ3Consistency;
+
+  /// No description provided for @onbQ3Plan.
+  ///
+  /// In es, this message translates to:
+  /// **'Solo me falta un plan'**
+  String get onbQ3Plan;
+
+  /// No description provided for @onbGeneratePlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Generar mi plan'**
+  String get onbGeneratePlan;
+
+  /// No description provided for @onbGenPhase1.
+  ///
+  /// In es, this message translates to:
+  /// **'Analizando tus objetivos…'**
+  String get onbGenPhase1;
+
+  /// No description provided for @onbGenPhase2.
+  ///
+  /// In es, this message translates to:
+  /// **'Diseñando tu rutina…'**
+  String get onbGenPhase2;
+
+  /// No description provided for @onbGenPhase3.
+  ///
+  /// In es, this message translates to:
+  /// **'Ajustando horarios y dificultad…'**
+  String get onbGenPhase3;
+
+  /// No description provided for @onbPlanReadyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Tu plan está listo!'**
+  String get onbPlanReadyTitle;
+
+  /// No description provided for @onbAcceptPlan.
+  ///
+  /// In es, this message translates to:
+  /// **'Empezar con este plan'**
+  String get onbAcceptPlan;
+
+  /// No description provided for @onbRegenerate.
+  ///
+  /// In es, this message translates to:
+  /// **'Probar otro plan'**
+  String get onbRegenerate;
+
+  /// No description provided for @onbPlanError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo generar el plan. Revisa tu conexión e inténtalo de nuevo.'**
+  String get onbPlanError;
+
+  /// No description provided for @onbRetry.
+  ///
+  /// In es, this message translates to:
+  /// **'Reintentar'**
+  String get onbRetry;
+
+  /// No description provided for @onbNotifTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Un empujón en el momento justo'**
+  String get onbNotifTitle;
+
+  /// No description provided for @onbNotifBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Te recordamos cada hábito a su hora. Sin spam — tú decides cuáles.'**
+  String get onbNotifBody;
+
+  /// Texto de la notificación de ejemplo
+  ///
+  /// In es, this message translates to:
+  /// **'💪 Es hora de tu primer hábito'**
+  String get onbNotifPreview;
+
+  /// No description provided for @onbNotifPreviewTime.
+  ///
+  /// In es, this message translates to:
+  /// **'ahora'**
+  String get onbNotifPreviewTime;
+
+  /// No description provided for @onbNotifAllow.
+  ///
+  /// In es, this message translates to:
+  /// **'Activar recordatorios'**
+  String get onbNotifAllow;
+
+  /// No description provided for @onbNotifLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Ahora no'**
+  String get onbNotifLater;
+
+  /// Mensaje que se envía a la IA con las respuestas del onboarding
+  ///
+  /// In es, this message translates to:
+  /// **'Quiero mejorar estas áreas: {areas}. Tengo más energía {energy}. Puedo dedicar {time} al día a mis hábitos. Sobre mí: {blocker}. Genera mi plan inicial de hábitos.'**
+  String onbAiPrompt(String areas, String energy, String time, String blocker);
+
+  /// No description provided for @onbRegeneratePrompt.
+  ///
+  /// In es, this message translates to:
+  /// **'No me convence del todo, genera un plan diferente con otros hábitos.'**
+  String get onbRegeneratePrompt;
+
+  /// No description provided for @onbAiFeaturesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu copiloto de IA'**
+  String get onbAiFeaturesTitle;
+
+  /// No description provided for @onbAiFeaturesSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan es solo el principio. Esto es todo lo que la IA hará por ti:'**
+  String get onbAiFeaturesSubtitle;
+
+  /// No description provided for @onbFeatChatTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Chat con tu coach'**
+  String get onbFeatChatTitle;
+
+  /// No description provided for @onbFeatChatDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Pídele planes nuevos o ajustes cuando quieras, conversando.'**
+  String get onbFeatChatDesc;
+
+  /// No description provided for @onbFeatReviewTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión semanal'**
+  String get onbFeatReviewTitle;
+
+  /// No description provided for @onbFeatReviewDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada semana analiza tus logros y tu ánimo, y te da consejos concretos.'**
+  String get onbFeatReviewDesc;
+
+  /// No description provided for @onbFeatButterflyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Efecto mariposa'**
+  String get onbFeatButterflyTitle;
+
+  /// No description provided for @onbFeatButterflyDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Proyecta cómo cambiará tu vida si mantienes tus hábitos en el tiempo.'**
+  String get onbFeatButterflyDesc;
+
+  /// No description provided for @onbFeatRenegotiationTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Renegociación inteligente'**
+  String get onbFeatRenegotiationTitle;
+
+  /// No description provided for @onbFeatRenegotiationDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Un hábito se te atasca? La IA te propone una versión más fácil de mantener.'**
+  String get onbFeatRenegotiationDesc;
+
+  /// No description provided for @onbFeatPatternsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Detección de patrones'**
+  String get onbFeatPatternsTitle;
+
+  /// No description provided for @onbFeatPatternsDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Descubre qué días y franjas horarias te funcionan mejor.'**
+  String get onbFeatPatternsDesc;
+
+  /// Chip de ubicación: pestaña del chat IA
+  ///
+  /// In es, this message translates to:
+  /// **'Pestaña Asistente'**
+  String get onbWhereAssistantTab;
+
+  /// Chip de ubicación: pestaña del dashboard
+  ///
+  /// In es, this message translates to:
+  /// **'Pestaña Progreso'**
+  String get onbWhereProgressTab;
+
+  /// Chip de ubicación: detalle del hábito
+  ///
+  /// In es, this message translates to:
+  /// **'En cada hábito'**
+  String get onbWhereHabitDetail;
+
+  /// No description provided for @onbNameTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Cómo te llamamos?'**
+  String get onbNameTitle;
+
+  /// No description provided for @onbNameSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu coach de IA usará tu nombre para hablarte.'**
+  String get onbNameSubtitle;
+
+  /// No description provided for @onbNameHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu nombre'**
+  String get onbNameHint;
+
+  /// Saludo en vivo mientras el usuario escribe su nombre
+  ///
+  /// In es, this message translates to:
+  /// **'¡Genial, {name}! 👋'**
+  String onbNameGreeting(String name);
+
+  /// Frase con el nombre que se antepone al prompt de la IA
+  ///
+  /// In es, this message translates to:
+  /// **'Me llamo {name}.'**
+  String onbAiPromptName(String name);
+
+  /// Receta: antes del nombre (ojo al espacio final)
+  ///
+  /// In es, this message translates to:
+  /// **'Plan de '**
+  String get onbRecipePlanFor;
+
+  /// Receta: entre nombre y áreas
+  ///
+  /// In es, this message translates to:
+  /// **' para mejorar '**
+  String get onbRecipeImprove;
+
+  /// Receta: arranque sin nombre
+  ///
+  /// In es, this message translates to:
+  /// **'Plan para mejorar '**
+  String get onbRecipeImproveNoName;
+
+  /// Receta: antes del momento de energía
+  ///
+  /// In es, this message translates to:
+  /// **' · energía '**
+  String get onbRecipeEnergy;
+
+  /// Receta: tras el tiempo diario
+  ///
+  /// In es, this message translates to:
+  /// **' al día'**
+  String get onbRecipePerDay;
+
+  /// No description provided for @onbCheckinTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Empieza ahora!'**
+  String get onbCheckinTitle;
+
+  /// No description provided for @onbCheckinSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'La primera victoria es la que más cuenta. ¿Cuál puedes completar hoy mismo?'**
+  String get onbCheckinSubtitle;
+
+  /// No description provided for @onbCheckinStreak.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Racha de 1 día! 🔥'**
+  String get onbCheckinStreak;
+
+  /// No description provided for @onbCheckinLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Lo haré más tarde'**
+  String get onbCheckinLater;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

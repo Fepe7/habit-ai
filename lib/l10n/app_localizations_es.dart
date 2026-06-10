@@ -3014,4 +3014,227 @@ class SEs extends S {
 
   @override
   String get updateLater => 'Ahora no';
+
+  @override
+  String get onbStart => 'Empezar';
+
+  @override
+  String get onbSkip => 'Saltar';
+
+  @override
+  String get onbTagline1 => 'Construye hábitos que duran';
+
+  @override
+  String get onbTagline2 => 'Tu IA personal de hábitos';
+
+  @override
+  String get onbTagline3 => 'Pequeños pasos, grandes cambios';
+
+  @override
+  String get onbWelcomeIntro =>
+      'Vamos a crear tu primer plan de hábitos en menos de 2 minutos.';
+
+  @override
+  String get onbCategoriesTitle => '¿Qué quieres mejorar?';
+
+  @override
+  String get onbCategoriesSubtitle =>
+      'Elige una o varias áreas. La IA diseñará tu plan con ellas.';
+
+  @override
+  String get onbLifestyleTitle => 'Cuéntanos sobre tu día';
+
+  @override
+  String get onbLifestyleSubtitle =>
+      'Tres preguntas rápidas para ajustar el plan a tu vida real.';
+
+  @override
+  String get onbQ1 => '¿Cuándo tienes más energía?';
+
+  @override
+  String get onbQ1Morning => 'Por la mañana';
+
+  @override
+  String get onbQ1Afternoon => 'Por la tarde';
+
+  @override
+  String get onbQ1Night => 'Por la noche';
+
+  @override
+  String get onbQ2 => '¿Cuánto tiempo puedes dedicar al día?';
+
+  @override
+  String get onbQ2Short => '10 minutos';
+
+  @override
+  String get onbQ2Medium => '20-30 minutos';
+
+  @override
+  String get onbQ2Long => '1 hora o más';
+
+  @override
+  String get onbQ3 => '¿Qué te frena normalmente?';
+
+  @override
+  String get onbQ3Start => 'Me cuesta empezar';
+
+  @override
+  String get onbQ3Consistency => 'Empiezo pero lo dejo';
+
+  @override
+  String get onbQ3Plan => 'Solo me falta un plan';
+
+  @override
+  String get onbGeneratePlan => 'Generar mi plan';
+
+  @override
+  String get onbGenPhase1 => 'Analizando tus objetivos…';
+
+  @override
+  String get onbGenPhase2 => 'Diseñando tu rutina…';
+
+  @override
+  String get onbGenPhase3 => 'Ajustando horarios y dificultad…';
+
+  @override
+  String get onbPlanReadyTitle => '¡Tu plan está listo!';
+
+  @override
+  String get onbAcceptPlan => 'Empezar con este plan';
+
+  @override
+  String get onbRegenerate => 'Probar otro plan';
+
+  @override
+  String get onbPlanError =>
+      'No se pudo generar el plan. Revisa tu conexión e inténtalo de nuevo.';
+
+  @override
+  String get onbRetry => 'Reintentar';
+
+  @override
+  String get onbNotifTitle => 'Un empujón en el momento justo';
+
+  @override
+  String get onbNotifBody =>
+      'Te recordamos cada hábito a su hora. Sin spam — tú decides cuáles.';
+
+  @override
+  String get onbNotifPreview => '💪 Es hora de tu primer hábito';
+
+  @override
+  String get onbNotifPreviewTime => 'ahora';
+
+  @override
+  String get onbNotifAllow => 'Activar recordatorios';
+
+  @override
+  String get onbNotifLater => 'Ahora no';
+
+  @override
+  String onbAiPrompt(String areas, String energy, String time, String blocker) {
+    return 'Quiero mejorar estas áreas: $areas. Tengo más energía $energy. Puedo dedicar $time al día a mis hábitos. Sobre mí: $blocker. Genera mi plan inicial de hábitos.';
+  }
+
+  @override
+  String get onbRegeneratePrompt =>
+      'No me convence del todo, genera un plan diferente con otros hábitos.';
+
+  @override
+  String get onbAiFeaturesTitle => 'Tu copiloto de IA';
+
+  @override
+  String get onbAiFeaturesSubtitle =>
+      'El plan es solo el principio. Esto es todo lo que la IA hará por ti:';
+
+  @override
+  String get onbFeatChatTitle => 'Chat con tu coach';
+
+  @override
+  String get onbFeatChatDesc =>
+      'Pídele planes nuevos o ajustes cuando quieras, conversando.';
+
+  @override
+  String get onbFeatReviewTitle => 'Revisión semanal';
+
+  @override
+  String get onbFeatReviewDesc =>
+      'Cada semana analiza tus logros y tu ánimo, y te da consejos concretos.';
+
+  @override
+  String get onbFeatButterflyTitle => 'Efecto mariposa';
+
+  @override
+  String get onbFeatButterflyDesc =>
+      'Proyecta cómo cambiará tu vida si mantienes tus hábitos en el tiempo.';
+
+  @override
+  String get onbFeatRenegotiationTitle => 'Renegociación inteligente';
+
+  @override
+  String get onbFeatRenegotiationDesc =>
+      '¿Un hábito se te atasca? La IA te propone una versión más fácil de mantener.';
+
+  @override
+  String get onbFeatPatternsTitle => 'Detección de patrones';
+
+  @override
+  String get onbFeatPatternsDesc =>
+      'Descubre qué días y franjas horarias te funcionan mejor.';
+
+  @override
+  String get onbWhereAssistantTab => 'Pestaña Asistente';
+
+  @override
+  String get onbWhereProgressTab => 'Pestaña Progreso';
+
+  @override
+  String get onbWhereHabitDetail => 'En cada hábito';
+
+  @override
+  String get onbNameTitle => '¿Cómo te llamamos?';
+
+  @override
+  String get onbNameSubtitle => 'Tu coach de IA usará tu nombre para hablarte.';
+
+  @override
+  String get onbNameHint => 'Tu nombre';
+
+  @override
+  String onbNameGreeting(String name) {
+    return '¡Genial, $name! 👋';
+  }
+
+  @override
+  String onbAiPromptName(String name) {
+    return 'Me llamo $name.';
+  }
+
+  @override
+  String get onbRecipePlanFor => 'Plan de ';
+
+  @override
+  String get onbRecipeImprove => ' para mejorar ';
+
+  @override
+  String get onbRecipeImproveNoName => 'Plan para mejorar ';
+
+  @override
+  String get onbRecipeEnergy => ' · energía ';
+
+  @override
+  String get onbRecipePerDay => ' al día';
+
+  @override
+  String get onbCheckinTitle => '¡Empieza ahora!';
+
+  @override
+  String get onbCheckinSubtitle =>
+      'La primera victoria es la que más cuenta. ¿Cuál puedes completar hoy mismo?';
+
+  @override
+  String get onbCheckinStreak => '¡Racha de 1 día! 🔥';
+
+  @override
+  String get onbCheckinLater => 'Lo haré más tarde';
 }

@@ -172,8 +172,10 @@ class HabitRepository {
     }
   }
 
-  // Crear varios habitos asignados a un grupo
-  Future<void> createHabitsInGroup(List<HabitModel> habits, String groupId) async {
+  // Crear varios habitos asignados a un grupo. Devuelve los modelos con su
+  // ID asignado (el onboarding los usa para el primer check-in)
+  Future<List<HabitModel>> createHabitsInGroup(
+      List<HabitModel> habits, String groupId) async {
     final batch = _firestore.batch();
     final withIds = <HabitModel>[];
     for (final habit in habits) {
@@ -187,6 +189,7 @@ class HabitRepository {
     for (final h in withIds) {
       await NotificationService.instance.scheduleHabitReminders(h);
     }
+    return withIds;
   }
 
   // Habitos de hoy sin grupo (creados manualmente)
