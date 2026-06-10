@@ -145,6 +145,9 @@ class PushNotificationService {
   void _onForegroundMessage(RemoteMessage message) {
     final notification = message.notification;
     if (notification == null) return;
+    // Pushes marcados con skipForeground (p.ej. logros) no se pintan con la
+    // app abierta: la UI in-app ya celebra el evento y duplicaría el aviso.
+    if (message.data['skipForeground'] == '1') return;
     NotificationService.instance.showSocialNotification(
       title: notification.title ?? 'HabitAI',
       body: notification.body ?? '',

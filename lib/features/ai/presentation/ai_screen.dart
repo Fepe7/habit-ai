@@ -51,13 +51,13 @@ class _AIScreenState extends State<AIScreen>
   String? _lastUserMessage;
   String? _userName;
 
-
   @override
   void initState() {
     super.initState();
     final firebaseUser = FirebaseAuth.instance.currentUser!;
     final uid = firebaseUser.uid;
-    _userName = firebaseUser.displayName ?? firebaseUser.email?.split('@').first;
+    _userName =
+        firebaseUser.displayName ?? firebaseUser.email?.split('@').first;
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
     _groupRepo = HabitGroupRepository(uid: uid);
@@ -71,17 +71,23 @@ class _AIScreenState extends State<AIScreen>
     _isAiPaused = AiAvailabilityService.instance.isPaused.value;
     AiAvailabilityService.instance.isPaused.addListener(_onAiPausedChanged);
 
-    _messages.add(ChatMessage(
-      // TODO: i18n — no se puede usar S.of(context) en initState
-      text: '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
-          'y te generaré un plan personalizado.',
-      isUser: false,
-      timestamp: DateTime.now(),
-    ));
+    _messages.add(
+      ChatMessage(
+        // TODO: i18n — no se puede usar S.of(context) en initState
+        text:
+            '¡Hola! Soy tu asistente de hábitos. Cuéntame tus metas '
+            'y te generaré un plan personalizado.',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   void _onAiPausedChanged() {
-    if (mounted) setState(() => _isAiPaused = AiAvailabilityService.instance.isPaused.value);
+    if (mounted)
+      setState(
+        () => _isAiPaused = AiAvailabilityService.instance.isPaused.value,
+      );
   }
 
   @override
@@ -99,10 +105,7 @@ class _AIScreenState extends State<AIScreen>
     // el asistente IA necesita red (las llamadas van a Cloud Functions)
     if (!ConnectivityService.instance.isOnline.value) {
       if (mounted) {
-        AppSnackBar.showInfo(
-          context,
-          S.of(context).aiOfflineError,
-        );
+        AppSnackBar.showInfo(context, S.of(context).aiOfflineError);
       }
       return;
     }
@@ -118,11 +121,9 @@ class _AIScreenState extends State<AIScreen>
     _lastUserMessage = msg;
 
     setState(() {
-      _messages.add(ChatMessage(
-        text: msg,
-        isUser: true,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        ChatMessage(text: msg, isUser: true, timestamp: DateTime.now()),
+      );
       _isLoading = true;
     });
 
@@ -139,35 +140,41 @@ class _AIScreenState extends State<AIScreen>
           emoji: plan.planEmoji,
           description: plan.planDescription,
           habits: plan.habits
-              .map((h) => HabitSuggestion(
-                    title: h.title,
-                    description: h.description,
-                    category: h.category,
-                    frequency: h.frequency,
-                    targetDays: h.targetDays,
-                    suggestedTime: h.suggestedTime,
-                  ))
+              .map(
+                (h) => HabitSuggestion(
+                  title: h.title,
+                  description: h.description,
+                  category: h.category,
+                  frequency: h.frequency,
+                  targetDays: h.targetDays,
+                  suggestedTime: h.suggestedTime,
+                ),
+              )
               .toList(),
         );
       }
 
       setState(() {
-        _messages.add(ChatMessage(
-          text: plan.coachMessage,
-          isUser: false,
-          timestamp: DateTime.now(),
-          plan: planData,
-        ));
+        _messages.add(
+          ChatMessage(
+            text: plan.coachMessage,
+            isUser: false,
+            timestamp: DateTime.now(),
+            plan: planData,
+          ),
+        );
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(
-          text: S.of(context).aiConnectionError,
-          isUser: false,
-          timestamp: DateTime.now(),
-          isError: true,
-        ));
+        _messages.add(
+          ChatMessage(
+            text: S.of(context).aiConnectionError,
+            isUser: false,
+            timestamp: DateTime.now(),
+            isError: true,
+          ),
+        );
         _isLoading = false;
       });
     }
@@ -202,14 +209,16 @@ class _AIScreenState extends State<AIScreen>
       final groupId = await _groupRepo.createGroup(group);
 
       final habits = accepted
-          .map((h) => GeneratedHabitModel(
-                title: h.title,
-                description: h.description,
-                category: h.category,
-                frequency: h.frequency,
-                targetDays: h.targetDays,
-                suggestedTime: h.suggestedTime,
-              ).toHabitModel(groupId: groupId))
+          .map(
+            (h) => GeneratedHabitModel(
+              title: h.title,
+              description: h.description,
+              category: h.category,
+              frequency: h.frequency,
+              targetDays: h.targetDays,
+              suggestedTime: h.suggestedTime,
+            ).toHabitModel(groupId: groupId),
+          )
           .toList();
 
       await _habitRepo.createHabitsInGroup(habits, groupId);
@@ -268,43 +277,13 @@ class _AIScreenState extends State<AIScreen>
                       children: [
                         Text(
                           s.aiTitle,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
                           _userName != null ? 'Hola, $_userName' : s.aiSubtitle,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // indicador Gemini
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppTheme.primaryContainer.withValues(alpha: 0.3),
-                          AppTheme.primary.withValues(alpha: 0.12),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.auto_awesome_rounded,
-                            size: 14, color: scheme.primary),
-                        const SizedBox(width: 6),
-                        Text(
-                          s.aiGeminiLabel,
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: scheme.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -314,15 +293,15 @@ class _AIScreenState extends State<AIScreen>
             ),
 
             // banner comunidad — solo visible cuando no hay conversación activa
-            if (_showSuggestions)
-              _CommunityBanner(),
+            if (_showSuggestions) _CommunityBanner(),
 
             // lista de mensajes
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
                 padding: EdgeInsets.fromLTRB(16, 8, 16, context.bottomNavInset),
-                itemCount: _messages.length +
+                itemCount:
+                    _messages.length +
                     (_isLoading ? 1 : 0) +
                     (_showSuggestions ? 1 : 0),
                 itemBuilder: (context, index) {
@@ -348,15 +327,12 @@ class _AIScreenState extends State<AIScreen>
                         onRetry: message.isError && _lastUserMessage != null
                             ? () => _sendMessage(_lastUserMessage)
                             : null,
-                      )
-                          .animate()
-                          .fadeIn(duration: 250.ms)
-                          .slideY(begin: 0.05),
+                      ).animate().fadeIn(duration: 250.ms).slideY(begin: 0.05),
                       if (message.plan != null)
                         PlanCard(
-                          plan: message.plan!,
-                          onSave: () => _saveHabits(message.plan!),
-                        )
+                              plan: message.plan!,
+                              onSave: () => _saveHabits(message.plan!),
+                            )
                             .animate()
                             .fadeIn(delay: 100.ms, duration: 350.ms)
                             .slideY(begin: 0.08),
@@ -370,7 +346,10 @@ class _AIScreenState extends State<AIScreen>
             if (_isAiPaused)
               Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
@@ -452,7 +431,9 @@ class _InputBar extends StatelessWidget {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                    color: scheme.surfaceContainerHighest.withValues(
+                      alpha: 0.4,
+                    ),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: TextField(
@@ -465,9 +446,12 @@ class _InputBar extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                     decoration: InputDecoration(
                       hintText: s.aiInputHint,
-                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
-                      ),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(
+                            color: scheme.onSurfaceVariant.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
@@ -497,12 +481,14 @@ class _InputBar extends StatelessWidget {
                             padding: EdgeInsets.all(14),
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation(Colors.white),
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                        : const Icon(Icons.send_rounded,
-                            color: Colors.white, size: 20),
+                        : const Icon(
+                            Icons.send_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                   ),
                 ),
               ),
@@ -533,23 +519,26 @@ class _SuggestionChips extends StatelessWidget {
         runSpacing: 8,
         children: suggestions.asMap().entries.map((entry) {
           return ActionChip(
-            label: Text(
-              entry.value,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: scheme.onSurface,
-              ),
-            ),
-            avatar: Icon(Icons.auto_awesome_rounded,
-                size: 14, color: scheme.primary),
-            backgroundColor: scheme.surfaceContainerLowest,
-            side: BorderSide.none,
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            onPressed: () => onTap(entry.value),
-          )
+                label: Text(
+                  entry.value,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: scheme.onSurface),
+                ),
+                avatar: Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 14,
+                  color: scheme.primary,
+                ),
+                backgroundColor: scheme.surfaceContainerLowest,
+                side: BorderSide.none,
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onPressed: () => onTap(entry.value),
+              )
               .animate()
               .fadeIn(
                 delay: Duration(milliseconds: 200 + entry.key * 80),
@@ -603,9 +592,9 @@ class _TypingIndicator extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               S.of(context).aiThinking,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -633,19 +622,21 @@ class _CommunityBanner extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                Icon(Icons.storefront_rounded,
-                    size: 18, color: scheme.primary),
+                Icon(Icons.storefront_rounded, size: 18, color: scheme.primary),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     S.of(context).aiExploreTemplates,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 16, color: scheme.onSurfaceVariant),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: scheme.onSurfaceVariant,
+                ),
               ],
             ),
           ),

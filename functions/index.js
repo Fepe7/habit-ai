@@ -800,6 +800,12 @@ exports.butterflyProjectionJob = onSchedule(
           skipped += 1;
         } else {
           generated += 1;
+          // avisar de que la proyección mensual ya puede verse
+          await sendPushToUser(userDoc.id, {
+            title: "🦋 Tu proyección mensual está lista",
+            body: "Mira cómo tus pequeños hábitos de hoy cambian tu futuro.",
+            route: `/dashboard/butterfly/${result.monthId}`,
+          });
         }
       } catch (e) {
         errors += 1;
@@ -1042,10 +1048,22 @@ exports.renegotiationJob = onSchedule(
           .where("isActive", "==", true)
           .get();
 
+        // máximo un push de renegociación por usuario y día, aunque la IA
+        // genere propuestas para varios hábitos a la vez
+        let pushedThisUser = false;
         for (const habitDoc of habitsSnap.docs) {
           try {
             const result = await runRenegotiation(userDoc.id, habitDoc.id);
             result.skipped ? (skipped += 1) : (generated += 1);
+            if (!result.skipped && !pushedThisUser) {
+              pushedThisUser = true;
+              const habitTitle = habitDoc.data().title || "un hábito";
+              await sendPushToUser(userDoc.id, {
+                title: "🤝 La IA tiene una propuesta para ti",
+                body: `«${habitTitle}» se te está atascando. Mira la versión más fácil que te sugiere.`,
+                route: `/habit/${habitDoc.id}`,
+              });
+            }
           } catch (e) {
             errors += 1;
             console.error(
@@ -1427,6 +1445,12 @@ exports.patternInsightsJob = onSchedule(
           skipped += 1;
         } else {
           generated += 1;
+          // avisar de que hay insights nuevos de patrones
+          await sendPushToUser(userDoc.id, {
+            title: "💡 Hemos detectado tus patrones",
+            body: "Descubre qué días y horas te funcionan mejor.",
+            route: `/dashboard/patterns/${result.periodId}`,
+          });
         }
       } catch (e) {
         errors += 1;
@@ -1487,7 +1511,7 @@ exports.pauseAiOnBudgetExceeded = onMessagePublished(
 // Envía una notificación push a todos los dispositivos registrados de un
 // usuario. Lee los tokens de users/{uid}/fcm_tokens y limpia los inválidos
 // para no acumular basura ni gastar envíos en tokens muertos.
-async function sendPushToUser(uid, { title, body, route }) {
+async function sendPushToUser(uid, { title, body, route, data }) {
   if (!uid) return;
   const db = admin.firestore();
   const tokensSnap = await db
@@ -1502,7 +1526,8 @@ async function sendPushToUser(uid, { title, body, route }) {
   const message = {
     notification: { title, body },
     // data debe ser plano de strings; el cliente lee `route` para el deep link
-    data: route ? { route } : {},
+    // y flags opcionales como `skipForeground` (extras en `data`)
+    data: { ...(route ? { route } : {}), ...(data || {}) },
     android: {
       priority: "high",
       notification: { channelId: "push_default" },
@@ -1587,6 +1612,460 @@ exports.onNewFollower = onDocumentCreated(
       title: "Tienes un nuevo seguidor",
       body: `${name} empezó a seguirte`,
       route: "/followers?tab=0",
+    });
+  }
+);
+
+// ==================== PUSH: RETOS COMPARTIDOS ====================
+
+// Lee el nombre visible de un participante del reto (subcolección participants)
+// con fallback al directorio de usuarios y, en último término, a un genérico.
+async function getDisplayNameForChallenge(challengeId, uid) {
+  const db = admin.firestore();
+  const participant = await db
+    .collection("challenges")
+    .doc(challengeId)
+    .collection("participants")
+    .doc(uid)
+    .get();
+  const pData = participant.data();
+  if (pData?.displayName || pData?.username) {
+    return pData.displayName || pData.username;
+  }
+  const dir = await db.collection("user_directory").doc(uid).get();
+  const dData = dir.data();
+  return dData?.displayName || dData?.username || "Alguien";
+}
+
+// Notifica al invitado cuando alguien le reta.
+exports.onChallengeCreated = onDocumentCreated(
+  { document: "challenges/{challengeId}", region: "europe-west1" },
+  async (event) => {
+    const data = event.data?.data();
+    if (!data || data.status !== "pending" || !data.invitedUid) return;
+    const name = await getDisplayNameForChallenge(
+      event.params.challengeId,
+      data.creatorUid
+    );
+    await sendPushToUser(data.invitedUid, {
+      title: "⚔️ ¡Te han retado!",
+      body: `${name} te reta: «${data.habitTitle}» durante ${data.durationDays} días`,
+      route: `/challenges/${event.params.challengeId}`,
+    });
+  }
+);
+
+// Notifica los cambios de estado del reto: aceptado, rechazado y completado.
+exports.onChallengeUpdated = onDocumentUpdated(
+  { document: "challenges/{challengeId}", region: "europe-west1" },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after || before.status === after.status) return;
+    const challengeId = event.params.challengeId;
+    const route = `/challenges/${challengeId}`;
+
+    // pending → active: el invitado aceptó, avisamos al creador
+    if (before.status === "pending" && after.status === "active") {
+      const name = await getDisplayNameForChallenge(
+        challengeId,
+        after.invitedUid
+      );
+      await sendPushToUser(after.creatorUid, {
+        title: "🤝 ¡Reto aceptado!",
+        body: `${name} aceptó tu reto «${after.habitTitle}». ¡Empieza hoy!`,
+        route,
+      });
+      return;
+    }
+
+    // pending → declined: aviso suave al creador, sin culpabilizar a nadie
+    if (before.status === "pending" && after.status === "declined") {
+      const name = await getDisplayNameForChallenge(
+        challengeId,
+        after.invitedUid
+      );
+      await sendPushToUser(after.creatorUid, {
+        title: "Reto sin respuesta",
+        body: `${name} no puede unirse a «${after.habitTitle}» ahora. ¡Prueba con otro reto!`,
+        route: "/challenges",
+      });
+      return;
+    }
+
+    // active → completed: celebración para ambos participantes
+    if (before.status === "active" && after.status === "completed") {
+      const uids = after.participantUids || [];
+      await Promise.all(
+        uids.map((uid) =>
+          sendPushToUser(uid, {
+            title: "🏆 ¡Reto completado!",
+            body: `Habéis terminado «${after.habitTitle}». ¡Enhorabuena a los dos!`,
+            route,
+          })
+        )
+      );
+    }
+  }
+);
+
+// Pique sano: cuando un participante completa un día del reto, se avisa al
+// rival para incentivar que no se quede atrás. Como los retos son diarios,
+// esto se autolimita a ~1 notificación al día por rival.
+exports.onChallengeProgressUpdated = onDocumentUpdated(
+  {
+    document: "challenges/{challengeId}/progress/{uid}",
+    region: "europe-west1",
+  },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+    // solo cuando suma un día completado (no en desmarcados ni otros updates)
+    if ((after.completedCount || 0) <= (before.completedCount || 0)) return;
+
+    const { challengeId, uid } = event.params;
+    const db = admin.firestore();
+    const challengeSnap = await db
+      .collection("challenges")
+      .doc(challengeId)
+      .get();
+    const challenge = challengeSnap.data();
+    if (!challenge || challenge.status !== "active") return;
+
+    const rivalUid = (challenge.participantUids || []).find((u) => u !== uid);
+    if (!rivalUid) return;
+
+    const name = await getDisplayNameForChallenge(challengeId, uid);
+    await sendPushToUser(rivalUid, {
+      title: `🔥 ${name} ya completó su día`,
+      body: `Día ${after.completedCount} de «${challenge.habitTitle}» hecho. ¡No te quedes atrás!`,
+      route: `/challenges/${challengeId}`,
+    });
+  }
+);
+
+// ==================== PUSH: REACCIONES Y ENGAGEMENT ====================
+
+// Notifica al dueño del perfil cuando alguien reacciona con un emoji.
+exports.onProfileReaction = onDocumentCreated(
+  {
+    document: "public_profiles/{ownerUid}/reactions/{reactorUid}",
+    region: "europe-west1",
+  },
+  async (event) => {
+    const { ownerUid, reactorUid } = event.params;
+    if (ownerUid === reactorUid) return;
+    const data = event.data?.data();
+    if (!data) return;
+    const name = data.reactorDisplayName || data.reactorUsername || "Alguien";
+    await sendPushToUser(ownerUid, {
+      title: "Nueva reacción en tu perfil",
+      body: `${name} reaccionó ${data.emoji || "👏"} a tus logros`,
+      route: "/profile",
+    });
+  }
+);
+
+// Rachas en riesgo: cada noche avisa a quien tiene una racha valiosa (>= 3
+// días) y aún no ha completado ese hábito hoy. Solo se considera el hábito
+// de mayor racha por usuario para no bombardear con varias notificaciones.
+// Coste acotado: solo itera usuarios con tokens FCM registrados (cap 500).
+exports.streakRiskJob = onSchedule(
+  {
+    schedule: "30 20 * * *",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+  },
+  async () => {
+    const db = admin.firestore();
+
+    // uids únicos con al menos un dispositivo registrado
+    const tokensSnap = await db.collectionGroup("fcm_tokens").get();
+    const uids = [
+      ...new Set(
+        tokensSnap.docs
+          .map((d) => d.ref.parent.parent?.id)
+          .filter((id) => Boolean(id))
+      ),
+    ].slice(0, 500);
+
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    // weekday ISO 1-7 (lunes=1) como usa targetDays en el cliente
+    const isoWeekday = now.getDay() === 0 ? 7 : now.getDay();
+
+    let sent = 0;
+    for (const uid of uids) {
+      try {
+        // usuarios en modo enfermedad no reciben presión por la racha
+        const userSnap = await db.collection("users").doc(uid).get();
+        const sickUntil = userSnap.data()?.sickModeUntil;
+        if (sickUntil && sickUntil.toDate() > now) continue;
+
+        const habitsSnap = await db
+          .collection("users")
+          .doc(uid)
+          .collection("habits")
+          .where("isActive", "==", true)
+          .get();
+
+        // hábito con mayor racha que toque hoy
+        const candidate = habitsSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .filter(
+            (h) =>
+              (h.currentStreak || 0) >= 3 &&
+              (h.targetDays || []).includes(isoWeekday)
+          )
+          .sort((a, b) => (b.currentStreak || 0) - (a.currentStreak || 0))[0];
+        if (!candidate) continue;
+
+        // ¿ya tiene log de hoy? entonces la racha está a salvo
+        const logSnap = await db
+          .collection("users")
+          .doc(uid)
+          .collection("habits")
+          .doc(candidate.id)
+          .collection("logs")
+          .where(
+            "date",
+            ">=",
+            admin.firestore.Timestamp.fromDate(startOfToday)
+          )
+          .limit(1)
+          .get();
+        if (!logSnap.empty) continue;
+
+        await sendPushToUser(uid, {
+          title: `🔥 Racha de ${candidate.currentStreak} días en riesgo`,
+          body: `Aún estás a tiempo: completa «${candidate.title}» antes de medianoche`,
+          route: "/",
+        });
+        sent++;
+      } catch (e) {
+        console.error(`[streakRisk] error con ${uid}:`, e.message);
+      }
+    }
+    console.log(`[streakRisk] ${sent}/${uids.length} avisos enviados`);
+  }
+);
+
+
+// ==================== PUSH: ENGAGEMENT PROGRAMADO ====================
+
+// Retos a punto de acabar: con 3 días restantes y en el último día se envía
+// el marcador a ambos participantes para avivar el pique. Solo se notifica
+// en esos dos hitos exactos para no repetir el aviso cada día.
+exports.challengeEndingSoonJob = onSchedule(
+  {
+    schedule: "0 10 * * *",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+
+    // pocos retos activos: filtrar endDate en código evita un índice compuesto
+    const challengesSnap = await db
+      .collection("challenges")
+      .where("status", "==", "active")
+      .get();
+
+    let sent = 0;
+    for (const doc of challengesSnap.docs) {
+      try {
+        const challenge = doc.data();
+        const endDate = challenge.endDate?.toDate();
+        if (!endDate) continue;
+        const daysLeft = Math.ceil((endDate.getTime() - now.getTime()) / msPerDay);
+        if (daysLeft !== 3 && daysLeft !== 1) continue;
+
+        const uids = challenge.participantUids || [];
+        if (uids.length !== 2) continue;
+
+        // marcador de cada participante
+        const progressDocs = await Promise.all(
+          uids.map((uid) =>
+            db
+              .collection("challenges")
+              .doc(doc.id)
+              .collection("progress")
+              .doc(uid)
+              .get()
+          )
+        );
+        const counts = {};
+        uids.forEach((uid, i) => {
+          counts[uid] = progressDocs[i].data()?.completedCount || 0;
+        });
+
+        const title =
+          daysLeft === 1
+            ? "🏁 ¡Último día de reto!"
+            : "⏳ Quedan 3 días de reto";
+        await Promise.all(
+          uids.map((uid) => {
+            const rival = uids.find((u) => u !== uid);
+            return sendPushToUser(uid, {
+              title,
+              body: `«${challenge.habitTitle}»: llevas ${counts[uid]} días, tu rival ${counts[rival]}. ¡Está reñido!`,
+              route: `/challenges/${doc.id}`,
+            });
+          })
+        );
+        sent += 2;
+      } catch (e) {
+        console.error(`[challengeEnding] error con ${doc.id}:`, e.message);
+      }
+    }
+    console.log(`[challengeEnding] ${sent} avisos enviados`);
+  }
+);
+
+// Fin del modo enfermedad: aviso de bienvenida sin culpa cuando expira.
+// La ventana de 24h coincide con la frecuencia del job, así cada expiración
+// se notifica exactamente una vez.
+exports.sickModeEndedJob = onSchedule(
+  {
+    schedule: "0 9 * * *",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const usersSnap = await db
+      .collection("users")
+      .where("sickModeUntil", ">", admin.firestore.Timestamp.fromDate(dayAgo))
+      .where("sickModeUntil", "<=", admin.firestore.Timestamp.fromDate(now))
+      .get();
+
+    for (const doc of usersSnap.docs) {
+      await sendPushToUser(doc.id, {
+        title: "💪 Modo enfermedad terminado",
+        body: "Tus rachas te esperaron. Retómalas hoy, sin prisa.",
+        route: "/",
+      });
+    }
+    console.log(`[sickModeEnded] ${usersSnap.size} avisos enviados`);
+  }
+);
+
+// Resumen dominical: teaser con los números de la semana que invita a abrir
+// el dashboard. Distinto de la revisión semanal IA (esa llega el lunes con
+// su propio push); este es el cierre de semana con datos crudos.
+exports.weeklySummaryJob = onSchedule(
+  {
+    schedule: "0 19 * * 0",
+    timeZone: "Europe/Madrid",
+    region: "europe-west1",
+    timeoutSeconds: 540,
+  },
+  async () => {
+    const db = admin.firestore();
+    const now = new Date();
+    // lunes de esta semana a las 00:00
+    const isoWeekday = now.getDay() === 0 ? 7 : now.getDay();
+    const monday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - (isoWeekday - 1)
+    );
+    const weekdayNames = [
+      "lunes",
+      "martes",
+      "miércoles",
+      "jueves",
+      "viernes",
+      "sábado",
+      "domingo",
+    ];
+
+    // solo usuarios con dispositivo registrado (mismo criterio que streakRisk)
+    const tokensSnap = await db.collectionGroup("fcm_tokens").get();
+    const uids = [
+      ...new Set(
+        tokensSnap.docs
+          .map((d) => d.ref.parent.parent?.id)
+          .filter((id) => Boolean(id))
+      ),
+    ].slice(0, 500);
+
+    let sent = 0;
+    for (const uid of uids) {
+      try {
+        const habitsSnap = await db
+          .collection("users")
+          .doc(uid)
+          .collection("habits")
+          .where("isActive", "==", true)
+          .get();
+        if (habitsSnap.empty) continue;
+
+        let totalLogs = 0;
+        let scheduled = 0;
+        const perWeekday = [0, 0, 0, 0, 0, 0, 0];
+
+        for (const habitDoc of habitsSnap.docs) {
+          scheduled += (habitDoc.data().targetDays || []).length;
+          const logsSnap = await db
+            .collection("users")
+            .doc(uid)
+            .collection("habits")
+            .doc(habitDoc.id)
+            .collection("logs")
+            .where("date", ">=", admin.firestore.Timestamp.fromDate(monday))
+            .get();
+          for (const log of logsSnap.docs) {
+            if (log.data().completed !== true) continue;
+            totalLogs += 1;
+            const d = log.data().date.toDate().getDay();
+            perWeekday[d === 0 ? 6 : d - 1] += 1;
+          }
+        }
+
+        // sin actividad no hay nada que celebrar (el rescate es otro flujo)
+        if (totalLogs === 0) continue;
+
+        const bestIndex = perWeekday.indexOf(Math.max(...perWeekday));
+        const ratio = scheduled > 0 ? `${totalLogs}/${scheduled}` : `${totalLogs}`;
+        await sendPushToUser(uid, {
+          title: "📊 Tu semana en números",
+          body: `${ratio} check-ins · mejor día: ${weekdayNames[bestIndex]}. Mira tu progreso completo.`,
+          route: "/dashboard",
+        });
+        sent++;
+      } catch (e) {
+        console.error(`[weeklySummary] error con ${uid}:`, e.message);
+      }
+    }
+    console.log(`[weeklySummary] ${sent}/${uids.length} resúmenes enviados`);
+  }
+);
+
+// Logro desbloqueado: el doc lo crea el cliente con la app abierta (el
+// overlay in-app ya celebra), así que `skipForeground` evita el banner
+// duplicado; el push solo luce en los demás dispositivos del usuario.
+exports.onAchievementUnlocked = onDocumentCreated(
+  {
+    document: "users/{userId}/achievements/{achievementId}",
+    region: "europe-west1",
+  },
+  async (event) => {
+    await sendPushToUser(event.params.userId, {
+      title: "🏅 ¡Logro desbloqueado!",
+      body: "Has conseguido un logro nuevo. Échale un vistazo a tu vitrina.",
+      route: "/dashboard/achievements",
+      data: { skipForeground: "1" },
     });
   }
 );
