@@ -31,6 +31,7 @@ import '../../features/habits/presentation/all_habits_screen.dart';
 import '../../features/settings/presentation/privacy_settings_screen.dart';
 import '../../features/mood/presentation/mood_calendar_screen.dart';
 import '../../features/mood/presentation/mood_insights_screen.dart';
+import '../../features/onboarding/presentation/onboarding_gate.dart';
 import '../services/analytics_service.dart';
 import 'main_shell.dart';
 
@@ -93,7 +94,10 @@ GoRouter createRouter(AuthRepository authRepository) {
     routes: [
       // tabs principales con bottom nav
       ShellRoute(
-        builder: (context, state, child) => MainShell(child: child),
+        // El gate intercepta a usuarios con onboarding pendiente y muestra
+        // el flujo a pantalla completa antes de dejarles entrar al shell
+        builder: (context, state, child) =>
+            OnboardingGate(child: MainShell(child: child)),
         routes: [
           GoRoute(
             path: '/',

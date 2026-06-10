@@ -735,8 +735,13 @@ class _GroupHabitTile extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 6),
-                    // dias activos del habito
-                    Row(
+                    // dias activos del habito. FittedBox: con recordatorio,
+                    // los 7 chips + la hora se pasan por ~2px en pantallas
+                    // estrechas; mejor encoger imperceptiblemente que desbordar
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
                       children: [
                         ...List.generate(7, (i) {
                           final day = i + 1;
@@ -785,6 +790,7 @@ class _GroupHabitTile extends StatelessWidget {
                           ),
                         ],
                       ],
+                      ),
                     ),
                   ],
                 ),
@@ -898,15 +904,16 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
     final colorScheme = Theme.of(context).colorScheme;
     final s = S.of(context);
 
-    return Padding(
+    // el padding del teclado (viewInsets) va DENTRO del scroll: si quedara
+    // fuera, con el teclado abierto el alto fijo desbordaría el sheet
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
         top: 16,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
-      child: SingleChildScrollView(
-        child: Column(
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1024,7 +1031,6 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
             const SizedBox(height: 8),
           ],
         ),
-      ),
     );
   }
 }
