@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
@@ -673,7 +674,8 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
+// Acordeón por categoría: colapsado por defecto para no saturar la pestaña
+class _CategorySection extends StatefulWidget {
   final String category;
   final List<HabitModel> habits;
   final int animationIndex;
@@ -685,43 +687,123 @@ class _CategorySection extends StatelessWidget {
   });
 
   @override
+  State<_CategorySection> createState() => _CategorySectionState();
+}
+
+class _CategorySectionState extends State<_CategorySection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final catBg = AppTheme.categoryBg(widget.category, brightness);
+    final catFg = AppTheme.categoryFg(widget.category, brightness);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(
-                AppTheme.categoryIcon(category),
-                size: 16,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                CategoryL10n.label(category, S.of(context)).toUpperCase(),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.3,
+          Material(
+            color: scheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(20),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _expanded = !_expanded);
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: catBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        AppTheme.categoryIcon(widget.category),
+                        size: 18,
+                        color: catFg,
+                      ),
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        CategoryL10n.label(widget.category, S.of(context)),
+                        style:
+                            Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: catBg.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${widget.habits.length}',
+                        style: TextStyle(
+                          color: catFg,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutCubic,
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ...habits.map(
-            (h) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ProfileHabitCard(habit: h).animate().fadeIn(
-                    delay: Duration(milliseconds: animationIndex * 60),
-                    duration: 300.ms,
-                  ),
             ),
+          )
+              .animate()
+              .fadeIn(
+                delay: Duration(milliseconds: widget.animationIndex * 60),
+                duration: 300.ms,
+              ),
+          // contenido plegable
+          AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: !_expanded
+                ? const SizedBox(width: double.infinity)
+                : Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Column(
+                      children: [
+                        for (final h in widget.habits)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: _ProfileHabitCard(habit: h)
+                                .animate()
+                                .fadeIn(duration: 250.ms),
+                          ),
+                      ],
+                    ),
+                  ),
           ),
-          const SizedBox(height: 14),
         ],
       ),
     );
