@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
@@ -1187,21 +1188,163 @@ class _HabitsGrid extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final chipWidth = (constraints.maxWidth - 10) / 2;
-            return Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (int i = 0; i < habits.length; i++)
-                  SizedBox(
-                    width: chipWidth,
-                    child: _HabitChip(habit: habits[i], index: i),
+        ...() {
+          // agrupados por categoría en acordeones colapsados, igual que en el perfil propio
+          final byCategory = <String, List<PublicHabitModel>>{};
+          for (final h in habits) {
+            byCategory.putIfAbsent(h.category, () => []).add(h);
+          }
+          var index = 0;
+          return byCategory.entries.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _PublicCategorySection(
+                category: e.key,
+                habits: e.value,
+                animationIndex: index++,
+              ),
+            ),
+          );
+        }(),
+      ],
+    );
+  }
+}
+
+// Acordeón por categoría: colapsado por defecto para no saturar la pestaña
+class _PublicCategorySection extends StatefulWidget {
+  final String category;
+  final List<PublicHabitModel> habits;
+  final int animationIndex;
+
+  const _PublicCategorySection({
+    required this.category,
+    required this.habits,
+    required this.animationIndex,
+  });
+
+  @override
+  State<_PublicCategorySection> createState() => _PublicCategorySectionState();
+}
+
+class _PublicCategorySectionState extends State<_PublicCategorySection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final catBg = AppTheme.categoryBg(widget.category, brightness);
+    final catFg = AppTheme.categoryFg(widget.category, brightness);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Material(
+          color: scheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(20),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _expanded = !_expanded);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: catBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      AppTheme.categoryIcon(widget.category),
+                      size: 18,
+                      color: catFg,
+                    ),
                   ),
-              ],
-            );
-          },
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      CategoryL10n.label(widget.category, S.of(context)),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: catBg.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${widget.habits.length}',
+                      style: TextStyle(
+                        color: catFg,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+            .animate()
+            .fadeIn(
+              delay: Duration(milliseconds: widget.animationIndex * 60),
+              duration: 300.ms,
+            ),
+        // contenido plegable: grid de chips de la categoría
+        AnimatedSize(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: !_expanded
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final chipWidth = (constraints.maxWidth - 10) / 2;
+                      return Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (int i = 0; i < widget.habits.length; i++)
+                            SizedBox(
+                              width: chipWidth,
+                              child: _HabitChip(
+                                habit: widget.habits[i],
+                                index: i,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ).animate().fadeIn(duration: 250.ms),
+                ),
         ),
       ],
     );
