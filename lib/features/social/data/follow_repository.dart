@@ -93,6 +93,10 @@ class FollowRepository {
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'respondedAt': null,
+      // TTL de Firestore: una pendiente que nadie responde caduca a los 90 días
+      'expiresAt': Timestamp.fromDate(
+        DateTime.now().add(const Duration(days: 90)),
+      ),
       'fromUsername': fromUsername,
       'fromDisplayName': fromDisplayName,
       'fromPhotoUrl': fromPhotoUrl,
@@ -117,6 +121,8 @@ class FollowRepository {
     batch.update(_requestsRef.doc(requestId), {
       'status': 'accepted',
       'respondedAt': Timestamp.fromDate(now),
+      // TTL de Firestore: resuelta solo hace falta unos días (notificación)
+      'expiresAt': Timestamp.fromDate(now.add(const Duration(days: 7))),
     });
 
     // fromUid pasa a ser follower de toUid
@@ -145,6 +151,10 @@ class FollowRepository {
     await _requestsRef.doc(requestId).update({
       'status': 'declined',
       'respondedAt': FieldValue.serverTimestamp(),
+      // TTL de Firestore: resuelta solo hace falta unos días
+      'expiresAt': Timestamp.fromDate(
+        DateTime.now().add(const Duration(days: 7)),
+      ),
     });
   }
 

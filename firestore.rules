@@ -209,11 +209,12 @@ service cloud.firestore {
                       || resource.data.toUid == request.auth.uid);
       allow create: if request.auth != null
                     && request.resource.data.fromUid == request.auth.uid;
-      // Solo el receptor puede actualizar el estado (aceptar/rechazar)
+      // Solo el receptor puede actualizar el estado (aceptar/rechazar);
+      // expiresAt es el campo TTL que acorta la retención al resolver
       allow update: if request.auth != null
                     && resource.data.toUid == request.auth.uid
                     && request.resource.data.diff(resource.data)
-                       .affectedKeys().hasOnly(['status', 'respondedAt']);
+                       .affectedKeys().hasOnly(['status', 'respondedAt', 'expiresAt']);
       // El remitente puede cancelar su solicitud mientras siga pendiente
       allow delete: if request.auth != null
                     && resource.data.fromUid == request.auth.uid

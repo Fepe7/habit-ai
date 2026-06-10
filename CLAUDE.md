@@ -88,7 +88,7 @@ Hosting: `public/` — landing, política de privacidad y términos de uso en Fi
 
 ## Modelo de datos (colecciones Firestore)
 
-- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`
+- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`, `lastActiveAt` (marca por sesión para la futura limpieza de cuentas inactivas)
 - `users/{uid}/habits/{habitId}` — hábitos con `visibility` individual, `isAIGenerated`, rachas, `groupId`, `stackOrder`
 - `users/{uid}/habits/{habitId}/logs/{logId}` — check-ins diarios
 - `users/{uid}/mood_entries/{entryId}` — registros de ánimo/energía por franja horaria (privados, nunca públicos)
@@ -184,8 +184,9 @@ TFG completado y defendido. Fase actual: **lanzamiento público**.
 - Release: keystore de producción configurado, AAB generado
 - iOS: cuenta Apple Developer activa, CI/CD con Codemagic (`codemagic.yaml`) compila y firma sin Mac, sube a TestFlight. App probada y funcionando en iPhone vía testing interno. Bundle ID `com.andreistaicu.habitai`, mínimo iOS 15.0. Clave privada de firma persistente en variable `CERTIFICATE_PRIVATE_KEY` (grupo `ios_signing`) de Codemagic.
 - Costes: blindaje Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs, App Check (cliente activado), caché Firestore 100MB. Ver `docs/gemini-costes.md`.
+- Retención de datos: campo TTL `expiresAt` en colecciones efímeras (chats IA 30d, revisiones 8 sem, mariposa 3 m, patrones 60d, renegociaciones 30d, follow_requests 90d/7d, fcm_tokens 120d, rate_limits 7d). `shield_grants` excluida a propósito (la dedupe de escudos debe vivir tanto como la racha). Plazos, comandos `gcloud` y backfill → `docs/retencion-datos.md`.
 
-**Pendiente para lanzamiento:** widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo), manejo offline, tests mínimos, `firebase deploy --only functions` (los triggers FCM nuevos están en código pero sin desplegar). App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
+**Pendiente para lanzamiento:** activar políticas TTL en Firestore (`gcloud firestore fields ttls update …`, comandos en `docs/retencion-datos.md`) + backfill `node functions/backfill_expires_at.js` + desplegar rules y functions con `expiresAt`. Widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo), manejo offline, tests mínimos, `firebase deploy --only functions` (los triggers FCM nuevos están en código pero sin desplegar). App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
 
 Ver roadmap completo y backlog → **ROADMAP.md**
 

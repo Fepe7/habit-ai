@@ -107,6 +107,16 @@ class UserRepository {
     await _userRef.set({'isProfilePublic': isPublic}, SetOptions(merge: true));
   }
 
+  // Marca de última actividad: la usará la futura limpieza de cuentas
+  // inactivas. Se registra desde ya porque no se puede reconstruir a posteriori
+  // (la sesión persiste y lastSignInTime de Auth no refleja el uso real).
+  Future<void> touchLastActive() async {
+    await _userRef.set(
+      {'lastActiveAt': FieldValue.serverTimestamp()},
+      SetOptions(merge: true),
+    );
+  }
+
   // Comprobar si ya se concedió escudo por un hito concreto de un hábito
   // (deduplicación para no dar escudos dos veces)
   Future<bool> hasShieldGrant(String habitId, int milestone) async {
