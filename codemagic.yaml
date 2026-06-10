@@ -33,6 +33,11 @@ workflows:
             --type IOS_APP_STORE \
             --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
+          # perfil para la extensión del widget de pantalla de inicio
+          app-store-connect fetch-signing-files "$BUNDLE_ID.HabitWidget" \
+            --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --create
           keychain add-certificates
 
       - name: Compilar Flutter sin firmar
