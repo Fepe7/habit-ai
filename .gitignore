@@ -58,6 +58,9 @@ key.properties
 
 # Firebase — configuración con API keys y credenciales de proyecto
 **/google-services.json
+# Clave privada del service account (backfill / enable_ttl) — NUNCA subirla
+**/serviceAccount*.json
+**/*service-account*.json
 # **/GoogleService-Info.plist  # necesario para CI/CD (iOS)
 # **/firebase_options.dart  # necesario para CI/CD
 functions/node_modules/

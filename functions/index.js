@@ -40,6 +40,15 @@ function getPrompts(locale) {
   return promptsByLocale[locale] || promptsByLocale["es"];
 }
 
+// Política de retención: timestamp para el campo expiresAt que las políticas
+// TTL de Firestore usan para purgar documentos viejos automáticamente.
+// Plazos por colección → docs/retencion-datos.md
+function expiresInDays(days) {
+  return admin.firestore.Timestamp.fromMillis(
+    Date.now() + days * 24 * 60 * 60 * 1000
+  );
+}
+
 // Comprueba que el usuario no ha superado el limite de peticiones (10/hora)
 async function checkRateLimit(uid) {
   const ref = admin.firestore().collection("rate_limits").doc(uid);
@@ -57,9 +66,9 @@ async function checkRateLimit(uid) {
     }
 
     requests.push(now);
-    await ref.update({ requests });
+    await ref.update({ requests, expiresAt: expiresInDays(7) });
   } else {
-    await ref.set({ requests: [now] });
+    await ref.set({ requests: [now], expiresAt: expiresInDays(7) });
   }
 
   return true;
@@ -419,6 +428,7 @@ Datos de ánimo de la semana:
     recommendations: parsed.recommendations || [],
     focus: parsed.focus || "",
     moodInsights: parsed.moodInsights || null,
+    expiresAt: expiresInDays(56), // retención: 8 semanas
   };
 
   await admin
@@ -712,6 +722,7 @@ Resumen del mes:
     storyAbandon: parsed.storyAbandon || "",
     keyMoments: parsed.keyMoments || [],
     closingMessage: parsed.closingMessage || "",
+    expiresAt: expiresInDays(90), // retención: 3 meses
   };
 
   await admin
@@ -941,6 +952,7 @@ Propón un ajuste concreto para que pueda retomarlo.`;
     encouragement: parsed.encouragement || "",
     appliedAt: null,
     dismissedAt: null,
+    expiresAt: expiresInDays(30), // retención: 30 días
   };
 
   await db
@@ -1356,6 +1368,7 @@ Genera entre 2 y 6 insights relevantes basándote exclusivamente en los datos an
     insights: parsed.insights || [],
     summary: parsed.summary || "",
     dataQuality: parsed.dataQuality || "limited",
+    expiresAt: expiresInDays(60), // retención: 60 días
   };
 
   console.log(`[patterns] escribiendo en Firestore: users/${uid}/pattern_insights/${periodId}`);

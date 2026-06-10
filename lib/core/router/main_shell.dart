@@ -150,6 +150,8 @@ class _MainShellState extends State<MainShell> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final repo = UserRepository(uid: uid);
+    // marca de última actividad (una vez por sesión, para detectar abandono)
+    unawaited(repo.touchLastActive());
     await repo.ensureDirectoryEntry();
   }
 

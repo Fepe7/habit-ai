@@ -136,6 +136,11 @@ class PushNotificationService {
         'token': token,
         'platform': defaultTargetPlatform.name,
         'updatedAt': FieldValue.serverTimestamp(),
+        // TTL de Firestore: se refresca en cada arranque; si el dispositivo
+        // no abre la app en 120 días, el token se purga solo
+        'expiresAt': Timestamp.fromDate(
+          DateTime.now().add(const Duration(days: 120)),
+        ),
       });
     } catch (e) {
       debugPrint('[FCM] no se pudo guardar token: $e');

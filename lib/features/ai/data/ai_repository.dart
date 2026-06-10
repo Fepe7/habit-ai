@@ -142,6 +142,10 @@ class AIRepository {
   }) async {
     final docRef = await _conversationsRef.add({
       'createdAt': Timestamp.fromDate(DateTime.now()),
+      // TTL de Firestore: las conversaciones se purgan a los 30 días
+      'expiresAt': Timestamp.fromDate(
+        DateTime.now().add(const Duration(days: 30)),
+      ),
       'userMessage': userMessage,
       'aiResponse': aiResponse,
       'generatedHabits': generatedHabits ?? [],
