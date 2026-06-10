@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget de pantalla de inicio -->
+    <string name="widget_habits_label">HabitAI — Hoy</string>
+    <string name="widget_habits_description">Tu progreso del día y check-ins rápidos</string>
+    <string name="widget_today">hoy</string>
+    <string name="widget_more">+%1$d más…</string>
+    <string name="widget_empty">Sin hábitos hoy</string>
+    <string name="widget_stale">Abre HabitAI para actualizar</string>
+</resources>

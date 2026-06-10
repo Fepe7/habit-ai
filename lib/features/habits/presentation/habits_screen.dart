@@ -37,6 +37,9 @@ import '../../ai/data/ai_repository.dart';
 import '../../ai/domain/renegotiation_model.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../challenges/data/challenge_repository.dart';
+import '../../../services/home_widget_service.dart';
+import '../../mood/presentation/widgets/mood_header_button.dart';
+import '../../mood/presentation/widgets/mood_today_banner.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// Pantalla principal — grupos de habitos y hábitos sueltos
@@ -304,6 +307,10 @@ class _HabitsScreenState extends State<HabitsScreen>
         if (mounted) setState(() => _completedToday[habit.id] = wasCompleted);
       }));
     }
+
+    // reflejar el cambio en el widget de pantalla de inicio (tras escribir el
+    // log: la caché de Firestore ya ve la escritura pendiente)
+    unawaited(HomeWidgetService.instance.syncToday());
 
     if (!wasCompleted) {
       // feedback de XP extra por ser hábito atómico (encadenado)
@@ -938,6 +945,18 @@ class _HabitsScreenState extends State<HabitsScreen>
                         ),
                       ),
 
+                      // check-in rápido de ánimo (desaparece al registrar la franja)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                          child: MoodTodayBanner(
+                            completedHabits: allHabits
+                                .where((h) => _completedToday[h.id] == true)
+                                .toList(),
+                          ),
+                        ),
+                      ),
+
                       // grupos como acordeones
                       ...activeGroups.map((group) {
                         final groupHabits = habitsByGroup[group.id] ?? [];
@@ -1260,6 +1279,13 @@ class _HabitsScreenState extends State<HabitsScreen>
               ],
             ),
           ),
+          // botón de ánimo: emoji de la franja actual o invitación a registrar
+          MoodHeaderButton(
+            completedHabits: _currentTodayHabits
+                .where((h) => _completedToday[h.id] == true)
+                .toList(),
+          ),
+          const SizedBox(width: 8),
           // boton de notificaciones con badge de nuevas
           GestureDetector(
             onTap: () {

@@ -64,7 +64,7 @@ Cualquier otra tarea (features, arquitectura, refactors, subagentes) → graphif
 
 ## Arquitectura del proyecto
 
-Feature-first: `lib/features/{auth,habits,dashboard,ai,achievements,settings,social,challenges,community,profile,levels,notifications,explore}/`  
+Feature-first: `lib/features/{auth,onboarding,habits,dashboard,ai,achievements,settings,social,challenges,community,profile,levels,notifications,explore}/`  
 Cada feature: `data/` (repositorios Firebase) → `domain/` (modelos Dart puros) → `presentation/` (screens/widgets, nunca Firebase directo).  
 Core compartido: `core/theme/app_theme.dart`, `core/router/app_router.dart`, `core/widgets/`, `core/widgets/ux/`, `core/services/feedback_service.dart`.  
 Servicios: `services/notification_service.dart`.  
@@ -88,7 +88,7 @@ Hosting: `public/` — landing, política de privacidad y términos de uso en Fi
 
 ## Modelo de datos (colecciones Firestore)
 
-- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`
+- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`
 - `users/{uid}/habits/{habitId}` — hábitos con `visibility` individual, `isAIGenerated`, rachas, `groupId`, `stackOrder`
 - `users/{uid}/habits/{habitId}/logs/{logId}` — check-ins diarios
 - `users/{uid}/mood_entries/{entryId}` — registros de ánimo/energía por franja horaria (privados, nunca públicos)
@@ -99,6 +99,7 @@ Hosting: `public/` — landing, política de privacidad y términos de uso en Fi
 - `users/{uid}/pattern_insights/{periodId}` — detección de patrones IA (solo admin SDK)
 - `users/{uid}/renegotiations/{habitId}` — propuestas de renegociación IA
 - `users/{uid}/shield_grants/{grantId}` — deduplicación de escudos concedidos
+- `users/{uid}/fcm_tokens/{token}` — tokens de dispositivo para push (FCM)
 - `users/{uid}/followers/{uid}` — seguidores (subcolección)
 - `users/{uid}/following/{uid}` — seguidos (subcolección)
 - `user_directory/{uid}` — entrada ligera para búsqueda por username y privacidad
@@ -131,11 +132,13 @@ Prompts: JSON estricto, contexto usuario, máx. 5-7 hábitos, incluir categoría
 SplashScreen → auth state
   ├── No auth → LoginScreen ↔ RegisterScreen (con Google Sign-In)
   └── Auth
-      ├── onboardingCompleted=false → OnboardingFlow
+      ├── onboardingCompleted=false → OnboardingFlow (vía OnboardingGate)
       └── onboardingCompleted=true → MainShell (BottomNav 5 tabs, swipe entre tabs)
           Tab 1: HabitsScreen (/) · Tab 2: DashboardScreen (/dashboard) · Tab 3: AIScreen (/ai)
           Tab 4: ExploreScreen (/explore) · Tab 5: ProfileScreen (/profile)
 ```
+
+- **OnboardingFlow** (`lib/features/onboarding/`): 8 pasos sobre fondo de gradiente animado — bienvenida → nombre → áreas → estilo de vida → plan generado por IA (con receta auto-escrita y confeti) → primer check-in real (racha de 1 día) → tour de funciones IA → permiso de notificaciones con preview. `OnboardingGate` envuelve el `MainShell` en el router y lee `onboardingCompleted` una vez por sesión (doc ausente = mostrar onboarding, por la carrera con `_ensureUserDoc` en el registro). El plan se guarda como grupo + hábitos reutilizando el flujo del chat IA; las áreas elegidas se persisten en `onboardingGoals`.
 
 - **HabitsScreen**: grupos como acordeones + hábitos sueltos, todos visibles (completados incluidos — ver lo logrado refuerza al usuario; NO ocultar completados, decisión explícita). Header con campana de notificaciones (badge) que abre `NotificationsBottomSheet`.
 - **ExploreScreen** agrupa lo social: desde ahí se llega a Comunidad (`/community`), Retos (`/challenges`) y perfiles públicos (`/profiles/:userId`).
@@ -163,8 +166,9 @@ SplashScreen → auth state
 
 TFG completado y defendido. Fase actual: **lanzamiento público**.
 
-**Features implementadas (mayo 2026):**
-- Auth: email/password + Google Sign-In, onboarding
+**Features implementadas (junio 2026):**
+- Auth: email/password + Google Sign-In
+- Onboarding interactivo: 8 pasos animados que terminan con plan IA generado y primer check-in hecho (ver Flujo de navegación)
 - Hábitos: CRUD, check-ins, rachas, escudos de racha, modo enfermedad, reordenamiento drag & drop, edición por lotes
 - Habit stacking: cadenas de hábitos (Atomic Habits), grupos, bonus XP, drag & drop dentro de cadena
 - IA: chat con Gemini, revisión semanal, renegociación inteligente, efecto mariposa, detección de patrones
@@ -174,12 +178,14 @@ TFG completado y defendido. Fase actual: **lanzamiento público**.
 - Comunidad: plantillas compartidas, feed paginado con filtros
 - Gamificación: logros con niveles por categoría, radar chart hexagonal
 - UX: feedback háptico, skeleton loaders, animaciones con flutter_animate, notificaciones locales
+- Push FCM (`functions/index.js`, helper `sendPushToUser` con limpieza de tokens muertos): follows y solicitudes, retos (invitación, aceptado/rechazado, completado, pique al completar día el rival, marcador a 3 días y último día), reacciones de perfil, logros (`skipForeground` evita duplicar el overlay in-app), jobs IA (revisión semanal, mariposa, patrones, renegociación con cap 1/usuario/día), racha en riesgo (20:30), fin de modo enfermedad y resumen dominical (domingo 19:00). Deep links via campo `route` en data
+- Widgets de home screen (#27): paquete `home_widget` 0.7 (0.8 exige compileSdk 37). `HomeWidgetService` (`lib/services/`) publica el payload del día y procesa check-ins; Android = RemoteViews (`HabitWidgetProvider.kt`) con check-in vía callback Dart en fondo; iOS = extensión WidgetKit (`ios/HabitWidget/`) con App Intent (iOS 17+) que marca optimista y encola en App Group `group.com.andreistaicu.habitai` — la app reconcilia al abrir. En iOS 15/16 el tap abre la app
 - Legal: política de privacidad + términos en Firebase Hosting, eliminación de cuenta con doble confirmación
 - Release: keystore de producción configurado, AAB generado
 - iOS: cuenta Apple Developer activa, CI/CD con Codemagic (`codemagic.yaml`) compila y firma sin Mac, sube a TestFlight. App probada y funcionando en iPhone vía testing interno. Bundle ID `com.andreistaicu.habitai`, mínimo iOS 15.0. Clave privada de firma persistente en variable `CERTIFICATE_PRIVATE_KEY` (grupo `ios_signing`) de Codemagic.
 - Costes: blindaje Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs, App Check (cliente activado), caché Firestore 100MB. Ver `docs/gemini-costes.md`.
 
-**Pendiente para lanzamiento:** manejo offline, FCM push, tests mínimos. App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
+**Pendiente para lanzamiento:** widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo), manejo offline, tests mínimos, `firebase deploy --only functions` (los triggers FCM nuevos están en código pero sin desplegar). App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
 
 Ver roadmap completo y backlog → **ROADMAP.md**
 

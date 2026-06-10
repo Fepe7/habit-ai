@@ -67,6 +67,9 @@ dependencies:
   package_info_plus: ^8.3.0
   firebase_remote_config: ^6.0.0
   firebase_app_check: ^0.4.0
+  # 0.8.x arrastra androidx.glance alpha (exige compileSdk 37 + AGP 9.1);
+  # 0.7.x tiene la misma API sin esa dependencia
+  home_widget: ^0.7.0
 
 dev_dependencies:
   flutter_test:

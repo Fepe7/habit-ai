@@ -2,4 +2,12 @@
 <resources>
     <!-- ID del cliente web de Firebase — requerido por google_sign_in v7 -->
     <string name="default_web_client_id">958324745015-j5sd17c4ttccmriqs34gcv4ctbpq8hk2.apps.googleusercontent.com</string>
+
+    <!-- Widget de pantalla de inicio -->
+    <string name="widget_habits_label">HabitAI — Today</string>
+    <string name="widget_habits_description">Your daily progress and quick check-ins</string>
+    <string name="widget_today">today</string>
+    <string name="widget_more">+%1$d more…</string>
+    <string name="widget_empty">No habits today</string>
+    <string name="widget_stale">Open HabitAI to refresh</string>
 </resources>
