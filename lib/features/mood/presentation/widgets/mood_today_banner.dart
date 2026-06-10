@@ -27,28 +27,18 @@ class MoodTodayBanner extends StatefulWidget {
 
 class _MoodTodayBannerState extends State<MoodTodayBanner> {
   MoodRepository? _repo;
-  int _streak = 0;
 
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid != null) {
-      _repo = MoodRepository(uid: uid);
-      _loadStreak(uid);
-    }
-  }
-
-  Future<void> _loadStreak(String uid) async {
-    final streak = await MoodRepository(uid: uid).getMoodStreak();
-    if (mounted) setState(() => _streak = streak);
+    if (uid != null) _repo = MoodRepository(uid: uid);
   }
 
   // Registro rápido de un toque: ánimo de la franja actual, sin abrir el sheet
   Future<void> _quickLog(int rating) async {
     final repo = _repo;
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (repo == null || uid == null) return;
+    if (repo == null) return;
 
     final now = DateTime.now();
     final entry = MoodEntryModel(
@@ -64,7 +54,6 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
     await FeedbackService.instance.moodSelected();
     await repo.createEntry(entry);
     if (!mounted) return;
-    _loadStreak(uid);
     AppSnackBar.showSuccess(context, S.of(context).moodLoggedToday);
   }
 
@@ -115,12 +104,9 @@ class _MoodTodayBannerState extends State<MoodTodayBanner> {
                 completedHabits: widget.completedHabits,
                 onQuickLog: _quickLog,
               ),
-            _CardState.logged => _LoggedCard(
-                key: const ValueKey('logged'),
-                rating: blockEntry!.rating,
-                streak: _streak,
-                completedHabits: widget.completedHabits,
-              ),
+            // registrada la franja, la tarjeta se quita: el estado queda
+            // visible en el botón de ánimo del header, sin ocupar la lista
+            _CardState.logged => const SizedBox.shrink(key: ValueKey('logged')),
           },
         );
       },
@@ -241,103 +227,6 @@ class _EntryCard extends StatelessWidget {
     if (hour >= 12 && hour < 15) return '☀️';
     if (hour >= 15 && hour < 21) return '🌇';
     return '🌙';
-  }
-}
-
-// --- estado: ya registrado ---
-
-class _LoggedCard extends StatelessWidget {
-  final int rating;
-  final int streak;
-  final List<HabitModel> completedHabits;
-
-  const _LoggedCard({
-    super.key,
-    required this.rating,
-    required this.streak,
-    required this.completedHabits,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final s = S.of(context);
-    final brightness = Theme.of(context).brightness;
-    final bg = MoodTheme.ratingBg(rating, brightness);
-    final accent = MoodTheme.ratingAccent(rating, brightness);
-    final emoji = MoodTheme.emojiFor(rating);
-
-    return GestureDetector(
-      onTap: () => MoodEntrySheet.show(
-        context,
-        completedHabits: completedHabits,
-      ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: accent.withValues(alpha: 0.22),
-            width: 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 26))
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .scale(
-                  begin: const Offset(1, 1),
-                  end: const Offset(1.07, 1.07),
-                  duration: 2000.ms,
-                  curve: Curves.easeInOut,
-                ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        s.moodLoggedToday,
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.check_circle_rounded,
-                        size: 14,
-                        color: accent,
-                      ),
-                    ],
-                  ),
-                  if (streak > 1) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '🔥 ${s.moodStreakDays(streak)}',
-                      style: TextStyle(
-                        color: accent.withValues(alpha: 0.8),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Icon(
-              Icons.add_rounded,
-              size: 18,
-              color: accent.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
-      ),
-    ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.08, duration: 300.ms);
   }
 }
 
