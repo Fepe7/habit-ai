@@ -64,6 +64,42 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Restablecer contraseña: pide el email en un diálogo y delega en
+  // Firebase Auth (envía el correo gratis con la plantilla de la consola).
+  // El mensaje de éxito es genérico a propósito: no revela si la cuenta existe.
+  Future<void> _handleForgotPassword() async {
+    final s = S.of(context);
+
+    // el diálogo posee su propio controller (no se puede hacer dispose aquí:
+    // la animación de cierre del diálogo aún depende de él)
+    final email = await showDialog<String>(
+      context: context,
+      builder: (ctx) => _ForgotPasswordDialog(
+        initialEmail: _emailController.text.trim(),
+      ),
+    );
+
+    if (email == null || !mounted) return;
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.authForgotPasswordInvalid)),
+      );
+      return;
+    }
+
+    try {
+      await AuthProvider.of(context).sendPasswordResetEmail(email);
+    } catch (_) {
+      // silenciar a propósito: mismo mensaje exista o no la cuenta
+      // (Firebase ya protege contra enumeración de emails por defecto)
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(s.authForgotPasswordSent)),
+      );
+    }
+  }
+
   Future<void> _handleGoogleSignIn() async {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
@@ -223,7 +259,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     return null;
                   },
                 ).animate().fadeIn(delay: 450.ms, duration: 400.ms),
-                const SizedBox(height: 28),
+
+                // enlace de recuperación de contraseña
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading ? null : _handleForgotPassword,
+                    child: Text(
+                      s.authForgotPassword,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 500.ms, duration: 400.ms),
+                const SizedBox(height: 12),
 
                 // error
                 if (_errorMessage != null)
@@ -440,6 +491,69 @@ class _GoogleLogo extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Diálogo de recuperación de contraseña. Posee su TextEditingController
+/// para que se libere con el ciclo de vida del diálogo (hacer dispose desde
+/// fuera rompe la animación de cierre: el campo aún depende del controller).
+class _ForgotPasswordDialog extends StatefulWidget {
+  const _ForgotPasswordDialog({required this.initialEmail});
+
+  final String initialEmail;
+
+  @override
+  State<_ForgotPasswordDialog> createState() => _ForgotPasswordDialogState();
+}
+
+class _ForgotPasswordDialogState extends State<_ForgotPasswordDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialEmail);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context)!;
+    return AlertDialog(
+      title: Text(s.authForgotPasswordTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(s.authForgotPasswordBody),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.emailAddress,
+            autofocus: true,
+            onSubmitted: (value) => Navigator.of(context).pop(value.trim()),
+            decoration: InputDecoration(
+              labelText: s.authEmail,
+              prefixIcon: const Icon(Icons.email_outlined),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(s.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: Text(s.authForgotPasswordSend),
+        ),
+      ],
     );
   }
 }

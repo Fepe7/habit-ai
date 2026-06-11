@@ -50,6 +50,13 @@ class UserModel {
   /// Mostrar contador de seguidores/siguiendo en el perfil público
   final bool showFollowerCount;
 
+  /// Suscripción premium activa. Lo escribe SOLO el backend (Admin SDK);
+  /// el cliente lo lee para abrir/cerrar gates. Nunca va en toJson().
+  final bool isPremium;
+
+  /// Caducidad de la suscripción (null = sin caducidad definida)
+  final DateTime? premiumUntil;
+
   const UserModel({
     required this.uid,
     required this.email,
@@ -68,12 +75,21 @@ class UserModel {
     this.showHabits = true,
     this.showAchievements = true,
     this.showFollowerCount = true,
+    this.isPremium = false,
+    this.premiumUntil,
   });
 
   /// Si el modo enfermedad sigue activo ahora mismo
   bool get isSickModeActive {
     if (sickModeUntil == null) return false;
     return sickModeUntil!.isAfter(DateTime.now());
+  }
+
+  /// Premium efectivo: flag activo y, si hay caducidad, todavía vigente
+  bool get hasPremium {
+    if (!isPremium) return false;
+    if (premiumUntil == null) return true;
+    return premiumUntil!.isAfter(DateTime.now());
   }
 
   /// Crear desde un doc de Firestore (el uid viene del doc.id o de auth)
@@ -102,6 +118,10 @@ class UserModel {
       showHabits: data['showHabits'] as bool? ?? true,
       showAchievements: data['showAchievements'] as bool? ?? true,
       showFollowerCount: data['showFollowerCount'] as bool? ?? true,
+      isPremium: data['isPremium'] as bool? ?? false,
+      premiumUntil: data['premiumUntil'] != null
+          ? (data['premiumUntil'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -170,6 +190,8 @@ class UserModel {
       showHabits: showHabits ?? this.showHabits,
       showAchievements: showAchievements ?? this.showAchievements,
       showFollowerCount: showFollowerCount ?? this.showFollowerCount,
+      isPremium: isPremium,
+      premiumUntil: premiumUntil,
     );
   }
 }

@@ -68,7 +68,7 @@ Feature-first: `lib/features/{auth,onboarding,habits,dashboard,ai,achievements,s
 Cada feature: `data/` (repositorios Firebase) → `domain/` (modelos Dart puros) → `presentation/` (screens/widgets, nunca Firebase directo).  
 Core compartido: `core/theme/app_theme.dart`, `core/router/app_router.dart`, `core/widgets/`, `core/widgets/ux/`, `core/services/feedback_service.dart`.  
 Servicios: `services/notification_service.dart`.  
-Hosting: `public/` — landing, política de privacidad y términos de uso en Firebase Hosting.
+Hosting: `public/` — landing, política de privacidad, términos de uso y `reset-password.html` (action handler propio de restablecimiento de contraseña: valida el `oobCode` y cambia la contraseña contra la REST API de Identity Toolkit, sin SDK; requiere "Personalizar URL de acción" en Authentication → Plantillas apuntando a `https://habit-ai-184ad.web.app/reset-password.html`).
 
 ---
 
@@ -88,7 +88,7 @@ Hosting: `public/` — landing, política de privacidad y términos de uso en Fi
 
 ## Modelo de datos (colecciones Firestore)
 
-- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`, `lastActiveAt` (marca por sesión para la futura limpieza de cuentas inactivas)
+- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`, `lastActiveAt` (marca por sesión para la futura limpieza de cuentas inactivas), `isPremium`/`premiumUntil`/`freePlanUsage` (solo Admin SDK — bloqueados al cliente en rules)
 - `users/{uid}/habits/{habitId}` — hábitos con `visibility` individual, `isAIGenerated`, rachas, `groupId`, `stackOrder`
 - `users/{uid}/habits/{habitId}/logs/{logId}` — check-ins diarios
 - `users/{uid}/mood_entries/{entryId}` — registros de ánimo/energía por franja horaria (privados, nunca públicos)
@@ -120,7 +120,7 @@ Cloud Function: verifica auth token → rate limiting (10 req/hora) → construy
 Prompts: JSON estricto, contexto usuario, máx. 5-7 hábitos, incluir categoría/frecuencia/horario.
 
 **Modelos** (constantes `MODEL_PRO`/`MODEL_FLASH` en `functions/index.js`):
-- `gemini-2.5-pro` → solo chat interactivo (`generateHabitPlan`).
+- `gemini-2.5-pro` → solo chat interactivo (`generateHabitPlan`, `routineChat`).
 - `gemini-2.5-flash` → jobs de fondo (revisión semanal, mariposa, renegociación, patrones). ~10-20× más barato.
 - Nombre válido es `gemini-2.5-flash`, NO `gemini-flash-2-5` (404). Precios y predicción de coste → `docs/gemini-costes.md`.
 
@@ -167,11 +167,12 @@ SplashScreen → auth state
 TFG completado y defendido. Fase actual: **lanzamiento público**.
 
 **Features implementadas (junio 2026):**
-- Auth: email/password + Google Sign-In
+- Auth: email/password + Google Sign-In. Recuperación de contraseña: enlace en login → diálogo (`_ForgotPasswordDialog`, posee su controller — hacer dispose desde fuera rompe la animación de cierre) → `AuthRepository.sendPasswordResetEmail` (lo envía Firebase Auth gratis, sin SMTP). Mensaje de éxito genérico a propósito (no revela si la cuenta existe). El enlace del correo aterriza en `public/reset-password.html`
 - Onboarding interactivo: 8 pasos animados que terminan con plan IA generado y primer check-in hecho (ver Flujo de navegación)
 - Hábitos: CRUD, check-ins, rachas, escudos de racha, modo enfermedad, reordenamiento drag & drop, edición por lotes
 - Habit stacking: cadenas de hábitos (Atomic Habits), grupos, bonus XP, drag & drop dentro de cadena
 - IA: chat con Gemini, revisión semanal, renegociación inteligente, efecto mariposa, detección de patrones
+- Chat de rutina (premium): callable `routineChat` (Gemini Pro) con contexto completo del grupo — hábitos, rachas y logs de 30 días reconstruidos en cada mensaje. Propone cambios estructurados (updates con whitelist de campos + newHabits, máx. 3, nunca borrados) que `RoutineChatScreen` aplica con un toque via `updateHabit`/`createHabit`. Acceso: icono ✨ en `GroupDetailScreen` y opción en el menú ⋮ del acordeón de grupo en `HabitsScreen` → ruta `/group/:groupId/chat` tras `PremiumGuard`
 - Ánimo: tracking de energía/ánimo multi-franja (rating 1-5 + etiquetas + nota), heatmap mensual, correlación ánimo-hábitos con nivel de confianza y efecto retardado, integrado en la revisión semanal IA
 - Social: perfiles públicos/privados, sistema de follows con solicitudes, visibilidad granular, badges de notificación, directorio de usuarios con búsqueda por username
 - Retos compartidos: 21 días con otro usuario, seguimiento dual
@@ -184,9 +185,12 @@ TFG completado y defendido. Fase actual: **lanzamiento público**.
 - Release: keystore de producción configurado, AAB generado
 - iOS: cuenta Apple Developer activa, CI/CD con Codemagic (`codemagic.yaml`) compila y firma sin Mac, sube a TestFlight. App probada y funcionando en iPhone vía testing interno. Bundle ID `com.andreistaicu.habitai`, mínimo iOS 15.0. Clave privada de firma persistente en variable `CERTIFICATE_PRIVATE_KEY` (grupo `ios_signing`) de Codemagic.
 - Costes: blindaje Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs, App Check (cliente activado), caché Firestore 100MB. Ver `docs/gemini-costes.md`.
+- Monetización freemium (premium 3,99 €/mes): gates en backend — los 4 callables IA premium (`assertPremium`), los 4 jobs `onSchedule` saltan usuarios free, `generateHabitPlan` con cuota free de 7 mensajes/mes (`consumeFreePlanQuota`, contador `users/{uid}.freePlanUsage`, errores con `details.reason` = `premium_required`/`free_plan_quota`). Cliente: `PremiumService` (`lib/core/services/`, ValueNotifiers `isPremium` y `freePlanMessagesLeft`), `PremiumLimits` (7 hábitos free), `PaywallScreen` + ruta `/paywall`, `PremiumGuard` envuelve revisión semanal/mariposa/patrones/mood-insights en el router, `PremiumGate.checkHabitLimit` en los 3 puntos de creación manual de hábitos (onboarding/retos/plantillas exentos), contador de mensajes free en el chat IA. El CTA de compra es un stub a la espera del billing real
 - Retención de datos: campo TTL `expiresAt` en colecciones efímeras (chats IA 30d, revisiones 8 sem, mariposa 3 m, patrones 60d, renegociaciones 30d, follow_requests 90d/7d, fcm_tokens 120d, rate_limits 7d). `shield_grants` excluida a propósito (la dedupe de escudos debe vivir tanto como la racha). Plazos, comandos `gcloud` y backfill → `docs/retencion-datos.md`.
 
-**Pendiente para lanzamiento:** activar políticas TTL en Firestore (`gcloud firestore fields ttls update …`, comandos en `docs/retencion-datos.md`) + backfill `node functions/backfill_expires_at.js` + desplegar rules y functions con `expiresAt`. Widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo), manejo offline, tests mínimos, `firebase deploy --only functions` (los triggers FCM nuevos están en código pero sin desplegar). App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Migrar functions a Node.js 22 antes del 2026-10-30. Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
+**Pendiente para lanzamiento:** integrar billing real (RevenueCat o in_app_purchase) y conectar el CTA del paywall + el webhook que escriba `isPremium`/`premiumUntil` con Admin SDK. Comprar dominio propio y verificarlo en Authentication → Plantillas (SPF/DKIM + DMARC): los correos de Auth salen de `noreply@habit-ai-184ad.firebaseapp.com` y caen en spam; tras verificar, mover también la URL de acción y el Hosting al dominio. Configurar en consola la URL de acción de las plantillas → `reset-password.html` (si no, el enlace del correo sigue yendo al handler por defecto de Firebase). Activar políticas TTL en Firestore (`gcloud firestore fields ttls update …`, comandos en `docs/retencion-datos.md`) + backfill `node functions/backfill_expires_at.js`. Widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo), manejo offline, tests mínimos. App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto.
+
+**Desplegado el 2026-06-11:** functions completas (incluye triggers FCM, gates premium, `routineChat`) + firestore.rules (campos premium protegidos) + hosting (`reset-password.html`). Functions ya corren en **Node.js 22** (runtime en `firebase.json`) — la migración pre-2026-10-30 está hecha.
 
 Ver roadmap completo y backlog → **ROADMAP.md**
 

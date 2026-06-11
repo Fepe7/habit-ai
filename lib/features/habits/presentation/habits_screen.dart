@@ -23,6 +23,7 @@ import 'widgets/create_choice_sheet.dart';
 import 'widgets/create_group_sheet.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
+import '../../../core/widgets/premium_gate.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../features/profile/data/public_profile_repository.dart';
 import '../../../core/widgets/ux/gradient_fab.dart';
@@ -498,6 +499,9 @@ class _HabitsScreenState extends State<HabitsScreen>
   }
 
   Future<void> _doCreateHabit() async {
+    // límite free de hábitos activos: el gate muestra el upsell si toca
+    if (!await PremiumGate.checkHabitLimit(context, _habitRepo)) return;
+    if (!mounted) return;
     final habit = await CreateHabitSheet.show(context);
     if (habit == null) return;
 
@@ -2081,10 +2085,25 @@ class _GroupSection extends StatelessWidget {
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                       onSelected: (v) {
+                        if (v == 'chat') {
+                          // chat IA de la rutina (premium — la ruta muestra
+                          // paywall a usuarios free via PremiumGuard)
+                          context.push('/group/${group.id}/chat');
+                        }
                         if (v == 'edit') onEditGroup();
                         if (v == 'delete') onDeleteGroup();
                       },
                       itemBuilder: (ctx) => [
+                        PopupMenuItem(
+                          value: 'chat',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.auto_awesome_rounded, size: 20),
+                              const SizedBox(width: 12),
+                              Text(S.of(ctx).routineChatTitle),
+                            ],
+                          ),
+                        ),
                         PopupMenuItem(
                           value: 'edit',
                           child: Row(

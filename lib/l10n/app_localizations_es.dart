@@ -3237,4 +3237,134 @@ class SEs extends S {
 
   @override
   String get onbCheckinLater => 'Lo haré más tarde';
+
+  @override
+  String get paywallTitle => 'HabitAI Premium';
+
+  @override
+  String get paywallSubtitle =>
+      'Desbloquea todo el potencial de tu coach de hábitos';
+
+  @override
+  String get paywallPrice => '3,99 €/mes';
+
+  @override
+  String get paywallBenefitHabits => 'Hábitos ilimitados y cadenas de hábitos';
+
+  @override
+  String get paywallBenefitChat => 'Coach IA 24/7 sin límite de mensajes';
+
+  @override
+  String get paywallBenefitWeekly => 'Revisión semanal personalizada con IA';
+
+  @override
+  String get paywallBenefitInsights =>
+      'Efecto mariposa, patrones y renegociación inteligente';
+
+  @override
+  String get paywallBenefitMood => 'Correlación entre tu ánimo y tus hábitos';
+
+  @override
+  String get paywallBenefitShields =>
+      'Escudos de racha extra y modo enfermedad ampliado';
+
+  @override
+  String get paywallCta => 'Hazte Premium';
+
+  @override
+  String get paywallLater => 'Quizá más tarde';
+
+  @override
+  String get paywallComingSoon =>
+      'Las suscripciones estarán disponibles muy pronto 🚀';
+
+  @override
+  String get paywallFreePlanNote =>
+      'Tu plan gratuito incluye 7 hábitos, retos con amigos y una rutina generada por IA cada mes.';
+
+  @override
+  String get premiumRequiredSnack =>
+      'Esta función forma parte de HabitAI Premium';
+
+  @override
+  String get freeHabitLimitTitle => 'Has llegado al límite del plan gratuito';
+
+  @override
+  String freeHabitLimitBody(int count) {
+    return 'El plan gratuito incluye $count hábitos activos. Con Premium puedes crear todos los que quieras.';
+  }
+
+  @override
+  String freePlanMessagesLeft(int count) {
+    return '$count mensajes gratis este mes';
+  }
+
+  @override
+  String get freePlanQuotaExhausted =>
+      'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.';
+
+  @override
+  String get routineChatTitle => 'Chat de la rutina';
+
+  @override
+  String routineChatGreeting(String title) {
+    return 'Conozco «$title» al detalle: sus hábitos, rachas y los últimos 30 días. Pregúntame lo que quieras o pídeme cambios.';
+  }
+
+  @override
+  String get routineChatHint => 'Pregunta o pide un cambio...';
+
+  @override
+  String get routineChatChangesTitle => 'Cambios propuestos';
+
+  @override
+  String routineChatUpdateCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hábitos ajustados',
+      one: '1 hábito ajustado',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String routineChatNewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hábitos nuevos',
+      one: '1 hábito nuevo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get routineChatApply => 'Aplicar cambios';
+
+  @override
+  String get routineChatApplied => 'Cambios aplicados a la rutina ✅';
+
+  @override
+  String get routineChatApplyError => 'No se pudieron aplicar los cambios';
+
+  @override
+  String get authForgotPassword => '¿Olvidaste tu contraseña?';
+
+  @override
+  String get authForgotPasswordTitle => 'Restablecer contraseña';
+
+  @override
+  String get authForgotPasswordBody =>
+      'Te enviaremos un enlace por correo para crear una contraseña nueva.';
+
+  @override
+  String get authForgotPasswordSend => 'Enviar enlace';
+
+  @override
+  String get authForgotPasswordSent =>
+      'Si existe una cuenta con ese correo, recibirás un enlace en unos minutos. Revisa también el spam.';
+
+  @override
+  String get authForgotPasswordInvalid => 'Introduce un correo válido';
 }

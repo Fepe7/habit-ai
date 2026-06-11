@@ -6,6 +6,7 @@ import '../domain/weekly_review_model.dart';
 import '../domain/butterfly_projection_model.dart';
 import '../domain/renegotiation_model.dart';
 import '../domain/pattern_insight_model.dart';
+import '../domain/routine_chat_model.dart';
 
 // Llama a la Cloud Function proxy y guarda las conversaciones en Firestore
 class AIRepository {
@@ -22,6 +23,7 @@ class AIRepository {
   final HttpsCallable _generateButterflyFn;
   final HttpsCallable _generateRenegotiationFn;
   final HttpsCallable _generatePatternInsightsFn;
+  final HttpsCallable _routineChatFn;
 
   AIRepository({
     required String uid,
@@ -43,7 +45,10 @@ class AIRepository {
             .httpsCallable('generateRenegotiation'),
         _generatePatternInsightsFn = (functions ??
                 FirebaseFunctions.instanceFor(region: 'europe-west1'))
-            .httpsCallable('generatePatternInsights');
+            .httpsCallable('generatePatternInsights'),
+        _routineChatFn = (functions ??
+                FirebaseFunctions.instanceFor(region: 'europe-west1'))
+            .httpsCallable('routineChat');
 
   CollectionReference<Map<String, dynamic>> get _conversationsRef =>
       _firestore.collection('users').doc(_uid).collection('ai_conversations');
@@ -118,8 +123,37 @@ class AIRepository {
     _chatHistory.clear();
   }
 
+  // Chat sobre una rutina concreta (premium). El historial lo gestiona la
+  // pantalla (una conversación por rutina y sesión), a diferencia del chat
+  // general cuyo historial vive en este repositorio.
+  Future<RoutineChatResponse> routineChat({
+    required String groupId,
+    required String message,
+    required List<Map<String, String>> history,
+  }) async {
+    try {
+      final result = await _routineChatFn.call({
+        'groupId': groupId,
+        'message': message,
+        'history': history,
+        'locale': LocaleProvider.currentCode,
+      });
+      return RoutineChatResponse.fromJson(_deepCast(result.data));
+    } on FirebaseFunctionsException catch (e) {
+      throw _mapError(e);
+    }
+  }
+
   // Traduce errores de la Cloud Function a mensajes legibles
   String _mapError(FirebaseFunctionsException e) {
+    // gates premium del backend: details.reason distingue el motivo
+    final reason = (e.details is Map) ? (e.details as Map)['reason'] : null;
+    if (reason == 'free_plan_quota') {
+      return 'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.';
+    }
+    if (reason == 'premium_required') {
+      return 'Esta función forma parte de HabitAI Premium.';
+    }
     switch (e.code) {
       case 'unauthenticated':
         return 'Tu sesión ha expirado. Inicia sesión de nuevo.';

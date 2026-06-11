@@ -12,9 +12,19 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
-    // Documentos privados del usuario
+    // Documentos privados del usuario.
+    // Los campos premium (isPremium, premiumUntil) y la cuota free del chat
+    // (freePlanUsage) los escribe SOLO el Admin SDK: un cliente no puede
+    // autoconcederse premium ni resetear su cuota.
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+                    && !request.resource.data.keys()
+                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage']);
+      allow update: if isOwner(userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage']);
+      allow delete: if isOwner(userId);
 
       match /habits/{habitId} {
         allow read, write: if isOwner(userId);
