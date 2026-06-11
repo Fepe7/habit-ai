@@ -3224,4 +3224,131 @@ class SEn extends S {
 
   @override
   String get onbCheckinLater => 'I\'ll do it later';
+
+  @override
+  String get paywallTitle => 'HabitAI Premium';
+
+  @override
+  String get paywallSubtitle => 'Unlock the full power of your habit coach';
+
+  @override
+  String get paywallPrice => '€3.99/month';
+
+  @override
+  String get paywallBenefitHabits => 'Unlimited habits and habit stacking';
+
+  @override
+  String get paywallBenefitChat => '24/7 AI coach with unlimited messages';
+
+  @override
+  String get paywallBenefitWeekly => 'Personalized AI weekly review';
+
+  @override
+  String get paywallBenefitInsights =>
+      'Butterfly effect, patterns and smart renegotiation';
+
+  @override
+  String get paywallBenefitMood => 'Mood-habit correlation insights';
+
+  @override
+  String get paywallBenefitShields =>
+      'Extra streak shields and extended sick mode';
+
+  @override
+  String get paywallCta => 'Go Premium';
+
+  @override
+  String get paywallLater => 'Maybe later';
+
+  @override
+  String get paywallComingSoon => 'Subscriptions are coming very soon 🚀';
+
+  @override
+  String get paywallFreePlanNote =>
+      'Your free plan includes 7 habits, challenges with friends and one AI-generated routine every month.';
+
+  @override
+  String get premiumRequiredSnack => 'This feature is part of HabitAI Premium';
+
+  @override
+  String get freeHabitLimitTitle => 'You\'ve reached the free plan limit';
+
+  @override
+  String freeHabitLimitBody(int count) {
+    return 'The free plan includes $count active habits. With Premium you can create as many as you want.';
+  }
+
+  @override
+  String freePlanMessagesLeft(int count) {
+    return '$count free messages this month';
+  }
+
+  @override
+  String get freePlanQuotaExhausted =>
+      'You\'ve used this month\'s free generation. With Premium your coach has no limits.';
+
+  @override
+  String get routineChatTitle => 'Routine chat';
+
+  @override
+  String routineChatGreeting(String title) {
+    return 'I know \"$title\" inside out: its habits, streaks and the last 30 days. Ask me anything or request changes.';
+  }
+
+  @override
+  String get routineChatHint => 'Ask or request a change...';
+
+  @override
+  String get routineChatChangesTitle => 'Proposed changes';
+
+  @override
+  String routineChatUpdateCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count habits adjusted',
+      one: '1 habit adjusted',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String routineChatNewCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new habits',
+      one: '1 new habit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get routineChatApply => 'Apply changes';
+
+  @override
+  String get routineChatApplied => 'Changes applied to the routine ✅';
+
+  @override
+  String get routineChatApplyError => 'Couldn\'t apply the changes';
+
+  @override
+  String get authForgotPassword => 'Forgot your password?';
+
+  @override
+  String get authForgotPasswordTitle => 'Reset password';
+
+  @override
+  String get authForgotPasswordBody =>
+      'We\'ll email you a link to create a new password.';
+
+  @override
+  String get authForgotPasswordSend => 'Send link';
+
+  @override
+  String get authForgotPasswordSent =>
+      'If an account exists for that email, you\'ll receive a link in a few minutes. Check spam too.';
+
+  @override
+  String get authForgotPasswordInvalid => 'Enter a valid email';
 }

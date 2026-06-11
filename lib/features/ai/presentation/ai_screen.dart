@@ -19,6 +19,7 @@ import 'widgets/chat_bubble.dart';
 import 'widgets/plan_card.dart';
 import '../../achievements/data/achievement_repository.dart';
 import '../../../core/services/ai_availability_service.dart';
+import '../../../core/services/premium_service.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../achievements/data/achievement_checker.dart';
@@ -113,6 +114,16 @@ class _AIScreenState extends State<AIScreen>
     if (_isAiPaused) {
       if (mounted) {
         AppSnackBar.showInfo(context, S.of(context).aiPausedMessage);
+      }
+      return;
+    }
+
+    // cuota free agotada: ofrecer premium antes de gastar la llamada
+    final freeLeft = PremiumService.instance.freePlanMessagesLeft.value;
+    if (freeLeft != null && freeLeft <= 0) {
+      if (mounted) {
+        AppSnackBar.showInfo(context, S.of(context).freePlanQuotaExhausted);
+        context.push('/paywall');
       }
       return;
     }
@@ -376,6 +387,47 @@ class _AIScreenState extends State<AIScreen>
                   ],
                 ),
               ),
+
+            // contador de mensajes free del mes (los premium no lo ven)
+            ValueListenableBuilder<int?>(
+              valueListenable: PremiumService.instance.freePlanMessagesLeft,
+              builder: (context, left, _) {
+                if (left == null) return const SizedBox.shrink();
+                final scheme = Theme.of(context).colorScheme;
+                return GestureDetector(
+                  onTap: () => context.push('/paywall'),
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 16,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          S.of(context).freePlanMessagesLeft(left),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: scheme.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
 
             // input bar glassmorphism
             _InputBar(

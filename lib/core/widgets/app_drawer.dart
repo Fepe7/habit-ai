@@ -12,6 +12,7 @@ import '../../features/habits/data/habit_repository.dart';
 import '../../features/habits/presentation/widgets/create_habit_sheet.dart';
 import '../theme/app_theme.dart';
 import '../theme/theme_provider.dart';
+import 'premium_gate.dart';
 
 /// Drawer lateral con atajos a features enterradas, acciones rápidas
 /// y toggles de preferencias. SignOut vive solo en SettingsScreen.
@@ -87,8 +88,12 @@ class _AppDrawerState extends State<AppDrawer> {
 
   Future<void> _createHabit() async {
     Navigator.of(context).pop();
+    if (_habitRepo == null) return;
+    // límite free de hábitos activos: el gate muestra el upsell si toca
+    if (!await PremiumGate.checkHabitLimit(context, _habitRepo!)) return;
+    if (!mounted) return;
     final habit = await CreateHabitSheet.show(context);
-    if (habit == null || _habitRepo == null) return;
+    if (habit == null || _habitRepo == null || !mounted) return;
     final s = S.of(context)!;
     try {
       await _habitRepo!.createHabit(habit);

@@ -8,6 +8,7 @@ import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bottom_sheet.dart';
+import '../../../core/widgets/premium_gate.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -78,6 +79,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _doAddHabit() async {
+    // límite free de hábitos activos: el gate muestra el upsell si toca
+    if (!await PremiumGate.checkHabitLimit(context, _habitRepo)) return;
+    if (!mounted) return;
     final habit = await CreateHabitSheet.show(context, groupId: widget.groupId);
     if (habit == null) return;
     try {
@@ -408,6 +412,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               appBar: AppBar(
                 title: Text(s.groupDetailEditTitle),
                 actions: [
+                  // chat IA de la rutina (premium — la ruta muestra paywall a free)
+                  IconButton(
+                    tooltip: s.routineChatTitle,
+                    icon: const Icon(Icons.auto_awesome_rounded),
+                    onPressed: () =>
+                        context.push('/group/${widget.groupId}/chat'),
+                  ),
                   if (groupForHeader != null)
                     IconButton(
                       tooltip: isPublished

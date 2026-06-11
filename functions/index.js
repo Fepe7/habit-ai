@@ -86,6 +86,74 @@ async function assertAiAvailable() {
   }
 }
 
+// ==================== PREMIUM ====================
+// El estado premium vive en users/{uid}: isPremium (bool) + premiumUntil
+// (Timestamp opcional, para suscripciones con caducidad). Estos campos los
+// escribe SOLO el Admin SDK (bloqueados al cliente en firestore.rules);
+// la futura integración de billing (RevenueCat/Play) actualizará aquí.
+
+// Evalúa premium sobre los datos ya leídos del doc de usuario (0 lecturas extra)
+function isPremiumData(data) {
+  if (!data || data.isPremium !== true) return false;
+  const until = data.premiumUntil;
+  if (until && typeof until.toMillis === "function" && until.toMillis() < Date.now()) {
+    return false;
+  }
+  return true;
+}
+
+async function isPremiumUser(uid) {
+  const doc = await admin.firestore().doc(`users/${uid}`).get();
+  return doc.exists && isPremiumData(doc.data());
+}
+
+// Lanza permission-denied con reason=premium_required: el cliente lo
+// interpreta y redirige al paywall en vez de mostrar un error genérico.
+async function assertPremium(uid) {
+  if (!(await isPremiumUser(uid))) {
+    throw new HttpsError(
+      "permission-denied",
+      "Esta función forma parte de HabitAI Premium.",
+      { reason: "premium_required" }
+    );
+  }
+}
+
+// Cuota free del chat de planes IA: la "generación mensual gratis" se
+// materializa como un tope de mensajes por mes natural (una conversación
+// de generación usa varios turnos). El onboarding consume de aquí y cabe
+// de sobra. Contador en users/{uid}.freePlanUsage = { month, count }.
+const FREE_PLAN_MESSAGES_PER_MONTH = 7;
+
+// Consume 1 mensaje de la cuota free (transacción para evitar carreras).
+// Devuelve { allowed, remaining }; remaining=null significa premium (sin límite).
+async function consumeFreePlanQuota(uid) {
+  const db = admin.firestore();
+  const ref = db.doc(`users/${uid}`);
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const data = doc.exists ? doc.data() : null;
+    if (isPremiumData(data)) {
+      return { allowed: true, remaining: null };
+    }
+    const monthId = getMonthId(new Date());
+    const usage = data && data.freePlanUsage;
+    const count = usage && usage.month === monthId ? usage.count || 0 : 0;
+    if (count >= FREE_PLAN_MESSAGES_PER_MONTH) {
+      return { allowed: false, remaining: 0 };
+    }
+    tx.set(
+      ref,
+      { freePlanUsage: { month: monthId, count: count + 1 } },
+      { merge: true }
+    );
+    return {
+      allowed: true,
+      remaining: FREE_PLAN_MESSAGES_PER_MONTH - count - 1,
+    };
+  });
+}
+
 
 
 // Cloud Function callable desde Flutter
@@ -124,6 +192,16 @@ exports.generateHabitPlan = onCall(
        );
      }
 
+    // 2b. Cuota free: N mensajes/mes; premium sin límite (solo rate limit)
+    const quota = await consumeFreePlanQuota(uid);
+    if (!quota.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Has agotado tu generación gratuita de este mes. Con Premium el coach IA no tiene límites.",
+        { reason: "free_plan_quota" }
+      );
+    }
+
     // 3. Llamar a Gemini
     try {
       console.log("Llamando a Gemini con mensaje:", message.substring(0, 50));
@@ -157,9 +235,172 @@ exports.generateHabitPlan = onCall(
       return {
         text: text,
         plan: parsed,
+        // null = premium (sin límite); número = mensajes free restantes este mes
+        freeMessagesLeft: quota.remaining,
       };
     } catch (error) {
       console.error("Error llamando a Gemini:", error);
+      throw new HttpsError(
+        "internal",
+        "Error del asistente. Inténtalo más tarde."
+      );
+    }
+  }
+);
+
+// ==================== CHAT DE RUTINA (premium) ====================
+
+// Construye el contexto completo de una rutina para el chat: el grupo,
+// sus hábitos activos (configuración + rachas) y el rendimiento de los
+// últimos 30 días. Se reconstruye en cada mensaje para que la IA vea
+// siempre el estado actual (los cambios aplicados entre mensajes cuentan).
+async function buildRoutineContext(uid, groupId) {
+  const db = admin.firestore();
+  const userRef = db.collection("users").doc(uid);
+
+  const groupDoc = await userRef.collection("habit_groups").doc(groupId).get();
+  if (!groupDoc.exists) {
+    throw new HttpsError("not-found", "La rutina no existe.");
+  }
+  const group = groupDoc.data();
+
+  const habitsSnap = await userRef
+    .collection("habits")
+    .where("groupId", "==", groupId)
+    .where("isActive", "==", true)
+    .get();
+  if (habitsSnap.empty) {
+    throw new HttpsError(
+      "failed-precondition",
+      "La rutina no tiene hábitos activos."
+    );
+  }
+
+  const end = new Date();
+  const start = new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
+  start.setHours(0, 0, 0, 0);
+
+  const habits = [];
+  for (const doc of habitsSnap.docs) {
+    const h = doc.data();
+    const logsSnap = await userRef
+      .collection("habits")
+      .doc(doc.id)
+      .collection("logs")
+      .where("date", ">=", admin.firestore.Timestamp.fromDate(start))
+      .get();
+    const completed = logsSnap.docs.filter(
+      (d) => d.data().completed === true
+    ).length;
+
+    // Días esperados según targetDays dentro del rango (lun=1..dom=7)
+    const targetDays = h.targetDays || [];
+    let expected = 0;
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      const weekday = cursor.getDay() === 0 ? 7 : cursor.getDay();
+      if (targetDays.includes(weekday)) expected += 1;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    habits.push({
+      habitId: doc.id,
+      title: h.title,
+      description: h.description || "",
+      category: h.category,
+      frequency: h.frequency,
+      targetDays,
+      reminderTime: h.reminderTime || null,
+      currentStreak: h.currentStreak || 0,
+      bestStreak: h.bestStreak || 0,
+      last30Days: { completed, expected },
+    });
+  }
+
+  return {
+    routine: {
+      title: group.title || "",
+      emoji: group.emoji || "",
+      description: group.description || "",
+    },
+    habits,
+  };
+}
+
+// Chat conversacional sobre una rutina concreta. Solo premium: el contexto
+// completo + Gemini Pro lo hacen el callable más caro por mensaje.
+exports.routineChat = onCall(
+  {
+    region: "europe-west1",
+    secrets: [geminiApiKey],
+    maxInstances: 3,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Debes iniciar sesión para usar el asistente."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const { groupId, message, history, locale } = request.data;
+
+    if (!groupId || typeof groupId !== "string") {
+      throw new HttpsError("invalid-argument", "groupId requerido.");
+    }
+    if (!message || typeof message !== "string") {
+      throw new HttpsError(
+        "invalid-argument",
+        "El mensaje no puede estar vacío."
+      );
+    }
+
+    await assertAiAvailable();
+    await assertPremium(uid);
+    const allowed = await checkRateLimit(uid);
+    if (!allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Has hecho demasiadas peticiones. Espera unos minutos."
+      );
+    }
+
+    try {
+      const context = await buildRoutineContext(uid, groupId);
+      const prompts = getPrompts(locale);
+      const genAI = new GoogleGenerativeAI(geminiApiKey.value());
+      const model = genAI.getGenerativeModel({
+        model: MODEL_PRO,
+        systemInstruction:
+          prompts.ROUTINE_CHAT_PROMPT +
+          "\n\nCONTEXTO DE LA RUTINA (JSON):\n" +
+          JSON.stringify(context),
+      });
+
+      const chatHistory = (history || []).map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
+      }));
+
+      const chat = model.startChat({ history: chatHistory });
+      const result = await chat.sendMessage(message);
+      const text = result.response.text();
+
+      let parsed = null;
+      try {
+        parsed = JSON.parse(extractJson(text));
+      } catch {
+        // si no devuelve JSON válido, el texto crudo sirve como respuesta
+      }
+
+      return {
+        coachMessage: (parsed && parsed.coachMessage) || text,
+        changes: (parsed && parsed.changes) || null,
+      };
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      console.error("Error en routineChat:", error);
       throw new HttpsError(
         "internal",
         "Error del asistente. Inténtalo más tarde."
@@ -460,6 +701,7 @@ exports.generateWeeklyReview = onCall(
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
     await assertAiAvailable();
+    await assertPremium(uid);
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -515,6 +757,11 @@ exports.weeklyReviewJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
+      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
+      if (!isPremiumData(userDoc.data())) {
+        skipped += 1;
+        continue;
+      }
       try {
         const result = await runWeeklyReview(userDoc.id, now);
         if (result.skipped) {
@@ -754,6 +1001,7 @@ exports.generateButterflyProjection = onCall(
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
     await assertAiAvailable();
+    await assertPremium(uid);
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -805,6 +1053,11 @@ exports.butterflyProjectionJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
+      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
+      if (!isPremiumData(userDoc.data())) {
+        skipped += 1;
+        continue;
+      }
       try {
         const result = await runButterflyProjection(userDoc.id, now);
         if (result.skipped) {
@@ -982,6 +1235,7 @@ exports.generateRenegotiation = onCall(
 
     const uid = request.auth.uid;
     await assertAiAvailable();
+    await assertPremium(uid);
     const { habitId, locale } = request.data;
 
     if (!habitId || typeof habitId !== "string") {
@@ -1052,6 +1306,11 @@ exports.renegotiationJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
+      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
+      if (!isPremiumData(userDoc.data())) {
+        skipped += 1;
+        continue;
+      }
       try {
         const habitsSnap = await db
           .collection("users")
@@ -1399,6 +1658,7 @@ exports.generatePatternInsights = onCall(
 
     const uid = request.auth.uid;
     await assertAiAvailable();
+    await assertPremium(uid);
     const locale = request.data?.locale || "es";
     const allowed = await checkRateLimit(uid);
     if (!allowed) {
@@ -1452,6 +1712,11 @@ exports.patternInsightsJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
+      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
+      if (!isPremiumData(userDoc.data())) {
+        skipped += 1;
+        continue;
+      }
       try {
         const result = await runPatternInsights(userDoc.id, now);
         if (result.skipped) {

@@ -10,6 +10,7 @@ import 'firebase_options.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/l10n/locale_provider.dart';
 import 'core/services/ai_availability_service.dart';
+import 'core/services/premium_service.dart';
 import 'core/services/connectivity_service.dart';
 import 'core/services/update_service.dart';
 import 'services/home_widget_service.dart';
@@ -58,6 +59,7 @@ void main() async {
     await ConnectivityService.instance.init();
     await UpdateService.instance.init();
     await AiAvailabilityService.instance.init();
+    await PremiumService.instance.init();
     await HomeWidgetService.instance.init();
     // refrescar el widget de pantalla de inicio con el estado de hoy
     unawaited(HomeWidgetService.instance.syncToday());

@@ -81,6 +81,17 @@ class AuthRepository {
     }
   }
 
+  // Enviar correo de restablecimiento de contraseña.
+  // El email lo envía Firebase Auth (gratis, plantilla en la consola);
+  // no necesita Cloud Function ni proveedor SMTP.
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw e.code;
+    }
+  }
+
   // Iniciar sesion con Google (cuenta nueva o existente)
   Future<UserModel> signInWithGoogle() async {
     try {

@@ -14,6 +14,7 @@ import '../../features/ai/presentation/ai_screen.dart';
 import '../../features/ai/presentation/weekly_review_screen.dart';
 import '../../features/ai/presentation/butterfly_projection_screen.dart';
 import '../../features/ai/presentation/pattern_insights_screen.dart';
+import '../../features/ai/presentation/routine_chat_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/achievements/presentation/achievements_screen.dart';
 import '../../features/levels/presentation/levels_screen.dart';
@@ -32,6 +33,8 @@ import '../../features/settings/presentation/privacy_settings_screen.dart';
 import '../../features/mood/presentation/mood_calendar_screen.dart';
 import '../../features/mood/presentation/mood_insights_screen.dart';
 import '../../features/onboarding/presentation/onboarding_gate.dart';
+import '../../features/premium/presentation/paywall_screen.dart';
+import '../../features/premium/presentation/premium_guard.dart';
 import '../services/analytics_service.dart';
 import 'main_shell.dart';
 
@@ -123,6 +126,20 @@ GoRouter createRouter(AuthRepository authRepository) {
                     groupId: state.pathParameters['groupId']!,
                   ),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'chat',
+                    name: 'routine-chat',
+                    pageBuilder: (context, state) => _fadeSlideTransition(
+                      state: state,
+                      child: PremiumGuard(
+                        child: RoutineChatScreen(
+                          groupId: state.pathParameters['groupId']!,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'all-habits',
@@ -176,8 +193,10 @@ GoRouter createRouter(AuthRepository authRepository) {
                 name: 'weekly-review',
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
-                  child: WeeklyReviewScreen(
-                    weekId: state.pathParameters['weekId']!,
+                  child: PremiumGuard(
+                    child: WeeklyReviewScreen(
+                      weekId: state.pathParameters['weekId']!,
+                    ),
                   ),
                 ),
               ),
@@ -186,8 +205,10 @@ GoRouter createRouter(AuthRepository authRepository) {
                 name: 'butterfly-projection',
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
-                  child: ButterflyProjectionScreen(
-                    monthId: state.pathParameters['monthId']!,
+                  child: PremiumGuard(
+                    child: ButterflyProjectionScreen(
+                      monthId: state.pathParameters['monthId']!,
+                    ),
                   ),
                 ),
               ),
@@ -196,8 +217,10 @@ GoRouter createRouter(AuthRepository authRepository) {
                 name: 'pattern-insights',
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
-                  child: PatternInsightsScreen(
-                    periodId: state.pathParameters['periodId']!,
+                  child: PremiumGuard(
+                    child: PatternInsightsScreen(
+                      periodId: state.pathParameters['periodId']!,
+                    ),
                   ),
                 ),
               ),
@@ -222,7 +245,7 @@ GoRouter createRouter(AuthRepository authRepository) {
                 name: 'mood-insights',
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
-                  child: const MoodInsightsScreen(),
+                  child: const PremiumGuard(child: MoodInsightsScreen()),
                 ),
               ),
             ],
@@ -330,6 +353,31 @@ GoRouter createRouter(AuthRepository authRepository) {
             ),
           ),
         ],
+      ),
+
+      // paywall premium (fuera del shell: pantalla completa, sin bottom nav)
+      GoRoute(
+        path: '/paywall',
+        name: 'paywall',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PaywallScreen(),
+          transitionsBuilder: (context, animation, _, child) =>
+              FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.06),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+          ),
+          transitionDuration: const Duration(milliseconds: 350),
+        ),
       ),
 
       // auth (fuera del shell, sin bottom nav)

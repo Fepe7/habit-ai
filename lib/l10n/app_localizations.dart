@@ -5802,6 +5802,204 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Lo haré más tarde'**
   String get onbCheckinLater;
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'HabitAI Premium'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Desbloquea todo el potencial de tu coach de hábitos'**
+  String get paywallSubtitle;
+
+  /// No description provided for @paywallPrice.
+  ///
+  /// In es, this message translates to:
+  /// **'3,99 €/mes'**
+  String get paywallPrice;
+
+  /// No description provided for @paywallBenefitHabits.
+  ///
+  /// In es, this message translates to:
+  /// **'Hábitos ilimitados y cadenas de hábitos'**
+  String get paywallBenefitHabits;
+
+  /// No description provided for @paywallBenefitChat.
+  ///
+  /// In es, this message translates to:
+  /// **'Coach IA 24/7 sin límite de mensajes'**
+  String get paywallBenefitChat;
+
+  /// No description provided for @paywallBenefitWeekly.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión semanal personalizada con IA'**
+  String get paywallBenefitWeekly;
+
+  /// No description provided for @paywallBenefitInsights.
+  ///
+  /// In es, this message translates to:
+  /// **'Efecto mariposa, patrones y renegociación inteligente'**
+  String get paywallBenefitInsights;
+
+  /// No description provided for @paywallBenefitMood.
+  ///
+  /// In es, this message translates to:
+  /// **'Correlación entre tu ánimo y tus hábitos'**
+  String get paywallBenefitMood;
+
+  /// No description provided for @paywallBenefitShields.
+  ///
+  /// In es, this message translates to:
+  /// **'Escudos de racha extra y modo enfermedad ampliado'**
+  String get paywallBenefitShields;
+
+  /// No description provided for @paywallCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Hazte Premium'**
+  String get paywallCta;
+
+  /// No description provided for @paywallLater.
+  ///
+  /// In es, this message translates to:
+  /// **'Quizá más tarde'**
+  String get paywallLater;
+
+  /// No description provided for @paywallComingSoon.
+  ///
+  /// In es, this message translates to:
+  /// **'Las suscripciones estarán disponibles muy pronto 🚀'**
+  String get paywallComingSoon;
+
+  /// No description provided for @paywallFreePlanNote.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan gratuito incluye 7 hábitos, retos con amigos y una rutina generada por IA cada mes.'**
+  String get paywallFreePlanNote;
+
+  /// No description provided for @premiumRequiredSnack.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta función forma parte de HabitAI Premium'**
+  String get premiumRequiredSnack;
+
+  /// No description provided for @freeHabitLimitTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Has llegado al límite del plan gratuito'**
+  String get freeHabitLimitTitle;
+
+  /// No description provided for @freeHabitLimitBody.
+  ///
+  /// In es, this message translates to:
+  /// **'El plan gratuito incluye {count} hábitos activos. Con Premium puedes crear todos los que quieras.'**
+  String freeHabitLimitBody(int count);
+
+  /// No description provided for @freePlanMessagesLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'{count} mensajes gratis este mes'**
+  String freePlanMessagesLeft(int count);
+
+  /// No description provided for @freePlanQuotaExhausted.
+  ///
+  /// In es, this message translates to:
+  /// **'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.'**
+  String get freePlanQuotaExhausted;
+
+  /// No description provided for @routineChatTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Chat de la rutina'**
+  String get routineChatTitle;
+
+  /// No description provided for @routineChatGreeting.
+  ///
+  /// In es, this message translates to:
+  /// **'Conozco «{title}» al detalle: sus hábitos, rachas y los últimos 30 días. Pregúntame lo que quieras o pídeme cambios.'**
+  String routineChatGreeting(String title);
+
+  /// No description provided for @routineChatHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Pregunta o pide un cambio...'**
+  String get routineChatHint;
+
+  /// No description provided for @routineChatChangesTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios propuestos'**
+  String get routineChatChangesTitle;
+
+  /// No description provided for @routineChatUpdateCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 hábito ajustado} other{{count} hábitos ajustados}}'**
+  String routineChatUpdateCount(int count);
+
+  /// No description provided for @routineChatNewCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, one{1 hábito nuevo} other{{count} hábitos nuevos}}'**
+  String routineChatNewCount(int count);
+
+  /// No description provided for @routineChatApply.
+  ///
+  /// In es, this message translates to:
+  /// **'Aplicar cambios'**
+  String get routineChatApply;
+
+  /// No description provided for @routineChatApplied.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambios aplicados a la rutina ✅'**
+  String get routineChatApplied;
+
+  /// No description provided for @routineChatApplyError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudieron aplicar los cambios'**
+  String get routineChatApplyError;
+
+  /// No description provided for @authForgotPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Olvidaste tu contraseña?'**
+  String get authForgotPassword;
+
+  /// No description provided for @authForgotPasswordTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Restablecer contraseña'**
+  String get authForgotPasswordTitle;
+
+  /// No description provided for @authForgotPasswordBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Te enviaremos un enlace por correo para crear una contraseña nueva.'**
+  String get authForgotPasswordBody;
+
+  /// No description provided for @authForgotPasswordSend.
+  ///
+  /// In es, this message translates to:
+  /// **'Enviar enlace'**
+  String get authForgotPasswordSend;
+
+  /// No description provided for @authForgotPasswordSent.
+  ///
+  /// In es, this message translates to:
+  /// **'Si existe una cuenta con ese correo, recibirás un enlace en unos minutos. Revisa también el spam.'**
+  String get authForgotPasswordSent;
+
+  /// No description provided for @authForgotPasswordInvalid.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce un correo válido'**
+  String get authForgotPasswordInvalid;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
