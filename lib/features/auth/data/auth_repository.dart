@@ -117,22 +117,17 @@ class AuthRepository {
         email: user.email ?? '',
         displayName: user.displayName,
       );
+    } on GoogleSignInException catch (e) {
+      // el usuario cerró el selector → sentinela que la UI ignora sin error
+      if (e.code == GoogleSignInExceptionCode.canceled) throw 'cancelled';
+      throw 'sign-in-failed';
     } on FirebaseAuthException catch (e) {
-      // mapear los errores mas comunes a mensajes en espanol
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          throw 'Ya existe una cuenta con este correo usando otro método';
-        case 'invalid-credential':
-          throw 'Credenciales no válidas';
-        case 'network-request-failed':
-          throw 'Sin conexión a internet';
-        default:
-          throw 'Error al iniciar sesión con Google';
-      }
+      // propagar el código; el mapeador de la UI lo traduce (auth_error_l10n)
+      throw e.code;
     } catch (e) {
-      // si ya es un String (cancelacion u otro), lo reenviamos
+      // si ya es un String (cancelación u otro), lo reenviamos
       if (e is String) rethrow;
-      throw 'Error al iniciar sesión con Google';
+      throw 'sign-in-failed';
     }
   }
 
@@ -195,19 +190,11 @@ class AuthRepository {
       if (e.code == AuthorizationErrorCode.canceled) throw 'cancelled';
       throw 'Error al iniciar sesión con Apple';
     } on FirebaseAuthException catch (e) {
-      switch (e.code) {
-        case 'account-exists-with-different-credential':
-          throw 'Ya existe una cuenta con este correo usando otro método';
-        case 'invalid-credential':
-          throw 'Credenciales no válidas';
-        case 'network-request-failed':
-          throw 'Sin conexión a internet';
-        default:
-          throw 'Error al iniciar sesión con Apple';
-      }
+      // propagar el código; el mapeador de la UI lo traduce (auth_error_l10n)
+      throw e.code;
     } catch (e) {
       if (e is String) rethrow;
-      throw 'Error al iniciar sesión con Apple';
+      throw 'sign-in-failed';
     }
   }
 

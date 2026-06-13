@@ -6,7 +6,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../levels/presentation/category_l10n.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/habit_model.dart';
-import '../../../ai/domain/renegotiation_model.dart';
 
 /// Card de un habito con zonas de tap separadas:
 /// - circulo izquierdo: toggle completado
@@ -24,9 +23,6 @@ class HabitCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onEnterSelection;
   final VoidCallback? onToggleSelect;
-  final RenegotiationModel? renegotiation;
-  final VoidCallback? onApplyRenegotiation;
-  final VoidCallback? onDismissRenegotiation;
 
   // --- Stacking ---
   // true si este hábito es el siguiente en completarse dentro de su cadena
@@ -55,9 +51,6 @@ class HabitCard extends StatelessWidget {
     this.isSelected = false,
     this.onEnterSelection,
     this.onToggleSelect,
-    this.renegotiation,
-    this.onApplyRenegotiation,
-    this.onDismissRenegotiation,
     this.isNextInStack = false,
     this.stackPosition = 0,
     this.stackTotal = 0,
@@ -85,8 +78,6 @@ class HabitCard extends StatelessWidget {
             : isInsideGroup
                 ? Colors.transparent
                 : scheme.surfaceContainerLowest;
-
-    final hasPendingReno = renegotiation != null && renegotiation!.isPending;
 
     // chip de contexto: "🔗 Después de X" o "¡Siguiente!" según si hay título disponible
     final nudgeLabel = nudgeFromHabitTitle != null
@@ -351,12 +342,6 @@ class HabitCard extends StatelessWidget {
           ],
         ),
       ),
-        if (hasPendingReno)
-          _CoachBanner(
-            renegotiation: renegotiation!,
-            onApply: onApplyRenegotiation,
-            onDismiss: onDismissRenegotiation,
-          ),
         ],      // cierra Column.children
       ),        // cierra Column
     ));
@@ -465,134 +450,6 @@ class _CheckCircleState extends State<_CheckCircle>
                 ),
               ),
             ),
-    );
-  }
-}
-
-// ==================== COACH BANNER ====================
-
-class _CoachBanner extends StatelessWidget {
-  final RenegotiationModel renegotiation;
-  final VoidCallback? onApply;
-  final VoidCallback? onDismiss;
-
-  const _CoachBanner({
-    required this.renegotiation,
-    this.onApply,
-    this.onDismiss,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final s = S.of(context);
-    final now = TimeOfDay.now();
-    final timeStr =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer.withValues(alpha: 0.35),
-        border: Border(
-          top: BorderSide(
-            color: scheme.primary.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 12,
-                color: scheme.primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                s.habitCardCoachLabel,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: scheme.primary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                timeStr,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: scheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '"${renegotiation.diagnosis}"',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: scheme.onSurface,
-              height: 1.4,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onApply,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: scheme.primary,
-                    side: BorderSide(color: scheme.primary.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    s.habitCardCoachApply,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onDismiss,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: scheme.onSurfaceVariant,
-                    side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    s.habitCardCoachDismiss,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

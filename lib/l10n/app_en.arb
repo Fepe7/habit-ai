@@ -494,9 +494,13 @@
 
   "habitCardAfter": "After \"{title}\"",
   "habitCardNext": "Next!",
-  "habitCardCoachLabel": "– COACH · QUESTION OF THE DAY",
+  "habitCardCoachLabel": "– HABIT SUGGESTION",
   "habitCardCoachApply": "YES, DO IT →",
-  "habitCardCoachDismiss": "ANOTHER OPTION",
+  "habitCardCoachDismiss": "NO, DON'T",
+  "renoInboxTitle": "Get back on track",
+  "renoInboxCount": "{count, plural, =1{The AI has 1 suggestion for you} other{The AI has {count} suggestions for you}}",
+  "renoInboxSheetTitle": "AI suggestions",
+  "renoUnavailable": "That habit is no longer available",
 
   "createChoiceHabitTitle": "New habit",
   "createChoiceHabitSubtitle": "A single habit",
@@ -1088,5 +1092,16 @@
   "authForgotPasswordBody": "We'll email you a link to create a new password.",
   "authForgotPasswordSend": "Send link",
   "authForgotPasswordSent": "If an account exists for that email, you'll receive a link in a few minutes. Check spam too.",
-  "authForgotPasswordInvalid": "Enter a valid email"
+  "authForgotPasswordInvalid": "Enter a valid email",
+  "authErrorInvalidCredential": "Incorrect email or password. Check them and try again.",
+  "authErrorInvalidEmail": "The email format isn't valid.",
+  "authErrorUserDisabled": "This account is disabled. Contact support.",
+  "authErrorTooManyRequests": "Too many attempts. Wait a few minutes and try again.",
+  "authErrorNetwork": "No internet connection. Check your network and try again.",
+  "authErrorEmailInUse": "An account already exists with this email. Sign in instead.",
+  "authErrorWeakPassword": "The password is too weak. Use at least 6 characters.",
+  "authErrorAccountExists": "An account already exists with this email using a different sign-in method.",
+  "authErrorOperationNotAllowed": "This sign-in method isn't enabled.",
+  "authErrorRequiresPassword": "Enter your password to continue.",
+  "authErrorGeneric": "Couldn't complete the operation. Please try again."
 }

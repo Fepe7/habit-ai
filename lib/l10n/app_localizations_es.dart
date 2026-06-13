@@ -1591,13 +1591,33 @@ class SEs extends S {
   String get habitCardNext => '¡Siguiente!';
 
   @override
-  String get habitCardCoachLabel => '– COACH · PREGUNTA DEL DÍA';
+  String get habitCardCoachLabel => '– SUGERENCIA DE HÁBITO';
 
   @override
   String get habitCardCoachApply => 'SÍ, HAZLO →';
 
   @override
-  String get habitCardCoachDismiss => 'OTRA OPCIÓN';
+  String get habitCardCoachDismiss => 'NO, NO LO HAGAS';
+
+  @override
+  String get renoInboxTitle => 'Retoma tus hábitos';
+
+  @override
+  String renoInboxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'La IA tiene $count propuestas para ti',
+      one: 'La IA tiene 1 propuesta para ti',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get renoInboxSheetTitle => 'Propuestas de la IA';
+
+  @override
+  String get renoUnavailable => 'Ese hábito ya no está disponible';
 
   @override
   String get createChoiceHabitTitle => 'Nuevo hábito';
@@ -3367,4 +3387,47 @@ class SEs extends S {
 
   @override
   String get authForgotPasswordInvalid => 'Introduce un correo válido';
+
+  @override
+  String get authErrorInvalidCredential =>
+      'Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.';
+
+  @override
+  String get authErrorInvalidEmail => 'El correo no tiene un formato válido.';
+
+  @override
+  String get authErrorUserDisabled =>
+      'Esta cuenta está deshabilitada. Contacta con soporte.';
+
+  @override
+  String get authErrorTooManyRequests =>
+      'Demasiados intentos. Espera unos minutos y prueba de nuevo.';
+
+  @override
+  String get authErrorNetwork =>
+      'Sin conexión a internet. Comprueba tu red e inténtalo de nuevo.';
+
+  @override
+  String get authErrorEmailInUse =>
+      'Ya existe una cuenta con este correo. Inicia sesión.';
+
+  @override
+  String get authErrorWeakPassword =>
+      'La contraseña es demasiado débil. Usa al menos 6 caracteres.';
+
+  @override
+  String get authErrorAccountExists =>
+      'Ya existe una cuenta con este correo usando otro método de acceso.';
+
+  @override
+  String get authErrorOperationNotAllowed =>
+      'Este método de inicio de sesión no está habilitado.';
+
+  @override
+  String get authErrorRequiresPassword =>
+      'Introduce tu contraseña para continuar.';
+
+  @override
+  String get authErrorGeneric =>
+      'No se pudo completar la operación. Inténtalo de nuevo.';
 }

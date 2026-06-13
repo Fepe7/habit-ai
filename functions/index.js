@@ -1140,7 +1140,8 @@ async function buildRenegotiationContext(uid, habitId) {
   const lastThree = recentTargetDays.slice(0, 3);
   if (!lastThree.every((d) => !d.done)) return null;
 
-  return { habit, missedDays: lastThree.length };
+  // lastThree está ordenado del más reciente al más antiguo → [0] es el último día fallado
+  return { habit, missedDays: lastThree.length, lastMissedDate: lastThree[0].date };
 }
 
 // Genera (o saltea si ya hay una pendiente) la sugerencia para un hábito
@@ -1277,7 +1278,13 @@ exports.generateRenegotiation = onCall(
   }
 );
 
-// Job diario a las 07:00 Europa/Madrid — analiza todos los hábitos activos
+// Tope de propuestas de renegociación que el job crea por usuario y día. Se
+// eligen los hábitos fallados más recientemente. Subirlo gasta más Gemini.
+const MAX_RENEGOTIATIONS_PER_DAY = 3;
+
+// Job diario a las 07:00 Europa/Madrid — analiza los hábitos activos y genera
+// como mucho MAX_RENEGOTIATIONS_PER_DAY propuestas por usuario (las de los
+// hábitos fallados más recientemente)
 exports.renegotiationJob = onSchedule(
   {
     schedule: "0 7 * * *",
@@ -1319,28 +1326,55 @@ exports.renegotiationJob = onSchedule(
           .where("isActive", "==", true)
           .get();
 
-        // máximo un push de renegociación por usuario y día, aunque la IA
-        // genere propuestas para varios hábitos a la vez
-        let pushedThisUser = false;
+        // Nudge escaso: como mucho MAX_RENEGOTIATIONS_PER_DAY propuestas por
+        // usuario y día, las de los hábitos fallados más recientemente (los más
+        // frescos en la cabeza del usuario).
+        const candidates = [];
         for (const habitDoc of habitsSnap.docs) {
           try {
-            const result = await runRenegotiation(userDoc.id, habitDoc.id);
-            result.skipped ? (skipped += 1) : (generated += 1);
-            if (!result.skipped && !pushedThisUser) {
-              pushedThisUser = true;
-              const habitTitle = habitDoc.data().title || "un hábito";
-              await sendPushToUser(userDoc.id, {
-                title: "🤝 La IA tiene una propuesta para ti",
-                body: `«${habitTitle}» se te está atascando. Mira la versión más fácil que te sugiere.`,
-                route: `/habit/${habitDoc.id}`,
-              });
-            }
+            const ctx = await buildRenegotiationContext(userDoc.id, habitDoc.id);
+            if (!ctx) continue;
+            candidates.push({
+              habitId: habitDoc.id,
+              habitTitle: habitDoc.data().title || "un hábito",
+              time: ctx.lastMissedDate.getTime(),
+              missedDays: ctx.missedDays,
+            });
           } catch (e) {
             errors += 1;
             console.error(
-              `Error procesando ${userDoc.id}/${habitDoc.id}:`,
+              `Error evaluando ${userDoc.id}/${habitDoc.id}:`,
               e.message
             );
+          }
+        }
+
+        if (candidates.length === 0) {
+          skipped += 1;
+          continue;
+        }
+
+        // más reciente primero; a igualdad de fecha, más días fallados primero
+        candidates.sort((a, b) => b.time - a.time || b.missedDays - a.missedDays);
+        const targets = candidates.slice(0, MAX_RENEGOTIATIONS_PER_DAY);
+
+        // un solo push por usuario (el del hábito más reciente), aunque se
+        // generen varias propuestas
+        let pushedThisUser = false;
+        for (const target of targets) {
+          const result = await runRenegotiation(userDoc.id, target.habitId);
+          if (result.skipped) {
+            skipped += 1;
+            continue;
+          }
+          generated += 1;
+          if (!pushedThisUser) {
+            pushedThisUser = true;
+            await sendPushToUser(userDoc.id, {
+              title: "🤝 La IA tiene una propuesta para ti",
+              body: `«${target.habitTitle}» se te está atascando. Mira la versión más fácil que te sugiere.`,
+              route: `/habit/${target.habitId}`,
+            });
           }
         }
       } catch (e) {

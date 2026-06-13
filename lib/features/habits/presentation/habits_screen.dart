@@ -14,6 +14,7 @@ import '../domain/habit_model.dart';
 import '../domain/habit_group_model.dart';
 import '../domain/habit_log_model.dart';
 import 'widgets/habit_card.dart';
+import 'widgets/renegotiation_inbox.dart';
 import 'widgets/habit_stack_connector.dart';
 import 'widgets/stack_complete_overlay.dart';
 import 'widgets/empty_habits_view.dart';
@@ -485,6 +486,21 @@ class _HabitsScreenState extends State<HabitsScreen>
 
   Future<void> _dismissRenegotiation(String habitId) async {
     await _aiRepo.dismissRenegotiation(habitId);
+  }
+
+  // Abre el inbox consolidado de propuestas de la IA (sustituye los banners
+  // por-hábito que empapelaban la lista).
+  void _openRenegotiationInbox(List<HabitModel> allHabits) {
+    final pending = _pendingRenegotiations.values.toList();
+    if (pending.isEmpty) return;
+    final habitsById = {for (final h in allHabits) h.id: h};
+    RenegotiationInboxSheet.show(
+      context,
+      renegotiations: pending,
+      habitsById: habitsById,
+      onApply: _applyRenegotiation,
+      onDismiss: _dismissRenegotiation,
+    );
   }
 
   Future<void> _handleFabTap() async {
@@ -961,6 +977,16 @@ class _HabitsScreenState extends State<HabitsScreen>
                         ),
                       ),
 
+                      // propuestas de la IA agrupadas en una sola tarjeta
+                      // (antes: un banner de coach por cada hábito atascado)
+                      SliverToBoxAdapter(
+                        child: RenegotiationInboxCard(
+                          renegotiations:
+                              _pendingRenegotiations.values.toList(),
+                          onTap: () => _openRenegotiationInbox(allHabits),
+                        ),
+                      ),
+
                       // grupos como acordeones
                       ...activeGroups.map((group) {
                         final groupHabits = habitsByGroup[group.id] ?? [];
@@ -992,9 +1018,6 @@ class _HabitsScreenState extends State<HabitsScreen>
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterReorder: _enterFullReorder,
-                            pendingRenegotiations: _pendingRenegotiations,
-                            onApplyRenegotiation: _applyRenegotiation,
-                            onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
                             onReorderStack: _reorderStack,
@@ -1018,9 +1041,6 @@ class _HabitsScreenState extends State<HabitsScreen>
                             selectedIds: _selectedHabitIds,
                             onToggleSelect: _toggleHabitSelection,
                             onEnterReorder: _enterFullReorder,
-                            pendingRenegotiations: _pendingRenegotiations,
-                            onApplyRenegotiation: _applyRenegotiation,
-                            onDismissRenegotiation: _dismissRenegotiation,
                             nudgeHabitIds: _nudgeHabitIds,
                             nudgeFromTitles: _nudgeFromTitles,
                             onReorderStack: _reorderStack,
@@ -1402,9 +1422,6 @@ List<Widget> _buildStackedHabitWidgets({
   required Set<String> selectedIds,
   required void Function(String) onToggleSelect,
   required VoidCallback onEnterReorder,
-  required Map<String, RenegotiationModel> pendingRenegotiations,
-  required void Function(HabitModel) onApplyRenegotiation,
-  required void Function(String) onDismissRenegotiation,
   required Future<void> Function(String stackId, List<String> orderedIds) onReorderStack,
   Set<String> pendingSyncIds = const {},
 }) {
@@ -1437,9 +1454,6 @@ List<Widget> _buildStackedHabitWidgets({
         selectionMode: selectionMode,
         isSelected: selectedIds.contains(habit.id),
         onToggleSelect: () => onToggleSelect(habit.id),
-        renegotiation: pendingRenegotiations[habit.id],
-        onApplyRenegotiation: () => onApplyRenegotiation(habit),
-        onDismissRenegotiation: () => onDismissRenegotiation(habit.id),
         isNextInStack: nudgeHabitIds.contains(habit.id),
         nudgeFromHabitTitle: nudgeFromTitles[habit.id],
         onLongPressOverride: onEnterReorder,
@@ -1464,9 +1478,6 @@ List<Widget> _buildStackedHabitWidgets({
       selectedIds: selectedIds,
       onToggleSelect: onToggleSelect,
       onEnterReorder: onEnterReorder,
-      pendingRenegotiations: pendingRenegotiations,
-      onApplyRenegotiation: onApplyRenegotiation,
-      onDismissRenegotiation: onDismissRenegotiation,
       onReorderStack: onReorderStack,
       pendingSyncIds: pendingSyncIds,
     ));
@@ -1495,9 +1506,6 @@ class _StackSection extends StatefulWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final VoidCallback onEnterReorder;
-  final Map<String, RenegotiationModel> pendingRenegotiations;
-  final void Function(HabitModel) onApplyRenegotiation;
-  final void Function(String) onDismissRenegotiation;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
   final Set<String> pendingSyncIds;
 
@@ -1515,9 +1523,6 @@ class _StackSection extends StatefulWidget {
     required this.selectedIds,
     required this.onToggleSelect,
     required this.onEnterReorder,
-    required this.pendingRenegotiations,
-    required this.onApplyRenegotiation,
-    required this.onDismissRenegotiation,
     required this.onReorderStack,
     this.pendingSyncIds = const {},
   });
@@ -1578,9 +1583,6 @@ class _StackSectionState extends State<_StackSection> {
         selectionMode: widget.selectionMode,
         isSelected: widget.selectedIds.contains(habit.id),
         onToggleSelect: () => widget.onToggleSelect(habit.id),
-        renegotiation: widget.pendingRenegotiations[habit.id],
-        onApplyRenegotiation: () => widget.onApplyRenegotiation(habit),
-        onDismissRenegotiation: () => widget.onDismissRenegotiation(habit.id),
         isNextInStack: widget.nudgeHabitIds.contains(habit.id),
         stackPosition: pos,
         stackTotal: total,
@@ -1967,9 +1969,6 @@ class _GroupSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final VoidCallback onEnterReorder;
-  final Map<String, RenegotiationModel> pendingRenegotiations;
-  final void Function(HabitModel) onApplyRenegotiation;
-  final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
@@ -1992,9 +1991,6 @@ class _GroupSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterReorder,
-    this.pendingRenegotiations = const {},
-    required this.onApplyRenegotiation,
-    required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
     required this.onReorderStack,
@@ -2178,9 +2174,6 @@ class _GroupSection extends StatelessWidget {
                       selectedIds: selectedIds,
                       onToggleSelect: onToggleSelect,
                       onEnterReorder: onEnterReorder,
-                      pendingRenegotiations: pendingRenegotiations,
-                      onApplyRenegotiation: onApplyRenegotiation,
-                      onDismissRenegotiation: onDismissRenegotiation,
                       onReorderStack: onReorderStack,
                       pendingSyncIds: pendingSyncIds,
                     ),
@@ -2212,9 +2205,6 @@ class _UngroupedSection extends StatelessWidget {
   final Set<String> selectedIds;
   final void Function(String) onToggleSelect;
   final VoidCallback onEnterReorder;
-  final Map<String, RenegotiationModel> pendingRenegotiations;
-  final void Function(HabitModel) onApplyRenegotiation;
-  final void Function(String) onDismissRenegotiation;
   final Set<String> nudgeHabitIds;
   final Map<String, String> nudgeFromTitles;
   final Future<void> Function(String stackId, List<String> orderedIds) onReorderStack;
@@ -2231,9 +2221,6 @@ class _UngroupedSection extends StatelessWidget {
     this.selectedIds = const {},
     required this.onToggleSelect,
     required this.onEnterReorder,
-    this.pendingRenegotiations = const {},
-    required this.onApplyRenegotiation,
-    required this.onDismissRenegotiation,
     this.nudgeHabitIds = const {},
     this.nudgeFromTitles = const {},
     required this.onReorderStack,
@@ -2302,9 +2289,6 @@ class _UngroupedSection extends StatelessWidget {
                 selectedIds: selectedIds,
                 onToggleSelect: onToggleSelect,
                 onEnterReorder: onEnterReorder,
-                pendingRenegotiations: pendingRenegotiations,
-                onApplyRenegotiation: onApplyRenegotiation,
-                onDismissRenegotiation: onDismissRenegotiation,
                 onReorderStack: onReorderStack,
                 pendingSyncIds: pendingSyncIds,
               ),

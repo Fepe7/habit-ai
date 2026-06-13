@@ -13,6 +13,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../social/data/user_directory_repository.dart';
 import '../../../l10n/app_localizations.dart';
+import 'auth_error_l10n.dart';
 
 // Pantalla de registro — diseño Editorial Vitality
 class RegisterScreen extends StatefulWidget {
@@ -101,9 +102,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       AnalyticsService.instance.logSignUp('email');
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -122,9 +122,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final authRepository = AuthProvider.of(context);
       await authRepository.signInWithGoogle();
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -144,10 +143,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await authRepository.signInWithApple();
       AnalyticsService.instance.logSignUp('apple');
     } catch (e) {
-      // 'cancelled' = el usuario cerró el diálogo de Apple, no es un error
-      if (e.toString() != 'cancelled') {
-        setState(() => _errorMessage = e.toString());
-      }
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
