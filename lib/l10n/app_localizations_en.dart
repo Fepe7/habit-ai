@@ -1585,13 +1585,33 @@ class SEn extends S {
   String get habitCardNext => 'Next!';
 
   @override
-  String get habitCardCoachLabel => '– COACH · QUESTION OF THE DAY';
+  String get habitCardCoachLabel => '– HABIT SUGGESTION';
 
   @override
   String get habitCardCoachApply => 'YES, DO IT →';
 
   @override
-  String get habitCardCoachDismiss => 'ANOTHER OPTION';
+  String get habitCardCoachDismiss => 'NO, DON\'T';
+
+  @override
+  String get renoInboxTitle => 'Get back on track';
+
+  @override
+  String renoInboxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The AI has $count suggestions for you',
+      one: 'The AI has 1 suggestion for you',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get renoInboxSheetTitle => 'AI suggestions';
+
+  @override
+  String get renoUnavailable => 'That habit is no longer available';
 
   @override
   String get createChoiceHabitTitle => 'New habit';
@@ -3351,4 +3371,46 @@ class SEn extends S {
 
   @override
   String get authForgotPasswordInvalid => 'Enter a valid email';
+
+  @override
+  String get authErrorInvalidCredential =>
+      'Incorrect email or password. Check them and try again.';
+
+  @override
+  String get authErrorInvalidEmail => 'The email format isn\'t valid.';
+
+  @override
+  String get authErrorUserDisabled =>
+      'This account is disabled. Contact support.';
+
+  @override
+  String get authErrorTooManyRequests =>
+      'Too many attempts. Wait a few minutes and try again.';
+
+  @override
+  String get authErrorNetwork =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get authErrorEmailInUse =>
+      'An account already exists with this email. Sign in instead.';
+
+  @override
+  String get authErrorWeakPassword =>
+      'The password is too weak. Use at least 6 characters.';
+
+  @override
+  String get authErrorAccountExists =>
+      'An account already exists with this email using a different sign-in method.';
+
+  @override
+  String get authErrorOperationNotAllowed =>
+      'This sign-in method isn\'t enabled.';
+
+  @override
+  String get authErrorRequiresPassword => 'Enter your password to continue.';
+
+  @override
+  String get authErrorGeneric =>
+      'Couldn\'t complete the operation. Please try again.';
 }

@@ -2884,7 +2884,7 @@ abstract class S {
   /// No description provided for @habitCardCoachLabel.
   ///
   /// In es, this message translates to:
-  /// **'– COACH · PREGUNTA DEL DÍA'**
+  /// **'– SUGERENCIA DE HÁBITO'**
   String get habitCardCoachLabel;
 
   /// No description provided for @habitCardCoachApply.
@@ -2896,8 +2896,32 @@ abstract class S {
   /// No description provided for @habitCardCoachDismiss.
   ///
   /// In es, this message translates to:
-  /// **'OTRA OPCIÓN'**
+  /// **'NO, NO LO HAGAS'**
   String get habitCardCoachDismiss;
+
+  /// No description provided for @renoInboxTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Retoma tus hábitos'**
+  String get renoInboxTitle;
+
+  /// No description provided for @renoInboxCount.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =1{La IA tiene 1 propuesta para ti} other{La IA tiene {count} propuestas para ti}}'**
+  String renoInboxCount(int count);
+
+  /// No description provided for @renoInboxSheetTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Propuestas de la IA'**
+  String get renoInboxSheetTitle;
+
+  /// No description provided for @renoUnavailable.
+  ///
+  /// In es, this message translates to:
+  /// **'Ese hábito ya no está disponible'**
+  String get renoUnavailable;
 
   /// No description provided for @createChoiceHabitTitle.
   ///
@@ -6000,6 +6024,72 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Introduce un correo válido'**
   String get authForgotPasswordInvalid;
+
+  /// No description provided for @authErrorInvalidCredential.
+  ///
+  /// In es, this message translates to:
+  /// **'Correo o contraseña incorrectos. Revísalos e inténtalo de nuevo.'**
+  String get authErrorInvalidCredential;
+
+  /// No description provided for @authErrorInvalidEmail.
+  ///
+  /// In es, this message translates to:
+  /// **'El correo no tiene un formato válido.'**
+  String get authErrorInvalidEmail;
+
+  /// No description provided for @authErrorUserDisabled.
+  ///
+  /// In es, this message translates to:
+  /// **'Esta cuenta está deshabilitada. Contacta con soporte.'**
+  String get authErrorUserDisabled;
+
+  /// No description provided for @authErrorTooManyRequests.
+  ///
+  /// In es, this message translates to:
+  /// **'Demasiados intentos. Espera unos minutos y prueba de nuevo.'**
+  String get authErrorTooManyRequests;
+
+  /// No description provided for @authErrorNetwork.
+  ///
+  /// In es, this message translates to:
+  /// **'Sin conexión a internet. Comprueba tu red e inténtalo de nuevo.'**
+  String get authErrorNetwork;
+
+  /// No description provided for @authErrorEmailInUse.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe una cuenta con este correo. Inicia sesión.'**
+  String get authErrorEmailInUse;
+
+  /// No description provided for @authErrorWeakPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'La contraseña es demasiado débil. Usa al menos 6 caracteres.'**
+  String get authErrorWeakPassword;
+
+  /// No description provided for @authErrorAccountExists.
+  ///
+  /// In es, this message translates to:
+  /// **'Ya existe una cuenta con este correo usando otro método de acceso.'**
+  String get authErrorAccountExists;
+
+  /// No description provided for @authErrorOperationNotAllowed.
+  ///
+  /// In es, this message translates to:
+  /// **'Este método de inicio de sesión no está habilitado.'**
+  String get authErrorOperationNotAllowed;
+
+  /// No description provided for @authErrorRequiresPassword.
+  ///
+  /// In es, this message translates to:
+  /// **'Introduce tu contraseña para continuar.'**
+  String get authErrorRequiresPassword;
+
+  /// No description provided for @authErrorGeneric.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la operación. Inténtalo de nuevo.'**
+  String get authErrorGeneric;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -12,6 +12,7 @@ import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../auth/data/user_repository.dart';
 import '../../auth/domain/user_model.dart';
+import '../../auth/presentation/auth_error_l10n.dart';
 import '../../habits/data/habit_repository.dart';
 import '../../../core/services/feedback_service.dart';
 import '../../../core/services/review_service.dart';
@@ -339,7 +340,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Contraseña incorrecta',
             _ when msg.contains('requires-recent-login') =>
               s.settingsDeleteRequiresRelogin,
-            _ => s.settingsDeleteAccountError(msg),
+            // resto de códigos (red, demasiados intentos, etc.) → mensaje
+            // claro y localizado en vez del código crudo
+            _ => authErrorMessage(s, e),
           },
         );
       }

@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/spark_check_logo.dart';
 import '../../../l10n/app_localizations.dart';
+import 'auth_error_l10n.dart';
 
 // Pantalla de login — diseño Editorial Vitality
 class LoginScreen extends StatefulWidget {
@@ -54,9 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       AnalyticsService.instance.logLogin('email');
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -112,9 +112,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await authRepository.signInWithGoogle();
       AnalyticsService.instance.logLogin('google');
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-      });
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -134,10 +133,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await authRepository.signInWithApple();
       AnalyticsService.instance.logLogin('apple');
     } catch (e) {
-      // 'cancelled' = el usuario cerró el diálogo de Apple, no es un error
-      if (e.toString() != 'cancelled') {
-        setState(() => _errorMessage = e.toString());
-      }
+      if (isAuthCancelled(e) || !mounted) return;
+      setState(() => _errorMessage = authErrorMessage(S.of(context), e));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
