@@ -401,11 +401,15 @@ class PublicProfileRepository {
     String uid, {
     required bool viewerIsFollower,
   }) {
-    return _publicProfilesRef
-        .doc(uid)
-        .collection('habits')
-        .snapshots()
-        .map((snap) {
+    Query<Map<String, dynamic>> query =
+        _publicProfilesRef.doc(uid).collection('habits');
+    // Un no-seguidor solo puede leer los hábitos 'public': la regla rechaza
+    // los 'followers', así que hay que acotar la query o fallaría entera.
+    // Un seguidor lee toda la colección (la regla le permite ambos).
+    if (!viewerIsFollower) {
+      query = query.where('visibility', isEqualTo: 'public');
+    }
+    return query.snapshots().map((snap) {
       final all = snap.docs
           .map((doc) => PublicHabitModel.fromFirestore(doc.data(), doc.id))
           .toList();
