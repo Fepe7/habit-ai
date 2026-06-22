@@ -159,12 +159,14 @@ class _AppDrawerState extends State<AppDrawer> {
                   title: s.drawerWeeklyReview,
                   subtitle: s.drawerWeeklyReviewSubtitle,
                   onTap: _openLatestWeeklyReview,
+                  premium: true,
                 ),
                 _DrawerTile(
                   icon: Icons.auto_awesome_rounded,
                   title: s.drawerButterfly,
                   subtitle: s.drawerButterflySubtitle,
                   onTap: _openLatestButterfly,
+                  premium: true,
                 ),
                 const SizedBox(height: 8),
                 _SectionLabel(label: s.drawerQuickActions),
@@ -424,12 +426,14 @@ class _DrawerTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
+  final bool premium;
 
   const _DrawerTile({
     required this.icon,
     required this.title,
     this.subtitle,
     required this.onTap,
+    this.premium = false,
   });
 
   @override
@@ -446,11 +450,21 @@ class _DrawerTile extends StatelessWidget {
         ),
         child: Icon(icon, size: 18, color: scheme.primary),
       ),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w500,
-        ),
+      title: Row(
+        children: [
+          Flexible(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (premium) ...[
+            const SizedBox(width: 8),
+            const _ProBadge(),
+          ],
+        ],
       ),
       subtitle: subtitle == null
           ? null
@@ -468,6 +482,42 @@ class _DrawerTile extends StatelessWidget {
   }
 }
 
+
+/// Píldora "PRO" para marcar funciones premium en el menú.
+class _ProBadge extends StatelessWidget {
+  const _ProBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.workspace_premium_rounded,
+            size: 11,
+            color: AppTheme.tertiary,
+          ),
+          SizedBox(width: 3),
+          Text(
+            'PRO',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: AppTheme.tertiary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Toggle rápido de modo enfermedad — reusa la lógica de UserRepository.
 class _SickModeQuickTile extends StatefulWidget {

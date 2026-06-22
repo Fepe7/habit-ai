@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../app.dart';
 import '../../../core/services/ai_availability_service.dart';
+import '../../../core/services/premium_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/app_drawer.dart';
@@ -389,14 +390,74 @@ class _DashboardScreenState extends State<DashboardScreen>
             ],
           ),
         ),
-        _buildRenegotiationsCard(context),
-        const SizedBox(height: 8),
-        _buildWeeklyReviewCard(context),
-        const SizedBox(height: 8),
-        _buildButterflyCard(context),
-        const SizedBox(height: 8),
-        _buildPatternsCard(context),
+        _buildInsightsSection(context),
       ],
+    );
+  }
+
+  // Sección de insights IA (premium). Para usuarios free, en vez de las cards
+  // reales —que intentarían generar contra el backend y serían rechazadas—
+  // muestra filas bloqueadas con badge PRO + candado que llevan al paywall.
+  Widget _buildInsightsSection(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: PremiumService.instance.isPremium,
+      builder: (context, isPremium, _) {
+        if (!isPremium) {
+          final s = S.of(context);
+          Widget locked({
+            IconData? icon,
+            String? emoji,
+            required Color accent,
+            required String title,
+          }) =>
+              _InsightSlimRow(
+                icon: icon,
+                emoji: emoji,
+                accent: accent,
+                title: title,
+                locked: true,
+                onTap: () => context.push('/paywall'),
+              );
+          return Column(
+            children: [
+              locked(
+                icon: Icons.auto_fix_high_rounded,
+                accent: _amber,
+                title: s.dashboardSmartAdjust,
+              ),
+              const SizedBox(height: 8),
+              locked(
+                icon: Icons.insights_rounded,
+                accent: AppTheme.tertiary,
+                title: s.dashboardWeeklyReviewTitle,
+              ),
+              const SizedBox(height: 8),
+              locked(
+                emoji: '🦋',
+                accent: AppTheme.tertiary,
+                title: s.dashboardButterflyTitle,
+              ),
+              const SizedBox(height: 8),
+              locked(
+                icon: Icons.analytics_rounded,
+                accent: const Color(0xFF6366F1),
+                title: s.dashboardPatternsTitle,
+              ),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            _buildRenegotiationsCard(context),
+            const SizedBox(height: 8),
+            _buildWeeklyReviewCard(context),
+            const SizedBox(height: 8),
+            _buildButterflyCard(context),
+            const SizedBox(height: 8),
+            _buildPatternsCard(context),
+          ],
+        );
+      },
     );
   }
 
@@ -1985,6 +2046,7 @@ class _InsightSlimRow extends StatelessWidget {
   final bool busy;
   final IconData? trailingIcon;
   final VoidCallback? onTap;
+  final bool locked;
 
   const _InsightSlimRow({
     this.icon,
@@ -1995,6 +2057,7 @@ class _InsightSlimRow extends StatelessWidget {
     this.busy = false,
     this.trailingIcon,
     this.onTap,
+    this.locked = false,
   });
 
   @override
@@ -2047,7 +2110,31 @@ class _InsightSlimRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
               ],
-              if (busy)
+              if (locked) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.tertiaryContainer.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'PRO',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.5,
+                      color: AppTheme.tertiary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.lock_rounded,
+                  size: 16,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ] else if (busy)
                 const SizedBox(
                   width: 16,
                   height: 16,

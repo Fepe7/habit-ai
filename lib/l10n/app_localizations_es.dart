@@ -3324,6 +3324,41 @@ class SEs extends S {
       'Renovación automática mensual · Cancela cuando quieras';
 
   @override
+  String get lockedChatTitle => 'Chat de rutina con IA';
+
+  @override
+  String get lockedChatDesc =>
+      'Habla con tu coach para afinar toda tu rutina: te propone cambios y nuevos hábitos al instante.';
+
+  @override
+  String get lockedWeeklyTitle => 'Revisión semanal con IA';
+
+  @override
+  String get lockedWeeklyDesc =>
+      'Cada semana, la IA analiza tu progreso y te da un resumen personalizado con próximos pasos.';
+
+  @override
+  String get lockedButterflyTitle => 'Efecto mariposa';
+
+  @override
+  String get lockedButterflyDesc =>
+      'Descubre cómo tus hábitos de hoy transforman tu vida dentro de unos meses.';
+
+  @override
+  String get lockedPatternsTitle => 'Detección de patrones';
+
+  @override
+  String get lockedPatternsDesc =>
+      'La IA encuentra patrones ocultos entre tus hábitos, tu ánimo y tus horarios.';
+
+  @override
+  String get lockedMoodTitle => 'Correlación de ánimo';
+
+  @override
+  String get lockedMoodDesc =>
+      'Descubre qué hábitos disparan tu energía y tu estado de ánimo.';
+
+  @override
   String get paywallBadge => 'PREMIUM';
 
   @override
