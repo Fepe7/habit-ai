@@ -7,6 +7,7 @@ const {
 } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const admin = require("firebase-admin");
+const crypto = require("crypto");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { defineSecret } = require("firebase-functions/params");
 
@@ -54,29 +55,74 @@ function expiresInDays(days) {
   );
 }
 
-// Comprueba que el usuario no ha superado el limite de peticiones (10/hora)
+// Comprueba que el usuario no ha superado el limite de peticiones (10/hora).
+// Lectura + escritura en una transacción: con concurrency alto, varias
+// peticiones en paralelo del mismo usuario no pueden leer todas un contador
+// por debajo del tope y colarse a la vez (saltándose el límite de coste).
 async function checkRateLimit(uid) {
   const ref = admin.firestore().collection("rate_limits").doc(uid);
-  const doc = await ref.get();
   const now = Date.now();
   const oneHourAgo = now - 60 * 60 * 1000;
 
-  if (doc.exists) {
-    const requests = (doc.data().requests || []).filter(
-      (ts) => ts > oneHourAgo
-    );
+  return admin.firestore().runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const previous = doc.exists ? doc.data().requests || [] : [];
+    const requests = previous.filter((ts) => ts > oneHourAgo);
 
     if (requests.length >= 10) {
       return false;
     }
 
     requests.push(now);
-    await ref.update({ requests, expiresAt: expiresInDays(7) });
-  } else {
-    await ref.set({ requests: [now], expiresAt: expiresInDays(7) });
-  }
+    tx.set(ref, { requests, expiresAt: expiresInDays(7) });
+    return true;
+  });
+}
 
-  return true;
+// Compara dos strings en tiempo constante (evita timing attacks sobre el
+// token del webhook). Devuelve false si alguno falta o difieren en longitud.
+function safeEqual(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// Topes de entrada para el chat IA: acotan el coste de tokens y evitan que
+// un cliente envíe payloads enormes a Gemini. Generosos para uso real.
+const MAX_MESSAGE_LEN = 2000;
+const MAX_HISTORY_TURNS = 20;
+
+// Valida el mensaje del usuario; lanza invalid-argument si falta o se pasa.
+function assertValidMessage(message) {
+  if (!message || typeof message !== "string") {
+    throw new HttpsError("invalid-argument", "El mensaje no puede estar vacío.");
+  }
+  if (message.length > MAX_MESSAGE_LEN) {
+    throw new HttpsError(
+      "invalid-argument",
+      "El mensaje es demasiado largo."
+    );
+  }
+}
+
+// Normaliza el historial recibido del cliente: descarta entradas mal formadas,
+// recorta cada texto y limita el número de turnos (los más recientes).
+function sanitizeHistory(history) {
+  if (!Array.isArray(history)) return [];
+  return history
+    .filter(
+      (msg) =>
+        msg &&
+        (msg.role === "user" || msg.role === "model") &&
+        typeof msg.text === "string"
+    )
+    .slice(-MAX_HISTORY_TURNS)
+    .map((msg) => ({
+      role: msg.role,
+      parts: [{ text: msg.text.slice(0, MAX_MESSAGE_LEN) }],
+    }));
 }
 
 // Lanza HttpsError si la IA está pausada por presupuesto o manualmente.
@@ -181,12 +227,7 @@ exports.generateHabitPlan = onCall(
     const { message, history, locale } = request.data;
     const prompts = getPrompts(locale);
 
-    if (!message || typeof message !== "string") {
-      throw new HttpsError(
-        "invalid-argument",
-        "El mensaje no puede estar vacío."
-      );
-    }
+    assertValidMessage(message);
 
     await assertAiAvailable();
      const allowed = await checkRateLimit(uid);
@@ -209,20 +250,14 @@ exports.generateHabitPlan = onCall(
 
     // 3. Llamar a Gemini
     try {
-      console.log("Llamando a Gemini con mensaje:", message.substring(0, 50));
-      const apiKey = geminiApiKey.value();
-      console.log("API key presente:", apiKey ? "SI" : "NO");
-      const genAI = new GoogleGenerativeAI(apiKey);
+      const genAI = new GoogleGenerativeAI(geminiApiKey.value());
       const model = genAI.getGenerativeModel({
         model: MODEL_PRO,
         systemInstruction: prompts.SYSTEM_PROMPT,
       });
 
-      // Reconstruir historial si existe
-      const chatHistory = (history || []).map((msg) => ({
-        role: msg.role,
-        parts: [{ text: msg.text }],
-      }));
+      // Reconstruir historial (saneado y acotado) si existe
+      const chatHistory = sanitizeHistory(history);
 
       const chat = model.startChat({ history: chatHistory });
       const result = await chat.sendMessage(message);
@@ -354,12 +389,7 @@ exports.routineChat = onCall(
     if (!groupId || typeof groupId !== "string") {
       throw new HttpsError("invalid-argument", "groupId requerido.");
     }
-    if (!message || typeof message !== "string") {
-      throw new HttpsError(
-        "invalid-argument",
-        "El mensaje no puede estar vacío."
-      );
-    }
+    assertValidMessage(message);
 
     await assertAiAvailable();
     await assertPremium(uid);
@@ -383,10 +413,7 @@ exports.routineChat = onCall(
           JSON.stringify(context),
       });
 
-      const chatHistory = (history || []).map((msg) => ({
-        role: msg.role,
-        parts: [{ text: msg.text }],
-      }));
+      const chatHistory = sanitizeHistory(history);
 
       const chat = model.startChat({ history: chatHistory });
       const result = await chat.sendMessage(message);
@@ -2415,7 +2442,8 @@ exports.revenueCatWebhook = onRequest(
       return;
     }
     // Autenticación: header exacto pactado con el panel de RevenueCat.
-    if (req.get("Authorization") !== revenueCatAuthToken.value()) {
+    // Comparación en tiempo constante para no filtrar el token por timing.
+    if (!safeEqual(req.get("Authorization"), revenueCatAuthToken.value())) {
       res.status(401).send("Unauthorized");
       return;
     }
