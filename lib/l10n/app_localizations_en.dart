@@ -3308,6 +3308,41 @@ class SEn extends S {
   String get paywallCancelAnytime => 'Auto-renews monthly · Cancel anytime';
 
   @override
+  String get lockedChatTitle => 'AI routine chat';
+
+  @override
+  String get lockedChatDesc =>
+      'Talk to your coach to fine-tune your whole routine: it suggests changes and new habits instantly.';
+
+  @override
+  String get lockedWeeklyTitle => 'AI weekly review';
+
+  @override
+  String get lockedWeeklyDesc =>
+      'Every week, the AI analyzes your progress and gives you a personalized summary with next steps.';
+
+  @override
+  String get lockedButterflyTitle => 'Butterfly effect';
+
+  @override
+  String get lockedButterflyDesc =>
+      'Discover how your habits today transform your life a few months down the road.';
+
+  @override
+  String get lockedPatternsTitle => 'Pattern detection';
+
+  @override
+  String get lockedPatternsDesc =>
+      'The AI finds hidden patterns between your habits, your mood and your schedule.';
+
+  @override
+  String get lockedMoodTitle => 'Mood correlation';
+
+  @override
+  String get lockedMoodDesc =>
+      'Find out which habits boost your energy and your mood.';
+
+  @override
   String get paywallBadge => 'PREMIUM';
 
   @override

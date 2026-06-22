@@ -5941,6 +5941,66 @@ abstract class S {
   /// **'Renovación automática mensual · Cancela cuando quieras'**
   String get paywallCancelAnytime;
 
+  /// No description provided for @lockedChatTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Chat de rutina con IA'**
+  String get lockedChatTitle;
+
+  /// No description provided for @lockedChatDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Habla con tu coach para afinar toda tu rutina: te propone cambios y nuevos hábitos al instante.'**
+  String get lockedChatDesc;
+
+  /// No description provided for @lockedWeeklyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Revisión semanal con IA'**
+  String get lockedWeeklyTitle;
+
+  /// No description provided for @lockedWeeklyDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Cada semana, la IA analiza tu progreso y te da un resumen personalizado con próximos pasos.'**
+  String get lockedWeeklyDesc;
+
+  /// No description provided for @lockedButterflyTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Efecto mariposa'**
+  String get lockedButterflyTitle;
+
+  /// No description provided for @lockedButterflyDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Descubre cómo tus hábitos de hoy transforman tu vida dentro de unos meses.'**
+  String get lockedButterflyDesc;
+
+  /// No description provided for @lockedPatternsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Detección de patrones'**
+  String get lockedPatternsTitle;
+
+  /// No description provided for @lockedPatternsDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'La IA encuentra patrones ocultos entre tus hábitos, tu ánimo y tus horarios.'**
+  String get lockedPatternsDesc;
+
+  /// No description provided for @lockedMoodTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Correlación de ánimo'**
+  String get lockedMoodTitle;
+
+  /// No description provided for @lockedMoodDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Descubre qué hábitos disparan tu energía y tu estado de ánimo.'**
+  String get lockedMoodDesc;
+
   /// No description provided for @paywallBadge.
   ///
   /// In es, this message translates to:

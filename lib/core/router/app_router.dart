@@ -133,6 +133,7 @@ GoRouter createRouter(AuthRepository authRepository) {
                     pageBuilder: (context, state) => _fadeSlideTransition(
                       state: state,
                       child: PremiumGuard(
+                        feature: PremiumFeature.routineChat,
                         child: RoutineChatScreen(
                           groupId: state.pathParameters['groupId']!,
                         ),
@@ -194,6 +195,7 @@ GoRouter createRouter(AuthRepository authRepository) {
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
                   child: PremiumGuard(
+                    feature: PremiumFeature.weeklyReview,
                     child: WeeklyReviewScreen(
                       weekId: state.pathParameters['weekId']!,
                     ),
@@ -206,6 +208,7 @@ GoRouter createRouter(AuthRepository authRepository) {
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
                   child: PremiumGuard(
+                    feature: PremiumFeature.butterfly,
                     child: ButterflyProjectionScreen(
                       monthId: state.pathParameters['monthId']!,
                     ),
@@ -218,6 +221,7 @@ GoRouter createRouter(AuthRepository authRepository) {
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
                   child: PremiumGuard(
+                    feature: PremiumFeature.patterns,
                     child: PatternInsightsScreen(
                       periodId: state.pathParameters['periodId']!,
                     ),
@@ -245,7 +249,10 @@ GoRouter createRouter(AuthRepository authRepository) {
                 name: 'mood-insights',
                 pageBuilder: (context, state) => _fadeSlideTransition(
                   state: state,
-                  child: const PremiumGuard(child: MoodInsightsScreen()),
+                  child: const PremiumGuard(
+                    feature: PremiumFeature.mood,
+                    child: MoodInsightsScreen(),
+                  ),
                 ),
               ),
             ],
