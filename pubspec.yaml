@@ -70,6 +70,8 @@ dependencies:
   # 0.8.x arrastra androidx.glance alpha (exige compileSdk 37 + AGP 9.1);
   # 0.7.x tiene la misma API sin esa dependencia
   home_widget: ^0.7.0
+  # Billing de suscripciones (RevenueCat) — envuelve Play Billing y StoreKit
+  purchases_flutter: ^8.4.0
 
 dev_dependencies:
   flutter_test:
