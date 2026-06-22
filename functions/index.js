@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onMessagePublished } = require("firebase-functions/v2/pubsub");
 const {
@@ -28,6 +28,11 @@ const MODEL_FLASH = "gemini-2.5-flash";
 
 // La API key se guarda como secret en Firebase, nunca en el codigo
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
+
+// Token compartido con el panel de RevenueCat (Integrations → Webhooks →
+// Authorization header). El webhook rechaza cualquier petición que no lo traiga
+// para que nadie pueda autoconcederse premium falseando un evento.
+const revenueCatAuthToken = defineSecret("REVENUECAT_WEBHOOK_TOKEN");
 
 // Prompts por idioma — se seleccionan en runtime según request.data.locale
 const promptsByLocale = {
@@ -2379,5 +2384,78 @@ exports.onAchievementUnlocked = onDocumentCreated(
       route: "/dashboard/achievements",
       data: { skipForeground: "1" },
     });
+  }
+);
+
+// ==================== WEBHOOK DE BILLING (RevenueCat) ====================
+// RevenueCat cobra la suscripción y nos avisa por este webhook. Aquí es donde
+// el premium se materializa: escribimos users/{uid}.isPremium + premiumUntil
+// con Admin SDK (los únicos que pueden, por firestore.rules). El cliente solo
+// lanza la compra; nunca se concede premium a sí mismo.
+//
+// app_user_id == uid de Firebase porque la app llama a Purchases.logIn(uid).
+// Eventos que CONCEDEN premium (renuevan la caducidad): compra inicial,
+// renovación, cambio de producto, reactivación, compra no renovable y
+// extensiones. EXPIRATION lo REVOCA. La cancelación NO revoca: el usuario
+// sigue siendo premium hasta que caduca (premiumUntil ya lo cubre).
+const GRANT_EVENTS = new Set([
+  "INITIAL_PURCHASE",
+  "RENEWAL",
+  "PRODUCT_CHANGE",
+  "UNCANCELLATION",
+  "NON_RENEWING_PURCHASE",
+  "SUBSCRIPTION_EXTENDED",
+]);
+
+exports.revenueCatWebhook = onRequest(
+  { region: "europe-west1", secrets: [revenueCatAuthToken] },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
+    // Autenticación: header exacto pactado con el panel de RevenueCat.
+    if (req.get("Authorization") !== revenueCatAuthToken.value()) {
+      res.status(401).send("Unauthorized");
+      return;
+    }
+
+    const event = req.body && req.body.event;
+    if (!event || !event.type) {
+      res.status(400).send("Bad Request");
+      return;
+    }
+
+    const uid = event.app_user_id;
+    // Ignora ids anónimos de RevenueCat (compra sin logIn): no hay doc que tocar.
+    if (!uid || uid.startsWith("$RCAnonymousID:")) {
+      res.status(200).send("ignored: anonymous user");
+      return;
+    }
+
+    const userRef = admin.firestore().doc(`users/${uid}`);
+
+    try {
+      if (event.type === "EXPIRATION") {
+        await userRef.set(
+          { isPremium: false, premiumUntil: null },
+          { merge: true }
+        );
+      } else if (GRANT_EVENTS.has(event.type)) {
+        const until = event.expiration_at_ms
+          ? admin.firestore.Timestamp.fromMillis(event.expiration_at_ms)
+          : null;
+        await userRef.set(
+          { isPremium: true, premiumUntil: until },
+          { merge: true }
+        );
+      }
+      // Otros eventos (CANCELLATION, BILLING_ISSUE, TRANSFER, TEST...) se
+      // confirman sin tocar el estado: la caducidad ya gobierna el acceso.
+      res.status(200).send("ok");
+    } catch (e) {
+      console.error("revenueCatWebhook: fallo al escribir premium", uid, e);
+      res.status(500).send("error");
+    }
   }
 );

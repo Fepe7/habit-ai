@@ -3288,6 +3288,33 @@ class SEn extends S {
       'Your free plan includes 7 habits, challenges with friends and one AI-generated routine every month.';
 
   @override
+  String get paywallRestore => 'Restore purchases';
+
+  @override
+  String get paywallPurchaseSuccess => 'Welcome to Premium! 🎉';
+
+  @override
+  String get paywallPurchaseError =>
+      'Couldn\'t complete the purchase. Please try again.';
+
+  @override
+  String get paywallRestoreSuccess => 'Purchase restored. Premium activated.';
+
+  @override
+  String get paywallRestoreNone =>
+      'We couldn\'t find any previous purchases to restore.';
+
+  @override
+  String get paywallCancelAnytime => 'Auto-renews monthly · Cancel anytime';
+
+  @override
+  String get paywallBadge => 'PREMIUM';
+
+  @override
+  String get paywallSocialProof =>
+      'Join others already building better habits with AI';
+
+  @override
   String get premiumRequiredSnack => 'This feature is part of HabitAI Premium';
 
   @override

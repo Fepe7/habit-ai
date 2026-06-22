@@ -5905,6 +5905,54 @@ abstract class S {
   /// **'Tu plan gratuito incluye 7 hábitos, retos con amigos y una rutina generada por IA cada mes.'**
   String get paywallFreePlanNote;
 
+  /// No description provided for @paywallRestore.
+  ///
+  /// In es, this message translates to:
+  /// **'Restaurar compras'**
+  String get paywallRestore;
+
+  /// No description provided for @paywallPurchaseSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Bienvenido a Premium! 🎉'**
+  String get paywallPurchaseSuccess;
+
+  /// No description provided for @paywallPurchaseError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo completar la compra. Inténtalo de nuevo.'**
+  String get paywallPurchaseError;
+
+  /// No description provided for @paywallRestoreSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Compra restaurada. Premium activado.'**
+  String get paywallRestoreSuccess;
+
+  /// No description provided for @paywallRestoreNone.
+  ///
+  /// In es, this message translates to:
+  /// **'No encontramos compras anteriores para restaurar.'**
+  String get paywallRestoreNone;
+
+  /// No description provided for @paywallCancelAnytime.
+  ///
+  /// In es, this message translates to:
+  /// **'Renovación automática mensual · Cancela cuando quieras'**
+  String get paywallCancelAnytime;
+
+  /// No description provided for @paywallBadge.
+  ///
+  /// In es, this message translates to:
+  /// **'PREMIUM'**
+  String get paywallBadge;
+
+  /// No description provided for @paywallSocialProof.
+  ///
+  /// In es, this message translates to:
+  /// **'Únete a quienes ya construyen mejores hábitos con IA'**
+  String get paywallSocialProof;
+
   /// No description provided for @premiumRequiredSnack.
   ///
   /// In es, this message translates to:

@@ -3303,6 +3303,34 @@ class SEs extends S {
       'Tu plan gratuito incluye 7 hábitos, retos con amigos y una rutina generada por IA cada mes.';
 
   @override
+  String get paywallRestore => 'Restaurar compras';
+
+  @override
+  String get paywallPurchaseSuccess => '¡Bienvenido a Premium! 🎉';
+
+  @override
+  String get paywallPurchaseError =>
+      'No se pudo completar la compra. Inténtalo de nuevo.';
+
+  @override
+  String get paywallRestoreSuccess => 'Compra restaurada. Premium activado.';
+
+  @override
+  String get paywallRestoreNone =>
+      'No encontramos compras anteriores para restaurar.';
+
+  @override
+  String get paywallCancelAnytime =>
+      'Renovación automática mensual · Cancela cuando quieras';
+
+  @override
+  String get paywallBadge => 'PREMIUM';
+
+  @override
+  String get paywallSocialProof =>
+      'Únete a quienes ya construyen mejores hábitos con IA';
+
+  @override
   String get premiumRequiredSnack =>
       'Esta función forma parte de HabitAI Premium';
 
