@@ -164,6 +164,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 const SizedBox(height: 16),
 
+                // ── 4b. Suscripción ──────────────────────────────────────
+                SettingsSectionCard(
+                  icon: Icons.workspace_premium_rounded,
+                  iconColor: AppTheme.tertiaryContainer,
+                  title: s.subscriptionTitle,
+                  children: [
+                    SettingsRow(
+                      title: s.settingsSubscription,
+                      subtitle: s.settingsSubscriptionSubtitle,
+                      onTap: () => context.pushNamed('subscription'),
+                      divider: false,
+                    ),
+                  ],
+                ).animate().fadeIn(delay: 180.ms, duration: 260.ms),
+
+                const SizedBox(height: 16),
+
                 // ── 5. Información ───────────────────────────────────────
                 SettingsSectionCard(
                   icon: Icons.info_outline_rounded,
@@ -316,18 +333,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (password == null || !mounted) return; // canceló
     }
 
+    // El loader vive en el navigator RAÍZ (showDialog usa useRootNavigator
+    // por defecto). Capturamos ese mismo navigator para cerrarlo: con go_router
+    // `Navigator.of(context)` resolvería un navigator anidado y el pop no
+    // cerraría el diálogo → la pantalla se quedaría "cargando" para siempre.
+    final rootNavigator = Navigator.of(
+      context, // ignore: use_build_context_synchronously
+      rootNavigator: true,
+    );
     showDialog(
       context: context, // ignore: use_build_context_synchronously
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
 
+    // Cierre idempotente del loader, sin depender de `mounted` (si el State ya
+    // no estuviera montado, el loader quedaría colgado en pantalla).
+    var loaderClosed = false;
+    void closeLoader() {
+      if (loaderClosed) return;
+      loaderClosed = true;
+      rootNavigator.pop();
+    }
+
     try {
       await auth.deleteAccount(password: password);
-      // éxito: authStateChanges redirige a login y desmonta esta pantalla,
-      // así que no cerramos el loader manualmente (evita parpadeo).
+      // éxito: cerramos el loader y dejamos que authStateChanges redirija a
+      // login (el loader es el tope del navigator raíz, sobre las rutas que
+      // go_router ya reemplazó, así que el pop cierra el loader, no el login).
+      closeLoader();
     } catch (e) {
-      if (mounted) Navigator.of(context).pop(); // ignore: use_build_context_synchronously — cerrar loader
+      closeLoader();
       final msg = e.toString();
       if (msg == 'cancelled') return; // canceló el diálogo del proveedor
       if (mounted) {

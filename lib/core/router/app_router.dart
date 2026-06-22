@@ -35,6 +35,7 @@ import '../../features/mood/presentation/mood_insights_screen.dart';
 import '../../features/onboarding/presentation/onboarding_gate.dart';
 import '../../features/premium/presentation/paywall_screen.dart';
 import '../../features/premium/presentation/premium_guard.dart';
+import '../../features/premium/presentation/subscription_screen.dart';
 import '../services/analytics_service.dart';
 import 'main_shell.dart';
 
@@ -385,6 +386,13 @@ GoRouter createRouter(AuthRepository authRepository) {
           ),
           transitionDuration: const Duration(milliseconds: 350),
         ),
+      ),
+
+      // gestión de la suscripción (estado premium + cancelar en la tienda)
+      GoRoute(
+        path: '/subscription',
+        name: 'subscription',
+        builder: (context, state) => const SubscriptionScreen(),
       ),
 
       // auth (fuera del shell, sin bottom nav)
