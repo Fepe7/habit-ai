@@ -3308,6 +3308,54 @@ class SEn extends S {
   String get paywallCancelAnytime => 'Auto-renews monthly · Cancel anytime';
 
   @override
+  String get subscriptionTitle => 'Subscription';
+
+  @override
+  String get settingsSubscription => 'Manage subscription';
+
+  @override
+  String get settingsSubscriptionSubtitle =>
+      'Your plan, billing and cancellation';
+
+  @override
+  String get subscriptionStatusActive => 'Premium active';
+
+  @override
+  String get subscriptionStatusActiveDesc =>
+      'You have access to all premium features.';
+
+  @override
+  String get subscriptionStatusFree => 'Free plan';
+
+  @override
+  String get subscriptionStatusFreeDesc =>
+      'Upgrade to Premium to unlock everything.';
+
+  @override
+  String get subscriptionManageSection => 'Manage';
+
+  @override
+  String get subscriptionManage => 'Manage subscription';
+
+  @override
+  String get subscriptionManageSubtitle =>
+      'Change or cancel your plan in the store';
+
+  @override
+  String get subscriptionRestoreSubtitle =>
+      'Recover your Premium on this device';
+
+  @override
+  String get subscriptionCancelHint =>
+      'To cancel, open \"Manage subscription\". Cancellation happens in the App Store or Google Play; you\'ll keep Premium until the end of the period you already paid for.';
+
+  @override
+  String get subscriptionGoPremium => 'Go Premium';
+
+  @override
+  String get subscriptionOpenError => 'Couldn\'t open subscription management.';
+
+  @override
   String get lockedChatTitle => 'AI routine chat';
 
   @override

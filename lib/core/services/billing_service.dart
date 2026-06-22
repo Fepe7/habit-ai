@@ -134,6 +134,32 @@ class BillingService {
   bool _hasEntitlement(CustomerInfo info) =>
       info.entitlements.active.containsKey(entitlementId);
 
+  /// URL de gestión de la suscripción que devuelve RevenueCat (apunta a la
+  /// pantalla de suscripciones de la tienda correspondiente, donde el usuario
+  /// puede cancelar). Puede ser null si el usuario no tiene compras o aún no
+  /// se ha sincronizado; en ese caso la pantalla usa [storeSubscriptionsUrl].
+  Future<Uri?> managementUrl() async {
+    if (!_configured) return null;
+    try {
+      final info = await Purchases.getCustomerInfo();
+      final url = info.managementURL;
+      if (url != null && url.isNotEmpty) return Uri.tryParse(url);
+    } catch (e) {
+      debugPrint('BillingService: managementUrl falló: $e');
+    }
+    return null;
+  }
+
+  /// Fallback a la pantalla de suscripciones nativa de la tienda según la
+  /// plataforma. Apple/Google sólo permiten cancelar desde ahí, nunca dentro
+  /// de la app. Se usa cuando RevenueCat no da [managementUrl] todavía.
+  static Uri get storeSubscriptionsUrl {
+    if (Platform.isIOS) {
+      return Uri.parse('https://apps.apple.com/account/subscriptions');
+    }
+    return Uri.parse('https://play.google.com/store/account/subscriptions');
+  }
+
   void dispose() {
     _authSub?.cancel();
     _authSub = null;

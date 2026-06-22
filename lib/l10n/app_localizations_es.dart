@@ -3324,6 +3324,55 @@ class SEs extends S {
       'Renovación automática mensual · Cancela cuando quieras';
 
   @override
+  String get subscriptionTitle => 'Suscripción';
+
+  @override
+  String get settingsSubscription => 'Gestionar suscripción';
+
+  @override
+  String get settingsSubscriptionSubtitle =>
+      'Tu plan, facturación y cancelación';
+
+  @override
+  String get subscriptionStatusActive => 'Premium activo';
+
+  @override
+  String get subscriptionStatusActiveDesc =>
+      'Tienes acceso a todas las funciones premium.';
+
+  @override
+  String get subscriptionStatusFree => 'Plan gratuito';
+
+  @override
+  String get subscriptionStatusFreeDesc =>
+      'Mejora a Premium para desbloquearlo todo.';
+
+  @override
+  String get subscriptionManageSection => 'Gestionar';
+
+  @override
+  String get subscriptionManage => 'Gestionar suscripción';
+
+  @override
+  String get subscriptionManageSubtitle =>
+      'Cambia o cancela tu plan en la tienda';
+
+  @override
+  String get subscriptionRestoreSubtitle =>
+      'Recupera tu Premium en este dispositivo';
+
+  @override
+  String get subscriptionCancelHint =>
+      'Para cancelar, abre «Gestionar suscripción». La cancelación se realiza en la App Store o Google Play; mantendrás Premium hasta el final del periodo ya pagado.';
+
+  @override
+  String get subscriptionGoPremium => 'Hazte Premium';
+
+  @override
+  String get subscriptionOpenError =>
+      'No se pudo abrir la gestión de la suscripción.';
+
+  @override
   String get lockedChatTitle => 'Chat de rutina con IA';
 
   @override

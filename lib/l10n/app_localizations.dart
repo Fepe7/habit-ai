@@ -5941,6 +5941,90 @@ abstract class S {
   /// **'Renovación automática mensual · Cancela cuando quieras'**
   String get paywallCancelAnytime;
 
+  /// No description provided for @subscriptionTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Suscripción'**
+  String get subscriptionTitle;
+
+  /// No description provided for @settingsSubscription.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar suscripción'**
+  String get settingsSubscription;
+
+  /// No description provided for @settingsSubscriptionSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu plan, facturación y cancelación'**
+  String get settingsSubscriptionSubtitle;
+
+  /// No description provided for @subscriptionStatusActive.
+  ///
+  /// In es, this message translates to:
+  /// **'Premium activo'**
+  String get subscriptionStatusActive;
+
+  /// No description provided for @subscriptionStatusActiveDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Tienes acceso a todas las funciones premium.'**
+  String get subscriptionStatusActiveDesc;
+
+  /// No description provided for @subscriptionStatusFree.
+  ///
+  /// In es, this message translates to:
+  /// **'Plan gratuito'**
+  String get subscriptionStatusFree;
+
+  /// No description provided for @subscriptionStatusFreeDesc.
+  ///
+  /// In es, this message translates to:
+  /// **'Mejora a Premium para desbloquearlo todo.'**
+  String get subscriptionStatusFreeDesc;
+
+  /// No description provided for @subscriptionManageSection.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar'**
+  String get subscriptionManageSection;
+
+  /// No description provided for @subscriptionManage.
+  ///
+  /// In es, this message translates to:
+  /// **'Gestionar suscripción'**
+  String get subscriptionManage;
+
+  /// No description provided for @subscriptionManageSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Cambia o cancela tu plan en la tienda'**
+  String get subscriptionManageSubtitle;
+
+  /// No description provided for @subscriptionRestoreSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Recupera tu Premium en este dispositivo'**
+  String get subscriptionRestoreSubtitle;
+
+  /// No description provided for @subscriptionCancelHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Para cancelar, abre «Gestionar suscripción». La cancelación se realiza en la App Store o Google Play; mantendrás Premium hasta el final del periodo ya pagado.'**
+  String get subscriptionCancelHint;
+
+  /// No description provided for @subscriptionGoPremium.
+  ///
+  /// In es, this message translates to:
+  /// **'Hazte Premium'**
+  String get subscriptionGoPremium;
+
+  /// No description provided for @subscriptionOpenError.
+  ///
+  /// In es, this message translates to:
+  /// **'No se pudo abrir la gestión de la suscripción.'**
+  String get subscriptionOpenError;
+
   /// No description provided for @lockedChatTitle.
   ///
   /// In es, this message translates to:
