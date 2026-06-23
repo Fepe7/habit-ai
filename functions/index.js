@@ -35,6 +35,12 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY");
 // para que nadie pueda autoconcederse premium falseando un evento.
 const revenueCatAuthToken = defineSecret("REVENUECAT_WEBHOOK_TOKEN");
 
+// API key SECRETA (v1) de RevenueCat (Project Settings → API Keys → Secret).
+// Se usa solo en el evento TRANSFER para consultar la caducidad real de la
+// suscripción transferida (el evento TRANSFER no la incluye) y escribir un
+// premiumUntil exacto en la cuenta destino.
+const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
+
 // Prompts por idioma — se seleccionan en runtime según request.data.locale
 const promptsByLocale = {
   es: require("./prompts/es"),
@@ -2434,8 +2440,52 @@ const GRANT_EVENTS = new Set([
   "SUBSCRIPTION_EXTENDED",
 ]);
 
+// Escribe el estado premium en users/{uid}. `until` es un Timestamp o null.
+async function setPremium(uid, isPremium, until) {
+  await admin.firestore().doc(`users/${uid}`).set(
+    { isPremium, premiumUntil: until },
+    { merge: true }
+  );
+}
+
+// Consulta a la REST v1 de RevenueCat el estado del entitlement `premium` para
+// un app_user_id. El evento TRANSFER no trae la caducidad, así que la pedimos
+// aquí para escribir un premiumUntil exacto en la cuenta destino.
+// Devuelve { active, until } donde until es Timestamp o null (premium vitalicio
+// o compra no renovable). active=false => no hay premium que conceder.
+async function fetchPremiumStatus(uid) {
+  const resp = await fetch(
+    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`,
+    { headers: { Authorization: `Bearer ${revenueCatApiKey.value()}` } }
+  );
+  if (!resp.ok) {
+    throw new Error(`RevenueCat REST ${resp.status}`);
+  }
+  const data = await resp.json();
+  const ent =
+    data &&
+    data.subscriber &&
+    data.subscriber.entitlements &&
+    data.subscriber.entitlements.premium;
+  if (!ent) return { active: false, until: null };
+  // Sin expires_date => entitlement vitalicio: premium activo sin caducidad.
+  if (!ent.expires_date) return { active: true, until: null };
+  const ms = Date.parse(ent.expires_date);
+  if (Number.isNaN(ms)) return { active: true, until: null };
+  // Caducado ya => no conceder.
+  if (ms <= Date.now()) return { active: false, until: null };
+  return { active: true, until: admin.firestore.Timestamp.fromMillis(ms) };
+}
+
+// Filtra los app_user_id reales (descarta anónimos de RevenueCat).
+function realUids(list) {
+  return (Array.isArray(list) ? list : []).filter(
+    (u) => u && !u.startsWith("$RCAnonymousID:")
+  );
+}
+
 exports.revenueCatWebhook = onRequest(
-  { region: "europe-west1", secrets: [revenueCatAuthToken] },
+  { region: "europe-west1", secrets: [revenueCatAuthToken, revenueCatApiKey] },
   async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).send("Method Not Allowed");
@@ -2454,35 +2504,45 @@ exports.revenueCatWebhook = onRequest(
       return;
     }
 
-    const uid = event.app_user_id;
-    // Ignora ids anónimos de RevenueCat (compra sin logIn): no hay doc que tocar.
-    if (!uid || uid.startsWith("$RCAnonymousID:")) {
-      res.status(200).send("ignored: anonymous user");
-      return;
-    }
-
-    const userRef = admin.firestore().doc(`users/${uid}`);
-
     try {
-      if (event.type === "EXPIRATION") {
-        await userRef.set(
-          { isPremium: false, premiumUntil: null },
-          { merge: true }
+      // TRANSFER: el mismo recibo de tienda pasa de unas cuentas a otras (p.ej.
+      // el usuario borra su cuenta y restaura con otra usando el mismo Apple ID).
+      // No trae app_user_id ni caducidad: viene con arrays from/to. Revocamos las
+      // cuentas origen y concedemos a las destino consultando la caducidad real.
+      if (event.type === "TRANSFER") {
+        const fromUids = realUids(event.transferred_from);
+        const toUids = realUids(event.transferred_to);
+        await Promise.all(fromUids.map((u) => setPremium(u, false, null)));
+        await Promise.all(
+          toUids.map(async (u) => {
+            const status = await fetchPremiumStatus(u);
+            await setPremium(u, status.active, status.until);
+          })
         );
+        res.status(200).send("ok");
+        return;
+      }
+
+      const uid = event.app_user_id;
+      // Ignora ids anónimos de RevenueCat (compra sin logIn): no hay doc que tocar.
+      if (!uid || uid.startsWith("$RCAnonymousID:")) {
+        res.status(200).send("ignored: anonymous user");
+        return;
+      }
+
+      if (event.type === "EXPIRATION") {
+        await setPremium(uid, false, null);
       } else if (GRANT_EVENTS.has(event.type)) {
         const until = event.expiration_at_ms
           ? admin.firestore.Timestamp.fromMillis(event.expiration_at_ms)
           : null;
-        await userRef.set(
-          { isPremium: true, premiumUntil: until },
-          { merge: true }
-        );
+        await setPremium(uid, true, until);
       }
-      // Otros eventos (CANCELLATION, BILLING_ISSUE, TRANSFER, TEST...) se
-      // confirman sin tocar el estado: la caducidad ya gobierna el acceso.
+      // Otros eventos (CANCELLATION, BILLING_ISSUE, TEST...) se confirman sin
+      // tocar el estado: la caducidad ya gobierna el acceso.
       res.status(200).send("ok");
     } catch (e) {
-      console.error("revenueCatWebhook: fallo al escribir premium", uid, e);
+      console.error("revenueCatWebhook: fallo al procesar evento", event.type, e);
       res.status(500).send("error");
     }
   }
