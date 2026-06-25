@@ -537,6 +537,8 @@ const double kBottomNavBarHeight = 72.0;
 extension BottomNavInset on BuildContext {
   /// Espacio inferior para que el contenido scrollable no quede
   /// tapado por _GlassNavBar cuando extendBody=true en MainShell.
+  /// = alto de la barra (72) + safe area inferior + margen de respiro, para
+  /// que el último elemento no quede pegado/cortado bajo la barra flotante.
   double get bottomNavInset =>
-      kBottomNavBarHeight + MediaQuery.viewPaddingOf(this).bottom + 16;
+      kBottomNavBarHeight + MediaQuery.viewPaddingOf(this).bottom + 28;
 }

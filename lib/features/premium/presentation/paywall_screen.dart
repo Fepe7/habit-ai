@@ -113,16 +113,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
               ),
             ),
+            // Glow de marca anclado al borde superior: el punto más brillante
+            // vive en el borde y se difumina hacia abajo, así no queda un corte
+            // duro arriba (un círculo desplazado sí lo dejaba al recortar el Stack).
             Positioned(
-              top: -160,
-              left: -40,
-              right: -40,
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 360,
               child: IgnorePointer(
-                child: Container(
-                  height: 420,
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
                     gradient: RadialGradient(
+                      center: Alignment.topCenter,
+                      radius: 1.1,
                       colors: [
                         _accent.withValues(alpha: 0.32),
                         _accent.withValues(alpha: 0.0),
