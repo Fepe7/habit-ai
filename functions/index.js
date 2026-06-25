@@ -35,12 +35,6 @@ const geminiApiKey = defineSecret("GEMINI_API_KEY");
 // para que nadie pueda autoconcederse premium falseando un evento.
 const revenueCatAuthToken = defineSecret("REVENUECAT_WEBHOOK_TOKEN");
 
-// API key SECRETA (v1) de RevenueCat (Project Settings → API Keys → Secret).
-// Se usa solo en el evento TRANSFER para consultar la caducidad real de la
-// suscripción transferida (el evento TRANSFER no la incluye) y escribir un
-// premiumUntil exacto en la cuenta destino.
-const revenueCatApiKey = defineSecret("REVENUECAT_API_KEY");
-
 // Prompts por idioma — se seleccionan en runtime según request.data.locale
 const promptsByLocale = {
   es: require("./prompts/es"),
@@ -2448,33 +2442,20 @@ async function setPremium(uid, isPremium, until) {
   );
 }
 
-// Consulta a la REST v1 de RevenueCat el estado del entitlement `premium` para
-// un app_user_id. El evento TRANSFER no trae la caducidad, así que la pedimos
-// aquí para escribir un premiumUntil exacto en la cuenta destino.
-// Devuelve { active, until } donde until es Timestamp o null (premium vitalicio
-// o compra no renovable). active=false => no hay premium que conceder.
-async function fetchPremiumStatus(uid) {
-  const resp = await fetch(
-    `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`,
-    { headers: { Authorization: `Bearer ${revenueCatApiKey.value()}` } }
-  );
-  if (!resp.ok) {
-    throw new Error(`RevenueCat REST ${resp.status}`);
+// Lee el premium vigente del doc users/{uid} en Firestore. Lo usamos en el
+// TRANSFER: la caducidad exacta ya la tiene la cuenta ORIGEN (se la escribió el
+// INITIAL_PURCHASE/RENEWAL), así que la heredamos sin depender de la REST de
+// RevenueCat. Devuelve { active, until } con until = Timestamp o null.
+async function readPremium(uid) {
+  const snap = await admin.firestore().doc(`users/${uid}`).get();
+  const data = snap.exists ? snap.data() : null;
+  if (!data || data.isPremium !== true) return { active: false, until: null };
+  const until = data.premiumUntil || null;
+  // Caducado ya => no hay premium que heredar.
+  if (until && until.toMillis && until.toMillis() <= Date.now()) {
+    return { active: false, until: null };
   }
-  const data = await resp.json();
-  const ent =
-    data &&
-    data.subscriber &&
-    data.subscriber.entitlements &&
-    data.subscriber.entitlements.premium;
-  if (!ent) return { active: false, until: null };
-  // Sin expires_date => entitlement vitalicio: premium activo sin caducidad.
-  if (!ent.expires_date) return { active: true, until: null };
-  const ms = Date.parse(ent.expires_date);
-  if (Number.isNaN(ms)) return { active: true, until: null };
-  // Caducado ya => no conceder.
-  if (ms <= Date.now()) return { active: false, until: null };
-  return { active: true, until: admin.firestore.Timestamp.fromMillis(ms) };
+  return { active: true, until };
 }
 
 // Filtra los app_user_id reales (descarta anónimos de RevenueCat).
@@ -2485,7 +2466,7 @@ function realUids(list) {
 }
 
 exports.revenueCatWebhook = onRequest(
-  { region: "europe-west1", secrets: [revenueCatAuthToken, revenueCatApiKey] },
+  { region: "europe-west1", secrets: [revenueCatAuthToken] },
   async (req, res) => {
     if (req.method !== "POST") {
       res.status(405).send("Method Not Allowed");
@@ -2512,13 +2493,20 @@ exports.revenueCatWebhook = onRequest(
       if (event.type === "TRANSFER") {
         const fromUids = realUids(event.transferred_from);
         const toUids = realUids(event.transferred_to);
+        // La caducidad vive en la cuenta origen: la leemos ANTES de revocar y
+        // nos quedamos con la más lejana (por si hubiera varias).
+        let until = null;
+        for (const u of fromUids) {
+          const p = await readPremium(u);
+          if (p.active && p.until && (!until || p.until.toMillis() > until.toMillis())) {
+            until = p.until;
+          }
+        }
         await Promise.all(fromUids.map((u) => setPremium(u, false, null)));
-        await Promise.all(
-          toUids.map(async (u) => {
-            const status = await fetchPremiumStatus(u);
-            await setPremium(u, status.active, status.until);
-          })
-        );
+        // Solo concedemos si había premium vigente que heredar.
+        if (until) {
+          await Promise.all(toUids.map((u) => setPremium(u, true, until)));
+        }
         res.status(200).send("ok");
         return;
       }
