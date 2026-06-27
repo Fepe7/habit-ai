@@ -143,8 +143,11 @@ service cloud.firestore {
                       && reactorUid == request.auth.uid
                       && request.resource.data.diff(resource.data)
                          .affectedKeys().hasOnly(['emoji', 'createdAt']);
+        // Borra el propio reactor, o el DUEÑO del perfil (necesario para limpiar
+        // sus reacciones al eliminar la cuenta — si no, quedarían huérfanas).
         allow delete: if request.auth != null
-                      && reactorUid == request.auth.uid;
+                      && (reactorUid == request.auth.uid
+                          || userId == request.auth.uid);
       }
     }
 
