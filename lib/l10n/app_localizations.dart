@@ -2491,6 +2491,12 @@ abstract class S {
   /// **'Por @{username}'**
   String exploreByAuthor(String username);
 
+  /// No description provided for @exploreByAuthorName.
+  ///
+  /// In es, this message translates to:
+  /// **'Por {name}'**
+  String exploreByAuthorName(String name);
+
   /// No description provided for @snackbarRetry.
   ///
   /// In es, this message translates to:
