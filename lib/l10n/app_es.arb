@@ -967,6 +967,10 @@
   "@exploreByAuthor": {
     "placeholders": { "username": { "type": "String" } }
   },
+  "exploreByAuthorName": "Por {name}",
+  "@exploreByAuthorName": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "snackbarRetry": "Reintentar",
   "@snackbarRetry": {},

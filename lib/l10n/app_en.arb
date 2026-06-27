@@ -420,6 +420,10 @@
   "exploreHabitCountShort": "{count} hab.",
 
   "exploreByAuthor": "By @{username}",
+  "exploreByAuthorName": "By {name}",
+  "@exploreByAuthorName": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "snackbarRetry": "Retry",
 

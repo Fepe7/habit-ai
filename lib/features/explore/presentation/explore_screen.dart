@@ -824,6 +824,19 @@ class _FeaturedTemplateCard extends StatelessWidget {
     this.full = false,
   });
 
+  // Línea de autor sin exponer NUNCA el uid: prefiere el nombre, luego un
+  // username válido (≠ uid), y si no hay nada usable muestra "Usuario eliminado".
+  // Protege contra datos heredados donde authorUsername quedó igual al uid.
+  String _authorLine(S s, CommunityTemplateModel t) {
+    if (t.authorDisplayName.isNotEmpty && t.authorDisplayName != t.authorUid) {
+      return s.exploreByAuthorName(t.authorDisplayName);
+    }
+    if (t.authorUsername.isNotEmpty && t.authorUsername != t.authorUid) {
+      return s.exploreByAuthor(t.authorUsername);
+    }
+    return s.exploreByAuthorName(s.communityDeletedAuthor);
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -906,7 +919,7 @@ class _FeaturedTemplateCard extends StatelessWidget {
                     Text(
                       template.description.isNotEmpty
                           ? template.description
-                          : s.exploreByAuthor(template.authorUsername),
+                          : _authorLine(s, template),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
