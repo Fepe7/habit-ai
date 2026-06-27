@@ -2485,6 +2485,21 @@ exports.revenueCatWebhook = onRequest(
       return;
     }
 
+    // Observabilidad: registra cada evento recibido (tipo + app_user_id +
+    // arrays de transfer). Temporal para depurar el flujo de compra/restore.
+    console.log(
+      "revenueCatWebhook recibido:",
+      JSON.stringify({
+        type: event.type,
+        app_user_id: event.app_user_id || null,
+        original_app_user_id: event.original_app_user_id || null,
+        transferred_from: event.transferred_from || null,
+        transferred_to: event.transferred_to || null,
+        expiration_at_ms: event.expiration_at_ms || null,
+        entitlement_ids: event.entitlement_ids || null,
+      })
+    );
+
     try {
       // TRANSFER: el mismo recibo de tienda pasa de unas cuentas a otras (p.ej.
       // el usuario borra su cuenta y restaura con otra usando el mismo Apple ID).

@@ -164,6 +164,9 @@ class SEn extends S {
   String get settingsFallbackUsername => 'User';
 
   @override
+  String get communityDeletedAuthor => 'Deleted user';
+
+  @override
   String get settingsNotifications => 'Notifications';
 
   @override

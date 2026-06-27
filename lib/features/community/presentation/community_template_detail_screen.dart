@@ -158,11 +158,10 @@ class _CommunityTemplateDetailScreenState
     final bgColor = AppTheme.categoryBg(t.category, brightness);
     final fgColor = AppTheme.categoryFg(t.category, brightness);
 
-    // nombre para mostrar del autor (del perfil publico si existe)
+    // nombre para mostrar del autor (del perfil publico si existe; nunca el uid)
     final authorName = (_authorProfile?['displayName'] as String?) ??
-        (t.authorDisplayName.isNotEmpty
-            ? t.authorDisplayName
-            : '@${t.authorUsername}');
+        t.authorLabelOrNull ??
+        S.of(context).communityDeletedAuthor;
     final authorUid = t.authorUid;
     final hasPublicProfile = _authorProfile != null;
 

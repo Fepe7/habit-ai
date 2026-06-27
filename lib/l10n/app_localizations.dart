@@ -379,6 +379,12 @@ abstract class S {
   /// **'Usuario'**
   String get settingsFallbackUsername;
 
+  /// Autor de una plantilla cuya cuenta se borró o no tiene nombre válido
+  ///
+  /// In es, this message translates to:
+  /// **'Usuario eliminado'**
+  String get communityDeletedAuthor;
+
   /// No description provided for @settingsNotifications.
   ///
   /// In es, this message translates to:

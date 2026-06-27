@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../levels/presentation/category_l10n.dart';
 import '../../../../core/widgets/avatar_circle.dart';
 import '../../domain/community_template_model.dart';
@@ -83,9 +84,7 @@ class CommunityTemplateCard extends StatelessWidget {
                         // avatar del autor
                         AvatarCircle(
                           initials: AvatarCircle.fromName(
-                            template.authorDisplayName.isNotEmpty
-                                ? template.authorDisplayName
-                                : template.authorUsername,
+                            template.authorLabelOrNull,
                             null,
                           ),
                           size: 18,
@@ -94,9 +93,8 @@ class CommunityTemplateCard extends StatelessWidget {
                         const SizedBox(width: 5),
                         Flexible(
                           child: Text(
-                            template.authorDisplayName.isNotEmpty
-                                ? template.authorDisplayName
-                                : '@${template.authorUsername}',
+                            template.authorLabelOrNull ??
+                                S.of(context).communityDeletedAuthor,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context)
