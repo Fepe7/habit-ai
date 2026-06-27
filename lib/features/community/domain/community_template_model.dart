@@ -97,4 +97,18 @@ class CommunityTemplateModel {
       authorPhotoUrl: authorPhotoUrl ?? this.authorPhotoUrl,
     );
   }
+
+  /// Etiqueta segura del autor para la UI, o null si no hay nombre válido
+  /// (autor sin datos o cuenta borrada). NUNCA devuelve el uid: un username
+  /// vacío o igual al uid (dato heredado de un bug de publicación) se descarta
+  /// para no exponer el id crudo. La UI muestra un fallback localizado.
+  String? get authorLabelOrNull {
+    if (authorDisplayName.isNotEmpty && authorDisplayName != authorUid) {
+      return authorDisplayName;
+    }
+    if (authorUsername.isNotEmpty && authorUsername != authorUid) {
+      return '@$authorUsername';
+    }
+    return null;
+  }
 }

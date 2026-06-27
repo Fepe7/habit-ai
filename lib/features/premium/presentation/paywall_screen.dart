@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 import '../../../core/services/billing_service.dart';
+import '../../../core/services/premium_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../l10n/app_localizations.dart';
@@ -39,7 +42,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final s = S.of(context);
     setState(() => _busy = true);
     try {
-      final ok = await BillingService.instance.purchaseMonthly();
+      // purchaseMonthly devuelve si el entitlement quedó activo en el cliente.
+      // Puede ser false aunque la compra/reactivación SÍ se procese (el premium
+      // real lo escribe el webhook y llega por el stream de Firestore unos
+      // segundos después), así que si da false esperamos a confirmarlo.
+      final ok = await BillingService.instance.purchaseMonthly() ||
+          await _waitForPremium(const Duration(seconds: 8));
       if (!mounted) return;
       if (ok) {
         _snack(s.paywallPurchaseSuccess);
@@ -65,7 +73,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final s = S.of(context);
     setState(() => _busy = true);
     try {
-      final ok = await BillingService.instance.restore();
+      // restore() puede dar false aunque la compra se esté transfiriendo a esta
+      // cuenta (mismo Apple ID, otra cuenta de Firebase): RevenueCat dispara el
+      // TRANSFER por detrás y el premium llega por el webhook→Firestore. Si da
+      // false, esperamos al stream antes de decir "no hay compras".
+      final ok = await BillingService.instance.restore() ||
+          await _waitForPremium(const Duration(seconds: 8));
       if (!mounted) return;
       _snack(ok ? s.paywallRestoreSuccess : s.paywallRestoreNone);
       if (ok) context.pop();
@@ -75,6 +88,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (mounted) _snack(s.paywallRestoreNone);
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Espera a que `PremiumService.isPremium` se confirme (lo escribe el webhook
+  /// en Firestore tras la compra/transferencia y llega por stream). Evita el
+  /// falso "no hay compras" cuando el premium llega con unos segundos de retardo.
+  Future<bool> _waitForPremium(Duration timeout) async {
+    final premium = PremiumService.instance.isPremium;
+    if (premium.value) return true;
+    final completer = Completer<bool>();
+    void listener() {
+      if (premium.value && !completer.isCompleted) completer.complete(true);
+    }
+
+    premium.addListener(listener);
+    try {
+      return await completer.future
+          .timeout(timeout, onTimeout: () => premium.value);
+    } finally {
+      premium.removeListener(listener);
     }
   }
 
@@ -113,14 +146,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
               ),
             ),
-            // Glow de marca anclado al borde superior: el punto más brillante
-            // vive en el borde y se difumina hacia abajo, así no queda un corte
-            // duro arriba (un círculo desplazado sí lo dejaba al recortar el Stack).
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 360,
+            // Glow de marca anclado al borde superior. Ocupa TODA la pantalla
+            // (Positioned.fill) a propósito: si la caja terminara antes (p.ej.
+            // 360px de alto), el degradado radial aún tendría algo de color en
+            // ese borde y dejaría una costura horizontal. Con la caja a pantalla
+            // completa el radial se desvanece a transparente sin ningún corte.
+            Positioned.fill(
               child: IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(

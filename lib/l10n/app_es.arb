@@ -150,6 +150,8 @@
 
   "settingsFallbackUsername": "Usuario",
   "@settingsFallbackUsername": {},
+  "communityDeletedAuthor": "Usuario eliminado",
+  "@communityDeletedAuthor": { "description": "Autor de una plantilla cuya cuenta se borró o no tiene nombre válido" },
 
   "settingsNotifications": "Notificaciones",
   "@settingsNotifications": {},

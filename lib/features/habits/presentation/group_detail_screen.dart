@@ -220,7 +220,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final profileDoc = await _ensureActivePublicProfile(uid);
     if (profileDoc == null) return;
 
-    final username = profileDoc['username'] as String? ?? uid;
+    // Nunca usar el uid como username (se mostraría crudo en el feed). Un perfil
+    // público activo siempre tiene username; si faltara, mejor vacío que el uid.
+    final username = profileDoc['username'] as String? ?? '';
     final displayName = profileDoc['displayName'] as String? ??
         FirebaseAuth.instance.currentUser?.displayName ??
         '';

@@ -49,6 +49,8 @@
   "settingsDeleteRequiresRelogin": "For security reasons, sign out, sign back in and try again",
   "settingsDeleteAccountError": "Error deleting account: {error}",
   "settingsFallbackUsername": "User",
+  "communityDeletedAuthor": "Deleted user",
+  "@communityDeletedAuthor": { "description": "Author of a template whose account was deleted or has no valid name" },
   "settingsNotifications": "Notifications",
   "settingsNotificationsEnabled": "You will receive habit reminders",
   "settingsNotificationsDisabled": "Reminders disabled",
