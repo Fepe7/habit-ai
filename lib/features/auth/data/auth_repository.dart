@@ -356,6 +356,14 @@ class AuthRepository {
     // 6.5 borrar plantillas de comunidad subidas por el usuario
     await _deleteCommunityTemplates(uid);
 
+    // 6.6 borrar el espejo público (public_profiles/{uid} + subcolecciones):
+    //     sin esto quedaba huérfano para siempre ocupando espacio en Firestore.
+    await _deletePublicProfile(uid);
+
+    // 6.7 retos compartidos: no se pueden borrar (son duales), así que se marcan
+    //     ABANDONADOS para que el compañero los vea cerrados, no rotos.
+    await _abandonChallenges(uid);
+
     // 7. borrar avatar de Storage
     try {
       await FirebaseStorage.instance.ref('users/$uid/avatar.jpg').delete();
@@ -415,6 +423,36 @@ class AuthRepository {
         await h.reference.delete();
       }
       await tpl.reference.delete();
+    }
+  }
+
+  // Borra el espejo público del usuario y sus subcolecciones (hábitos públicos,
+  // retos públicos y reacciones que otros dejaron en su perfil). Las reglas
+  // permiten al dueño borrar las reacciones de su propio perfil.
+  Future<void> _deletePublicProfile(String uid) async {
+    final profileRef = _firestore.collection('public_profiles').doc(uid);
+    for (final sub in ['habits', 'challenges', 'reactions']) {
+      final docs = await profileRef.collection(sub).get();
+      for (final doc in docs.docs) {
+        await doc.reference.delete();
+      }
+    }
+    await profileRef.delete();
+  }
+
+  // Marca como abandonados los retos vivos (pending/active) del usuario. Los
+  // retos son duales y la regla prohíbe borrarlos (delete: if false); solo deja
+  // cambiar 'status'. Así el compañero ve el reto cerrado en vez de roto.
+  Future<void> _abandonChallenges(String uid) async {
+    final challenges = await _firestore
+        .collection('challenges')
+        .where('participantUids', arrayContains: uid)
+        .get();
+    for (final doc in challenges.docs) {
+      final status = doc.data()['status'] as String?;
+      if (status == 'pending' || status == 'active') {
+        await doc.reference.update({'status': 'abandoned'});
+      }
     }
   }
 
