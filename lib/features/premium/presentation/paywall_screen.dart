@@ -193,8 +193,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           _hero(s),
                           const SizedBox(height: 26),
                           _benefitsCard(benefits),
-                          const SizedBox(height: 16),
-                          _priceCard(s),
                           const SizedBox(height: 8),
                         ],
                       ),
@@ -394,6 +392,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
       padding: const EdgeInsets.fromLTRB(24, 6, 24, 14),
       child: Column(
         children: [
+          _priceCard(s),
+          const SizedBox(height: 14),
           GradientButton(
             label: s.paywallCta,
             icon: Icons.workspace_premium_rounded,
