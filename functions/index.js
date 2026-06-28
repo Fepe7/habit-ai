@@ -170,14 +170,17 @@ async function assertPremium(uid) {
   }
 }
 
-// Cuota free del chat de planes IA: la "generación mensual gratis" se
-// materializa como un tope de mensajes por mes natural (una conversación
-// de generación usa varios turnos). El onboarding consume de aquí y cabe
-// de sobra. Contador en users/{uid}.freePlanUsage = { month, count }.
-const FREE_PLAN_MESSAGES_PER_MONTH = 7;
+// Cuota free de generación de hábitos con IA. SIN renovación mensual:
+//  - El ONBOARDING es gratis para todos (se exime mirando onboardingCompleted
+//    en el servidor, no un flag del cliente): mientras no esté completado, no
+//    consume cuota.
+//  - Ya completado el onboarding, el usuario free tiene N generaciones de POR
+//    VIDA. Después, premium. Contador en users/{uid}.freePlanUsage.count.
+const FREE_PLAN_LIFETIME_GENERATIONS = 1;
 
-// Consume 1 mensaje de la cuota free (transacción para evitar carreras).
-// Devuelve { allowed, remaining }; remaining=null significa premium (sin límite).
+// Consume 1 generación de la cuota free (transacción para evitar carreras).
+// Devuelve { allowed, remaining }; remaining=null significa sin límite (premium
+// o usuario aún en onboarding).
 async function consumeFreePlanQuota(uid) {
   const db = admin.firestore();
   const ref = db.doc(`users/${uid}`);
@@ -187,20 +190,19 @@ async function consumeFreePlanQuota(uid) {
     if (isPremiumData(data)) {
       return { allowed: true, remaining: null };
     }
-    const monthId = getMonthId(new Date());
-    const usage = data && data.freePlanUsage;
-    const count = usage && usage.month === monthId ? usage.count || 0 : 0;
-    if (count >= FREE_PLAN_MESSAGES_PER_MONTH) {
+    // Onboarding gratis: hasta completarlo no se consume ni se bloquea.
+    if (!data || data.onboardingCompleted !== true) {
+      return { allowed: true, remaining: null };
+    }
+    const usage = data.freePlanUsage;
+    const count = (usage && usage.count) || 0;
+    if (count >= FREE_PLAN_LIFETIME_GENERATIONS) {
       return { allowed: false, remaining: 0 };
     }
-    tx.set(
-      ref,
-      { freePlanUsage: { month: monthId, count: count + 1 } },
-      { merge: true }
-    );
+    tx.set(ref, { freePlanUsage: { count: count + 1 } }, { merge: true });
     return {
       allowed: true,
-      remaining: FREE_PLAN_MESSAGES_PER_MONTH - count - 1,
+      remaining: FREE_PLAN_LIFETIME_GENERATIONS - count - 1,
     };
   });
 }
@@ -2484,21 +2486,6 @@ exports.revenueCatWebhook = onRequest(
       res.status(400).send("Bad Request");
       return;
     }
-
-    // Observabilidad: registra cada evento recibido (tipo + app_user_id +
-    // arrays de transfer). Temporal para depurar el flujo de compra/restore.
-    console.log(
-      "revenueCatWebhook recibido:",
-      JSON.stringify({
-        type: event.type,
-        app_user_id: event.app_user_id || null,
-        original_app_user_id: event.original_app_user_id || null,
-        transferred_from: event.transferred_from || null,
-        transferred_to: event.transferred_to || null,
-        expiration_at_ms: event.expiration_at_ms || null,
-        entitlement_ids: event.entitlement_ids || null,
-      })
-    );
 
     try {
       // TRANSFER: el mismo recibo de tienda pasa de unas cuentas a otras (p.ej.

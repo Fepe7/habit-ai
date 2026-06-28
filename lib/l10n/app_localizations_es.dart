@@ -3436,12 +3436,19 @@ class SEs extends S {
 
   @override
   String freePlanMessagesLeft(int count) {
-    return '$count mensajes gratis este mes';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count generaciones gratis restantes',
+      one: '1 generación gratis restante',
+      zero: 'Sin generaciones gratis',
+    );
+    return '$_temp0';
   }
 
   @override
   String get freePlanQuotaExhausted =>
-      'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.';
+      'Ya has usado tu generación gratis. Con Premium el coach no tiene límites.';
 
   @override
   String get routineChatTitle => 'Chat de la rutina';

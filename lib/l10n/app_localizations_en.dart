@@ -3418,12 +3418,19 @@ class SEn extends S {
 
   @override
   String freePlanMessagesLeft(int count) {
-    return '$count free messages this month';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count free generations left',
+      one: '1 free generation left',
+      zero: 'No free generations left',
+    );
+    return '$_temp0';
   }
 
   @override
   String get freePlanQuotaExhausted =>
-      'You\'ve used this month\'s free generation. With Premium your coach has no limits.';
+      'You\'ve used your free generation. With Premium your coach has no limits.';
 
   @override
   String get routineChatTitle => 'Routine chat';
