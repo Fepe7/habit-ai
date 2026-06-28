@@ -261,7 +261,10 @@ service cloud.firestore {
                         && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.toUid == request.auth.uid
                         && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.fromUid == userId
                         && get(/databases/$(database)/documents/follow_requests/$(request.resource.data.acceptedRequestId)).data.status == 'pending');
-      allow delete: if isOwner(userId);
+      // El dueño de la lista borra; y el SEGUIDO puede quitar su propia entrada
+      // (necesario al eliminar su cuenta: se quita de la lista 'following' de
+      // quienes le seguían — sin esto, borrar cuenta con seguidores fallaba).
+      allow delete: if isOwner(userId) || request.auth.uid == followingId;
       allow update: if false;
     }
 

@@ -262,28 +262,13 @@ class _ExploreScreenState extends State<ExploreScreen>
               elevation: 0,
               backgroundColor: scheme.surface,
               leading: const DrawerMenuButton(),
-              title: Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.heroGradient,
-                      shape: BoxShape.circle,
+              title: Text(
+                s.exploreTitle,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: scheme.primary,
+                      letterSpacing: -0.2,
                     ),
-                    child: const Icon(Icons.auto_awesome,
-                        size: 16, color: Colors.white),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    s.exploreTitle,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: scheme.primary,
-                          letterSpacing: -0.2,
-                        ),
-                  ),
-                ],
               ),
               actions: [
                 IconButton(
