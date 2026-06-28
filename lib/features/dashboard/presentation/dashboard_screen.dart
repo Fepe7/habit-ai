@@ -297,16 +297,6 @@ class _DashboardScreenState extends State<DashboardScreen>
               ],
             ),
           ),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLowest,
-              shape: BoxShape.circle,
-              boxShadow: AppTheme.ambientShadow(),
-            ),
-            child: Icon(Icons.insights_rounded, color: scheme.primary, size: 20),
-          ),
         ],
       ),
     );

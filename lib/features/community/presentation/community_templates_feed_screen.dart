@@ -159,7 +159,6 @@ class _CommunityTemplatesFeedScreenState
                     child: SearchBar(
                       controller: _searchController,
                       hintText: s.communitySearchHint,
-                      leading: const Icon(Icons.search_rounded),
                       trailing: [
                         if (_searchQuery.isNotEmpty)
                           IconButton(
