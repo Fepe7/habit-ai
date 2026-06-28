@@ -11,9 +11,10 @@ class PremiumLimits {
   /// Máximo de hábitos activos en el plan free
   static const int maxFreeHabits = 7;
 
-  /// Mensajes/mes del chat de generación de planes en free
-  /// (debe coincidir con FREE_PLAN_MESSAGES_PER_MONTH en functions/index.js)
-  static const int freePlanMessagesPerMonth = 7;
+  /// Generaciones de IA gratis de POR VIDA tras el onboarding en el plan free
+  /// (debe coincidir con FREE_PLAN_LIFETIME_GENERATIONS en functions/index.js).
+  /// El onboarding es gratis aparte y no consume.
+  static const int freePlanLifetimeGenerations = 1;
 
   /// Precio mostrado en el paywall (el real lo fijará la tienda)
   static const String monthlyPriceLabel = '3,99 €/mes';
@@ -67,20 +68,16 @@ class PremiumService {
     return true;
   }
 
-  /// Calcula los mensajes restantes con la misma lógica que el backend:
-  /// freePlanUsage = { month: "2026-06", count } se resetea por mes natural.
+  /// Calcula las generaciones gratis restantes con la misma lógica que el
+  /// backend: el onboarding es gratis (sin contador hasta completarlo) y, ya
+  /// completado, hay un cupo de POR VIDA `freePlanUsage.count` (sin reset mensual).
   int? _remainingFreeMessages(Map<String, dynamic>? data) {
     if (_hasPremium(data)) return null; // premium = sin límite
+    // Onboarding gratis: no aplica cupo hasta completarlo.
+    if (data?['onboardingCompleted'] != true) return null;
     final usage = data?['freePlanUsage'];
-    if (usage is! Map) return PremiumLimits.freePlanMessagesPerMonth;
-    final now = DateTime.now();
-    final monthId =
-        '${now.year}-${now.month.toString().padLeft(2, '0')}';
-    if (usage['month'] != monthId) {
-      return PremiumLimits.freePlanMessagesPerMonth;
-    }
-    final count = usage['count'] as int? ?? 0;
-    final left = PremiumLimits.freePlanMessagesPerMonth - count;
+    final count = (usage is Map ? usage['count'] as int? : null) ?? 0;
+    final left = PremiumLimits.freePlanLifetimeGenerations - count;
     return left < 0 ? 0 : left;
   }
 

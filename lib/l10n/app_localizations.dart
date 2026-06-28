@@ -6130,13 +6130,13 @@ abstract class S {
   /// No description provided for @freePlanMessagesLeft.
   ///
   /// In es, this message translates to:
-  /// **'{count} mensajes gratis este mes'**
+  /// **'{count, plural, =0{Sin generaciones gratis} =1{1 generación gratis restante} other{{count} generaciones gratis restantes}}'**
   String freePlanMessagesLeft(int count);
 
   /// No description provided for @freePlanQuotaExhausted.
   ///
   /// In es, this message translates to:
-  /// **'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.'**
+  /// **'Ya has usado tu generación gratis. Con Premium el coach no tiene límites.'**
   String get freePlanQuotaExhausted;
 
   /// No description provided for @routineChatTitle.
