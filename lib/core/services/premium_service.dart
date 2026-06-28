@@ -9,7 +9,7 @@ class PremiumLimits {
   PremiumLimits._();
 
   /// Máximo de hábitos activos en el plan free
-  static const int maxFreeHabits = 7;
+  static const int maxFreeHabits = 20;
 
   /// Generaciones de IA gratis de POR VIDA tras el onboarding en el plan free
   /// (debe coincidir con FREE_PLAN_LIFETIME_GENERATIONS en functions/index.js).

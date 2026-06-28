@@ -105,6 +105,9 @@ class SettingsSectionCard extends StatelessWidget {
               color: scheme.outlineVariant.withValues(alpha: 0.12),
             ),
             ...children,
+            // Aire inferior: que la última fila no quede pegada al borde
+            // redondeado (la cabecera ya respira 18px arriba).
+            const SizedBox(height: 6),
           ],
         ),
       ),
@@ -141,7 +144,7 @@ class SettingsRow extends StatelessWidget {
     final titleColor = isDestructive ? scheme.error : scheme.onSurface;
 
     final row = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       child: Row(
         children: [
           if (isDestructive && destructiveIcon != null) ...[

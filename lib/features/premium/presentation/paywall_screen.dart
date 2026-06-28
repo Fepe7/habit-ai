@@ -195,16 +195,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           _benefitsCard(benefits),
                           const SizedBox(height: 16),
                           _priceCard(s),
-                          const SizedBox(height: 14),
-                          Text(
-                            s.paywallFreePlanNote,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              height: 1.4,
-                              color: _inkSoft,
-                            ),
-                          ),
                           const SizedBox(height: 8),
                         ],
                       ),
