@@ -36,6 +36,11 @@ class AnalyticsService {
   Future<void> logAccountDeleted() =>
       _analytics.logEvent(name: 'account_deleted');
 
+  /// El usuario free topó con el límite de hábitos (para decidir con datos si
+  /// el límite convierte o solo estorba). Ver PremiumGate.checkHabitLimit.
+  Future<void> logHabitLimitReached() =>
+      _analytics.logEvent(name: 'habit_limit_reached');
+
   Future<void> setUserId(String? uid) =>
       _analytics.setUserId(id: uid);
 }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/habits/data/habit_repository.dart';
 import '../../l10n/app_localizations.dart';
+import '../services/analytics_service.dart';
 import '../services/premium_service.dart';
 
 /// Helpers de gating premium para la capa de presentación.
@@ -20,6 +21,9 @@ class PremiumGate {
     if (PremiumService.instance.isPremium.value) return true;
     final habits = await repo.getActiveHabits();
     if (habits.length < PremiumLimits.maxFreeHabits) return true;
+    // Mide cuánta gente topa con el límite free (para decidir el número con
+    // datos: si casi nadie llega, subir/quitar; si topan y pagan, apretar).
+    AnalyticsService.instance.logHabitLimitReached();
     if (context.mounted) await showHabitLimitDialog(context);
     return false;
   }
