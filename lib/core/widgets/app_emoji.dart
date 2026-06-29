@@ -3,7 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 /// Emoticonos propios de HabitAI (SVG vectoriales en assets/emojis/), en vez
 /// de los emoji del sistema. Identidad estable: el ánimo se mapea por rating
-/// (1-5) y la reacción por su clave unicode (🔥/❤️/⭐/⚡/🏆), que es lo
+/// (1-5) y la reacción por su clave unicode (🔥/❤️/⭐/🏆), que es lo
 /// que ya se guarda en Firestore — no hace falta migrar datos.
 ///
 /// Si llega una clave desconocida, cae con elegancia al glyph unicode como
@@ -33,13 +33,12 @@ class AppEmoji extends StatelessWidget {
   }
 
   /// Reacciones disponibles, en orden de presentación.
-  static const reactionKeys = ['🔥', '❤️', '⭐', '⚡', '🏆'];
+  static const reactionKeys = ['🔥', '❤️', '⭐', '🏆'];
 
   static const _reactionAssets = {
     '🔥': 'assets/emojis/reactions/fire.svg',
     '❤️': 'assets/emojis/reactions/heart.svg',
     '⭐': 'assets/emojis/reactions/star.svg',
-    '⚡': 'assets/emojis/reactions/bolt.svg',
     '🏆': 'assets/emojis/reactions/trophy.svg',
   };
 
