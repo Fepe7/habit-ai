@@ -2737,7 +2737,7 @@ class SEs extends S {
 
   @override
   String get privacySocialReactionsSubtitle =>
-      'Permite que tus seguidores reaccionen a tus logros con 🔥 💪 👏';
+      'Permite que tus seguidores reaccionen a tus logros con 🔥 ⭐ 🏆';
 
   @override
   String get achievementFirstHabitTitle => 'Primer paso';

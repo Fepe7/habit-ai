@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/feedback_service.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
@@ -283,7 +284,7 @@ class _DarkRatingRow extends StatelessWidget {
       children: List.generate(5, (i) {
         final r = i + 1;
         return _DarkCircle(
-          emoji: MoodTheme.emojis[i],
+          rating: r,
           selected: rating == r,
           dimmed: rating != null && rating != r,
           accent: accent,
@@ -295,14 +296,14 @@ class _DarkRatingRow extends StatelessWidget {
 }
 
 class _DarkCircle extends StatelessWidget {
-  final String emoji;
+  final int rating;
   final bool selected;
   final bool dimmed;
   final Color accent;
   final VoidCallback onTap;
 
   const _DarkCircle({
-    required this.emoji,
+    required this.rating,
     required this.selected,
     required this.dimmed,
     required this.accent,
@@ -340,12 +341,10 @@ class _DarkCircle extends StatelessWidget {
                 : [],
           ),
           child: Center(
-            child: AnimatedDefaultTextStyle(
+            child: AnimatedScale(
               duration: const Duration(milliseconds: 220),
-              style: TextStyle(
-                fontSize: selected ? _size * 0.57 : _size * 0.46,
-              ),
-              child: Text(emoji),
+              scale: selected ? 1.0 : 0.84,
+              child: AppEmoji.mood(rating, size: _size * 0.57),
             ),
           ),
         ),

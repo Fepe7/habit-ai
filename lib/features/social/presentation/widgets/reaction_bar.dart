@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../core/widgets/app_emoji.dart';
 import '../../domain/reaction_model.dart';
 
-/// Píldora de reacciones al perfil: chips 🔥💪👏 + contador total.
+/// Píldora de reacciones al perfil: chips de AppEmoji.reactionKeys + contador total.
 /// Usada tanto en ProfileScreen (lectura, isOwnProfile=true)
 /// como en PublicProfileScreen (interactiva, isOwnProfile=false).
 class ProfileReactionsPill extends StatelessWidget {
@@ -34,14 +35,16 @@ class ProfileReactionsPill extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ReactionBar(
-            myUid: myUid,
-            reactions: reactions,
-            isOwnProfile: isOwnProfile,
-            onTap: onTap,
+          Expanded(
+            child: ReactionBar(
+              myUid: myUid,
+              reactions: reactions,
+              isOwnProfile: isOwnProfile,
+              onTap: onTap,
+            ),
           ),
-          const Spacer(),
-          if (total > 0)
+          if (total > 0) ...[
+            const SizedBox(width: 8),
             Text(
               total == 1 ? '1 reacción' : '$total reacciones',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -49,13 +52,14 @@ class ProfileReactionsPill extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
             ),
+          ],
         ],
       ),
     );
   }
 }
 
-/// Fila de tres chips emoji (🔥 💪 👏) con contadores para reaccionar a un perfil.
+/// Fila de chips (AppEmoji.reactionKeys) con contadores para reaccionar a un perfil.
 /// El chip activo lleva borde primary. Al tocar, rebota con animación de escala.
 class ReactionBar extends StatefulWidget {
   final String myUid;
@@ -112,23 +116,26 @@ class _ReactionBarState extends State<ReactionBar> {
     final counts = _counts;
     final myEmoji = _myEmoji;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final emoji in ['🔥', '💪', '👏'])
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: _EmojiChip(
-              emoji: emoji,
-              count: counts[emoji] ?? 0,
-              active: myEmoji == emoji,
-              bouncing: _bouncing == emoji,
-              disabled: widget.isOwnProfile,
-              onTap: () => _handleTap(emoji),
-              scheme: scheme,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final emoji in AppEmoji.reactionKeys)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: _EmojiChip(
+                emoji: emoji,
+                count: counts[emoji] ?? 0,
+                active: myEmoji == emoji,
+                bouncing: _bouncing == emoji,
+                disabled: widget.isOwnProfile,
+                onTap: () => _handleTap(emoji),
+                scheme: scheme,
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -174,7 +181,7 @@ class _EmojiChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 17)),
+            AppEmoji.reaction(emoji, size: 22),
             if (count > 0) ...[
               const SizedBox(width: 5),
               Text(

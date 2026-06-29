@@ -2,12 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/services/feedback_service.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
-import '../mood_theme.dart';
 import 'mood_entry_sheet.dart';
 
 enum _CardState { loading, notLogged, logged }
@@ -201,7 +201,7 @@ class _EntryCard extends StatelessWidget {
               children: List.generate(5, (i) {
                 final rating = i + 1;
                 return _QuickEmoji(
-                  emoji: MoodTheme.emojiFor(rating),
+                  rating: rating,
                   onTap: () => onQuickLog(rating),
                 );
               }),
@@ -232,10 +232,10 @@ class _EntryCard extends StatelessWidget {
 
 // Emoji tappable para el registro rápido de un toque
 class _QuickEmoji extends StatelessWidget {
-  final String emoji;
+  final int rating;
   final VoidCallback onTap;
 
-  const _QuickEmoji({required this.emoji, required this.onTap});
+  const _QuickEmoji({required this.rating, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -249,7 +249,7 @@ class _QuickEmoji extends StatelessWidget {
         highlightColor: const Color(0xFFFFEACB),
         child: Padding(
           padding: const EdgeInsets.all(6),
-          child: Text(emoji, style: const TextStyle(fontSize: 28)),
+          child: AppEmoji.mood(rating, size: 32),
         ),
       ),
     );

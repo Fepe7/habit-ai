@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
@@ -157,7 +158,7 @@ class _EntryTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(entry.emoji, style: const TextStyle(fontSize: 28)),
+          AppEmoji.mood(entry.rating, size: 30),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
