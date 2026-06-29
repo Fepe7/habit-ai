@@ -33,18 +33,18 @@ class ProfileReactionsPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.2)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: ReactionBar(
-              myUid: myUid,
-              reactions: reactions,
-              isOwnProfile: isOwnProfile,
-              onTap: onTap,
-            ),
+          ReactionBar(
+            myUid: myUid,
+            reactions: reactions,
+            isOwnProfile: isOwnProfile,
+            onTap: onTap,
           ),
           if (total > 0) ...[
-            const SizedBox(width: 8),
+            const SizedBox(height: 8),
             Text(
               total == 1 ? '1 reacción' : '$total reacciones',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -116,26 +116,21 @@ class _ReactionBarState extends State<ReactionBar> {
     final counts = _counts;
     final myEmoji = _myEmoji;
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final emoji in AppEmoji.reactionKeys)
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _EmojiChip(
-                emoji: emoji,
-                count: counts[emoji] ?? 0,
-                active: myEmoji == emoji,
-                bouncing: _bouncing == emoji,
-                disabled: widget.isOwnProfile,
-                onTap: () => _handleTap(emoji),
-                scheme: scheme,
-              ),
-            ),
-        ],
-      ),
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final emoji in AppEmoji.reactionKeys)
+          _EmojiChip(
+            emoji: emoji,
+            count: counts[emoji] ?? 0,
+            active: myEmoji == emoji,
+            bouncing: _bouncing == emoji,
+            disabled: widget.isOwnProfile,
+            onTap: () => _handleTap(emoji),
+            scheme: scheme,
+          ),
+      ],
     );
   }
 }
