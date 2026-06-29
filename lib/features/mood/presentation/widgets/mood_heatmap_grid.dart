@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../domain/mood_entry_model.dart';
 import '../mood_theme.dart';
 import 'mood_day_detail_sheet.dart';
@@ -134,7 +135,7 @@ class MoodHeatmapLegend extends StatelessWidget {
         for (int r = 1; r <= 5; r++) ...[
           _LegendDot(
             color: MoodTheme.ratingAccent(r, brightness),
-            label: MoodTheme.emojis[r - 1],
+            moodRating: r,
           ),
           if (r < 5) const SizedBox(width: 8),
         ],
@@ -145,10 +146,16 @@ class MoodHeatmapLegend extends StatelessWidget {
 
 class _LegendDot extends StatelessWidget {
   final Color color;
-  final String label;
+  final String? label;
+  final int? moodRating;
   final Color? labelColor;
 
-  const _LegendDot({required this.color, required this.label, this.labelColor});
+  const _LegendDot({
+    required this.color,
+    this.label,
+    this.moodRating,
+    this.labelColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,13 +171,16 @@ class _LegendDot extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 3),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: labelColor ??
-                    Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-        ),
+        if (moodRating != null)
+          AppEmoji.mood(moodRating!, size: 14)
+        else
+          Text(
+            label ?? '',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: labelColor ??
+                      Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
       ],
     );
   }

@@ -4846,7 +4846,7 @@ abstract class S {
   /// No description provided for @privacySocialReactionsSubtitle.
   ///
   /// In es, this message translates to:
-  /// **'Permite que tus seguidores reaccionen a tus logros con 🔥 💪 👏'**
+  /// **'Permite que tus seguidores reaccionen a tus logros con 🔥 ⭐ 🏆'**
   String get privacySocialReactionsSubtitle;
 
   /// No description provided for @achievementFirstHabitTitle.

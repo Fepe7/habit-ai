@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
 import '../../data/mood_repository.dart';
 import '../../domain/mood_entry_model.dart';
-import '../mood_theme.dart';
 import 'mood_entry_sheet.dart';
 
 // Botón circular de ánimo para headers — refleja la franja actual y abre el sheet
@@ -65,10 +65,7 @@ class _MoodHeaderButtonState extends State<MoodHeaderButton> {
               ),
               alignment: Alignment.center,
               child: blockEntry != null
-                  ? Text(
-                      MoodTheme.emojiFor(blockEntry.rating),
-                      style: const TextStyle(fontSize: 19),
-                    )
+                  ? AppEmoji.mood(blockEntry.rating, size: 22)
                   : Icon(
                       Icons.add_reaction_outlined,
                       color: scheme.onSurfaceVariant,

@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_emoji.dart';
 import '../../../../core/widgets/ux/app_snackbar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../data/mood_repository.dart';
@@ -369,10 +370,7 @@ class _QuickMoodRow extends StatelessWidget {
                 highlightColor: const Color(0xFFFFEACB),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
-                  child: Text(
-                    MoodTheme.emojiFor(rating),
-                    style: const TextStyle(fontSize: 24),
-                  ),
+                  child: AppEmoji.mood(rating, size: 26),
                 ),
               ),
             );
@@ -437,10 +435,9 @@ class _SlotPill extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // emoji principal
-            Text(
-              logged ? MoodTheme.emojiFor(entry!.rating) : blockEmoji,
-              style: TextStyle(fontSize: logged ? 22 : 18),
-            ),
+            logged
+                ? AppEmoji.mood(entry!.rating, size: 24)
+                : Text(blockEmoji, style: const TextStyle(fontSize: 18)),
             const SizedBox(height: 4),
             // indicador
             if (logged)
@@ -552,10 +549,7 @@ class _WeekStrip extends StatelessWidget {
                   child: isFuture
                       ? null
                       : rating != null
-                          ? Text(
-                              MoodTheme.emojiFor(rating),
-                              style: TextStyle(fontSize: isToday ? 20 : 17),
-                            )
+                          ? AppEmoji.mood(rating, size: isToday ? 22 : 18)
                           : Container(
                               width: isToday ? 8 : 6,
                               height: isToday ? 8 : 6,

@@ -2724,7 +2724,7 @@ class SEn extends S {
 
   @override
   String get privacySocialReactionsSubtitle =>
-      'Let your followers react to your achievements with 🔥 💪 👏';
+      'Let your followers react to your achievements with 🔥 ⭐ 🏆';
 
   @override
   String get achievementFirstHabitTitle => 'First step';

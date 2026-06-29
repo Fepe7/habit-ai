@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../../core/widgets/app_emoji.dart';
+
 /// Banner flotante amber (estilo AchievementOverlay) que notifica al propietario
 /// del perfil cuando alguien reacciona a uno de sus logros.
 class ReactionReceivedOverlay {
@@ -93,7 +95,7 @@ class _ReactionBanner extends StatelessWidget {
                     border: Border.all(color: amber.withValues(alpha: 0.3)),
                   ),
                   child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                    child: AppEmoji.reaction(emoji, size: 28),
                   ),
                 )
                     .animate(onComplete: (c) => c.repeat(reverse: true))
