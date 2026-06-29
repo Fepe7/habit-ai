@@ -873,11 +873,7 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
   late final TextEditingController _titleCtrl;
   late final TextEditingController _emojiCtrl;
 
-  // emojis sugeridos para elegir rapido
-  static const _suggestedEmojis = [
-    '🏋️', '🏃', '🧘', '📚', '✍️', '💻', '🎨', '🎵',
-    '🥗', '💧', '😴', '🌱', '💡', '🎯', '⭐', '🔥',
-  ];
+  // emojis sugeridos para elegir rapido (lista compartida en habit_group_model.dart)
 
   @override
   void initState() {
@@ -1006,7 +1002,7 @@ class _EditGroupSheetState extends State<_EditGroupSheet> {
                     ),
                   ),
                 ),
-                ..._suggestedEmojis.map((e) {
+                ...kGroupSuggestedEmojis.map((e) {
                   final selected = _emojiCtrl.text == e;
                   return InkWell(
                     onTap: () => setState(() => _emojiCtrl.text = e),

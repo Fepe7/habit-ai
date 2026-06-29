@@ -1,5 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Emojis sugeridos para personalizar una rutina (grupo de hábitos).
+/// Lista única compartida por el sheet de creación y el de edición.
+/// El usuario siempre puede escribir cualquier otro emoji a mano.
+const kGroupSuggestedEmojis = [
+  // deporte y movimiento
+  '🏋️', '🏃', '🚴', '🏊', '🧘', '⚽', '🏀', '🥊',
+  // mente y descanso
+  '🧠', '😴', '🛌', '🙏', '☕', '🕯️',
+  // aprendizaje
+  '📚', '✍️', '📝', '🎓', '🔬', '🗣️',
+  // creatividad y trabajo
+  '💻', '🎨', '🎵', '🎸', '📷', '🎬', '💼', '📈', '💡',
+  // salud y comida
+  '🥗', '💧', '🍎', '🥦', '🍵', '💊', '🦷',
+  // naturaleza y hogar
+  '🌱', '🌳', '☀️', '🌙', '🌊', '🐶', '🧹',
+  // dinero
+  '💰', '💸', '🏦',
+  // motivación
+  '🎯', '⭐', '🔥', '✨', '❤️', '🏆', '🚀', '✅', '📅',
+];
+
 // Grupo de habitos generado por la IA (o creado manualmente)
 class HabitGroupModel {
   final String id;

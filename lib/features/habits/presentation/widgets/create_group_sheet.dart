@@ -28,11 +28,6 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
   final _descCtrl = TextEditingController();
   final _emojiCtrl = TextEditingController();
 
-  static const _suggestedEmojis = [
-    '🏋️', '🏃', '🧘', '📚', '✍️', '💻', '🎨', '🎵',
-    '🥗', '💧', '😴', '🌱', '💡', '🎯', '⭐', '🔥',
-  ];
-
   @override
   void dispose() {
     _titleCtrl.dispose();
@@ -182,7 +177,7 @@ class _CreateGroupSheetState extends State<CreateGroupSheet> {
                     ),
                   ),
                 ),
-                ..._suggestedEmojis.map((e) {
+                ...kGroupSuggestedEmojis.map((e) {
                   final selected = _emojiCtrl.text == e;
                   return InkWell(
                     onTap: () => setState(() => _emojiCtrl.text = e),
