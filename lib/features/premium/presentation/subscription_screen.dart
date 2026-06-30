@@ -127,6 +127,19 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                         ),
                   ),
                 ),
+              ] else if (PremiumLimits.freeLaunchPhase) ...[
+                // Fase de lanzamiento gratis: no se vende nada, así que no se
+                // muestran botones de compra/restaurar, solo una nota.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    s.freeLaunchPaywallBody,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                  ),
+                ),
               ] else ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),

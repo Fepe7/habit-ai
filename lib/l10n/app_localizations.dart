@@ -6109,6 +6109,24 @@ abstract class S {
   /// **'Únete a quienes ya construyen mejores hábitos con IA'**
   String get paywallSocialProof;
 
+  /// No description provided for @freeLaunchPaywallTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Acceso anticipado gratuito'**
+  String get freeLaunchPaywallTitle;
+
+  /// No description provided for @freeLaunchPaywallBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Estamos en fase de lanzamiento: todas las funciones están desbloqueadas para todos. Disfrútalas sin límites.'**
+  String get freeLaunchPaywallBody;
+
+  /// No description provided for @freeLaunchPaywallCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Entendido'**
+  String get freeLaunchPaywallCta;
+
   /// No description provided for @premiumRequiredSnack.
   ///
   /// In es, this message translates to:

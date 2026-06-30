@@ -119,6 +119,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Widget build(BuildContext context) {
     final s = S.of(context);
 
+    // Durante la fase de lanzamiento gratis no se vende nada: todo está
+    // desbloqueado para todos. Mostramos el escaparate sin precio ni CTA de
+    // compra/restaurar (App Review rechaza productos de pago no expuestos), solo
+    // un mensaje informativo. Reversible con el mismo flag `freeLaunchPhase`.
+    final freeLaunch = PremiumLimits.freeLaunchPhase;
+
     final benefits = [
       s.paywallBenefitHabits,
       s.paywallBenefitChat,
@@ -190,7 +196,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _hero(s),
+                          _hero(s, freeLaunch),
                           const SizedBox(height: 26),
                           _benefitsCard(benefits),
                           const SizedBox(height: 8),
@@ -198,7 +204,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                     ),
                   ),
-                  _footer(s),
+                  freeLaunch ? _freeLaunchFooter(s) : _footer(s),
                 ],
               ),
             ),
@@ -210,7 +216,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   // ---- Secciones -----------------------------------------------------------
 
-  Widget _hero(S s) {
+  Widget _hero(S s, bool freeLaunch) {
     return Column(
       children: [
         // Insignia con corona sobre gradiente hero + glow.
@@ -259,7 +265,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         ).animate(delay: 120.ms).fadeIn().slideY(begin: 0.3),
         const SizedBox(height: 16),
         Text(
-          s.paywallTitle,
+          freeLaunch ? s.freeLaunchPaywallTitle : s.paywallTitle,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 30,
@@ -271,7 +277,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         ).animate(delay: 160.ms).fadeIn().slideY(begin: 0.2),
         const SizedBox(height: 10),
         Text(
-          s.paywallSubtitle,
+          freeLaunch ? s.freeLaunchPaywallBody : s.paywallSubtitle,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 15,
@@ -385,6 +391,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
         ],
       ),
     ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.15);
+  }
+
+  /// Footer de la fase de lanzamiento gratis: sin precio ni botones de compra,
+  /// solo un cierre. El estado premium real lo siguen gestionando el webhook y
+  /// `PremiumService`; aquí no se ofrece ninguna transacción.
+  Widget _freeLaunchFooter(S s) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 6, 24, 18),
+      child: GradientButton(
+        label: s.freeLaunchPaywallCta,
+        icon: Icons.check_rounded,
+        onPressed: () => context.pop(),
+      ),
+    );
   }
 
   Widget _footer(S s) {

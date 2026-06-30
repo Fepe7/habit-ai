@@ -3423,6 +3423,16 @@ class SEs extends S {
       'Únete a quienes ya construyen mejores hábitos con IA';
 
   @override
+  String get freeLaunchPaywallTitle => 'Acceso anticipado gratuito';
+
+  @override
+  String get freeLaunchPaywallBody =>
+      'Estamos en fase de lanzamiento: todas las funciones están desbloqueadas para todos. Disfrútalas sin límites.';
+
+  @override
+  String get freeLaunchPaywallCta => 'Entendido';
+
+  @override
   String get premiumRequiredSnack =>
       'Esta función forma parte de HabitAI Premium';
 
