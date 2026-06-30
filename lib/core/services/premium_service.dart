@@ -11,10 +11,19 @@ class PremiumLimits {
   /// Máximo de hábitos activos en el plan free
   static const int maxFreeHabits = 20;
 
-  /// Generaciones de IA gratis de POR VIDA tras el onboarding en el plan free
-  /// (debe coincidir con FREE_PLAN_LIFETIME_GENERATIONS en functions/index.js).
-  /// El onboarding es gratis aparte y no consume.
-  static const int freePlanLifetimeGenerations = 1;
+  /// Cuotas SEMANALES del plan free para IA (deben coincidir con
+  /// FREE_WEEKLY_LIMITS en functions/index.js). El onboarding es gratis aparte
+  /// y no consume.
+  static const int freeWeeklyHabitChat = 3; // mensajes/semana en el chat IA
+  static const int freeWeeklyRoutineChat = 2; // conversaciones/semana de coach
+  static const int freeWeeklyReview = 1;
+  static const int freeWeeklyButterfly = 1;
+  static const int freeWeeklyPatterns = 1;
+
+  /// Fase de lanzamiento gratis: mientras sea true, las funciones de IA
+  /// "premium" se abren a todos bajo cuota semanal. Ponlo en false al activar
+  /// el plan de pago para que vuelva el gating premium.
+  static const bool freeLaunchPhase = true;
 
   /// Precio mostrado en el paywall (el real lo fijará la tienda)
   static const String monthlyPriceLabel = '3,99 €/mes';
@@ -68,17 +77,39 @@ class PremiumService {
     return true;
   }
 
-  /// Calcula las generaciones gratis restantes con la misma lógica que el
-  /// backend: el onboarding es gratis (sin contador hasta completarlo) y, ya
-  /// completado, hay un cupo de POR VIDA `freePlanUsage.count` (sin reset mensual).
+  /// Mensajes de chat IA gratis restantes ESTA SEMANA, con la misma lógica que
+  /// el backend: el onboarding es gratis (sin contador hasta completarlo) y, ya
+  /// completado, hay una cuota semanal `weeklyUsage.habitChat` que se resetea
+  /// sola al cambiar el ISO week id.
   int? _remainingFreeMessages(Map<String, dynamic>? data) {
     if (_hasPremium(data)) return null; // premium = sin límite
     // Onboarding gratis: no aplica cupo hasta completarlo.
     if (data?['onboardingCompleted'] != true) return null;
-    final usage = data?['freePlanUsage'];
-    final count = (usage is Map ? usage['count'] as int? : null) ?? 0;
-    final left = PremiumLimits.freePlanLifetimeGenerations - count;
+    final used = _weeklyCount(data, 'habitChat');
+    final left = PremiumLimits.freeWeeklyHabitChat - used;
     return left < 0 ? 0 : left;
+  }
+
+  /// Usos consumidos esta semana de una clave de `weeklyUsage`. Si la entrada
+  /// es de otra semana, cuenta 0 (el contador se renueva solo).
+  int _weeklyCount(Map<String, dynamic>? data, String key) {
+    final usage = data?['weeklyUsage'];
+    final entry = usage is Map ? usage[key] : null;
+    if (entry is! Map) return 0;
+    if (entry['week'] != _isoWeekId(DateTime.now())) return 0;
+    return (entry['count'] as int?) ?? 0;
+  }
+
+  /// ID ISO de la semana ("YYYY-Www"), idéntico a getIsoWeekId en el backend
+  /// para que cliente y servidor cuenten la misma ventana semanal.
+  static String _isoWeekId(DateTime date) {
+    final d = DateTime.utc(date.year, date.month, date.day);
+    final dayNum = d.weekday; // 1=lun..7=dom (ya en convención ISO)
+    final thursday = d.add(Duration(days: 4 - dayNum));
+    final yearStart = DateTime.utc(thursday.year, 1, 1);
+    final weekNum =
+        ((thursday.difference(yearStart).inDays + 1) / 7).ceil();
+    return '${thursday.year}-W${weekNum.toString().padLeft(2, '0')}';
   }
 
   void dispose() {

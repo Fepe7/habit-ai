@@ -18,6 +18,12 @@ class PremiumGuard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Fase de lanzamiento gratis: las funciones marcadas se abren a todos bajo
+    // cuota semanal (impuesta en backend). Al activar el plan de pago, poner
+    // PremiumLimits.freeLaunchPhase=false y vuelve el gating premium.
+    if (PremiumLimits.freeLaunchPhase && feature.openDuringFreeLaunch) {
+      return child;
+    }
     return ValueListenableBuilder<bool>(
       valueListenable: PremiumService.instance.isPremium,
       builder: (context, isPremium, _) =>
