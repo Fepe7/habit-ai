@@ -148,8 +148,8 @@ class AIRepository {
   String _mapError(FirebaseFunctionsException e) {
     // gates premium del backend: details.reason distingue el motivo
     final reason = (e.details is Map) ? (e.details as Map)['reason'] : null;
-    if (reason == 'free_plan_quota') {
-      return 'Has usado tu generación gratuita de este mes. Con Premium el coach no tiene límites.';
+    if (reason == 'free_weekly_quota') {
+      return 'Has agotado tu cuota gratis de esta semana. Con Premium no hay límite.';
     }
     if (reason == 'premium_required') {
       return 'Esta función forma parte de HabitAI Premium.';

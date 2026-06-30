@@ -170,20 +170,26 @@ async function assertPremium(uid) {
   }
 }
 
-// Cuota free de generación de hábitos con IA. SIN renovación mensual:
-//  - El ONBOARDING es gratis para todos (se exime mirando onboardingCompleted
-//    en el servidor, no un flag del cliente): mientras no esté completado, no
-//    consume cuota.
-//  - Ya completado el onboarding, el usuario free tiene N generaciones de POR
-//    VIDA. Después, premium. Contador en users/{uid}.freePlanUsage.count.
-const FREE_PLAN_LIFETIME_GENERATIONS = 1;
+// Cuota SEMANAL del plan free para las funciones de IA (fase de lanzamiento
+// gratis: todos viven bajo cuota, premium = sin límite). Se renueva sola al
+// cambiar el ISO week id (lunes). Contador por clave en
+// users/{uid}.weeklyUsage.{key} = { week: "2026-W27", count }.
+const FREE_WEEKLY_LIMITS = {
+  habitChat: 3, // generateHabitPlan (chat IA general), por mensaje
+  routineChat: 2, // routineChat (coach de rutina), por conversación nueva
+  weeklyReview: 1, // generateWeeklyReview manual
+  butterfly: 1, // generateButterflyProjection manual
+  patterns: 1, // generatePatternInsights manual
+};
 
-// Consume 1 generación de la cuota free (transacción para evitar carreras).
-// Devuelve { allowed, remaining }; remaining=null significa sin límite (premium
-// o usuario aún en onboarding).
-async function consumeFreePlanQuota(uid) {
+// Consume 1 uso de la cuota semanal de `key` (transacción para evitar carreras).
+// Devuelve { allowed, remaining }; remaining=null = sin límite (premium o, con
+// opts.exemptDuringOnboarding, usuario aún en onboarding). No consume si
+// !allowed. Usa getIsoWeekId (hoisted) como ventana semanal.
+async function consumeWeeklyQuota(uid, key, limit, opts = {}) {
   const db = admin.firestore();
   const ref = db.doc(`users/${uid}`);
+  const weekId = getIsoWeekId(new Date());
   return db.runTransaction(async (tx) => {
     const doc = await tx.get(ref);
     const data = doc.exists ? doc.data() : null;
@@ -191,19 +197,25 @@ async function consumeFreePlanQuota(uid) {
       return { allowed: true, remaining: null };
     }
     // Onboarding gratis: hasta completarlo no se consume ni se bloquea.
-    if (!data || data.onboardingCompleted !== true) {
+    if (
+      opts.exemptDuringOnboarding &&
+      (!data || data.onboardingCompleted !== true)
+    ) {
       return { allowed: true, remaining: null };
     }
-    const usage = data.freePlanUsage;
-    const count = (usage && usage.count) || 0;
-    if (count >= FREE_PLAN_LIFETIME_GENERATIONS) {
+    const usage = (data && data.weeklyUsage) || {};
+    const entry = usage[key];
+    const count = entry && entry.week === weekId ? entry.count || 0 : 0;
+    if (count >= limit) {
       return { allowed: false, remaining: 0 };
     }
-    tx.set(ref, { freePlanUsage: { count: count + 1 } }, { merge: true });
-    return {
-      allowed: true,
-      remaining: FREE_PLAN_LIFETIME_GENERATIONS - count - 1,
-    };
+    // merge:true fusiona el mapa anidado: no pisa las otras claves de weeklyUsage.
+    tx.set(
+      ref,
+      { weeklyUsage: { [key]: { week: weekId, count: count + 1 } } },
+      { merge: true }
+    );
+    return { allowed: true, remaining: limit - count - 1 };
   });
 }
 
@@ -240,13 +252,19 @@ exports.generateHabitPlan = onCall(
        );
      }
 
-    // 2b. Cuota free: N mensajes/mes; premium sin límite (solo rate limit)
-    const quota = await consumeFreePlanQuota(uid);
+    // 2b. Cuota free SEMANAL: N mensajes/semana; premium sin límite (solo rate
+    // limit). El onboarding está exento (no consume hasta completarlo).
+    const quota = await consumeWeeklyQuota(
+      uid,
+      "habitChat",
+      FREE_WEEKLY_LIMITS.habitChat,
+      { exemptDuringOnboarding: true }
+    );
     if (!quota.allowed) {
       throw new HttpsError(
         "resource-exhausted",
-        "Has agotado tu generación gratuita de este mes. Con Premium el coach IA no tiene límites.",
-        { reason: "free_plan_quota" }
+        "Has agotado tus mensajes gratis de esta semana. Con Premium el coach IA no tiene límites.",
+        { reason: "free_weekly_quota" }
       );
     }
 
@@ -394,7 +412,23 @@ exports.routineChat = onCall(
     assertValidMessage(message);
 
     await assertAiAvailable();
-    await assertPremium(uid);
+    // Cuota semanal por CONVERSACIÓN nueva (history vacío = nueva). Premium sin
+    // límite. Los mensajes siguientes de la misma conversación no consumen.
+    const isNewConversation = !Array.isArray(history) || history.length === 0;
+    if (isNewConversation) {
+      const quota = await consumeWeeklyQuota(
+        uid,
+        "routineChat",
+        FREE_WEEKLY_LIMITS.routineChat
+      );
+      if (!quota.allowed) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Has agotado tus conversaciones de coach gratis de esta semana. Con Premium no hay límite.",
+          { reason: "free_weekly_quota" }
+        );
+      }
+    }
     const allowed = await checkRateLimit(uid);
     if (!allowed) {
       throw new HttpsError(
@@ -735,7 +769,18 @@ exports.generateWeeklyReview = onCall(
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
     await assertAiAvailable();
-    await assertPremium(uid);
+    const quota = await consumeWeeklyQuota(
+      uid,
+      "weeklyReview",
+      FREE_WEEKLY_LIMITS.weeklyReview
+    );
+    if (!quota.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Ya has generado tu revisión semanal gratis de esta semana. Con Premium puedes generar las que quieras.",
+        { reason: "free_weekly_quota" }
+      );
+    }
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -1035,7 +1080,18 @@ exports.generateButterflyProjection = onCall(
     const uid = request.auth.uid;
     const locale = request.data?.locale || "es";
     await assertAiAvailable();
-    await assertPremium(uid);
+    const quota = await consumeWeeklyQuota(
+      uid,
+      "butterfly",
+      FREE_WEEKLY_LIMITS.butterfly
+    );
+    if (!quota.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Ya has generado tu proyección mariposa gratis de esta semana. Con Premium no hay límite.",
+        { reason: "free_weekly_quota" }
+      );
+    }
      const allowed = await checkRateLimit(uid);
      if (!allowed) {
        throw new HttpsError(
@@ -1726,8 +1782,19 @@ exports.generatePatternInsights = onCall(
 
     const uid = request.auth.uid;
     await assertAiAvailable();
-    await assertPremium(uid);
     const locale = request.data?.locale || "es";
+    const quota = await consumeWeeklyQuota(
+      uid,
+      "patterns",
+      FREE_WEEKLY_LIMITS.patterns
+    );
+    if (!quota.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Ya has generado tus patrones gratis de esta semana. Con Premium no hay límite.",
+        { reason: "free_weekly_quota" }
+      );
+    }
     const allowed = await checkRateLimit(uid);
     if (!allowed) {
       throw new HttpsError(

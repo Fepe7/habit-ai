@@ -13,6 +13,18 @@ import '../../../l10n/app_localizations.dart';
 /// propio icono + textos contextuales en [PremiumLockedScreen].
 enum PremiumFeature { routineChat, weeklyReview, butterfly, patterns, mood }
 
+extension PremiumFeatureLaunch on PremiumFeature {
+  /// Durante la fase de lanzamiento gratis estas funciones de IA se abren a
+  /// todos bajo cuota semanal (el backend la aplica). `mood` se queda premium.
+  bool get openDuringFreeLaunch => switch (this) {
+    PremiumFeature.routineChat ||
+    PremiumFeature.weeklyReview ||
+    PremiumFeature.butterfly ||
+    PremiumFeature.patterns => true,
+    PremiumFeature.mood => false,
+  };
+}
+
 /// Pantalla que se muestra (en vez del contenido real) cuando un usuario free
 /// abre una función premium. En lugar de esconderla, la enseña "bloqueada":
 /// un teaser difuminado de fondo + candado con glow + copy específico de la
