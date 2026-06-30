@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/services/ai_availability_service.dart';
 import '../../../core/services/connectivity_service.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/weekly_quota_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/pattern_insight_model.dart';
@@ -140,6 +141,12 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
             ),
           ],
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: WeeklyQuotaChip(featureKey: 'patterns'),
+          ),
+        ],
       ),
       body: FutureBuilder<PatternInsightModel?>(
         key: ValueKey(_refreshKey),

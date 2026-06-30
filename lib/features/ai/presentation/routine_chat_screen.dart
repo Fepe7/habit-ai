@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
+import '../../../core/widgets/weekly_quota_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../habits/data/habit_group_repository.dart';
 import '../../habits/data/habit_repository.dart';
@@ -177,6 +178,12 @@ class _RoutineChatScreenState extends State<RoutineChatScreen> {
                   ),
               ],
             ),
+            actions: const [
+              Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: WeeklyQuotaChip(featureKey: 'routineChat'),
+              ),
+            ],
           ),
           body: SafeArea(
             child: Column(

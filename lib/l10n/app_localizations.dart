@@ -6130,14 +6130,20 @@ abstract class S {
   /// No description provided for @freePlanMessagesLeft.
   ///
   /// In es, this message translates to:
-  /// **'{count, plural, =0{Sin generaciones gratis} =1{1 generación gratis restante} other{{count} generaciones gratis restantes}}'**
+  /// **'{count, plural, =0{Sin mensajes IA esta semana} =1{1 mensaje IA esta semana} other{{count} mensajes IA esta semana}}'**
   String freePlanMessagesLeft(int count);
 
   /// No description provided for @freePlanQuotaExhausted.
   ///
   /// In es, this message translates to:
-  /// **'Ya has usado tu generación gratis. Con Premium el coach no tiene límites.'**
+  /// **'Has agotado tus mensajes IA de esta semana. Vuelven el lunes, o pásate a Premium para no tener límite.'**
   String get freePlanQuotaExhausted;
+
+  /// No description provided for @freeWeeklyLeft.
+  ///
+  /// In es, this message translates to:
+  /// **'{count, plural, =0{Sin usos esta semana} =1{Te queda 1 uso esta semana} other{Te quedan {count} usos esta semana}}'**
+  String freeWeeklyLeft(int count);
 
   /// No description provided for @routineChatTitle.
   ///
