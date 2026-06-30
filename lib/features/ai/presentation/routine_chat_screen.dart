@@ -178,12 +178,16 @@ class _RoutineChatScreenState extends State<RoutineChatScreen> {
                   ),
               ],
             ),
-            actions: const [
-              Padding(
-                padding: EdgeInsets.only(right: 12),
-                child: WeeklyQuotaChip(featureKey: 'routineChat'),
+            bottom: const PreferredSize(
+              preferredSize: Size.fromHeight(34),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 12, bottom: 6),
+                  child: WeeklyQuotaChip(featureKey: 'routineChat'),
+                ),
               ),
-            ],
+            ),
           ),
           body: SafeArea(
             child: Column(
