@@ -40,9 +40,24 @@ class PremiumService {
 
   final ValueNotifier<bool> isPremium = ValueNotifier(false);
 
-  /// Mensajes free restantes este mes en el chat de planes
-  /// (null = desconocido todavía; el backend es la fuente de verdad)
+  /// Mensajes free restantes esta semana en el chat IA general
+  /// (null = sin límite: premium o aún en onboarding).
   final ValueNotifier<int?> freePlanMessagesLeft = ValueNotifier(null);
+
+  /// Usos free restantes ESTA SEMANA por función de IA (keys = las de
+  /// FREE_WEEKLY_LIMITS en backend). Valor null para una key = sin límite
+  /// (premium, o habitChat durante el onboarding). Mapa vacío = desconocido.
+  final ValueNotifier<Map<String, int?>> weeklyRemaining = ValueNotifier({});
+
+  /// Límite semanal de cada función (debe coincidir con FREE_WEEKLY_LIMITS).
+  static const Map<String, int> _weeklyLimits = {
+    'habitChat': PremiumLimits.freeWeeklyHabitChat,
+    'routineChat': PremiumLimits.freeWeeklyRoutineChat,
+    'weeklyReview': PremiumLimits.freeWeeklyReview,
+    'butterfly': PremiumLimits.freeWeeklyButterfly,
+    'patterns': PremiumLimits.freeWeeklyPatterns,
+    'renegotiation': PremiumLimits.freeWeeklyRenegotiation,
+  };
 
   StreamSubscription<User?>? _authSub;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userSub;
@@ -53,6 +68,7 @@ class PremiumService {
       if (user == null) {
         isPremium.value = false;
         freePlanMessagesLeft.value = null;
+        weeklyRemaining.value = {};
         return;
       }
       _userSub = FirebaseFirestore.instance
@@ -63,6 +79,7 @@ class PremiumService {
               final data = snap.data();
               isPremium.value = _hasPremium(data);
               freePlanMessagesLeft.value = _remainingFreeMessages(data);
+              weeklyRemaining.value = _computeWeeklyRemaining(data);
             },
             onError: (_) => isPremium.value = false,
           );
@@ -89,6 +106,20 @@ class PremiumService {
     final used = _weeklyCount(data, 'habitChat');
     final left = PremiumLimits.freeWeeklyHabitChat - used;
     return left < 0 ? 0 : left;
+  }
+
+  /// Usos restantes esta semana de cada función. null para una key = sin
+  /// límite (premium; o habitChat mientras el onboarding no esté completado).
+  Map<String, int?> _computeWeeklyRemaining(Map<String, dynamic>? data) {
+    final premium = _hasPremium(data);
+    final onboardingDone = data?['onboardingCompleted'] == true;
+    return {
+      for (final entry in _weeklyLimits.entries)
+        entry.key: (premium || (entry.key == 'habitChat' && !onboardingDone))
+            ? null
+            : (entry.value - _weeklyCount(data, entry.key))
+                .clamp(0, entry.value),
+    };
   }
 
   /// Usos consumidos esta semana de una clave de `weeklyUsage`. Si la entrada
@@ -118,5 +149,6 @@ class PremiumService {
     _userSub?.cancel();
     isPremium.dispose();
     freePlanMessagesLeft.dispose();
+    weeklyRemaining.dispose();
   }
 }

@@ -4,6 +4,7 @@ import '../../../app.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
+import '../../../core/widgets/weekly_quota_chip.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
@@ -138,6 +139,12 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).dashboardWeeklyReviewTitle),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: WeeklyQuotaChip(featureKey: 'weeklyReview'),
+          ),
+        ],
       ),
       body: _loading
           ? const Padding(

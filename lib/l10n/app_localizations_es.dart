@@ -3439,16 +3439,28 @@ class SEs extends S {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count generaciones gratis restantes',
-      one: '1 generación gratis restante',
-      zero: 'Sin generaciones gratis',
+      other: '$count mensajes IA esta semana',
+      one: '1 mensaje IA esta semana',
+      zero: 'Sin mensajes IA esta semana',
     );
     return '$_temp0';
   }
 
   @override
   String get freePlanQuotaExhausted =>
-      'Ya has usado tu generación gratis. Con Premium el coach no tiene límites.';
+      'Has agotado tus mensajes IA de esta semana. Vuelven el lunes, o pásate a Premium para no tener límite.';
+
+  @override
+  String freeWeeklyLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Te quedan $count usos esta semana',
+      one: 'Te queda 1 uso esta semana',
+      zero: 'Sin usos esta semana',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get routineChatTitle => 'Chat de la rutina';

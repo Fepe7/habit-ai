@@ -4,6 +4,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../app.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
+import '../../../core/widgets/weekly_quota_chip.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/ai_repository.dart';
 import '../domain/butterfly_projection_model.dart';
@@ -84,6 +85,12 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
             ),
           ],
         ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: WeeklyQuotaChip(featureKey: 'butterfly'),
+          ),
+        ],
       ),
       body: _loading
           ? const Padding(
