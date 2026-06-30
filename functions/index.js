@@ -273,7 +273,7 @@ exports.generateHabitPlan = onCall(
     try {
       const genAI = new GoogleGenerativeAI(geminiApiKey.value());
       const model = genAI.getGenerativeModel({
-        model: MODEL_PRO,
+        model: MODEL_FLASH, // fase gratis: Flash en vez de Pro para abaratar
         systemInstruction: prompts.SYSTEM_PROMPT,
       });
 
@@ -443,7 +443,7 @@ exports.routineChat = onCall(
       const prompts = getPrompts(locale);
       const genAI = new GoogleGenerativeAI(geminiApiKey.value());
       const model = genAI.getGenerativeModel({
-        model: MODEL_PRO,
+        model: MODEL_FLASH, // fase gratis: Flash en vez de Pro para abaratar
         systemInstruction:
           prompts.ROUTINE_CHAT_PROMPT +
           "\n\nCONTEXTO DE LA RUTINA (JSON):\n" +
