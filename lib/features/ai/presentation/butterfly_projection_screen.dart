@@ -85,12 +85,16 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
             ),
           ],
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: WeeklyQuotaChip(featureKey: 'butterfly'),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(34),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(right: 12, bottom: 6),
+              child: WeeklyQuotaChip(featureKey: 'butterfly'),
+            ),
           ),
-        ],
+        ),
       ),
       body: _loading
           ? const Padding(

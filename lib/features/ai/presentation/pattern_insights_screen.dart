@@ -141,12 +141,16 @@ class _PatternInsightsScreenState extends State<PatternInsightsScreen> {
             ),
           ],
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: WeeklyQuotaChip(featureKey: 'patterns'),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(34),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(right: 12, bottom: 6),
+              child: WeeklyQuotaChip(featureKey: 'patterns'),
+            ),
           ),
-        ],
+        ),
       ),
       body: FutureBuilder<PatternInsightModel?>(
         key: ValueKey(_refreshKey),

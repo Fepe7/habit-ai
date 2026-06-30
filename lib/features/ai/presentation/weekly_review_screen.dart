@@ -139,12 +139,16 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).dashboardWeeklyReviewTitle),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: WeeklyQuotaChip(featureKey: 'weeklyReview'),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(34),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: EdgeInsets.only(right: 12, bottom: 6),
+              child: WeeklyQuotaChip(featureKey: 'weeklyReview'),
+            ),
           ),
-        ],
+        ),
       ),
       body: _loading
           ? const Padding(
