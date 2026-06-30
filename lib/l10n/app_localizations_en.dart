@@ -3406,6 +3406,16 @@ class SEn extends S {
       'Join others already building better habits with AI';
 
   @override
+  String get freeLaunchPaywallTitle => 'Free early access';
+
+  @override
+  String get freeLaunchPaywallBody =>
+      'We\'re in launch phase: every feature is unlocked for everyone. Enjoy it, no limits.';
+
+  @override
+  String get freeLaunchPaywallCta => 'Got it';
+
+  @override
   String get premiumRequiredSnack => 'This feature is part of HabitAI Premium';
 
   @override
