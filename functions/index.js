@@ -27,6 +27,12 @@ setGlobalOptions({
 const MODEL_PRO = "gemini-2.5-pro";
 const MODEL_FLASH = "gemini-2.5-flash";
 
+// Fase de lanzamiento gratis: cuando es true, los jobs de IA automáticos
+// (revisión semanal, mariposa, patrones, renegociación) corren para TODOS los
+// usuarios, no solo premium, para que la app se sienta viva. Ponlo en false al
+// activar el plan de pago para que la auto-generación vuelva a ser premium-only.
+const FREE_LAUNCH_PHASE = true;
+
 // La API key se guarda como secret en Firebase, nunca en el codigo
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
@@ -837,8 +843,10 @@ exports.weeklyReviewJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
-      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
-      if (!isPremiumData(userDoc.data())) {
+      // Fase de lanzamiento gratis (FREE_LAUNCH_PHASE): la auto-generación corre
+      // para TODOS (Flash, barato) para que la app se sienta viva como premium.
+      // Con el plan de pago activo, vuelve a saltar a los no-premium.
+      if (!FREE_LAUNCH_PHASE && !isPremiumData(userDoc.data())) {
         skipped += 1;
         continue;
       }
@@ -1144,8 +1152,10 @@ exports.butterflyProjectionJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
-      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
-      if (!isPremiumData(userDoc.data())) {
+      // Fase de lanzamiento gratis (FREE_LAUNCH_PHASE): la auto-generación corre
+      // para TODOS (Flash, barato) para que la app se sienta viva como premium.
+      // Con el plan de pago activo, vuelve a saltar a los no-premium.
+      if (!FREE_LAUNCH_PHASE && !isPremiumData(userDoc.data())) {
         skipped += 1;
         continue;
       }
@@ -1430,8 +1440,10 @@ exports.renegotiationJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
-      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
-      if (!isPremiumData(userDoc.data())) {
+      // Fase de lanzamiento gratis (FREE_LAUNCH_PHASE): la auto-generación corre
+      // para TODOS (Flash, barato) para que la app se sienta viva como premium.
+      // Con el plan de pago activo, vuelve a saltar a los no-premium.
+      if (!FREE_LAUNCH_PHASE && !isPremiumData(userDoc.data())) {
         skipped += 1;
         continue;
       }
@@ -1874,8 +1886,10 @@ exports.patternInsightsJob = onSchedule(
     let errors = 0;
 
     for (const userDoc of usersSnapshot.docs) {
-      // Solo premium: no gastar Gemini en usuarios que no pueden ver el resultado
-      if (!isPremiumData(userDoc.data())) {
+      // Fase de lanzamiento gratis (FREE_LAUNCH_PHASE): la auto-generación corre
+      // para TODOS (Flash, barato) para que la app se sienta viva como premium.
+      // Con el plan de pago activo, vuelve a saltar a los no-premium.
+      if (!FREE_LAUNCH_PHASE && !isPremiumData(userDoc.data())) {
         skipped += 1;
         continue;
       }
