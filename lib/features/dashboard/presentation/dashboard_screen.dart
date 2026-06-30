@@ -392,7 +392,11 @@ class _DashboardScreenState extends State<DashboardScreen>
     return ValueListenableBuilder<bool>(
       valueListenable: PremiumService.instance.isPremium,
       builder: (context, isPremium, _) {
-        if (!isPremium) {
+        // Fase de lanzamiento gratis: todos ven las tarjetas reales (las
+        // funciones de IA quedan acotadas por cuota semanal en backend). Al
+        // activar el plan de pago (freeLaunchPhase=false) vuelven las filas
+        // bloqueadas para los usuarios free.
+        if (!isPremium && !PremiumLimits.freeLaunchPhase) {
           final s = S.of(context);
           Widget locked({
             IconData? icon,
