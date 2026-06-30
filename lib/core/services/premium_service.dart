@@ -19,6 +19,7 @@ class PremiumLimits {
   static const int freeWeeklyReview = 1;
   static const int freeWeeklyButterfly = 1;
   static const int freeWeeklyPatterns = 1;
+  static const int freeWeeklyRenegotiation = 2; // ajustes inteligentes/semana
 
   /// Fase de lanzamiento gratis: mientras sea true, las funciones de IA
   /// "premium" se abren a todos bajo cuota semanal. Ponlo en false al activar

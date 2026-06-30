@@ -180,6 +180,7 @@ const FREE_WEEKLY_LIMITS = {
   weeklyReview: 1, // generateWeeklyReview manual
   butterfly: 1, // generateButterflyProjection manual
   patterns: 1, // generatePatternInsights manual
+  renegotiation: 2, // generateRenegotiation manual (Flash, barato, por hábito)
 };
 
 // Consume 1 uso de la cuota semanal de `key` (transacción para evitar carreras).
@@ -1326,11 +1327,28 @@ exports.generateRenegotiation = onCall(
 
     const uid = request.auth.uid;
     await assertAiAvailable();
-    await assertPremium(uid);
     const { habitId, locale } = request.data;
 
     if (!habitId || typeof habitId !== "string") {
       throw new HttpsError("invalid-argument", "habitId requerido.");
+    }
+
+    // Cuota semanal (fase gratis): rechaza si ya está agotada. Se CONSUME más
+    // abajo solo si se genera de verdad (no en not_eligible/already_pending),
+    // para no malgastar la cuota. Premium = sin límite.
+    const premium = await isPremiumUser(uid);
+    if (!premium) {
+      const uSnap = await admin.firestore().doc(`users/${uid}`).get();
+      const entry = (uSnap.data()?.weeklyUsage || {}).renegotiation;
+      const used =
+        entry && entry.week === getIsoWeekId(new Date()) ? entry.count || 0 : 0;
+      if (used >= FREE_WEEKLY_LIMITS.renegotiation) {
+        throw new HttpsError(
+          "resource-exhausted",
+          "Has agotado tus ajustes inteligentes gratis de esta semana. Con Premium no hay límite.",
+          { reason: "free_weekly_quota" }
+        );
+      }
     }
 
     // rate limit propio: 5 renegociaciones/hora por usuario
@@ -1356,7 +1374,16 @@ exports.generateRenegotiation = onCall(
     }
 
     try {
-      return await runRenegotiation(uid, habitId, locale || "es");
+      const result = await runRenegotiation(uid, habitId, locale || "es");
+      // Consume cuota solo si se generó una propuesta nueva (no en no-ops).
+      if (!premium && result && result.skipped === false) {
+        await consumeWeeklyQuota(
+          uid,
+          "renegotiation",
+          FREE_WEEKLY_LIMITS.renegotiation
+        );
+      }
+      return result;
     } catch (error) {
       if (error instanceof HttpsError) throw error;
       console.error("Error en generateRenegotiation:", error);

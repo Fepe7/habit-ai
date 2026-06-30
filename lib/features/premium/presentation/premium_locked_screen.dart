@@ -14,14 +14,15 @@ import '../../../l10n/app_localizations.dart';
 enum PremiumFeature { routineChat, weeklyReview, butterfly, patterns, mood }
 
 extension PremiumFeatureLaunch on PremiumFeature {
-  /// Durante la fase de lanzamiento gratis estas funciones de IA se abren a
-  /// todos bajo cuota semanal (el backend la aplica). `mood` se queda premium.
+  /// Durante la fase de lanzamiento gratis estas funciones se abren a todos.
+  /// Las de IA van bajo cuota semanal (impuesta en backend); `mood` no usa IA
+  /// (correlación local), así que se abre sin cuota.
   bool get openDuringFreeLaunch => switch (this) {
     PremiumFeature.routineChat ||
     PremiumFeature.weeklyReview ||
     PremiumFeature.butterfly ||
-    PremiumFeature.patterns => true,
-    PremiumFeature.mood => false,
+    PremiumFeature.patterns ||
+    PremiumFeature.mood => true,
   };
 }
 
