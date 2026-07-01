@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../app.dart';
+import '../../../core/widgets/ux/app_snackbar.dart';
 import '../../../core/widgets/ux/error_state_view.dart';
 import '../../../core/widgets/ux/skeletons.dart';
 import '../../../core/widgets/weekly_quota_chip.dart';
@@ -26,7 +27,10 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   late AIRepository _aiRepo;
   ButterflyProjectionModel? _projection;
   bool _loading = true;
+  bool _generating = false;
   bool _initialized = false;
+  // mes mostrado: puede cambiar si se regenera (pasa al mes actual)
+  late String _monthId = widget.monthId;
 
   @override
   void didChangeDependencies() {
@@ -43,12 +47,62 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
   }
 
   Future<void> _loadProjection() async {
-    final projection = await _aiRepo.getProjectionForMonth(widget.monthId);
+    final projection = await _aiRepo.getProjectionForMonth(_monthId);
     if (mounted) {
       setState(() {
         _projection = projection;
         _loading = false;
       });
+    }
+  }
+
+  // Genera manualmente una proyección nueva. El callable consume 1 uso de la
+  // cuota semanal en el backend (rechaza con free_weekly_quota si ya no quedan);
+  // confirmamos antes para no gastar el uso por accidente.
+  Future<void> _generateManually() async {
+    final s = S.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.aiRegenerateConfirmTitle),
+        content: Text(s.aiRegenerateConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.aiRegenerateConfirmCta),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _generating = true);
+    try {
+      final monthId = await _aiRepo.generateButterflyProjection();
+      if (!mounted) return;
+      if (monthId == null) {
+        // no hay datos suficientes este mes (no consume cuota en backend)
+        AppSnackBar.showInfo(context, s.dashboardButterflyNeedMore);
+      } else {
+        final projection = await _aiRepo.getProjectionForMonth(monthId);
+        if (!mounted) return;
+        setState(() {
+          _monthId = monthId;
+          _projection = projection;
+        });
+        if (projection != null) {
+          AppSnackBar.showSuccess(context, s.aiRegenerateSuccess);
+        }
+      }
+    } catch (e) {
+      // incluye el mensaje mapeado de cuota agotada (free_weekly_quota)
+      if (mounted) AppSnackBar.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -78,13 +132,31 @@ class _ButterflyProjectionScreenState extends State<ButterflyProjectionScreen> {
             const Text('🦋', style: TextStyle(fontSize: 20)),
             const SizedBox(width: 8),
             Text(
-              _formatMonthId(widget.monthId, s),
+              _formatMonthId(_monthId, s),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
             ),
           ],
         ),
+        actions: [
+          _generating
+              ? const Padding(
+                  padding: EdgeInsets.only(right: 18),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  tooltip: s.aiRegenerate,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  onPressed: _generateManually,
+                ),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(34),
           child: Align(

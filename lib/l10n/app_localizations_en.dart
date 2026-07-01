@@ -383,6 +383,50 @@ class SEn extends S {
   }
 
   @override
+  String get tourIntroTitle => 'This is HabitAI';
+
+  @override
+  String get tourIntroSubtitle => 'A quick look at what lives in each tab.';
+
+  @override
+  String get tourHabitsTitle => 'Your habits, day by day';
+
+  @override
+  String get tourHabitsBody =>
+      'Log your check-ins, stack habits into groups and protect your streak.';
+
+  @override
+  String get tourDashboardTitle => 'Your progress';
+
+  @override
+  String get tourDashboardBody =>
+      'Stats, charts and your mood: everything you\'re building, at a glance.';
+
+  @override
+  String get tourAITitle => 'AI assistant';
+
+  @override
+  String get tourAIBody =>
+      'Chat with your coach, generate habit plans and get your weekly review.';
+
+  @override
+  String get tourExploreTitle => 'Explore the community';
+
+  @override
+  String get tourExploreBody =>
+      'Templates from other users, 21-day challenges and profiles to follow.';
+
+  @override
+  String get tourProfileTitle => 'Your profile';
+
+  @override
+  String get tourProfileBody =>
+      'Your achievements, mastery and followers. Settings live behind the ⚙ icon.';
+
+  @override
+  String get tourDone => 'Got it!';
+
+  @override
   String get drawerProgress => 'Your progress';
 
   @override
@@ -3414,6 +3458,22 @@ class SEn extends S {
 
   @override
   String get freeLaunchPaywallCta => 'Got it';
+
+  @override
+  String get aiRegenerate => 'Generate new';
+
+  @override
+  String get aiRegenerateConfirmTitle => 'Generate again?';
+
+  @override
+  String get aiRegenerateConfirmBody =>
+      'This will generate fresh AI content and use 1 of your weekly uses.';
+
+  @override
+  String get aiRegenerateConfirmCta => 'Generate';
+
+  @override
+  String get aiRegenerateSuccess => 'New version generated';
 
   @override
   String get premiumRequiredSnack => 'This feature is part of HabitAI Premium';

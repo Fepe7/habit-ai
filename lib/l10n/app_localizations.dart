@@ -763,6 +763,84 @@ abstract class S {
   /// **'@{username} aceptó tu solicitud'**
   String navFollowAcceptedBody(String username);
 
+  /// No description provided for @tourIntroTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Esto es HabitAI'**
+  String get tourIntroTitle;
+
+  /// No description provided for @tourIntroSubtitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Un vistazo rápido a lo que vive en cada pestaña.'**
+  String get tourIntroSubtitle;
+
+  /// No description provided for @tourHabitsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus hábitos, día a día'**
+  String get tourHabitsTitle;
+
+  /// No description provided for @tourHabitsBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Marca tus check-ins, encadena hábitos en grupos y protege tu racha.'**
+  String get tourHabitsBody;
+
+  /// No description provided for @tourDashboardTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu progreso'**
+  String get tourDashboardTitle;
+
+  /// No description provided for @tourDashboardBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Estadísticas, gráficas y tu ánimo: todo lo que avanzas, de un vistazo.'**
+  String get tourDashboardBody;
+
+  /// No description provided for @tourAITitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Asistente IA'**
+  String get tourAITitle;
+
+  /// No description provided for @tourAIBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Chatea con tu coach, genera planes de hábitos y recibe tu revisión semanal.'**
+  String get tourAIBody;
+
+  /// No description provided for @tourExploreTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Explora la comunidad'**
+  String get tourExploreTitle;
+
+  /// No description provided for @tourExploreBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Plantillas de otros usuarios, retos de 21 días y perfiles que seguir.'**
+  String get tourExploreBody;
+
+  /// No description provided for @tourProfileTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Tu perfil'**
+  String get tourProfileTitle;
+
+  /// No description provided for @tourProfileBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Tus logros, maestría y seguidores. Los ajustes viven en el icono ⚙.'**
+  String get tourProfileBody;
+
+  /// No description provided for @tourDone.
+  ///
+  /// In es, this message translates to:
+  /// **'¡Entendido!'**
+  String get tourDone;
+
   /// No description provided for @drawerProgress.
   ///
   /// In es, this message translates to:
@@ -6126,6 +6204,36 @@ abstract class S {
   /// In es, this message translates to:
   /// **'Entendido'**
   String get freeLaunchPaywallCta;
+
+  /// No description provided for @aiRegenerate.
+  ///
+  /// In es, this message translates to:
+  /// **'Generar nueva'**
+  String get aiRegenerate;
+
+  /// No description provided for @aiRegenerateConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Generar de nuevo?'**
+  String get aiRegenerateConfirmTitle;
+
+  /// No description provided for @aiRegenerateConfirmBody.
+  ///
+  /// In es, this message translates to:
+  /// **'Se generará contenido nuevo con IA y consumirá 1 uso de esta semana.'**
+  String get aiRegenerateConfirmBody;
+
+  /// No description provided for @aiRegenerateConfirmCta.
+  ///
+  /// In es, this message translates to:
+  /// **'Generar'**
+  String get aiRegenerateConfirmCta;
+
+  /// No description provided for @aiRegenerateSuccess.
+  ///
+  /// In es, this message translates to:
+  /// **'Nueva versión generada'**
+  String get aiRegenerateSuccess;
 
   /// No description provided for @premiumRequiredSnack.
   ///

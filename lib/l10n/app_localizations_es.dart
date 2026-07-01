@@ -385,6 +385,51 @@ class SEs extends S {
   }
 
   @override
+  String get tourIntroTitle => 'Esto es HabitAI';
+
+  @override
+  String get tourIntroSubtitle =>
+      'Un vistazo rápido a lo que vive en cada pestaña.';
+
+  @override
+  String get tourHabitsTitle => 'Tus hábitos, día a día';
+
+  @override
+  String get tourHabitsBody =>
+      'Marca tus check-ins, encadena hábitos en grupos y protege tu racha.';
+
+  @override
+  String get tourDashboardTitle => 'Tu progreso';
+
+  @override
+  String get tourDashboardBody =>
+      'Estadísticas, gráficas y tu ánimo: todo lo que avanzas, de un vistazo.';
+
+  @override
+  String get tourAITitle => 'Asistente IA';
+
+  @override
+  String get tourAIBody =>
+      'Chatea con tu coach, genera planes de hábitos y recibe tu revisión semanal.';
+
+  @override
+  String get tourExploreTitle => 'Explora la comunidad';
+
+  @override
+  String get tourExploreBody =>
+      'Plantillas de otros usuarios, retos de 21 días y perfiles que seguir.';
+
+  @override
+  String get tourProfileTitle => 'Tu perfil';
+
+  @override
+  String get tourProfileBody =>
+      'Tus logros, maestría y seguidores. Los ajustes viven en el icono ⚙.';
+
+  @override
+  String get tourDone => '¡Entendido!';
+
+  @override
   String get drawerProgress => 'Tu progreso';
 
   @override
@@ -3431,6 +3476,22 @@ class SEs extends S {
 
   @override
   String get freeLaunchPaywallCta => 'Entendido';
+
+  @override
+  String get aiRegenerate => 'Generar nueva';
+
+  @override
+  String get aiRegenerateConfirmTitle => '¿Generar de nuevo?';
+
+  @override
+  String get aiRegenerateConfirmBody =>
+      'Se generará contenido nuevo con IA y consumirá 1 uso de esta semana.';
+
+  @override
+  String get aiRegenerateConfirmCta => 'Generar';
+
+  @override
+  String get aiRegenerateSuccess => 'Nueva versión generada';
 
   @override
   String get premiumRequiredSnack =>

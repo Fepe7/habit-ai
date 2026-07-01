@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -28,12 +27,11 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   // Paleta local del escaparate (oscuro fijo, no depende del ColorScheme).
-  static const Color _bgTop = Color(0xFF101A26);
-  static const Color _bgBottom = Color(0xFF080D14);
+  // Un solo tono de fondo para toda la pantalla (sin gradiente = sin costuras).
+  static const Color _bg = Color(0xFF0E1722);
   static const Color _accent = AppTheme.primaryContainer; // sky #38BDF8
   static const Color _ink = Color(0xFFF4F8FC);
   static const Color _inkSoft = Color(0xFFAEBdCB);
-  static const Color _card = Color(0xFF18242F);
 
   bool _busy = false;
 
@@ -135,45 +133,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
     ];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      // Status bar transparente (el fondo pasa por debajo sin la franja del
+      // sistema). La barra de navegación NO puede ser transparente: la app no
+      // corre en edge-to-edge, así que no hay nada detrás y Android la pinta
+      // de blanco. Se pinta del mismo tono sólido del fondo.
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: _bg,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
       child: Scaffold(
-        backgroundColor: _bgBottom,
-        body: Stack(
-          children: [
-            // Fondo: degradado vertical + glow de marca difuso arriba.
-            const Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [_bgTop, _bgBottom],
-                  ),
-                ),
-              ),
-            ),
-            // Glow de marca anclado al borde superior. Ocupa TODA la pantalla
-            // (Positioned.fill) a propósito: si la caja terminara antes (p.ej.
-            // 360px de alto), el degradado radial aún tendría algo de color en
-            // ese borde y dejaría una costura horizontal. Con la caja a pantalla
-            // completa el radial se desvanece a transparente sin ningún corte.
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.topCenter,
-                      radius: 1.1,
-                      colors: [
-                        _accent.withValues(alpha: 0.32),
-                        _accent.withValues(alpha: 0.0),
-                      ],
-                    ),
-                  ),
-                ),
-              ).animate().fadeIn(duration: 700.ms),
-            ),
-            SafeArea(
+        // Un ÚNICO color sólido en toda la pantalla. Sin gradientes ni capas de
+        // distinto tono: así no puede quedar ninguna costura/junta (era eso lo
+        // que se veía como "corte", el borde entre dos tonos casi iguales).
+        backgroundColor: _bg,
+        body: SafeArea(
               child: Column(
                 children: [
                   // Cerrar
@@ -208,8 +182,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ],
               ),
             ),
-          ],
-        ),
       ),
     );
   }
@@ -224,26 +196,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
           width: 76,
           height: 76,
           alignment: Alignment.center,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: AppTheme.heroGradient,
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: _accent.withValues(alpha: 0.45),
-                blurRadius: 28,
-                spreadRadius: 2,
-              ),
-            ],
           ),
           child: const Icon(
             Icons.workspace_premium_rounded,
             color: Colors.white,
             size: 38,
           ),
-        ).animate().scale(
-              duration: 450.ms,
-              curve: Curves.easeOutBack,
-            ),
+        ),
         const SizedBox(height: 18),
         // Pill PREMIUM
         Container(
@@ -262,7 +224,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               color: _accent,
             ),
           ),
-        ).animate(delay: 120.ms).fadeIn().slideY(begin: 0.3),
+        ),
         const SizedBox(height: 16),
         Text(
           freeLaunch ? s.freeLaunchPaywallTitle : s.paywallTitle,
@@ -274,7 +236,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             height: 1.1,
             color: _ink,
           ),
-        ).animate(delay: 160.ms).fadeIn().slideY(begin: 0.2),
+        ),
         const SizedBox(height: 10),
         Text(
           freeLaunch ? s.freeLaunchPaywallBody : s.paywallSubtitle,
@@ -284,22 +246,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
             height: 1.4,
             color: _inkSoft,
           ),
-        ).animate(delay: 220.ms).fadeIn(),
+        ),
       ],
     );
   }
 
   Widget _benefitsCard(List<String> benefits) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-      decoration: BoxDecoration(
-        color: _card.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
+    // Sin recuadro: la lista va directa sobre el fondo plano. El borde sutil de
+    // la tarjeta se leía como una línea/corte a media pantalla, así que fuera.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
       child: Column(
         children: [
-          for (final (i, text) in benefits.indexed)
+          for (final text in benefits)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 11),
               child: Row(
@@ -331,10 +290,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                 ],
               ),
-            )
-                .animate(delay: (260 + 70 * i).ms)
-                .fadeIn(duration: 300.ms)
-                .slideX(begin: 0.08, curve: Curves.easeOutCubic),
+            ),
         ],
       ),
     );
@@ -390,7 +346,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           ),
         ],
       ),
-    ).animate(delay: 300.ms).fadeIn().slideY(begin: 0.15);
+    );
   }
 
   /// Footer de la fase de lanzamiento gratis: sin precio ni botones de compra,
