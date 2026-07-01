@@ -97,6 +97,8 @@ memoria/
 defensa/
 
 bash.exe.stackdump
+**/bash.exe.stackdump
+*.stackdump
 
 
 preparacion-proyecto.md
