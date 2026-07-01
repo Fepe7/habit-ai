@@ -30,7 +30,10 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
   bool _initialized = false;
   WeeklyReviewModel? _review;
   bool _loading = true;
+  bool _generating = false;
   String? _error;
+  // semana mostrada: puede cambiar si se regenera (pasa a la semana actual)
+  late String _weekId = widget.weekId;
   // cache de hábitos activos para fallback por título cuando Gemini no
   // devuelve un habitId válido
   List<HabitModel>? _activeHabits;
@@ -52,7 +55,7 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
 
   Future<void> _load() async {
     try {
-      final review = await _aiRepo.getReviewForWeek(widget.weekId);
+      final review = await _aiRepo.getReviewForWeek(_weekId);
       if (mounted) {
         setState(() {
           _review = review;
@@ -67,6 +70,58 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
           _error = S.of(context).weeklyReviewLoadError;
         });
       }
+    }
+  }
+
+  // Genera manualmente una revisión nueva. El callable consume 1 uso de la
+  // cuota semanal en el backend (rechaza con free_weekly_quota si ya no quedan);
+  // pedimos confirmación antes para no gastar el uso por accidente.
+  Future<void> _generateManually() async {
+    final s = S.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.aiRegenerateConfirmTitle),
+        content: Text(s.aiRegenerateConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(s.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(s.aiRegenerateConfirmCta),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _generating = true);
+    try {
+      final weekId = await _aiRepo.generateWeeklyReview();
+      if (!mounted) return;
+      if (weekId == null) {
+        // no hay datos suficientes esta semana (no consume cuota en backend)
+        AppSnackBar.showInfo(context, s.dashboardWeeklyReviewNeedMore);
+      } else {
+        final review = await _aiRepo.getReviewForWeek(weekId);
+        if (!mounted) return;
+        setState(() {
+          _weekId = weekId;
+          _review = review;
+          _error = review == null ? s.weeklyReviewNotFound : null;
+          _activeHabits = null; // recargar hábitos para resolver recomendaciones
+        });
+        if (review != null) {
+          AppSnackBar.showSuccess(context, s.aiRegenerateSuccess);
+        }
+      }
+    } catch (e) {
+      // incluye el mensaje mapeado de cuota agotada (free_weekly_quota)
+      if (mounted) AppSnackBar.showError(context, e.toString());
+    } finally {
+      if (mounted) setState(() => _generating = false);
     }
   }
 
@@ -139,6 +194,24 @@ class _WeeklyReviewScreenState extends State<WeeklyReviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(S.of(context).dashboardWeeklyReviewTitle),
+        actions: [
+          _generating
+              ? const Padding(
+                  padding: EdgeInsets.only(right: 18),
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  tooltip: S.of(context).aiRegenerate,
+                  icon: const Icon(Icons.auto_awesome_rounded),
+                  onPressed: _generateManually,
+                ),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(34),
           child: Align(

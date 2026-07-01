@@ -578,10 +578,15 @@ class _GroupChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dentro de un Wrap los chips reciben ancho ilimitado, así que un título de
+    // grupo largo desbordaría a la derecha. Limitamos el ancho al del sheet y
+    // truncamos el texto con elipsis.
+    final maxWidth = MediaQuery.sizeOf(context).width - 48;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
+        constraints: BoxConstraints(maxWidth: maxWidth),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected
@@ -605,13 +610,17 @@ class _GroupChip extends StatelessWidget {
                   color: selected ? scheme.primary : scheme.onSurfaceVariant),
               const SizedBox(width: 6),
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: selected ? scheme.primary : scheme.onSurfaceVariant,
-                fontWeight:
-                    selected ? FontWeight.w600 : FontWeight.w400,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: selected ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight:
+                      selected ? FontWeight.w600 : FontWeight.w400,
+                ),
               ),
             ),
           ],

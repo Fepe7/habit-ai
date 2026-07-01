@@ -226,6 +226,30 @@ async function consumeWeeklyQuota(uid, key, limit, opts = {}) {
   });
 }
 
+// Devuelve 1 uso de la cuota semanal de `key` (transacción). Se usa cuando una
+// generación manual se saltó por falta de datos (no hubo coste de Gemini): no es
+// justo que el usuario pierda el uso. Solo decrementa dentro de la misma semana
+// y nunca por debajo de 0.
+async function refundWeeklyQuota(uid, key) {
+  const db = admin.firestore();
+  const ref = db.doc(`users/${uid}`);
+  const weekId = getIsoWeekId(new Date());
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const data = doc.exists ? doc.data() : null;
+    const usage = (data && data.weeklyUsage) || {};
+    const entry = usage[key];
+    if (!entry || entry.week !== weekId) return;
+    const count = entry.count || 0;
+    if (count <= 0) return;
+    tx.set(
+      ref,
+      { weeklyUsage: { [key]: { week: weekId, count: count - 1 } } },
+      { merge: true }
+    );
+  });
+}
+
 
 
 // Cloud Function callable desde Flutter
@@ -799,7 +823,12 @@ exports.generateWeeklyReview = onCall(
     try {
       // El boton manual analiza la semana en curso (mas intuitivo para el usuario).
       // El job scheduled sigue usando la semana anterior.
-      return await runWeeklyReview(uid, new Date(), { currentWeek: true, locale });
+      const result = await runWeeklyReview(uid, new Date(), { currentWeek: true, locale });
+      // Sin datos suficientes no hubo generación: devolvemos el uso consumido.
+      if (result && result.skipped && quota.remaining !== null) {
+        await refundWeeklyQuota(uid, "weeklyReview");
+      }
+      return result;
     } catch (error) {
       if (error instanceof HttpsError) throw error;
       console.error("Error en generateWeeklyReview:", error);
@@ -1110,7 +1139,12 @@ exports.generateButterflyProjection = onCall(
      }
 
     try {
-      return await runButterflyProjection(uid, new Date(), { currentMonth: true, locale });
+      const result = await runButterflyProjection(uid, new Date(), { currentMonth: true, locale });
+      // Sin datos suficientes no hubo generación: devolvemos el uso consumido.
+      if (result && result.skipped && quota.remaining !== null) {
+        await refundWeeklyQuota(uid, "butterfly");
+      }
+      return result;
     } catch (error) {
       if (error instanceof HttpsError) throw error;
       console.error("Error en generateButterflyProjection:", error);
@@ -1843,7 +1877,12 @@ exports.generatePatternInsights = onCall(
     }
 
     try {
-      return await runPatternInsights(uid, new Date(), { manual: true, locale });
+      const result = await runPatternInsights(uid, new Date(), { manual: true, locale });
+      // Sin datos suficientes no hubo generación: devolvemos el uso consumido.
+      if (result && result.skipped && quota.remaining !== null) {
+        await refundWeeklyQuota(uid, "patterns");
+      }
+      return result;
     } catch (error) {
       if (error instanceof HttpsError) throw error;
       console.error("Error en generatePatternInsights:", error);

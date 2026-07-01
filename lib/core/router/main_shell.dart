@@ -24,6 +24,7 @@ import '../../services/push_notification_service.dart';
 import '../services/feedback_service.dart';
 import '../services/analytics_service.dart';
 import '../widgets/app_drawer.dart';
+import '../../features/onboarding/presentation/features_intro_screen.dart';
 import '../widgets/ux/offline_banner.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -68,6 +69,12 @@ class _MainShellState extends State<MainShell> {
     // registrar el token de FCM del dispositivo para este usuario (push remotos)
     PushNotificationService.instance.registerForCurrentUser();
     AnalyticsService.instance.setUserId(FirebaseAuth.instance.currentUser?.uid);
+    // intro de funciones (una vez por instalación), cuando la UI ya está pintada
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (mounted) FeaturesIntroScreen.maybeShow(context);
+      });
+    });
   }
 
   @override
