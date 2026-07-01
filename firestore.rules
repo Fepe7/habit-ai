@@ -13,17 +13,21 @@ service cloud.firestore {
     }
 
     // Documentos privados del usuario.
-    // Los campos premium (isPremium, premiumUntil) y la cuota free del chat
-    // (freePlanUsage) los escribe SOLO el Admin SDK: un cliente no puede
-    // autoconcederse premium ni resetear su cuota.
+    // Los campos premium (isPremium, premiumUntil), la cuota free del chat
+    // (freePlanUsage) y la cuota semanal de IA (weeklyUsage) los escribe SOLO
+    // el Admin SDK: un cliente no puede autoconcederse premium ni resetear su
+    // cuota. weeklyUsage es el ÚNICO freno de coste de las funciones de IA en
+    // la fase gratis (ya no hay assertPremium), así que debe ser inescribible
+    // desde el cliente: si no, un free pondría el contador a 0 antes de cada
+    // llamada y obtendría generaciones de Gemini ilimitadas.
     match /users/{userId} {
       allow read: if isOwner(userId);
       allow create: if isOwner(userId)
                     && !request.resource.data.keys()
-                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage']);
+                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage', 'weeklyUsage']);
       allow update: if isOwner(userId)
                     && !request.resource.data.diff(resource.data).affectedKeys()
-                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage']);
+                       .hasAny(['isPremium', 'premiumUntil', 'freePlanUsage', 'weeklyUsage']);
       allow delete: if isOwner(userId);
 
       match /habits/{habitId} {

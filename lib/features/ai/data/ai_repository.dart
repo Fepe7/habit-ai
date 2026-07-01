@@ -130,6 +130,10 @@ class AIRepository {
     required String groupId,
     required String message,
     required List<Map<String, String>> history,
+    // identifica la conversación en el backend para cobrar la cuota una sola
+    // vez por conversación (no por mensaje). Estable durante toda la sesión de
+    // la pantalla de chat; el backend NO se fía del history para esto.
+    String? conversationId,
   }) async {
     try {
       final result = await _routineChatFn.call({
@@ -137,6 +141,7 @@ class AIRepository {
         'message': message,
         'history': history,
         'locale': LocaleProvider.currentCode,
+        'conversationId': ?conversationId,
       });
       return RoutineChatResponse.fromJson(_deepCast(result.data));
     } on FirebaseFunctionsException catch (e) {

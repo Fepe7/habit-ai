@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -47,6 +49,11 @@ class _RoutineChatScreenState extends State<RoutineChatScreen> {
   // historial role/text que se reenvía al callable en cada mensaje
   final List<Map<String, String>> _history = [];
 
+  // id estable de esta sesión de chat: el backend cobra la cuota una vez por
+  // conversación usando este id, no el history (falsificable). Se genera al
+  // abrir la pantalla y no cambia mientras esté abierta.
+  late final String _conversationId;
+
   bool _isLoading = false;
 
   @override
@@ -56,6 +63,8 @@ class _RoutineChatScreenState extends State<RoutineChatScreen> {
     _aiRepo = AIRepository(uid: uid);
     _habitRepo = HabitRepository(uid: uid);
     _groupRepo = HabitGroupRepository(uid: uid);
+    _conversationId =
+        '${DateTime.now().microsecondsSinceEpoch}-${Random().nextInt(1 << 32)}';
   }
 
   @override
@@ -83,6 +92,7 @@ class _RoutineChatScreenState extends State<RoutineChatScreen> {
         groupId: widget.groupId,
         message: msg,
         history: _history,
+        conversationId: _conversationId,
       );
       _history.add({'role': 'user', 'text': msg});
       _history.add({'role': 'model', 'text': response.coachMessage});

@@ -250,6 +250,53 @@ async function refundWeeklyQuota(uid, key) {
   });
 }
 
+// Consume 1 uso por CONVERSACIÓN nueva (no por mensaje). Cobra la primera vez
+// que ve `conversationId` esta semana; reusarlo (mensajes siguientes de la
+// misma conversación) no vuelve a cobrar. La identidad de la conversación vive
+// aquí, en el servidor, NO en el `history` que manda el cliente: history es
+// falsificable, así que decidir el cobro con él permitía saltarse la cuota
+// mandando siempre un historial no vacío. Forjar ids nuevos tampoco ayuda al
+// abusador: cada id no visto cuenta como conversación nueva y consume cuota.
+// El array `convos` queda acotado por `limit` (al llegar al tope se rechaza y
+// no crece más). Si falta conversationId (cliente antiguo) se comporta como
+// cobro por mensaje: falla cerrado, nunca a favor del cliente.
+async function consumeConversationQuota(uid, key, limit, conversationId) {
+  const db = admin.firestore();
+  const ref = db.doc(`users/${uid}`);
+  const weekId = getIsoWeekId(new Date());
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(ref);
+    const data = doc.exists ? doc.data() : null;
+    if (isPremiumData(data)) {
+      return { allowed: true, remaining: null };
+    }
+    const usage = (data && data.weeklyUsage) || {};
+    const entry = usage[key];
+    const sameWeek = entry && entry.week === weekId;
+    const count = sameWeek ? entry.count || 0 : 0;
+    const convos =
+      sameWeek && Array.isArray(entry.convos) ? entry.convos : [];
+    // conversación ya cobrada esta semana → mensaje siguiente, no cobra
+    if (conversationId && convos.includes(conversationId)) {
+      return { allowed: true, remaining: limit - count };
+    }
+    if (count >= limit) {
+      return { allowed: false, remaining: 0 };
+    }
+    const nextConvos = conversationId ? [...convos, conversationId] : convos;
+    tx.set(
+      ref,
+      {
+        weeklyUsage: {
+          [key]: { week: weekId, count: count + 1, convos: nextConvos },
+        },
+      },
+      { merge: true }
+    );
+    return { allowed: true, remaining: limit - count - 1 };
+  });
+}
+
 
 
 // Cloud Function callable desde Flutter
@@ -435,7 +482,7 @@ exports.routineChat = onCall(
     }
 
     const uid = request.auth.uid;
-    const { groupId, message, history, locale } = request.data;
+    const { groupId, message, history, locale, conversationId } = request.data;
 
     if (!groupId || typeof groupId !== "string") {
       throw new HttpsError("invalid-argument", "groupId requerido.");
@@ -443,22 +490,27 @@ exports.routineChat = onCall(
     assertValidMessage(message);
 
     await assertAiAvailable();
-    // Cuota semanal por CONVERSACIÓN nueva (history vacío = nueva). Premium sin
-    // límite. Los mensajes siguientes de la misma conversación no consumen.
-    const isNewConversation = !Array.isArray(history) || history.length === 0;
-    if (isNewConversation) {
-      const quota = await consumeWeeklyQuota(
-        uid,
-        "routineChat",
-        FREE_WEEKLY_LIMITS.routineChat
+    // Cuota semanal por CONVERSACIÓN nueva. La identidad de la conversación la
+    // fija el servidor vía conversationId (ver consumeConversationQuota); NO se
+    // deriva del `history` del cliente, que es falsificable —antes bastaba con
+    // mandar siempre un historial no vacío para no consumir nunca. Premium sin
+    // límite; los mensajes siguientes de la misma conversación no consumen.
+    const convId =
+      typeof conversationId === "string" && conversationId.length > 0
+        ? conversationId.slice(0, 128)
+        : null;
+    const quota = await consumeConversationQuota(
+      uid,
+      "routineChat",
+      FREE_WEEKLY_LIMITS.routineChat,
+      convId
+    );
+    if (!quota.allowed) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "Has agotado tus conversaciones de coach gratis de esta semana. Con Premium no hay límite.",
+        { reason: "free_weekly_quota" }
       );
-      if (!quota.allowed) {
-        throw new HttpsError(
-          "resource-exhausted",
-          "Has agotado tus conversaciones de coach gratis de esta semana. Con Premium no hay límite.",
-          { reason: "free_weekly_quota" }
-        );
-      }
     }
     const allowed = await checkRateLimit(uid);
     if (!allowed) {
