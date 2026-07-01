@@ -217,9 +217,10 @@ class DrawerMenuButton extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLowest,
+        // relleno tonal en vez de blanco+sombra: sobre el campo casi blanco
+        // el círculo blanco no se distinguía
+        color: scheme.surfaceContainer,
         shape: BoxShape.circle,
-        boxShadow: AppTheme.ambientShadow(),
       ),
       child: IconButton(
         iconSize: 22,

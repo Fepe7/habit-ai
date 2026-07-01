@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Gestiona el tema (claro/oscuro/sistema) y lo persiste en SharedPreferences
 class ThemeProvider extends ChangeNotifier {
   static const _key = 'theme_mode';
-  ThemeMode _themeMode = ThemeMode.system;
+  // oscuro por defecto (decisión de producto): si el usuario nunca eligió
+  // tema, la app arranca en oscuro; su elección en Ajustes sigue mandando
+  ThemeMode _themeMode = ThemeMode.dark;
 
   ThemeMode get themeMode => _themeMode;
 
@@ -18,7 +20,7 @@ class ThemeProvider extends ChangeNotifier {
     if (value != null) {
       _themeMode = ThemeMode.values.firstWhere(
         (m) => m.name == value,
-        orElse: () => ThemeMode.system,
+        orElse: () => ThemeMode.dark,
       );
       notifyListeners();
     }

@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_emoji.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../habits/domain/habit_model.dart';
@@ -59,9 +58,9 @@ class _MoodHeaderButtonState extends State<MoodHeaderButton> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest,
+                // relleno tonal, como el resto de botones del header
+                color: scheme.surfaceContainer,
                 shape: BoxShape.circle,
-                boxShadow: AppTheme.ambientShadow(),
               ),
               alignment: Alignment.center,
               child: blockEntry != null

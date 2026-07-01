@@ -1323,9 +1323,10 @@ class _HabitsScreenState extends State<HabitsScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: scheme.surfaceContainerLowest,
+                    // relleno tonal en vez de blanco+sombra: sobre el campo
+                    // casi blanco el círculo blanco no se distinguía
+                    color: scheme.surfaceContainer,
                     shape: BoxShape.circle,
-                    boxShadow: AppTheme.ambientShadow(),
                   ),
                   child: Icon(
                     _hasNewNotifs
@@ -1379,9 +1380,8 @@ class _HabitsScreenState extends State<HabitsScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: scheme.surfaceContainerLowest,
+                color: scheme.surfaceContainer,
                 shape: BoxShape.circle,
-                boxShadow: AppTheme.ambientShadow(),
               ),
               child: Icon(
                 Icons.more_vert_rounded,
@@ -1853,19 +1853,34 @@ class _DailyProgressHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final progress = total > 0 ? completed / total : 0.0;
     final allDone = completed == total && total > 0;
     final pct = (progress * 100).toInt();
+
+    // Regla "color como recompensa" del design system: en claro, la card en
+    // reposo es una isla blanca con acentos teal; el degradado (amber) solo
+    // aparece al completar TODO el día — el color se gana. En oscuro el
+    // degradado de siempre funciona bien y se mantiene.
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final useGradient = allDone || !isLight;
+    final fg = useGradient ? Colors.white : scheme.primary;
+    final fgSoft = useGradient
+        ? Colors.white.withValues(alpha: 0.8)
+        : scheme.onSurfaceVariant;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: allDone
-              ? AppTheme.streakGradient
-              : AppTheme.heroGradient,
+          gradient: !useGradient
+              ? null
+              : allDone
+                  ? AppTheme.streakGradient
+                  : AppTheme.heroGradient,
+          color: useGradient ? null : scheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(28),
-          boxShadow: AppTheme.ambientShadow(opacity: 0.14),
+          boxShadow: AppTheme.ambientShadow(opacity: useGradient ? 0.14 : 0.06),
         ),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -1879,7 +1894,7 @@ class _DailyProgressHero extends StatelessWidget {
                     Text(
                       allDone ? S.of(context).habitsAllDone : S.of(context).habitsProgressToday,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: fgSoft,
                         letterSpacing: 0.8,
                       ),
                     ),
@@ -1891,7 +1906,7 @@ class _DailyProgressHero extends StatelessWidget {
                       builder: (context, v, _) => Text(
                         '${(v * 100).toInt()}%',
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: Colors.white,
+                          color: fg,
                           fontWeight: FontWeight.w700,
                           height: 1,
                         ),
@@ -1901,7 +1916,7 @@ class _DailyProgressHero extends StatelessWidget {
                     Text(
                       S.of(context).habitsCompletedOf(completed, total),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: fgSoft,
                       ),
                     ),
                   ],
@@ -1922,8 +1937,10 @@ class _DailyProgressHero extends StatelessWidget {
                       CircularProgressIndicator(
                         value: v,
                         strokeWidth: 6,
-                        backgroundColor: Colors.white.withValues(alpha: 0.25),
-                        valueColor: const AlwaysStoppedAnimation(Colors.white),
+                        backgroundColor: useGradient
+                            ? Colors.white.withValues(alpha: 0.25)
+                            : scheme.primaryContainer.withValues(alpha: 0.25),
+                        valueColor: AlwaysStoppedAnimation(fg),
                         strokeCap: StrokeCap.round,
                       ),
                       Center(
@@ -1933,7 +1950,7 @@ class _DailyProgressHero extends StatelessWidget {
                             : Text(
                                 '$pct%',
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
+                                  color: fg,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
