@@ -110,7 +110,9 @@ class AppTheme {
       onPrimaryContainer: Color(0xFF004965),
       secondary: secondary,
       onSecondary: Colors.white,
-      secondaryContainer: secondaryContainer,
+      // container pastel (no el cian saturado): los FilledButton.tonal y demás
+      // superficies tonales M3 beben de aquí — con #39B8FD salían chillones
+      secondaryContainer: Color(0xFFC9E6FF),
       onSecondaryContainer: Color(0xFF004666),
       tertiary: tertiary,
       onTertiary: Colors.white,
