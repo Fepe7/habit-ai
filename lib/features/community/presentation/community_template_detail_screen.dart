@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/feedback_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../../l10n/app_localizations.dart';
@@ -81,6 +82,7 @@ class _CommunityTemplateDetailScreenState
       );
 
       if (!mounted) return;
+      FeedbackService.instance.reactionReceived();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(

@@ -38,6 +38,11 @@ class MainShell extends StatefulWidget {
   /// Key global para abrir el drawer desde cualquier widget hijo.
   static final scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// Índice del tab activo. Las pantallas keep-alive del PageView lo escuchan
+  /// para refrescar datos derivados al volver a ser visibles (ej. la maestría
+  /// del perfil, que se calcula bajo demanda y no viene de un stream).
+  static final ValueNotifier<int> activeTab = ValueNotifier<int>(0);
+
   @override
   State<MainShell> createState() => _MainShellState();
 }
@@ -213,6 +218,12 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final tabs = _buildTabs(context);
     final selected = _currentIndex(context);
+    // notificar el tab activo tras el frame (nunca durante el build)
+    if (MainShell.activeTab.value != selected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) MainShell.activeTab.value = selected;
+      });
+    }
     final scheme = Theme.of(context).colorScheme;
     final isWide = MediaQuery.of(context).size.width >= 600;
 

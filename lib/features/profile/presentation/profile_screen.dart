@@ -46,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   late final FollowRepository _followRepo;
   late final ReactionRepository _reactRepo;
   LevelsProfile? _levels;
+  bool _loadingLevels = false;
   int _followersCount = 0;
   int _followingCount = 0;
 
@@ -60,16 +61,41 @@ class _ProfileScreenState extends State<ProfileScreen>
     _reactRepo = ReactionRepository();
     _loadLevels();
     _loadFollowCounts();
+    // la pantalla es keep-alive: recalcular la maestría al volver al tab,
+    // si no los check-ins hechos en otras pestañas no se reflejarían
+    MainShell.activeTab.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    MainShell.activeTab.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (MainShell.activeTab.value == 4) {
+      _loadLevels();
+      _loadFollowCounts();
+    }
   }
 
   Future<void> _loadLevels() async {
-    final profile = await _levelsRepo.computeProfile();
-    if (!mounted) return;
-    setState(() => _levels = profile);
+    if (_loadingLevels) return;
+    _loadingLevels = true;
+    try {
+      final profile = await _levelsRepo.computeProfile();
+      if (!mounted) return;
+      setState(() => _levels = profile);
+    } catch (_) {
+      // sesión cerrada o sin permisos a mitad de carga: conservar lo que haya
+    } finally {
+      _loadingLevels = false;
+    }
   }
 
   Future<void> _loadFollowCounts() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
     final results = await Future.wait([
       _followRepo.getFollowerCount(uid).catchError((_) => 0),
       _followRepo.getFollowingCount(uid).catchError((_) => 0),
