@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/community_template_repository.dart';
 import '../domain/community_template_model.dart';
@@ -224,8 +225,17 @@ class _CommunityTemplatesFeedScreenState
             ),
           ),
 
+          // primera carga: skeletons con la silueta de las cards
+          if (filtered.isEmpty && _loading)
+            SliverList.builder(
+              itemCount: 4,
+              itemBuilder: (_, i) => const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: ChartSkeleton(height: 130),
+              ),
+            )
           // estado vacio
-          if (filtered.isEmpty && !_loading)
+          else if (filtered.isEmpty && !_loading)
             SliverFillRemaining(
               hasScrollBody: false,
               child: _EmptyState(

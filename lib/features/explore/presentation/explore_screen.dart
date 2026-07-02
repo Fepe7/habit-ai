@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/main_shell.dart';
+import '../../../core/services/feedback_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/ux/empty_state_view.dart';
@@ -178,6 +179,7 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   Future<void> _followUser(UserDirectoryEntry target) async {
     if (_followingUids.contains(target.uid)) return;
+    FeedbackService.instance.moodSelected();
     final me = FirebaseAuth.instance.currentUser!;
     final myEntry = await _dirRepo.getEntry(_myUid);
     try {
@@ -220,6 +222,7 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   Future<void> _followPublicProfile(PublicProfileModel profile) async {
     if (_followingUids.contains(profile.uid)) return;
+    FeedbackService.instance.moodSelected();
     final me = FirebaseAuth.instance.currentUser!;
     final myEntry = await _dirRepo.getEntry(_myUid);
     try {
@@ -238,6 +241,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   }
 
   Future<void> _unfollowUid(String uid) async {
+    FeedbackService.instance.moodSelected();
     await _followRepo.unfollow(uid);
     if (mounted) setState(() => _followingUids.remove(uid));
   }

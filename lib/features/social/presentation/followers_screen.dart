@@ -10,6 +10,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../core/widgets/avatar_circle.dart';
 import '../../../core/widgets/ux/app_snackbar.dart' show AppSnackBar;
 import '../../../core/widgets/ux/empty_state_view.dart';
+import '../../../core/widgets/ux/skeletons.dart';
 import '../data/follow_repository.dart';
 import '../data/user_directory_repository.dart';
 import '../domain/follow_model.dart';
@@ -418,7 +419,10 @@ class _FollowersTabState extends State<_FollowersTab> {
             stream: widget.followRepo.watchMyFollowers(),
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: List.filled(6, const ListTileSkeleton()),
+                );
               }
               final followers = snap.data ?? [];
               if (followers.isEmpty) {
@@ -500,7 +504,10 @@ class _FollowingTabState extends State<_FollowingTab> {
       stream: widget.followRepo.watchMyFollowing(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: List.filled(6, const ListTileSkeleton()),
+          );
         }
         final following = snap.data ?? [];
         if (following.isEmpty) {
@@ -542,7 +549,10 @@ class _RequestsTab extends StatelessWidget {
       stream: followRepo.watchPendingFollowRequests(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: List.filled(4, const ListTileSkeleton()),
+          );
         }
         if (snap.hasError) {
           return Center(child: Text(S.of(context).followersRequestsError('${snap.error}')));

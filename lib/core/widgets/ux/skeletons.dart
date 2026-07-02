@@ -154,6 +154,41 @@ class StatRowSkeleton extends StatelessWidget {
   }
 }
 
+/// Tile de lista con avatar circular + dos líneas + acción — para listas
+/// de personas (seguidores, resultados de búsqueda, feed de comunidad)
+class ListTileSkeleton extends StatelessWidget {
+  const ListTileSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surfaceContainerHighest;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          _Bone(width: 44, height: 44, radius: 22, color: surface),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Bone(width: 130, height: 13, color: surface),
+                const SizedBox(height: 7),
+                _Bone(width: 80, height: 10, color: surface),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _Bone(width: 72, height: 30, radius: 15, color: surface),
+        ],
+      ),
+    )
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(duration: 1400.ms, color: Colors.white.withValues(alpha: 0.45));
+  }
+}
+
 /// Bloque rectangular shimmer — para gráficas
 class ChartSkeleton extends StatelessWidget {
   const ChartSkeleton({super.key, this.height = 180});

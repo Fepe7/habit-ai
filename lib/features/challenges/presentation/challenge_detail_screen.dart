@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../../core/services/feedback_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../levels/presentation/category_l10n.dart';
 import '../../../core/widgets/avatar_circle.dart';
@@ -182,6 +183,7 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
       );
 
       if (!mounted) return;
+      FeedbackService.instance.reactionReceived();
       AppSnackBar.showSuccess(context, S.of(context).challengeDetailAccepted);
       // recargar para mostrar progreso
       await _load();
@@ -230,6 +232,12 @@ class _ChallengeDetailScreenState extends State<ChallengeDetailScreen> {
 
     final wasCompleted = _completedToday;
     setState(() => _completedToday = !wasCompleted);
+    // misma respuesta háptica que el check-in de hábito normal
+    if (wasCompleted) {
+      FeedbackService.instance.habitUncompleted();
+    } else {
+      FeedbackService.instance.habitCompleted();
+    }
 
     try {
       if (!wasCompleted) {
