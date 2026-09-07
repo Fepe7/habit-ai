@@ -1,229 +1,229 @@
-# CLAUDE.md — HabitAI
+<div align="center">
 
-## Identidad del proyecto
+# HabitAI
 
-**HabitAI** — app móvil de gestión de hábitos con IA. Origen: TFG de 2º DAM (completado). Fase actual: lanzamiento público.  
-**Autor**: Andrei Felipe Staicu  
-**Código**: variables/clases en inglés, comentarios en español.
+**Tu coach de hábitos con IA.** Le cuentas cómo es tu vida, Gemini diseña tu plan,
+y la app detecta tus patrones y renegocia contigo cuando fallas.
+
+[![App Store](https://img.shields.io/badge/App_Store-Descargar-0D96F6?logo=apple&logoColor=white)](https://apps.apple.com/app/id6777939075)
+[![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Firestore_·_Functions-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Gemini](https://img.shields.io/badge/Gemini-2.5_Pro-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev)
+
+**[Descargar en la App Store →](https://apps.apple.com/app/id6777939075)**
+
+Publicada en julio de 2026 · Trabajo Final de Grado del CFGS de Desarrollo de Aplicaciones Multiplataforma
+
+</div>
 
 ---
 
-## Stack tecnológico
+## La app
+
+| | | |
+|:-:|:-:|:-:|
+| <img src="docs/screenshots/06.png" width="230" alt="Pantalla de hábitos del día"> | <img src="docs/screenshots/01.png" width="230" alt="Asistente de IA"> | <img src="docs/screenshots/02.png" width="230" alt="Panel de progreso"> |
+| **Hábitos del día** | **Asistente IA** | **Progreso** |
+| <img src="docs/screenshots/03.png" width="230" alt="Correlación entre ánimo y hábitos"> | <img src="docs/screenshots/04.png" width="230" alt="Progreso mensual"> | <img src="docs/screenshots/05.png" width="230" alt="Distribución por categorías"> |
+| **Ánimo y hábitos** | **Progreso mensual** | **Equilibrio por áreas** |
+
+---
+
+## Qué hace
+
+La mayoría de gestores de hábitos son listas de tareas con rachas. HabitAI intenta
+resolver los dos momentos en los que esas apps fallan: **el arranque** (no sabes qué
+hábitos ponerte) y **la recaída** (fallas tres días y abandonas).
+
+**Arranque.** En el onboarding describes tu rutina y tus metas en lenguaje natural y
+Gemini devuelve un plan completo: hábitos concretos, frecuencia por días, hora de
+recordatorio y categoría, agrupados con título y emoji. Todo editable después.
+
+**Recaída.** Cuando fallas un hábito tres o más días, la IA no insiste: te propone un
+ajuste concreto —bajar la intensidad, cambiar la hora, partirlo en micro-hábitos o
+reducir la frecuencia— acompañado de un diagnóstico de por qué está fallando. Es la
+función de la que más orgulloso estoy.
+
+### Seguimiento
+
+- **Check-in diario** con rachas reales (actual y mejor) y feedback háptico.
+- **Registro de ánimo** por franja horaria: valoración de 1 a 5, etiquetas emocionales y nota.
+- **Correlación ánimo–hábitos**: la app cruza check-ins con estado de ánimo y muestra qué
+  hábitos te suben o te bajan el ánimo, con nivel de fiabilidad y efecto retardado (impacto
+  en el día siguiente).
+- **Dashboard** con gráfica semanal, desglose de 30 días, distribución por categorías y
+  heatmap mensual de ánimo estilo GitHub.
+
+### La IA como coach
+
+| Función | Cuándo | Qué genera |
+|---|---|---|
+| Plan de onboarding | Al registrarte | Grupo de hábitos adaptado a tu rutina |
+| Chat del asistente | Cuando quieras | Consejo conversacional sobre tus hábitos reales |
+| Revisión semanal | Lunes, automática | Logros, dificultades, recomendaciones y foco de la semana |
+| Efecto mariposa | Día 1 de cada mes | Dos futuros a 3 años: manteniendo vs. abandonando los hábitos |
+| Renegociación | Al fallar ≥3 días | Ajuste concreto del hábito, con diagnóstico |
+| Patrones | Bajo demanda | Insights sobre tus datos de ánimo y constancia |
+
+### Gamificación y social
+
+- Logros (11 tipos) con banner animado, niveles por categoría y radar hexagonal del perfil.
+- Escudos de racha para congelarla en días libres o de enfermedad.
+- Retos entre usuarios con progreso compartido.
+- Plantillas de la comunidad: publicas tus grupos de hábitos y otros los importan con un toque.
+- Perfiles públicos opcionales, seguidores con solicitud previa y reacciones.
+
+### Monetización
+
+Suscripción premium gestionada con **RevenueCat**. El plan gratuito funciona con cuota
+semanal por tipo de función de IA (3 mensajes de chat, 1 revisión semanal, 1 proyección,
+2 renegociaciones…) y premium la elimina. El estado premium **solo se escribe desde el
+webhook de RevenueCat validado en el servidor**, nunca desde el cliente, para que nadie
+pueda autoconcederse la suscripción falseando un evento.
+
+---
+
+## Arquitectura
+
+Estructura **feature-first**: cada funcionalidad es una carpeta con tres capas propias, sin
+dependencias cruzadas entre features.
+
+```
+lib/
+├── main.dart                     # Init de Firebase + App Check
+├── app.dart                      # MaterialApp + AuthProvider
+├── core/
+│   ├── router/app_router.dart    # go_router con auth guard y ShellRoute
+│   ├── theme/                    # Material 3, paleta y tipografía
+│   └── widgets/                  # Drawer, snackbars, skeletons, empty states
+├── l10n/                         # Localización ES/EN con archivos ARB
+└── features/
+    ├── auth/          onboarding/     habits/        dashboard/
+    ├── ai/            mood/           achievements/  levels/
+    ├── challenges/    community/      social/        profile/
+    └── explore/       notifications/  premium/       settings/
+```
+
+Cada feature respeta el mismo contrato:
+
+- **`domain/`** — Modelos puros, sin una sola importación de Firebase. Es lo que se testea.
+- **`data/`** — Repositorios que encapsulan Firestore y las Cloud Functions.
+- **`presentation/`** — Pantallas y widgets. Solo hablan con su repositorio.
+
+### El cliente nunca habla con Gemini
+
+```
+Flutter  →  Cloud Function (callable)  →  Gemini
+              │
+              ├── verifica el token de Firebase Auth
+              ├── comprueba la cuota semanal (en transacción, sin condiciones de carrera)
+              ├── aplica rate limiting (10 peticiones/hora)
+              ├── construye el prompt en el servidor
+              └── valida y parsea el JSON de respuesta
+```
+
+La API key de Gemini vive en Secret Manager y **nunca sale del servidor**. Los prompts
+también están en el backend (`functions/prompts/`), así que se corrigen sin publicar una
+versión nueva en la App Store.
+
+### Backend: 24 Cloud Functions
+
+Node.js 20 en `europe-west1`, de cuatro tipos:
+
+| Tipo | Nº | Ejemplos |
+|---|:-:|---|
+| Callables | 7 | `generateHabitPlan`, `routineChat`, `generateRenegotiation` |
+| Jobs programados | 9 | `weeklyReviewJob` (lunes 08:00), `butterflyProjectionJob` (día 1, 09:00), `streakRiskJob` |
+| Triggers de Firestore | 10 | `onNewFollower`, `onAchievementUnlocked`, `onChallengeProgressUpdated` |
+| Webhooks y Pub/Sub | 2 | `revenueCatWebhook`, `pauseAiOnBudgetExceeded` |
+
+Los jobs programados se crean solos con Cloud Scheduler en el primer despliegue, y las
+notificaciones push salen por FCM desde los triggers.
+
+**Control de coste**: `pauseAiOnBudgetExceeded` escucha las alertas de facturación de Google
+Cloud por Pub/Sub y desactiva las funciones de IA automáticamente al superar el presupuesto.
+Un proyecto con IA generativa y tarjeta asociada no debería poder dispararse mientras duermes.
+
+### Modelo de datos
+
+```
+users/{uid}
+  ├── habits/{habitId}/logs/{logId}
+  ├── mood_entries/{entryId}          # privados, nunca salen del usuario
+  ├── achievements/{achievementId}
+  ├── ai_conversations/{conversationId}
+  ├── weekly_reviews/{weekId}         # 2026-W15
+  └── butterfly_projections/{monthId} # 2026-04
+
+community_templates/{templateId}/habits/{habitSnapshotId}
+challenges/{challengeId}/participants/{uid}
+```
+
+### Seguridad
+
+- **Reglas de Firestore deny-by-default**: nada es accesible salvo lo que se autoriza
+  explícitamente, y cada documento valida `request.auth.uid == userId`.
+- **App Check** activo: las APIs solo responden a instalaciones legítimas de la app.
+- **Cuotas y rate limiting en el servidor**, nunca en el cliente.
+- **Retención automática**: los documentos temporales llevan `expiresAt` y las políticas TTL
+  de Firestore los purgan solas.
+
+---
+
+## Stack
 
 | Capa | Tecnología |
-|------|-----------|
-| Frontend | Flutter 3.41.6 + Dart 3.x, Material Design 3 |
-| Navegación | go_router |
-| Animaciones | flutter_animate |
-| Auth | Firebase Authentication |
-| BD | Cloud Firestore (Europa) |
-| IA | Gemini via Cloud Functions (europe-west1): `gemini-2.5-pro` en chat, `gemini-2.5-flash` en jobs de fondo |
-| Feedback | vibration, url_launcher |
-| Charts | fl_chart |
-| Storage | firebase_storage, image_picker |
-| Paquetes | firebase_core, firebase_auth, cloud_firestore, cloud_functions, go_router, flutter_animate, google_sign_in, google_fonts, shared_preferences, flutter_local_notifications |
+|---|---|
+| Frontend | Flutter 3.41 · Dart 3.11 |
+| Diseño | Material 3 · `google_fonts` · `flutter_animate` |
+| Navegación | `go_router` con auth guard y ShellRoute |
+| Gráficas | `fl_chart` |
+| Auth | Firebase Authentication (email y Google) |
+| Base de datos | Cloud Firestore (Europa) |
+| IA | Gemini 2.5 Pro y 2.5 Flash vía `firebase_ai` |
+| Backend | Cloud Functions (Node.js 20, `europe-west1`) |
+| Jobs | Cloud Scheduler + Pub/Sub |
+| Push | Firebase Cloud Messaging |
+| Pagos | RevenueCat (`purchases_flutter`) |
+| Seguridad | Firebase App Check · reglas de Firestore |
+| CI/CD | Codemagic → TestFlight → App Store |
+| Idiomas | Español e inglés (ARB) |
 
 ---
 
-## Paleta de colores
+## Ejecutar el proyecto
 
-Valores reales del tema (`lib/core/theme/app_theme.dart`). Sistema visual completo (escala de superficies, tipografía, componentes) → **DESIGN.md**.
+Requiere Flutter 3.41+, Node.js 20+ y un proyecto de Firebase en plan Blaze (las Cloud
+Functions lo necesitan).
 
-| Rol | Hex |
-|-----|-----|
-| Primary (Deep Harbor Teal) | `#00668A` |
-| Primary container (Sky) | `#38BDF8` |
-| Secondary (Signal Blue) | `#006591` / container `#39B8FD` |
-| Tertiary / Streak / Logros (Amber) | `#F59E0B` (deep `#855300`) |
-| Success (gradiente emerald) | `#059669` → `#34D399` |
-| Error | `#BA1A1A` / container `#FFDAD6` |
-| Surface (campo) | `#F8F9FF` |
-| Background / cards (lowest) | `#FFFFFF` |
-| Escala de superficies (low→highest) | `#EFF4FF` · `#E5EEFF` · `#DCE9FF` · `#D3E4FE` |
-| Dark bg | `#0F1620` |
-| Texto principal (Ink) | `#0B1C30` |
-| Texto secundario (Slate) | `#3E484F` |
+```bash
+git clone https://github.com/Fepe7/habit-ai.git
+cd habit-ai
 
-**Categorías** (fondo / texto): Salud `#CCFBF1/#115E59` · Productividad `#E0F2FE/#0C4A6E` · Bienestar `#FEF3C7/#92400E` · Social `#FCE7F3/#9D174D` · Aprendizaje `#EDE9FE/#5B21B6` · Finanzas `#FEE2E2/#991B1B`
+# Conecta tu propio proyecto de Firebase
+dart pub global activate flutterfire_cli
+flutterfire configure
 
----
-
-## Navegación de Contexto (Vía Graphify) — OBLIGATORIO
-
-**PROHIBIDO** usar `Grep`, `Glob` o `Read` sobre archivos de código (`.dart`, `.js`, etc.) sin haber leído antes `graphify-out/GRAPH_REPORT.md` en la sesión actual.
-
-Orden estricto:
-1. **Graphify**: Lee `graphify-out/GRAPH_REPORT.md` (y `graph.json` si hace falta).
-2. **Obsidian**: `obsidian-boveda/habit-ai-graph/` para decisiones de diseño.
-3. **Código crudo**: solo el archivo concreto a editar.
-
-**Excepción única**: ruta exacta dada por el usuario + edit puntual de una línea.  
-Cualquier otra tarea (features, arquitectura, refactors, subagentes) → graphify primero.
-
----
-
-## Arquitectura del proyecto
-
-Feature-first: `lib/features/{auth,onboarding,habits,dashboard,ai,achievements,settings,social,challenges,community,profile,levels,notifications,explore}/`  
-Cada feature: `data/` (repositorios Firebase) → `domain/` (modelos Dart puros) → `presentation/` (screens/widgets, nunca Firebase directo).  
-Core compartido: `core/theme/app_theme.dart`, `core/router/app_router.dart`, `core/widgets/`, `core/widgets/ux/`, `core/services/feedback_service.dart`.  
-Servicios: `services/notification_service.dart`.  
-Hosting: `public/` — landing, política de privacidad, términos de uso y `reset-password.html` (action handler propio de restablecimiento de contraseña: valida el `oobCode` y cambia la contraseña contra la REST API de Identity Toolkit, sin SDK; requiere "Personalizar URL de acción" en Authentication → Plantillas apuntando a `https://habit-ai-184ad.web.app/reset-password.html`).
-
----
-
-## Reglas de codificación
-
-1. **StatelessWidget** sin estado mutable; **StatefulWidget** con setState/controladores/animaciones.
-2. **Nunca lógica de negocio en widgets** — widgets llaman al repositorio, reaccionan al resultado.
-3. **`const`** en constructores siempre que sea posible.
-4. **Named parameters** con `required` en widgets públicos. Trailing commas siempre.
-5. Rutas en `core/router/app_router.dart`. `GoRoute` con `name`. Guards via `redirect`. `ShellRoute` para BottomNav.
-6. **StreamBuilder** para datos reactivos; **FutureBuilder** para operaciones puntuales; **setState** para UI local.
-7. **Nunca exponer API keys** en cliente. IA siempre via Cloud Functions.
-8. Regla Firestore base: `request.auth.uid == userId`. Ver `firestore.rules`.
-9. **Commits semánticos**: `feat:`, `fix:`, `docs:`.
-
----
-
-## Modelo de datos (colecciones Firestore)
-
-- `users/{uid}` — perfil, `isProfilePublic`, `habitVisibility`, `shieldsCount`, `sickModeStart/Until`, `username`, `onboardingCompleted`, `onboardingGoals`, `lastActiveAt` (marca por sesión para la futura limpieza de cuentas inactivas), `isPremium`/`premiumUntil`/`freePlanUsage` (solo Admin SDK — bloqueados al cliente en rules)
-- `users/{uid}/habits/{habitId}` — hábitos con `visibility` individual, `isAIGenerated`, rachas, `groupId`, `stackOrder`
-- `users/{uid}/habits/{habitId}/logs/{logId}` — check-ins diarios
-- `users/{uid}/mood_entries/{entryId}` — registros de ánimo/energía por franja horaria (privados, nunca públicos)
-- `users/{uid}/achievements/{achievementId}` — logros (inmutables)
-- `users/{uid}/ai_conversations/{conversationId}` — historial chat IA (inmutables)
-- `users/{uid}/weekly_reviews/{weekId}` — revisiones semanales Gemini (solo admin SDK)
-- `users/{uid}/butterfly_projections/{monthId}` — proyecciones mensuales (solo admin SDK)
-- `users/{uid}/pattern_insights/{periodId}` — detección de patrones IA (solo admin SDK)
-- `users/{uid}/renegotiations/{habitId}` — propuestas de renegociación IA
-- `users/{uid}/shield_grants/{grantId}` — deduplicación de escudos concedidos
-- `users/{uid}/fcm_tokens/{token}` — tokens de dispositivo para push (FCM)
-- `users/{uid}/followers/{uid}` — seguidores (subcolección)
-- `users/{uid}/following/{uid}` — seguidos (subcolección)
-- `user_directory/{uid}` — entrada ligera para búsqueda por username y privacidad
-- `usernames/{username}` — reserva de usernames únicos
-- `follow_requests/{requestId}` — solicitudes de seguimiento (pending/accepted/declined)
-- `community_templates/{templateId}` — plantillas globales
-
-`visibility` individual en hábito sobreescribe `habitVisibility` global del usuario.
-
----
-
-## Integración con IA (Gemini 2.5)
-
-```
-Flutter → Cloud Function (HTTPS callable, europe-west1) → Gemini API
-```
-Cloud Function: verifica auth token → rate limiting (10 req/hora) → construye prompt → parsea JSON → devuelve al cliente.  
-Prompts: JSON estricto, contexto usuario, máx. 5-7 hábitos, incluir categoría/frecuencia/horario.
-
-**Modelos** (constantes `MODEL_PRO`/`MODEL_FLASH` en `functions/index.js`):
-- `gemini-2.5-pro` → solo chat interactivo (`generateHabitPlan`, `routineChat`).
-- `gemini-2.5-flash` → jobs de fondo (revisión semanal, mariposa, renegociación, patrones). ~10-20× más barato.
-- Nombre válido es `gemini-2.5-flash`, NO `gemini-flash-2-5` (404). Precios y predicción de coste → `docs/gemini-costes.md`.
-
----
-
-## Flujo de navegación
-
-```
-SplashScreen → auth state
-  ├── No auth → LoginScreen ↔ RegisterScreen (con Google Sign-In)
-  └── Auth
-      ├── onboardingCompleted=false → OnboardingFlow (vía OnboardingGate)
-      └── onboardingCompleted=true → MainShell (BottomNav 5 tabs, swipe entre tabs)
-          Tab 1: HabitsScreen (/) · Tab 2: DashboardScreen (/dashboard) · Tab 3: AIScreen (/ai)
-          Tab 4: ExploreScreen (/explore) · Tab 5: ProfileScreen (/profile)
+flutter pub get
+flutter run
 ```
 
-- **OnboardingFlow** (`lib/features/onboarding/`): 8 pasos sobre fondo de gradiente animado — bienvenida → nombre → áreas → estilo de vida → plan generado por IA (con receta auto-escrita y confeti) → primer check-in real (racha de 1 día) → tour de funciones IA → permiso de notificaciones con preview. `OnboardingGate` envuelve el `MainShell` en el router y lee `onboardingCompleted` una vez por sesión (doc ausente = mostrar onboarding, por la carrera con `_ensureUserDoc` en el registro). El plan se guarda como grupo + hábitos reutilizando el flujo del chat IA; las áreas elegidas se persisten en `onboardingGoals`.
+Y el backend:
 
-- **HabitsScreen**: grupos como acordeones + hábitos sueltos, todos visibles (completados incluidos — ver lo logrado refuerza al usuario; NO ocultar completados, decisión explícita). Header con campana de notificaciones (badge) que abre `NotificationsBottomSheet`. Las propuestas de renegociación IA NO van como banner por hábito (empapelaban la lista a usuarios poco activos): se agrupan en una única tarjeta `RenegotiationInboxCard` arriba de la lista que abre `RenegotiationInboxSheet` (cada propuesta con aplicar/descartar, reutilizando `CoachBanner` de `widgets/renegotiation_inbox.dart`).
-- **ExploreScreen** agrupa lo social: desde ahí se llega a Comunidad (`/community`), Retos (`/challenges`) y perfiles públicos (`/profiles/:userId`).
-- **ProfileScreen** (propio): header centrado clásico (avatar grande, @username, seguidores, bento de stats) + tabs deslizables Hábitos · Maestría debajo. El header compacto estilo Instagram se probó y se descartó; las tabs sí gustaron. Tap en avatar abre `ProfilePhotoViewer` (foto fullscreen con swipe-to-dismiss). Ajustes via icono ⚙ (`/settings`).
-- **PublicProfileScreen** (otros usuarios): header centrado + tabs Hábitos · Logros + visor de foto.
-- **Drawer** (hamburguesa en headers): Logros, Ánimo, Todos los hábitos, Revisión semanal, Mariposa, Crear hábito, Chat IA, Modo enfermedad, Ajustes. Sin Niveles (duplicaría Perfil → Maestría).
-- Badge en tab Perfil = solicitudes de seguimiento pendientes.
-
----
-
-## Skills disponibles
-
-| Skill | Cuándo usarla |
-|-------|---------------|
-| `flutter-architecture` | Estructura, widgets, patrones |
-| `firebase-backend` | Auth, Firestore, Cloud Functions, seguridad |
-| `ai-integration` | Prompt engineering, Cloud Functions proxy, parseo |
-| `ui-design` | Material 3, animaciones, componentes |
-| `performance-and-quality` | Linting, rendimiento, RA 5 |
-| `tribunal-defense` | Preparación defensa TFG |
-
----
-
-## Estado del proyecto
-
-TFG completado y defendido. Fase actual: **lanzamiento público**.
-
-**Features implementadas (junio 2026):**
-- Auth: email/password + Google Sign-In. Recuperación de contraseña: enlace en login → diálogo (`_ForgotPasswordDialog`, posee su controller — hacer dispose desde fuera rompe la animación de cierre) → `AuthRepository.sendPasswordResetEmail` (lo envía Firebase Auth gratis, sin SMTP). Mensaje de éxito genérico a propósito (no revela si la cuenta existe). El enlace del correo aterriza en `public/reset-password.html`
-- Onboarding interactivo: 8 pasos animados que terminan con plan IA generado y primer check-in hecho (ver Flujo de navegación)
-- Hábitos: CRUD, check-ins, rachas, escudos de racha, modo enfermedad, reordenamiento drag & drop, edición por lotes
-- Habit stacking: cadenas de hábitos (Atomic Habits), grupos, bonus XP, drag & drop dentro de cadena
-- IA: chat con Gemini, revisión semanal, renegociación inteligente, efecto mariposa, detección de patrones
-- Chat de rutina (premium): callable `routineChat` (Gemini Pro) con contexto completo del grupo — hábitos, rachas y logs de 30 días reconstruidos en cada mensaje. Propone cambios estructurados (updates con whitelist de campos + newHabits, máx. 3, nunca borrados) que `RoutineChatScreen` aplica con un toque via `updateHabit`/`createHabit`. Acceso: icono ✨ en `GroupDetailScreen` y opción en el menú ⋮ del acordeón de grupo en `HabitsScreen` → ruta `/group/:groupId/chat` tras `PremiumGuard`
-- Ánimo: tracking de energía/ánimo multi-franja (rating 1-5 + etiquetas + nota), heatmap mensual, correlación ánimo-hábitos con nivel de confianza y efecto retardado, integrado en la revisión semanal IA
-- Social: perfiles públicos/privados, sistema de follows con solicitudes, visibilidad granular, badges de notificación, directorio de usuarios con búsqueda por username
-- Retos compartidos: 21 días con otro usuario, seguimiento dual
-- Comunidad: plantillas compartidas, feed paginado con filtros
-- Gamificación: logros con niveles por categoría, radar chart hexagonal
-- UX: feedback háptico, skeleton loaders, animaciones con flutter_animate, notificaciones locales
-- Push FCM (`functions/index.js`, helper `sendPushToUser` con limpieza de tokens muertos): follows y solicitudes, retos (invitación, aceptado/rechazado, completado, pique al completar día el rival, marcador a 3 días y último día), reacciones de perfil, logros (`skipForeground` evita duplicar el overlay in-app), jobs IA (revisión semanal, mariposa, patrones, renegociación con cap 1/usuario/día — el `renegotiationJob` genera UNA sola propuesta por usuario, la del hábito fallado más recientemente, no una por cada hábito atascado), racha en riesgo (20:30), fin de modo enfermedad y resumen dominical (domingo 19:00). Deep links via campo `route` en data
-- Widgets de home screen (#27): paquete `home_widget` 0.7 (0.8 exige compileSdk 37). `HomeWidgetService` (`lib/services/`) publica el payload del día y procesa check-ins; Android = RemoteViews (`HabitWidgetProvider.kt`) con check-in vía callback Dart en fondo; iOS = extensión WidgetKit (`ios/HabitWidget/`) con App Intent (iOS 17+) que marca optimista y encola en App Group `group.com.andreistaicu.habitai` — la app reconcilia al abrir. En iOS 15/16 el tap abre la app
-- Legal: política de privacidad + términos en Firebase Hosting, eliminación de cuenta con doble confirmación. **Borrado completo (2026-06-27):** `AuthRepository.deleteAccount` además de subcolecciones/directorio/username/plantillas borra el **espejo público** `public_profiles/{uid}` + subcolecciones (`habits`/`challenges`/`reactions`, antes huérfanas → fuga de espacio), y **marca abandonados** (`status:abandoned`) los retos vivos del usuario (son duales, la regla prohíbe borrarlos). Reglas ampliadas: `following/{id}` delete admite el `followingId` (sin esto **borrar cuenta con seguidores fallaba** con `permission-denied` → "no se pudo completar"); `reactions` delete admite el dueño del perfil. Script único `functions/cleanup_orphans.js --keyfile=…` limpió los huérfanos preexistentes (Admin SDK, con `--dry-run`)
-- Release: keystore de producción configurado, AAB generado
-- iOS: cuenta Apple Developer activa, CI/CD con Codemagic (`codemagic.yaml`) compila y firma sin Mac, sube a TestFlight. App probada y funcionando en iPhone vía testing interno. Bundle ID `com.andreistaicu.habitai`, mínimo iOS 15.0. Clave privada de firma persistente en variable `CERTIFICATE_PRIVATE_KEY` (grupo `ios_signing`) de Codemagic.
-- Costes: blindaje Firebase/Gemini — `maxInstances` (10 global, 3 IA), modelos Flash en jobs, App Check (cliente activado), caché Firestore 100MB. Ver `docs/gemini-costes.md`.
-- Monetización freemium (premium 3,99 €/mes): gates en backend — los 4 callables IA premium (`assertPremium`), los 4 jobs `onSchedule` saltan usuarios free, `generateHabitPlan` con cuota free **de por vida, SIN renovación mensual** (2026-06-27): el onboarding es gratis para todos (se exime mirando `onboardingCompleted` en el servidor, no consume) y, completado el onboarding, el free tiene `FREE_PLAN_LIFETIME_GENERATIONS = 1` generación de por vida; después premium (`consumeFreePlanQuota`, contador `users/{uid}.freePlanUsage.count`, errores con `details.reason` = `premium_required`/`free_plan_quota`). Cliente: `PremiumLimits.freePlanLifetimeGenerations` (debe coincidir). Cliente: `PremiumService` (`lib/core/services/`, ValueNotifiers `isPremium` y `freePlanMessagesLeft`), `PremiumLimits` (7 hábitos free), `PaywallScreen` + ruta `/paywall`, `PremiumGuard` envuelve revisión semanal/mariposa/patrones/mood-insights en el router, `PremiumGate.checkHabitLimit` en los 3 puntos de creación manual de hábitos (onboarding/retos/plantillas exentos), contador de mensajes free en el chat IA. **Límite de hábitos free = 20** (2026-06-27, subido desde 7 por el LLM Council: los hábitos no son coste, la IA es la palanca real; 20 no quema a nadie ni choca con el plan del onboarding). Es solo UX del cliente (no hay regla de servidor). Evento analytics `habit_limit_reached` al topar (para decidir el número con datos; Remote Config deferido). `PaywallScreen._waitForPremium` (8s): tras `purchase()`/`restore()`, si el resultado inmediato es false espera al stream de `PremiumService.isPremium` antes de decir "no hay compras" (evita el falso negativo por timing webhook→Firestore). **Billing real con RevenueCat:** `purchases_flutter` en pubspec; `BillingService` (`lib/core/services/billing_service.dart`) envuelve el SDK — `init` se autoconfigura solo si hay API key (si no, queda inerte y la app arranca igual), sigue `authStateChanges` para mantener `app_user_id` = uid de Firebase (`Purchases.logIn`), expone `purchaseMonthly`/`restore`/`monthlyPackage` contra el entitlement `premium`. `PaywallScreen` rediseñado (StatefulWidget, escaparate oscuro estilo Bevel: glow de marca, beneficios con checks cian, tarjeta de precio, CTA + "Restaurar compras") conecta el CTA a la compra; distingue cancelación de error vía `PurchasesErrorCode.purchaseCancelledError`. **API key pública iOS ya pegada** en `billing_service.dart` (`_iosApiKey = appl_…`); `_androidApiKey` vacío (queda inerte hasta configurar Android). Backend: webhook HTTP `revenueCatWebhook` (`onRequest`, europe-west1, secret `REVENUECAT_WEBHOOK_TOKEN` en header `Authorization`) — concede premium en INITIAL_PURCHASE/RENEWAL/PRODUCT_CHANGE/UNCANCELLATION/NON_RENEWING_PURCHASE/SUBSCRIPTION_EXTENDED escribiendo `isPremium`+`premiumUntil` (de `expiration_at_ms`) con Admin SDK, revoca en EXPIRATION; ignora ids `$RCAnonymousID:`; la cancelación NO revoca (manda `premiumUntil`). **Maneja `TRANSFER`** (2026-06-27): cuando el mismo recibo de Apple pasa de una cuenta a otra (usuario borra/cambia cuenta de Firebase y restaura con el mismo Apple ID — RevenueCat con "Transfer to new App User ID"), revoca los `transferred_from` y concede los `transferred_to` **heredando el `premiumUntil` del doc origen en Firestore** (el evento TRANSFER no trae la caducidad; se lee de `users/{uid}` antes de revocar, sin depender de la REST de RevenueCat — la vía REST se probó y daba 403). Helpers `setPremium`/`readPremium`/`realUids` en `functions/index.js`. **Webhook desplegado** (2026-06-22, re-desplegado con TRANSFER 2026-06-27) y registrado en RevenueCat (test event → 200); secret `REVENUECAT_WEBHOOK_TOKEN` en Secret Manager. El estado premium sigue siendo Firestore→`PremiumService` (RevenueCat solo cobra y avisa). Estado de configuración y pasos manuales → [[billing-revenuecat-setup]] (memoria).
-- **UX de bloqueo premium (funciones gated visualmente, no escondidas):** `PremiumLockedScreen` (`lib/features/premium/presentation/premium_locked_screen.dart`, enum `PremiumFeature`) — pantalla oscura estilo paywall con teaser difuminado + candado con glow + copy contextual por función + CTA. `PremiumGuard` ahora recibe `feature:` y, en vez de redirigir al paywall genérico, renderiza esa pantalla bloqueada contextual (reactivo a `isPremium`). Badge **PRO** en el Drawer (Revisión semanal, Mariposa) vía `_DrawerTile premium:true` (widget `_ProBadge`). En el Dashboard, `_buildInsightsSection` muestra para free 4 filas `_InsightSlimRow(locked:true)` (badge PRO + candado → `/paywall`) en vez de las cards reales, que intentarían generar contra el backend y serían rechazadas. Triple blindaje de coste IA: jobs `onSchedule` saltan free (`continue` antes de Gemini) + callables `assertPremium` + cliente no ofrece generar
-- Retención de datos: campo TTL `expiresAt` en colecciones efímeras (chats IA 30d, revisiones 8 sem, mariposa 3 m, patrones 60d, renegociaciones 30d, follow_requests 90d/7d, fcm_tokens 120d, rate_limits 7d). `shield_grants` excluida a propósito (la dedupe de escudos debe vivir tanto como la racha). Plazos, comandos y backfill → `docs/retencion-datos.md`. **Políticas TTL ACTIVADAS (2026-06-27)** vía `node functions/enable_ttl.js --keyfile=…` (API REST, sin gcloud) en los 8 collection groups. Backfill NO necesario: el dry-run mostró que los 77 docs existentes ya tenían `expiresAt` (lo escriben cliente/jobs desde el principio).
-
-**Pendiente para lanzamiento:** rematar el billing RevenueCat — **iOS casi listo** (suscripción `habitai_premium_monthly` 3,99€/mes con precio+localización+captura, RevenueCat configurado, webhook desplegado con TRANSFER, API key iOS en código). **Acuerdo para apps de pago de Apple: ACTIVO (2026-06-22)** → App Store ya expone el producto. **Ciclo iOS VERIFICADO end-to-end (2026-06-27):** compra → webhook → `isPremium` en Firestore → app premium; y la **transferencia entre cuentas** (cambio de cuenta + restaurar → `TRANSFER` revoca A, concede B heredando la fecha) confirmada con datos reales. Falta: **Android sin configurar** (service account de Play en RevenueCat + `_androidApiKey` `goog_…`) y **quitar el `console.log` temporal de observabilidad** del webhook (+ redeploy). **Gotchas sandbox** (en memoria): en TestFlight la compra usa el **Apple ID real** (gratis, acelerada), NO Sandbox Tester; recomprar el mismo Apple ID da `CANCELLATION`/`UNCANCELLATION` (no `INITIAL_PURCHASE`); el falso "no hay compras" era timing del cliente (arreglado con `_waitForPremium` en `PaywallScreen`). Detalle completo y cómo funciona → [[billing-revenuecat-setup]] (memoria). URL de acción de las plantillas de Auth → `https://gethabitai.com/reset-password.html`: BLOQUEADA por un **registro huérfano del dominio de correo personalizado** atascado en el backend (diagnóstico 2026-06-13). Estado real: `notification.sendEmail.dnsInfo.customDomain = "gethabitai.com"`, `customDomainState: NOT_STARTED`, `domainVerificationRequestTime: 1970-01-01T00:00:00Z` (época cero = la verificación NUNCA llegó a arrancar; no es que Google tarde 48 h, el job jamás se disparó). Mientras ese `customDomain` exista, cualquier edición de plantillas/URL de la sección de correo devuelve `EMAIL_TEMPLATE_UPDATE_NOT_ALLOWED` (probado: PATCH de solo `callbackUri` también falla). **Lo que YA se probó y NO funciona** (no repetir): (a) togglear `useCustomDomain` por API no dispara la verificación ni cambia `domainVerificationRequestTime`; (b) "Aplicar dominio personalizado" + "Guardar" en consola no persiste en el backend (UI y config quedan desincronizadas — la consola acaba mostrando el remitente por defecto pero el `customDomain` huérfano sigue ahí); (c) borrar `customDomain` por API se ignora silenciosamente (responde 200 pero conserva el valor — guard de servidor). **Vía de salida real:** abrir caso en soporte de Firebase (https://firebase.google.com/support/troubleshooter/contact) pidiendo que limpien/reseteen el custom email domain huérfano del proyecto `habit-ai-184ad`. En cuanto `customDomain` desaparezca de la config, la URL se desbloquea y se escribe por API: PATCH `identitytoolkit.googleapis.com/admin/v2/projects/habit-ai-184ad/config?updateMask=notification.sendEmail.callbackUri` con el token del CLI de Firebase (`~/.config/configstore/firebase-tools.json`). **No bloquea el lanzamiento:** la recuperación de contraseña funciona hoy con el handler por defecto (`https://habit-ai-184ad.firebaseapp.com/__/auth/action`), solo que sin la marca/dominio propio. Los DNS de correo (SPF/DKIM en Porkbun) están correctos — dejarlos puestos, no tocar. Widget iOS sin validar (App Group `group.com.andreistaicu.habitai` ya creado y asignado en el portal de Apple; falta build de Codemagic → TestFlight para probarlo). App Check: activar Enforce tras subir a Play (+ añadir App Signing SHA). Presupuesto de Cloud Billing solo-email (~80-120€ al crecer) y freno selectivo que pause solo la IA al superar el presupuesto. (Ya HECHO y verificado en código esta sesión: Sign in with Apple completo —código + entitlement `com.apple.developer.applesignin`—, manejo offline `connectivity_service`+`offline_banner`, 22 tests de modelos de dominio, `analytics_service`, políticas TTL activadas.)
-
-**Desplegado el 2026-06-11:** functions completas (incluye triggers FCM, gates premium, `routineChat`) + firestore.rules (campos premium protegidos) + hosting (`reset-password.html`). Functions ya corren en **Node.js 22** (runtime en `firebase.json`) — la migración pre-2026-10-30 está hecha.
-
-**Dominio propio (2026-06-11): `gethabitai.com`** — comprado en Porkbun, conectado a Firebase Hosting (A `199.36.158.100` + TXT `hosting-site`, verificado y sirviendo con SSL) y configurado para los correos de Auth (SPF fusionado Porkbun+Firebase en un único TXT, DKIM `firebase1/2._domainkey`, TXT `firebase=` — todo propagado y comprobado en DNS público; la verificación del lado de Google estaba pendiente a 2026-06-11, ver pendientes). Hasta que verifique, los correos siguen saliendo del dominio firebaseapp.com. Dominio añadido a dominios autorizados de Auth. DNS en Porkbun — ojo: el campo Host añade `.gethabitai.com` solo (no escribir el dominio completo, se duplica). Solo puede existir UN registro SPF: si se añade otro servicio de correo, fusionar el include en el TXT existente. MX de Porkbun presentes para redirección de correo entrante (sin activar).
-
-Ver roadmap completo y backlog → **ROADMAP.md**
-
----
-
-## Entorno de desarrollo
-
-- SO: EndeavourOS Linux | Flutter 3.41.6 | Emulador: Android API 36
-- Firebase: Firestore en Europa, plan Blaze activo
-- Cloud Functions: Node.js 20 (⚠️ decomisado 2026-10-30, migrar a 22), region europe-west1, API key Gemini como secret. `setGlobalOptions` con `maxInstances: 10`
-
----
-
-## graphify
-
-Grafo en `graphify-out/`. Si `graphify-out/wiki/index.md` existe, usarlo en vez de leer archivos raw.
-
-Tras editar código en la sesión, actualizar el grafo:
-```
-python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"
+```bash
+cd functions
+npm install
+firebase functions:secrets:set GEMINI_API_KEY
+firebase deploy --only functions
 ```
 
-| Situación | Comando |
-|-----------|---------|
-| Sesión nueva / muchos cambios | `/graphify` |
-| Cambios incrementales | `/graphify --update` |
-| Sesión larga en Android Studio | `/graphify --watch` |
+Tras el primer despliegue, Cloud Scheduler crea automáticamente los nueve jobs programados.
 
-**Rebuild manual, sin hooks.** El grafo se reconstruye a mano (normalmente `/graphify --update` al empezar sesión). No hay auto-rebuild: los hooks `post-commit`/`post-checkout` se quitaron porque saltaban en cada commit y cada `git switch`, lo cual molestaba más que ayudaba en el flujo multi-equipo.
+---
 
-`graphify-out/` está en `.gitignore` (artefacto derivado, 16M) — cada equipo genera el suyo, nunca se sube al repo.
+## Autor
 
-⚠️ **No correr `graphify hook install`**: vuelve a meter los hooks. Si querés auto-rebuild de nuevo, reinstalalos y acordate de añadir `export PATH="$HOME/.local/bin:$PATH"` al inicio (Android Studio no hereda el PATH de fish).
+**Andrei Felipe Staicu** — [github.com/Fepe7](https://github.com/Fepe7)
+
+Trabajo Final de Grado del CFGS de Desarrollo de Aplicaciones Multiplataforma
+(IES Salvador Gadea, 2026).
