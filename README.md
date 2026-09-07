@@ -9,6 +9,7 @@ y la app detecta tus patrones y renegocia contigo cuando fallas.
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore_·_Functions-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Pro-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
 
 **[Descargar en la App Store →](https://apps.apple.com/app/id6777939075)**
 
@@ -227,3 +228,7 @@ Tras el primer despliegue, Cloud Scheduler crea automáticamente los nueve jobs 
 
 Trabajo Final de Grado del CFGS de Desarrollo de Aplicaciones Multiplataforma
 (IES Salvador Gadea, 2026).
+
+## Licencia
+
+[MIT](LICENSE) — código abierto, citando la autoría.
