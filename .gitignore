@@ -103,3 +103,8 @@ preparacion-proyecto.md
 
 feature-22-renegociacion-inteligente.md
 
+
+# Script de la cuenta demo de App Review: se queda en local (arrastra credenciales por entorno)
+functions/create_demo_reviewer.js
+functions/.env.demo
+!functions/.env.demo.example
