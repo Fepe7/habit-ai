@@ -9,7 +9,7 @@ y la app detecta tus patrones y renegocia contigo cuando fallas.
 [![Flutter](https://img.shields.io/badge/Flutter-3.41-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore_·_Functions-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com)
 [![Gemini](https://img.shields.io/badge/Gemini-2.5_Pro-8E75B2?logo=googlegemini&logoColor=white)](https://ai.google.dev)
-[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+[![License](https://img.shields.io/badge/License-All_rights_reserved-lightgrey)](LICENSE)
 
 **[Descargar en la App Store →](https://apps.apple.com/app/id6777939075)**
 
@@ -231,4 +231,6 @@ Trabajo Final de Grado del CFGS de Desarrollo de Aplicaciones Multiplataforma
 
 ## Licencia
 
-[MIT](LICENSE) — código abierto, citando la autoría.
+© 2026 Andrei Felipe Staicu — **todos los derechos reservados**. El código se
+publica como portfolio: puedes leerlo, pero no copiarlo, modificarlo ni
+reutilizarlo sin permiso por escrito. Detalles en [LICENSE](LICENSE).
