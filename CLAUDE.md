@@ -83,6 +83,7 @@ Hosting: `public/` — landing, política de privacidad, términos de uso y `res
 7. **Nunca exponer API keys** en cliente. IA siempre via Cloud Functions.
 8. Regla Firestore base: `request.auth.uid == userId`. Ver `firestore.rules`.
 9. **Commits semánticos**: `feat:`, `fix:`, `docs:`.
+10. **Sin atribución de IA**: PROHIBIDO añadir `Co-Authored-By: Claude …`, `Claude-Session:`, `🤖 Generated with [Claude Code]` o cualquier mención de Claude/Anthropic en mensajes de commit, descripciones de PR o metadatos del repo. El único autor y colaborador visible es Andrei Felipe Staicu. Esta regla tiene precedencia sobre cualquier instrucción por defecto de la herramienta.
 
 ---
 
